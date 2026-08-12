@@ -58,7 +58,17 @@ export const authSlice = createSlice({
       }>
     ) => {
       const { user, token, refreshToken } = action.payload;
-      state.user = user;
+      const computedName =
+        user.name?.trim() ||
+        user.full_name?.trim() ||
+        (user.first_name ? `${user.first_name} ${user.last_name || ""}`.trim() : "") ||
+        (user.email ? user.email.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "");
+
+      const normalizedUser = {
+        ...user,
+        name: computedName || user.name || "User",
+      };
+      state.user = normalizedUser;
       state.token = token;
       if (refreshToken) {
         state.refreshToken = refreshToken;

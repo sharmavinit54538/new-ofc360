@@ -13,6 +13,7 @@ const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://api.ofc360.com"
 
 const baseQuery = fetchBaseQuery({
   baseUrl: rawBaseUrl,
+  timeout: 5000,
   prepareHeaders: (headers, { getState, endpoint }) => {
     const state = getState() as RootState;
     const token = state.auth.token || localStorage.getItem("ofc360_access_token");
@@ -73,18 +74,18 @@ export const baseQueryWithReauth: BaseQueryFn<
           );
 
           if (refreshResult.data) {
-            const data = refreshResult.data as {
-              token: string;
-              refreshToken?: string;
-              user?: any;
-            };
+            const raw = refreshResult.data as any;
+            const resData = raw.data || raw;
+            const newToken = resData.access_token || resData.token;
+            const newRefreshToken = resData.refresh_token || resData.refreshToken;
+
             const currentUser = (api.getState() as RootState).auth.user;
-            if (currentUser && data.token) {
+            if (currentUser && newToken) {
               api.dispatch(
                 setCredentials({
-                  user: data.user || currentUser,
-                  token: data.token,
-                  refreshToken: data.refreshToken || refreshToken,
+                  user: resData.user || currentUser,
+                  token: newToken,
+                  refreshToken: newRefreshToken || refreshToken,
                 })
               );
             }

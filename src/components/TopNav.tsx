@@ -61,8 +61,13 @@ export function TopNav({ onMenuClick }: TopNavProps) {
   const currentRole: SystemRole = user?.role || "hr_admin";
   const isRootDashboard = ROOT_DASHBOARD_PATHS.includes(location.pathname);
 
-  const userName = user?.name || "Alex Mercer";
-  const userEmail = user?.email || "admin@company.com";
+  const userName =
+    user?.name ||
+    user?.full_name ||
+    (user?.first_name ? `${user.first_name} ${user.last_name || ""}`.trim() : "") ||
+    (user?.email ? user.email.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "") ||
+    "User";
+  const userEmail = user?.email || "";
 
   const initials = userName
     .split(" ")
@@ -71,10 +76,13 @@ export function TopNav({ onMenuClick }: TopNavProps) {
     .join("")
     .toUpperCase();
 
-  const handleLogout = () => {
-    logout();
-    toast.success("Signed out successfully");
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      toast.success("Signed out successfully");
+      navigate("/login");
+    }
   };
 
   const handleRoleChange = (r: SystemRole) => {

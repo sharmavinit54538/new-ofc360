@@ -245,7 +245,7 @@ export default function DashboardPage() {
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="page-header">
-            Welcome back, {user?.name?.split(" ")[0] ?? "Admin"}
+            Welcome back, {user?.name || "User"}
           </h1>
           <p className="page-subheader">
             Org-wide workforce intelligence & real-time HR analytics dashboard.
