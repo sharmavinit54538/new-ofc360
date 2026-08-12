@@ -40,8 +40,14 @@ export const roleLabels: Record<SystemRole, string> = {
   super_admin: "Super Admin",
 };
 
+export const normalizeRole = (role: SystemRole | "admin" | string): SystemRole => {
+  if (role === "admin") return "hr_admin";
+  return role as SystemRole;
+};
+
 export const roleLabel = (r: SystemRole | "admin"): string => {
-  const norm: SystemRole = r === "admin" ? "hr_admin" : r;
+  const norm: SystemRole = normalizeRole(r);
   return roleLabels[norm] || "Employee";
 };
+
 

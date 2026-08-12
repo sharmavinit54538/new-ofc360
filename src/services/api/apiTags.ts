@@ -3,6 +3,8 @@ export const API_TAGS = [
   "User",
   "Company",
   "Employee",
+  "Manager",
+  "Department",
   "Attendance",
   "Leave",
   "Payroll",

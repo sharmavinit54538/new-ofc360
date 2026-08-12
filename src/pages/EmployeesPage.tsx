@@ -9,7 +9,11 @@ import {
   UserPlus,
   Filter,
   ShieldCheck,
-  UserCheck
+  UserCheck,
+  Send,
+  KeyRound,
+  UserX,
+  CheckCircle2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,51 +25,69 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@/components/ui/table";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { useEmployeeStore } from "@/stores/employeeStore";
+import {
+  useGetEmployeesQuery,
+  useCreateEmployeeMutation,
+  useUpdateEmployeeMutation,
+  useDeleteEmployeeMutation,
+  useSendInvitationMutation,
+  useDeactivateEmployeeMutation,
+  useActivateEmployeeByAdminMutation,
+  useResetEmployeePasswordMutation,
+} from "@/services/api/employeeApi";
 import { useAuth } from "@/hooks/useAuth";
-import { roleLabels, SystemRole } from "@/features/auth/authTypes";
+import { roleLabels } from "@/features/auth/authTypes";
 import { type Employee } from "@/types/hr";
 import EmployeeFormDialog from "@/components/employees/EmployeeFormDialog";
 import { toast } from "sonner";
 
-const statusStyle: Record<string, string> = {
-  Active: "bg-emerald-500/15 text-emerald-500 border-emerald-500/30 font-bold tracking-wider",
-  "On Leave": "bg-amber-500/15 text-amber-500 border-amber-500/30 font-bold tracking-wider",
-  Probation: "bg-blue-500/15 text-blue-500 border-blue-500/30 font-bold tracking-wider",
-  Notice: "bg-destructive/15 text-destructive border-destructive/30 font-bold tracking-wider",
+const getStatusBadgeStyle = (status?: string) => {
+  const s = (status || "active").toLowerCase().replace(/_/g, " ");
+  if (s.includes("active") && !s.includes("in")) {
+    return "bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 font-bold tracking-wider";
+  }
+  if (s.includes("leave")) {
+    return "bg-amber-500/15 text-amber-500 border border-amber-500/30 font-bold tracking-wider";
+  }
+  if (s.includes("probation")) {
+    return "bg-blue-500/15 text-blue-500 border border-blue-500/30 font-bold tracking-wider";
+  }
+  if (s.includes("notice") || s.includes("inactive") || s.includes("reject")) {
+    return "bg-destructive/15 text-destructive border border-destructive/30 font-bold tracking-wider";
+  }
+  return "bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 font-bold tracking-wider";
 };
 
 export default function EmployeesPage() {
   const { setRole } = useAuth();
-  const {
-    employees,
-    searchQuery,
-    departmentFilter,
-    statusFilter,
-    setSearchQuery,
-    setDepartmentFilter,
-    setStatusFilter,
-    addEmployee,
-    updateEmployee,
-    deleteEmployee,
-  } = useEmployeeStore();
+  const { data: employees = [], isLoading, isFetching, isError, error, refetch } = useGetEmployeesQuery();
+  const [createEmployeeApi] = useCreateEmployeeMutation();
+  const [updateEmployeeApi] = useUpdateEmployeeMutation();
+  const [deleteEmployeeApi] = useDeleteEmployeeMutation();
+  const [sendInvitationApi] = useSendInvitationMutation();
+  const [deactivateEmployeeApi] = useDeactivateEmployeeMutation();
+  const [activateEmployeeApi] = useActivateEmployeeByAdminMutation();
+  const [resetPasswordApi] = useResetEmployeePasswordMutation();
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [departmentFilter, setDepartmentFilter] = useState("ALL");
+  const [statusFilter, setStatusFilter] = useState("ALL");
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEmp, setEditingEmp] = useState<Employee | null>(null);
@@ -80,28 +102,91 @@ export default function EmployeesPage() {
     setIsFormOpen(true);
   };
 
-  const handleSaveEmployee = (empData: Omit<Employee, "id">) => {
-    if (editingEmp) {
-      updateEmployee(editingEmp.id, empData);
-    } else {
-      addEmployee(empData);
+  const handleSaveEmployee = async (empData: Omit<Employee, "id">) => {
+    try {
+      if (editingEmp) {
+        await updateEmployeeApi({ id: editingEmp.id, changes: empData }).unwrap();
+        toast.success(`${empData.name || editingEmp.name} updated`);
+      } else {
+        await createEmployeeApi(empData).unwrap();
+        toast.success(`${empData.name} added`);
+      }
+      setIsFormOpen(false);
+      setEditingEmp(null);
+    } catch (err: any) {
+      console.error("Save employee error:", err);
+      const errMsg =
+        err?.data?.message ||
+        err?.data?.error ||
+        (Array.isArray(err?.data?.errors) ? err.data.errors.join(", ") : undefined) ||
+        err?.error ||
+        err?.message ||
+        "Failed to save employee. Please check required fields.";
+      toast.error(typeof errMsg === "string" ? errMsg : JSON.stringify(errMsg));
     }
   };
 
-  const handleDelete = (id: string, name: string) => {
-    deleteEmployee(id);
-    toast.success(`User ${name} removed`);
+  const handleDelete = async (id: string, name: string) => {
+    try {
+      await deleteEmployeeApi(id).unwrap();
+      toast.success(`User ${name} removed`);
+    } catch (err: any) {
+      console.error("Delete employee error:", err);
+      const errMsg = err?.data?.message || err?.message || "Failed to remove employee. Please try again.";
+      toast.error(errMsg);
+    }
   };
 
-  const filtered = employees.filter((e) => {
+  const handleSendInvite = async (id: string, name: string) => {
+    try {
+      await sendInvitationApi(id).unwrap();
+      toast.success(`Invitation sent to ${name}`);
+    } catch (err: any) {
+      console.error("Send invite error:", err);
+      const errMsg = err?.data?.message || err?.message || `Failed to send invitation to ${name}`;
+      toast.error(errMsg);
+    }
+  };
+
+  const handleToggleActive = async (emp: Employee) => {
+    const isActive = (emp.status || "").toLowerCase().includes("active");
+    try {
+      if (isActive) {
+        await deactivateEmployeeApi(emp.id).unwrap();
+        toast.success(`Deactivated account for ${emp.name}`);
+      } else {
+        await activateEmployeeApi(emp.id).unwrap();
+        toast.success(`Activated account for ${emp.name}`);
+      }
+    } catch {
+      toast.error(`Failed to update status for ${emp.name}`);
+    }
+  };
+
+  const handleResetPassword = async (id: string, name: string) => {
+    try {
+      const res = await resetPasswordApi(id).unwrap();
+      if (res?.temporaryPassword) {
+        toast.success(`Password reset for ${name}. Temporary: ${res.temporaryPassword}`);
+      } else {
+        toast.success(`Password reset link sent to ${name}`);
+      }
+    } catch {
+      toast.error(`Failed to reset password for ${name}`);
+    }
+  };
+
+  const employeeList = Array.isArray(employees) ? employees : [];
+
+  const filtered = employeeList.filter((e) => {
     const matchesSearch =
-      e.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      e.department.toLowerCase().includes(searchQuery.toLowerCase());
+      (e.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (e.email || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (e.role || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (e.department || "").toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesDept = departmentFilter === "ALL" || e.department === departmentFilter;
-    const matchesStatus = statusFilter === "ALL" || e.status === statusFilter;
+    const matchesStatus = statusFilter === "ALL" || (e.status || "Active").toLowerCase() === statusFilter.toLowerCase();
     const matchesRole = roleFilter === "ALL" || (e.systemRole || "employee") === roleFilter;
 
     return matchesSearch && matchesDept && matchesStatus && matchesRole;
@@ -114,7 +199,7 @@ export default function EmployeesPage() {
         <div>
           <h2 className="text-xl font-bold text-foreground">Employees & Workforce Directory</h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {employees.length} active employee profiles and system user accounts
+            {employeeList.length} active employee profiles and system user accounts
           </p>
         </div>
         <Button
@@ -201,16 +286,41 @@ export default function EmployeesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 ? (
+            {isLoading || isFetching ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground text-xs">
+                  <div className="flex flex-col items-center justify-center space-y-2">
+                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    <p className="font-semibold text-xs text-foreground">Loading employee directory...</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : isError ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground text-xs">
+                  <div className="flex flex-col items-center justify-center space-y-3">
+                    <p className="font-bold text-sm text-destructive">
+                      Failed to load employees from the server.
+                    </p>
+                    <p className="text-[11px] text-muted-foreground max-w-sm">
+                      {(error as any)?.data?.message || (error as any)?.error || "An unexpected error occurred."}
+                    </p>
+                    <Button size="sm" variant="outline" onClick={() => refetch()} className="h-8 text-xs gap-1.5 font-semibold">
+                      Retry
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-12 text-muted-foreground text-xs">
                   <div className="flex flex-col items-center justify-center space-y-2">
                     <UserPlus className="w-8 h-8 text-muted-foreground/40" />
                     <p className="font-bold text-sm text-foreground">
-                      {employees.length === 0 ? "No employees in directory" : "No users match your filter criteria"}
+                      {employeeList.length === 0 ? "No employees in directory" : "No users match your filter criteria"}
                     </p>
                     <p className="text-[11px] text-muted-foreground max-w-sm">
-                      {employees.length === 0
+                      {employeeList.length === 0
                         ? 'Get started by creating employees and system user accounts using the "+ Add User / Employee" button above.'
                         : "Try clearing your search query or department filters to see more results."}
                     </p>
@@ -227,6 +337,8 @@ export default function EmployeesPage() {
                       .slice(0, 2)
                       .toUpperCase()
                   : "U";
+
+                const isEmpActive = (emp.status || "Active").toLowerCase().includes("active");
 
                 return (
                   <TableRow key={emp.id} className="hover:bg-secondary/30 transition-colors">
@@ -257,11 +369,11 @@ export default function EmployeesPage() {
                     </TableCell>
                     <TableCell>
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                          statusStyle[emp.status] || "bg-secondary text-foreground"
-                        }`}
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] uppercase ${getStatusBadgeStyle(
+                          emp.status
+                        )}`}
                       >
-                        {emp.status}
+                        {emp.status || "ACTIVE"}
                       </span>
                     </TableCell>
                     <TableCell className="text-xs font-mono font-semibold">
@@ -277,13 +389,14 @@ export default function EmployeesPage() {
                             <MoreHorizontal className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-52 rounded-xl p-1.5 shadow-lg border-border/60">
+                        <DropdownMenuContent align="end" className="w-56 rounded-xl p-1.5 shadow-lg border-border/60">
                           <DropdownMenuItem
                             onClick={() => handleOpenEdit(emp)}
                             className="text-xs gap-2 cursor-pointer font-medium py-2"
                           >
                             <Edit className="w-3.5 h-3.5 text-foreground" /> Edit Role & Details
                           </DropdownMenuItem>
+
                           <DropdownMenuItem
                             onClick={() => {
                               setRole(emp.systemRole || "employee");
@@ -295,7 +408,38 @@ export default function EmployeesPage() {
                           >
                             <UserCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" /> Switch UI to This Role
                           </DropdownMenuItem>
+
+                          <DropdownMenuItem
+                            onClick={() => handleSendInvite(emp.id, emp.name)}
+                            className="text-xs gap-2 text-blue-600 dark:text-blue-400 font-medium cursor-pointer py-2"
+                          >
+                            <Send className="w-3.5 h-3.5 text-blue-500" /> Send Invitation
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem
+                            onClick={() => handleResetPassword(emp.id, emp.name)}
+                            className="text-xs gap-2 text-amber-600 dark:text-amber-400 font-medium cursor-pointer py-2"
+                          >
+                            <KeyRound className="w-3.5 h-3.5 text-amber-500" /> Reset Password
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem
+                            onClick={() => handleToggleActive(emp)}
+                            className="text-xs gap-2 font-medium cursor-pointer py-2"
+                          >
+                            {isEmpActive ? (
+                              <>
+                                <UserX className="w-3.5 h-3.5 text-orange-500" /> Deactivate Account
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Activate Account
+                              </>
+                            )}
+                          </DropdownMenuItem>
+
                           <DropdownMenuSeparator className="my-1" />
+
                           <DropdownMenuItem
                             onClick={() => handleDelete(emp.id, emp.name)}
                             className="text-xs gap-2 text-destructive focus:text-destructive font-semibold cursor-pointer py-2"

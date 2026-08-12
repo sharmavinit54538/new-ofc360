@@ -1,22 +1,29 @@
-import { useDepartmentStore } from "@/stores/departmentStore";
-import { Building2, CheckCircle2, Users, UserPlus } from "lucide-react";
+import { useGetDepartmentsQuery } from "@/services/api/departmentApi";
+import { Building2, CheckCircle2, Users, UserPlus, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 export function DepartmentStatsCards() {
-  const departments = useDepartmentStore((s) => s.departments);
+  const { data: rawDepartments, isLoading } = useGetDepartmentsQuery();
+  const departments = Array.isArray(rawDepartments) ? rawDepartments : [];
 
   const hasData = departments.length > 0;
 
-  const totalDepts = hasData ? departments.length : "—";
-  const activeDepts = hasData
+  const totalDepts = isLoading ? "..." : hasData ? departments.length : 0;
+  const activeDepts = isLoading
+    ? "..."
+    : hasData
     ? departments.filter((d) => d.status === "Active" || d.status === "Hiring" || d.status === "Growing").length
-    : "—";
-  const totalCapacity = hasData
+    : 0;
+  const totalCapacity = isLoading
+    ? "..."
+    : hasData
     ? departments.reduce((acc, curr) => acc + (curr.capacity || 0), 0)
-    : "—";
-  const totalOpenPositions = hasData
+    : 0;
+  const totalOpenPositions = isLoading
+    ? "..."
+    : hasData
     ? departments.reduce((acc, curr) => acc + (curr.openPositions || 0), 0)
-    : "—";
+    : 0;
 
   const cards = [
     {
@@ -58,7 +65,7 @@ export function DepartmentStatsCards() {
           <div className="space-y-1">
             <p className="text-xs font-medium text-muted-foreground">{card.title}</p>
             <div className="text-2xl font-bold tracking-tight text-foreground">
-              {card.value}
+              {isLoading ? <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /> : card.value}
             </div>
             <p className="text-[11px] text-muted-foreground">{card.subtitle}</p>
           </div>

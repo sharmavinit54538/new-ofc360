@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { AuthState, AuthUser, SystemRole } from "./authTypes";
+import { AuthState, AuthUser, SystemRole, normalizeRole } from "./authTypes";
 
 const TOKEN_KEY = "ofc360_access_token";
 const REFRESH_TOKEN_KEY = "ofc360_refresh_token";
@@ -31,18 +31,21 @@ const getStoredUser = (): AuthUser | null => {
 };
 
 const initialUser = getStoredUser();
+const normalizedInitialUser: AuthUser | null = initialUser
+  ? { ...initialUser, role: normalizeRole(initialUser.role) }
+  : null;
 const initialToken = getStoredToken();
 const initialRefreshToken = getStoredRefreshToken();
 
 const initialState: AuthState = {
-  user: initialUser,
+  user: normalizedInitialUser,
   token: initialToken,
   refreshToken: initialRefreshToken,
-  isAuthenticated: Boolean(initialToken && initialUser),
+  isAuthenticated: Boolean(initialToken && normalizedInitialUser),
   isInitializing: false,
-  role: initialUser?.role || "employee",
-  companyId: initialUser?.companyId || null,
-  sessionStatus: initialToken && initialUser ? "authenticated" : "unauthenticated",
+  role: normalizedInitialUser?.role || "employee",
+  companyId: normalizedInitialUser?.companyId || null,
+  sessionStatus: initialToken && normalizedInitialUser ? "authenticated" : "unauthenticated",
 };
 
 export const authSlice = createSlice({
@@ -60,13 +63,15 @@ export const authSlice = createSlice({
       const { user, token, refreshToken } = action.payload;
       const computedName =
         user.name?.trim() ||
-        user.full_name?.trim() ||
-        (user.first_name ? `${user.first_name} ${user.last_name || ""}`.trim() : "") ||
+        (user as any).full_name?.trim() ||
+        ((user as any).first_name ? `${(user as any).first_name} ${(user as any).last_name || ""}`.trim() : "") ||
         (user.email ? user.email.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "");
 
-      const normalizedUser = {
+      const normalizedRole = normalizeRole(user.role);
+      const normalizedUser: AuthUser = {
         ...user,
         name: computedName || user.name || "User",
+        role: normalizedRole,
       };
       state.user = normalizedUser;
       state.token = token;
@@ -75,15 +80,15 @@ export const authSlice = createSlice({
       }
       state.isAuthenticated = true;
       state.sessionStatus = "authenticated";
-      state.role = user.role;
-      state.companyId = user.companyId || state.companyId;
+      state.role = normalizedRole;
+      state.companyId = normalizedUser.companyId || state.companyId;
 
       try {
         localStorage.setItem(TOKEN_KEY, token);
         if (refreshToken) {
           localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
         }
-        localStorage.setItem(USER_KEY, JSON.stringify(user));
+        localStorage.setItem(USER_KEY, JSON.stringify(normalizedUser));
       } catch {
         // ignore storage write error
       }
@@ -91,10 +96,15 @@ export const authSlice = createSlice({
 
     updateUser: (state, action: PayloadAction<Partial<AuthUser>>) => {
       if (state.user) {
-        state.user = { ...state.user, ...action.payload };
-        if (action.payload.role) {
-          state.role = action.payload.role;
-        }
+        const updatedRole = action.payload.role
+          ? normalizeRole(action.payload.role)
+          : state.user.role;
+        state.user = {
+          ...state.user,
+          ...action.payload,
+          role: updatedRole,
+        };
+        state.role = updatedRole;
         try {
           localStorage.setItem(USER_KEY, JSON.stringify(state.user));
         } catch {
@@ -104,7 +114,7 @@ export const authSlice = createSlice({
     },
 
     setRole: (state, action: PayloadAction<SystemRole | "admin">) => {
-      const role: SystemRole = action.payload === "admin" ? "hr_admin" : action.payload;
+      const role: SystemRole = normalizeRole(action.payload);
       state.role = role;
       if (state.user) {
         state.user.role = role;
@@ -115,6 +125,7 @@ export const authSlice = createSlice({
         }
       }
     },
+
 
     setCompanyContext: (state, action: PayloadAction<string | null>) => {
       state.companyId = action.payload;
@@ -158,5 +169,8 @@ export const {
   setInitializing,
   logout,
 } = authSlice.actions;
+
+export { normalizeRole } from "./authTypes";
+export type { AuthUser, AuthState, SystemRole } from "./authTypes";
 
 export default authSlice.reducer;

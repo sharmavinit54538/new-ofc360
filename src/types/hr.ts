@@ -131,6 +131,24 @@ export interface Employee {
   bankAccounts?: BankAccountItem[];
 }
 
+export interface ManagerPermissions {
+  canApproveLeaves?: boolean;
+  canManageTeam?: boolean;
+  canViewSalaries?: boolean;
+  canApproveExpenses?: boolean;
+  customPermissions?: string[];
+  [key: string]: unknown;
+}
+
+export interface Manager extends Employee {
+  teamSize?: number;
+  directReports?: string[];
+  departmentScope?: string[];
+  permissions?: ManagerPermissions;
+  isActivated?: boolean;
+  onboardingStatus?: string;
+}
+
 export interface LeaveRequest {
   id: string;
   employeeId: string;
@@ -177,10 +195,43 @@ export interface Department {
   id: string;
   name: string;
   code: string;
-  head: string;
-  employeeCount: number;
-  budget: number;
-  location: string;
+  head?: string;
+  headOfDepartment?: string;
+  manager?: string;
+  managerId?: string;
+  manager_id?: string;
+  location?: string;
+  employeeCount?: number | null;
+  employee_count?: number | null;
+  capacity?: number | null;
+  openPositions?: number | null;
+  open_positions?: number | null;
+  budget?: string | number | null;
+  costCenter?: string;
+  cost_center?: string;
+  status: "Active" | "Inactive" | "Hiring" | "Growing" | string;
+  hiringStatus?: "Open" | "Paused" | "Closed" | string;
+  hiring_status?: "Open" | "Paused" | "Closed" | string;
+  parentDepartment?: string;
+  parent_department?: string;
+  extension?: string;
+  color?: string;
+  icon?: string;
+  description?: string;
+  notes?: string;
+  createdAt?: string;
+  created_at?: string;
+  updatedAt?: string;
+  updated_at?: string;
+}
+
+export interface DepartmentStats {
+  totalEmployees?: number;
+  activeEmployees?: number;
+  totalCapacity?: number;
+  openPositions?: number;
+  budgetUtilized?: number;
+  [key: string]: unknown;
 }
 
 export interface AttendanceRecord {

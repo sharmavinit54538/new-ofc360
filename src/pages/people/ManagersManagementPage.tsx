@@ -9,7 +9,11 @@ import {
   UserPlus,
   Briefcase,
   UserCheck,
-  Building2
+  Building2,
+  Send,
+  KeyRound,
+  UserX,
+  CheckCircle2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,56 +25,69 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@/components/ui/table";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { useEmployeeStore } from "@/stores/employeeStore";
+import {
+  useGetManagersQuery,
+  useCreateManagerMutation,
+  useUpdateManagerMutation,
+  useDeleteManagerMutation,
+  useSendManagerInvitationByIdMutation,
+  useDeactivateManagerMutation,
+  useActivateManagerByAdminMutation,
+  useResetManagerPasswordMutation,
+} from "@/services/api/managerApi";
 import { useAuth } from "@/hooks/useAuth";
 import { roleLabels } from "@/features/auth/authTypes";
-import { type Employee } from "@/types/hr";
+import { type Employee, type Manager } from "@/types/hr";
 import EmployeeFormDialog from "@/components/employees/EmployeeFormDialog";
 import { toast } from "sonner";
 
 const statusStyle: Record<string, string> = {
-  Active: "bg-emerald-500/15 text-emerald-500 border-emerald-500/30 font-bold tracking-wider",
-  "On Leave": "bg-amber-500/15 text-amber-500 border-amber-500/30 font-bold tracking-wider",
-  Probation: "bg-blue-500/15 text-blue-500 border-blue-500/30 font-bold tracking-wider",
-  Notice: "bg-destructive/15 text-destructive border-destructive/30 font-bold tracking-wider",
+  Active: "bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 font-bold tracking-wider",
+  "On Leave": "bg-amber-500/15 text-amber-500 border border-amber-500/30 font-bold tracking-wider",
+  Probation: "bg-blue-500/15 text-blue-500 border border-blue-500/30 font-bold tracking-wider",
+  Notice: "bg-destructive/15 text-destructive border border-destructive/30 font-bold tracking-wider",
 };
 
 export default function ManagersManagementPage() {
   const { setRole } = useAuth();
-  const { employees, addEmployee, updateEmployee, deleteEmployee } = useEmployeeStore();
+  const { data: rawManagers = [], isLoading, isFetching, isError, error, refetch } = useGetManagersQuery();
+  const [createManagerApi] = useCreateManagerMutation();
+  const [updateManagerApi] = useUpdateManagerMutation();
+  const [deleteManagerApi] = useDeleteManagerMutation();
+  const [sendInviteApi] = useSendManagerInvitationByIdMutation();
+  const [deactivateManagerApi] = useDeactivateManagerMutation();
+  const [activateManagerApi] = useActivateManagerByAdminMutation();
+  const [resetPasswordApi] = useResetManagerPasswordMutation();
 
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("ALL");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingManager, setEditingManager] = useState<Employee | null>(null);
 
-  // Managers are employees with systemRole === 'manager' or management roles
-  const managers = employees.filter(
-    (e) => (e.systemRole || "employee") === "manager"
-  );
+  const managerList = Array.isArray(rawManagers) ? rawManagers : [];
 
-  const filtered = managers.filter((m) => {
+  const filtered = managerList.filter((m) => {
     const matchesSearch =
-      m.name.toLowerCase().includes(search.toLowerCase()) ||
-      m.email.toLowerCase().includes(search.toLowerCase()) ||
-      m.role.toLowerCase().includes(search.toLowerCase()) ||
-      m.department.toLowerCase().includes(search.toLowerCase());
+      (m.name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (m.email || "").toLowerCase().includes(search.toLowerCase()) ||
+      (m.role || "").toLowerCase().includes(search.toLowerCase()) ||
+      (m.department || "").toLowerCase().includes(search.toLowerCase());
 
     const matchesDept = deptFilter === "ALL" || m.department === deptFilter;
     return matchesSearch && matchesDept;
@@ -86,17 +103,69 @@ export default function ManagersManagementPage() {
     setIsFormOpen(true);
   };
 
-  const handleSave = (empData: Omit<Employee, "id">) => {
-    if (editingManager) {
-      updateEmployee(editingManager.id, { ...empData, systemRole: "manager" });
-    } else {
-      addEmployee({ ...empData, systemRole: "manager" });
+  const handleSave = async (empData: Omit<Employee, "id">) => {
+    try {
+      if (editingManager) {
+        await updateManagerApi({
+          id: editingManager.id,
+          manager: { ...empData, systemRole: "manager" },
+        }).unwrap();
+        toast.success(`Manager ${empData.name || editingManager.name} updated`);
+      } else {
+        await createManagerApi({ ...empData, systemRole: "manager" }).unwrap();
+        toast.success(`Manager ${empData.name} created`);
+      }
+      setIsFormOpen(false);
+      setEditingManager(null);
+    } catch {
+      toast.error("Failed to save manager details. Please try again.");
     }
   };
 
-  const handleDelete = (id: string, name: string) => {
-    deleteEmployee(id);
-    toast.success(`Manager ${name} removed`);
+  const handleDelete = async (id: string, name: string) => {
+    try {
+      await deleteManagerApi(id).unwrap();
+      toast.success(`Manager ${name} removed`);
+    } catch {
+      toast.error("Failed to remove manager. Please try again.");
+    }
+  };
+
+  const handleSendInvite = async (id: string, name: string) => {
+    try {
+      await sendInviteApi(id).unwrap();
+      toast.success(`Invitation sent to manager ${name}`);
+    } catch {
+      toast.error(`Failed to send invitation to ${name}`);
+    }
+  };
+
+  const handleToggleActive = async (mgr: Manager) => {
+    const isActive = (mgr.status || "").toLowerCase().includes("active");
+    try {
+      if (isActive) {
+        await deactivateManagerApi(mgr.id).unwrap();
+        toast.success(`Deactivated account for manager ${mgr.name}`);
+      } else {
+        await activateManagerApi(mgr.id).unwrap();
+        toast.success(`Activated account for manager ${mgr.name}`);
+      }
+    } catch {
+      toast.error(`Failed to update status for ${mgr.name}`);
+    }
+  };
+
+  const handleResetPassword = async (id: string, name: string) => {
+    try {
+      const res = await resetPasswordApi(id).unwrap();
+      if (res?.temporaryPassword) {
+        toast.success(`Password reset for ${name}. Temporary: ${res.temporaryPassword}`);
+      } else {
+        toast.success(`Password reset link sent to manager ${name}`);
+      }
+    } catch {
+      toast.error(`Failed to reset password for ${name}`);
+    }
   };
 
   return (
@@ -109,7 +178,7 @@ export default function ManagersManagementPage() {
             <span>Team Managers & Leads Directory</span>
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {managers.length} active managers with team delegation & approval privileges
+            {managerList.length} active managers with team delegation & approval privileges
           </p>
         </div>
         <Button
@@ -165,16 +234,41 @@ export default function ManagersManagementPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 ? (
+            {isLoading || isFetching ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground text-xs">
+                  <div className="flex flex-col items-center justify-center space-y-2">
+                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    <p className="font-semibold text-xs text-foreground">Loading managers directory...</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : isError ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground text-xs">
+                  <div className="flex flex-col items-center justify-center space-y-3">
+                    <p className="font-bold text-sm text-destructive">
+                      Failed to load managers from the server.
+                    </p>
+                    <p className="text-[11px] text-muted-foreground max-w-sm">
+                      {(error as any)?.data?.message || (error as any)?.error || "An unexpected error occurred."}
+                    </p>
+                    <Button size="sm" variant="outline" onClick={() => refetch()} className="h-8 text-xs gap-1.5 font-semibold">
+                      Retry
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-12 text-muted-foreground text-xs">
                   <div className="flex flex-col items-center justify-center space-y-2">
                     <Briefcase className="w-8 h-8 text-muted-foreground/40" />
                     <p className="font-bold text-sm text-foreground">
-                      {managers.length === 0 ? "No managers registered yet" : "No managers match your search"}
+                      {managerList.length === 0 ? "No managers registered yet" : "No managers match your search"}
                     </p>
                     <p className="text-[11px] text-muted-foreground max-w-sm">
-                      {managers.length === 0
+                      {managerList.length === 0
                         ? 'Click the "+ Add / Create Manager" button to appoint team managers.'
                         : "Try resetting your department filter or search query."}
                     </p>
@@ -191,6 +285,8 @@ export default function ManagersManagementPage() {
                       .slice(0, 2)
                       .toUpperCase()
                   : "M";
+
+                const isMgrActive = (mgr.status || "Active").toLowerCase().includes("active");
 
                 return (
                   <TableRow key={mgr.id} className="hover:bg-secondary/30 transition-colors">
@@ -216,16 +312,16 @@ export default function ManagersManagementPage() {
                     </TableCell>
                     <TableCell>
                       <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20 text-[10px] font-bold">
-                        Manager
+                        {roleLabels[mgr.systemRole || "manager"] || "Manager"}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] uppercase ${
                           statusStyle[mgr.status] || "bg-secondary text-foreground"
                         }`}
                       >
-                        {mgr.status}
+                        {mgr.status || "ACTIVE"}
                       </span>
                     </TableCell>
                     <TableCell className="text-xs font-mono font-semibold">
@@ -248,6 +344,7 @@ export default function ManagersManagementPage() {
                           >
                             <Edit className="w-3.5 h-3.5 text-foreground" /> Edit Role & Details
                           </DropdownMenuItem>
+
                           <DropdownMenuItem
                             onClick={() => {
                               setRole("manager");
@@ -257,7 +354,38 @@ export default function ManagersManagementPage() {
                           >
                             <UserCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" /> Switch UI to This Role
                           </DropdownMenuItem>
+
+                          <DropdownMenuItem
+                            onClick={() => handleSendInvite(mgr.id, mgr.name)}
+                            className="text-xs gap-2 text-blue-600 dark:text-blue-400 font-medium cursor-pointer py-2"
+                          >
+                            <Send className="w-3.5 h-3.5 text-blue-500" /> Send Invitation
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem
+                            onClick={() => handleResetPassword(mgr.id, mgr.name)}
+                            className="text-xs gap-2 text-amber-600 dark:text-amber-400 font-medium cursor-pointer py-2"
+                          >
+                            <KeyRound className="w-3.5 h-3.5 text-amber-500" /> Reset Password
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem
+                            onClick={() => handleToggleActive(mgr)}
+                            className="text-xs gap-2 font-medium cursor-pointer py-2"
+                          >
+                            {isMgrActive ? (
+                              <>
+                                <UserX className="w-3.5 h-3.5 text-orange-500" /> Deactivate Account
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Activate Account
+                              </>
+                            )}
+                          </DropdownMenuItem>
+
                           <DropdownMenuSeparator className="my-1" />
+
                           <DropdownMenuItem
                             onClick={() => handleDelete(mgr.id, mgr.name)}
                             className="text-xs gap-2 text-destructive focus:text-destructive font-semibold cursor-pointer py-2"

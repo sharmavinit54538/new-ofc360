@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Users,
@@ -18,16 +17,17 @@ type TabType = "employees" | "departments" | "manager" | "executive" | "it_admin
 
 export default function PeoplePage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+
   const paramTab = searchParams.get("tab") as TabType | null;
-  const initialTab: TabType =
+  const currentTab: TabType =
     paramTab && ["employees", "departments", "manager", "executive", "it_admin"].includes(paramTab)
       ? paramTab
+      : location.pathname === "/departments"
+      ? "departments"
       : "employees";
 
-  const [currentTab, setCurrentTab] = useState<TabType>(initialTab);
-
   const handleTabChange = (tab: TabType) => {
-    setCurrentTab(tab);
     setSearchParams({ tab });
   };
 

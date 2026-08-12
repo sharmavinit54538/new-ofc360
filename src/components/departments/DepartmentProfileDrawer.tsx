@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useDepartmentStore } from "@/stores/departmentStore";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,20 +14,75 @@ import {
   MapPin,
   UserCheck,
   Edit2,
+  Trash2,
   X,
+  Loader2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { hasPermission } from "@/lib/permissions";
+import { normalizeRole } from "@/features/auth/authTypes";
+import {
+  useGetDepartmentByIdQuery,
+  useGetDepartmentEmployeesQuery,
+  useGetDepartmentStatsQuery,
+  useDeleteDepartmentMutation,
+} from "@/services/api/departmentApi";
+import { toast } from "sonner";
 
 export function DepartmentProfileDrawer() {
   const { user } = useAuth();
-  const currentRole = user?.role || "employee";
+  const currentRole = normalizeRole(user?.role || "employee");
+  const [activeTab, setActiveTab] = useState("overview");
 
-  const { selectedDepartment, isDrawerOpen, closeDrawer, openEditForm } = useDepartmentStore();
+  const { selectedDepartment: storeDepartment, isDrawerOpen, closeDrawer, openEditForm } = useDepartmentStore();
 
-  const canEdit = hasPermission(currentRole, "departments", "edit");
+  const canEdit = hasPermission(currentRole, "departments", "edit") || currentRole === "hr_admin" || currentRole === "super_admin";
+  const canDelete = hasPermission(currentRole, "departments", "delete") || currentRole === "hr_admin" || currentRole === "super_admin";
+  const deptId = storeDepartment?.id || "";
 
-  if (!selectedDepartment) return null;
+  const [deleteDepartmentApi, { isLoading: isDeleting }] = useDeleteDepartmentMutation();
+
+  // Query fresh department details from API
+  const { data: fetchedDepartment } = useGetDepartmentByIdQuery(deptId, {
+    skip: !deptId || !isDrawerOpen,
+  });
+
+  // Lazy query department employees when workforce tab is active
+  const { data: departmentEmployees, isLoading: isLoadingEmployees } = useGetDepartmentEmployeesQuery(deptId, {
+    skip: !deptId || !isDrawerOpen || activeTab !== "workforce",
+  });
+
+  // Lazy query department stats when activity/overview is active
+  const { data: departmentStats } = useGetDepartmentStatsQuery(deptId, {
+    skip: !deptId || !isDrawerOpen,
+  });
+
+  const department = fetchedDepartment || storeDepartment;
+
+  const handleDelete = async () => {
+    const id = deptId || department?.id || (department as any)?._id || (department as any)?.departmentId;
+    if (!id) {
+      toast.error("Department ID not found");
+      return;
+    }
+    try {
+      await deleteDepartmentApi(id).unwrap();
+      toast.success(`Department "${department?.name || "Department"}" deleted successfully`);
+      closeDrawer();
+    } catch (err: any) {
+      console.error("Delete department error:", err);
+      if (err?.status === 404 || err?.originalStatus === 404) {
+        toast.success(`Department "${department?.name || "Department"}" deleted successfully`);
+        closeDrawer();
+      } else {
+        toast.error(err?.data?.message || err?.message || "Failed to delete department. Please try again.");
+      }
+    }
+  };
+
+  if (!department) return null;
+
+  const employeesList = Array.isArray(departmentEmployees) ? departmentEmployees : [];
 
   return (
     <Sheet open={isDrawerOpen} onOpenChange={(open) => !open && closeDrawer()}>
@@ -35,45 +91,59 @@ export function DepartmentProfileDrawer() {
         <SheetHeader className="p-5 border-b border-border/50 bg-muted/30 flex-row items-center justify-between space-y-0">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-sm">
-              {selectedDepartment.code.slice(0, 3)}
+              {department.code ? department.code.slice(0, 3) : "DEP"}
             </div>
             <div>
               <SheetTitle className="text-base font-bold text-foreground">
-                {selectedDepartment.name}
+                {department.name}
               </SheetTitle>
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="font-mono text-xs text-muted-foreground">
-                  {selectedDepartment.code}
+                  {department.code}
                 </span>
                 <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px]">
-                  {selectedDepartment.status}
+                  {department.status || "Active"}
                 </Badge>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 pr-6">
             {canEdit && (
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={() => {
                   closeDrawer();
-                  openEditForm(selectedDepartment);
+                  openEditForm(department);
                 }}
                 className="h-8 w-8 p-0"
+                title="Edit Department"
               >
                 <Edit2 className="w-4 h-4 text-muted-foreground" />
               </Button>
             )}
-            <Button size="sm" variant="ghost" onClick={closeDrawer} className="h-8 w-8 p-0">
-              <X className="w-4 h-4 text-muted-foreground" />
-            </Button>
+            {canDelete && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                title="Delete Department"
+              >
+                {isDeleting ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-destructive" />
+                ) : (
+                  <Trash2 className="w-4 h-4 text-destructive" />
+                )}
+              </Button>
+            )}
           </div>
         </SheetHeader>
 
         {/* Content Tabs */}
-        <Tabs defaultValue="overview" className="flex-1 flex flex-col min-h-0">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0">
           <div className="px-4 border-b border-border/40">
             <TabsList className="h-10 bg-transparent gap-2">
               <TabsTrigger value="overview" className="text-xs">Overview</TabsTrigger>
@@ -96,23 +166,23 @@ export function DepartmentProfileDrawer() {
                     <span className="text-muted-foreground flex items-center gap-1.5">
                       <UserCheck className="w-3.5 h-3.5 text-primary" /> Department Head
                     </span>
-                    <span className="font-semibold text-foreground">{selectedDepartment.head || "—"}</span>
+                    <span className="font-semibold text-foreground">{department.head || "—"}</span>
                   </div>
                   <div className="flex justify-between py-1 border-b border-border/30">
                     <span className="text-muted-foreground">Reporting Manager</span>
-                    <span className="font-medium text-foreground">{selectedDepartment.manager || "—"}</span>
+                    <span className="font-medium text-foreground">{department.manager || "—"}</span>
                   </div>
                   <div className="flex justify-between py-1 border-b border-border/30">
                     <span className="text-muted-foreground flex items-center gap-1.5">
                       <MapPin className="w-3.5 h-3.5 text-primary" /> Office Location
                     </span>
-                    <span className="font-medium text-foreground">{selectedDepartment.location || "—"}</span>
+                    <span className="font-medium text-foreground">{department.location || "—"}</span>
                   </div>
                   <div className="flex justify-between py-1">
                     <span className="text-muted-foreground flex items-center gap-1.5">
                       <GitFork className="w-3.5 h-3.5 text-primary" /> Parent Department
                     </span>
-                    <span className="font-medium text-foreground">{selectedDepartment.parentDepartment || "None (Root)"}</span>
+                    <span className="font-medium text-foreground">{department.parentDepartment || "None (Root)"}</span>
                   </div>
                 </div>
               </div>
@@ -122,7 +192,7 @@ export function DepartmentProfileDrawer() {
                   Description
                 </h4>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  {selectedDepartment.description || "No department description configured."}
+                  {department.description || "No department description configured."}
                 </p>
               </div>
             </TabsContent>
@@ -133,7 +203,7 @@ export function DepartmentProfileDrawer() {
                 <div className="glass-card rounded-xl p-4 border border-border/50 text-center">
                   <Users className="w-5 h-5 text-primary mx-auto mb-1" />
                   <div className="text-lg font-bold text-foreground">
-                    {selectedDepartment.capacity !== null ? selectedDepartment.capacity : "—"}
+                    {department.capacity !== null && department.capacity !== undefined ? department.capacity : "—"}
                   </div>
                   <div className="text-[11px] text-muted-foreground">Total Capacity</div>
                 </div>
@@ -141,19 +211,44 @@ export function DepartmentProfileDrawer() {
                 <div className="glass-card rounded-xl p-4 border border-border/50 text-center">
                   <Building2 className="w-5 h-5 text-primary mx-auto mb-1" />
                   <div className="text-lg font-bold text-primary">
-                    {selectedDepartment.openPositions !== null ? selectedDepartment.openPositions : "—"}
+                    {department.openPositions !== null && department.openPositions !== undefined ? department.openPositions : "—"}
                   </div>
                   <div className="text-[11px] text-muted-foreground">Open Positions</div>
                 </div>
               </div>
 
-              <div className="glass-card rounded-xl p-6 border border-border/50 text-center space-y-2">
-                <Users className="w-8 h-8 text-muted-foreground/50 mx-auto" />
-                <h5 className="text-xs font-semibold text-foreground">No employees assigned</h5>
-                <p className="text-[11px] text-muted-foreground">
-                  Employee roster will display here once team members are assigned to this department.
-                </p>
-              </div>
+              {isLoadingEmployees ? (
+                <div className="flex justify-center p-6">
+                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                </div>
+              ) : employeesList.length > 0 ? (
+                <div className="glass-card rounded-xl p-4 border border-border/50 space-y-2">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
+                    Department Members ({employeesList.length})
+                  </h4>
+                  <div className="divide-y divide-border/30">
+                    {employeesList.map((emp) => (
+                      <div key={emp.id} className="py-2 flex items-center justify-between text-xs">
+                        <div>
+                          <p className="font-medium text-foreground">{emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`}</p>
+                          <p className="text-[11px] text-muted-foreground">{emp.role || emp.email}</p>
+                        </div>
+                        <Badge variant="outline" className="text-[10px]">
+                          {emp.status || "Active"}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="glass-card rounded-xl p-6 border border-border/50 text-center space-y-2">
+                  <Users className="w-8 h-8 text-muted-foreground/50 mx-auto" />
+                  <h5 className="text-xs font-semibold text-foreground">No employees assigned</h5>
+                  <p className="text-[11px] text-muted-foreground">
+                    Employee roster will display here once team members are assigned to this department.
+                  </p>
+                </div>
+              )}
             </TabsContent>
 
             {/* Financial Tab */}
@@ -167,11 +262,11 @@ export function DepartmentProfileDrawer() {
                     <span className="text-muted-foreground flex items-center gap-1.5">
                       <DollarSign className="w-3.5 h-3.5 text-primary" /> Annual Budget
                     </span>
-                    <span className="font-semibold text-foreground">{selectedDepartment.budget || "—"}</span>
+                    <span className="font-semibold text-foreground">{department.budget || "—"}</span>
                   </div>
                   <div className="flex justify-between py-1">
                     <span className="text-muted-foreground">Cost Center Code</span>
-                    <span className="font-mono font-medium text-foreground">{selectedDepartment.costCenter || "—"}</span>
+                    <span className="font-mono font-medium text-foreground">{department.costCenter || "—"}</span>
                   </div>
                 </div>
               </div>
@@ -179,13 +274,25 @@ export function DepartmentProfileDrawer() {
 
             {/* Activity Tab */}
             <TabsContent value="activity" className="m-0 space-y-4">
-              <div className="glass-card rounded-xl p-8 border border-border/50 text-center space-y-2">
-                <Activity className="w-8 h-8 text-muted-foreground/50 mx-auto" />
-                <h5 className="text-xs font-semibold text-foreground">No recent activity</h5>
-                <p className="text-[11px] text-muted-foreground">
-                  Audit trails and operational changes for this unit will be logged here.
-                </p>
-              </div>
+              {departmentStats ? (
+                <div className="glass-card rounded-xl p-4 border border-border/50 space-y-2 text-xs">
+                  <h4 className="font-bold uppercase tracking-wider text-muted-foreground">Telemetry Stats</h4>
+                  {Object.entries(departmentStats).map(([k, v]) => (
+                    <div key={k} className="flex justify-between py-1 border-b border-border/30">
+                      <span className="text-muted-foreground capitalize">{k.replace(/([A-Z])/g, " $1")}</span>
+                      <span className="font-medium text-foreground">{String(v)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="glass-card rounded-xl p-8 border border-border/50 text-center space-y-2">
+                  <Activity className="w-8 h-8 text-muted-foreground/50 mx-auto" />
+                  <h5 className="text-xs font-semibold text-foreground">No recent activity</h5>
+                  <p className="text-[11px] text-muted-foreground">
+                    Audit trails and operational changes for this unit will be logged here.
+                  </p>
+                </div>
+              )}
             </TabsContent>
 
             {/* Documents Tab */}

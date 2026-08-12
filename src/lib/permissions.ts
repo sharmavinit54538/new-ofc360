@@ -309,11 +309,23 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
   },
 };
 
+function getResolvedRoleConfig(role?: string): RoleConfig | undefined {
+  if (!role) return undefined;
+  const lower = role.toLowerCase().trim() as SystemRole;
+  if (lower === "admin") return ROLE_CONFIGS["hr_admin"];
+  if (ROLE_CONFIGS[lower]) return ROLE_CONFIGS[lower];
+  if (lower.includes("super")) return ROLE_CONFIGS["super_admin"];
+  if (lower.includes("hr") || lower.includes("admin")) return ROLE_CONFIGS["hr_admin"];
+  if (lower.includes("manager")) return ROLE_CONFIGS["manager"];
+  if (lower.includes("cxo") || lower.includes("exec")) return ROLE_CONFIGS["cxo"];
+  return ROLE_CONFIGS["employee"];
+}
+
 /**
  * Checks whether a given role can view/access a module.
  */
-export function hasModuleAccess(role: SystemRole, module: SystemModule): boolean {
-  const config = ROLE_CONFIGS[role];
+export function hasModuleAccess(role: SystemRole | string, module: SystemModule): boolean {
+  const config = getResolvedRoleConfig(role);
   if (!config) return false;
   return config.allowedModules.includes(module);
 }
@@ -322,11 +334,11 @@ export function hasModuleAccess(role: SystemRole, module: SystemModule): boolean
  * Checks whether a given role has permission to perform an action on a module.
  */
 export function hasPermission(
-  role: SystemRole,
+  role: SystemRole | string,
   module: SystemModule,
   action: ActionCapability
 ): boolean {
-  const config = ROLE_CONFIGS[role];
+  const config = getResolvedRoleConfig(role);
   if (!config) return false;
   if (!config.allowedModules.includes(module)) return false;
   const actions = config.permissions[module];
@@ -338,10 +350,10 @@ export function hasPermission(
  * Returns allowed permissions for a specific role and module.
  */
 export function getModulePermissions(
-  role: SystemRole,
+  role: SystemRole | string,
   module: SystemModule
 ): ActionCapability[] {
-  const config = ROLE_CONFIGS[role];
+  const config = getResolvedRoleConfig(role);
   if (!config || !config.permissions[module]) return [];
   return config.permissions[module];
 }

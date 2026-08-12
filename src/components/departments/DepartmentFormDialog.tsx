@@ -1,5 +1,11 @@
 import { useState, useEffect } from "react";
-import { useDepartmentStore, DepartmentItem } from "@/stores/departmentStore";
+import { useDepartmentStore } from "@/stores/departmentStore";
+import { Department } from "@/types/hr";
+import {
+  useGetDepartmentsQuery,
+  useCreateDepartmentMutation,
+  useUpdateDepartmentMutation,
+} from "@/services/api/departmentApi";
 import {
   Dialog,
   DialogContent,
@@ -19,12 +25,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Building2, Save, X } from "lucide-react";
+import { Building2, Save, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export function DepartmentFormDialog() {
-  const { isFormOpen, editingDepartment, closeForm, addDepartment, updateDepartment, departments } =
-    useDepartmentStore();
+  const { isFormOpen, editingDepartment, closeForm } = useDepartmentStore();
+
+  const { data: rawDepartments } = useGetDepartmentsQuery(undefined, {
+    skip: !isFormOpen,
+  });
+  const departmentList: Department[] = Array.isArray(rawDepartments) ? rawDepartments : [];
+
+  const [createDepartmentApi, { isLoading: isCreating }] = useCreateDepartmentMutation();
+  const [updateDepartmentApi, { isLoading: isUpdating }] = useUpdateDepartmentMutation();
+  const isSubmitting = isCreating || isUpdating;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -36,8 +50,8 @@ export function DepartmentFormDialog() {
     openPositions: "",
     budget: "",
     costCenter: "",
-    status: "Active" as DepartmentItem["status"],
-    hiringStatus: "Open" as DepartmentItem["hiringStatus"],
+    status: "Active" as Department["status"],
+    hiringStatus: "Open" as Department["hiringStatus"],
     parentDepartment: "",
     extension: "",
     color: "#0d9488",
@@ -57,7 +71,7 @@ export function DepartmentFormDialog() {
         location: editingDepartment.location || "Headquarters",
         capacity: editingDepartment.capacity ? String(editingDepartment.capacity) : "",
         openPositions: editingDepartment.openPositions ? String(editingDepartment.openPositions) : "",
-        budget: editingDepartment.budget || "",
+        budget: editingDepartment.budget ? String(editingDepartment.budget) : "",
         costCenter: editingDepartment.costCenter || "",
         status: editingDepartment.status || "Active",
         hiringStatus: editingDepartment.hiringStatus || "Open",
@@ -98,17 +112,16 @@ export function DepartmentFormDialog() {
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
 
-    const payload = {
+    const payload: Partial<Department> = {
       name: formData.name.trim(),
       code: formData.code.trim().toUpperCase(),
       head: formData.head.trim(),
       manager: formData.manager.trim(),
       location: formData.location.trim(),
-      employeeCount: null,
       capacity: formData.capacity ? parseInt(formData.capacity, 10) : null,
       openPositions: formData.openPositions ? parseInt(formData.openPositions, 10) : null,
       budget: formData.budget.trim(),
@@ -122,12 +135,18 @@ export function DepartmentFormDialog() {
       notes: formData.notes.trim(),
     };
 
-    if (editingDepartment) {
-      updateDepartment(editingDepartment.id, payload);
-      toast.success("Department updated successfully");
-    } else {
-      addDepartment(payload);
-      toast.success("Department created successfully");
+    try {
+      if (editingDepartment) {
+        await updateDepartmentApi({ id: editingDepartment.id, department: payload }).unwrap();
+        toast.success(`Department "${formData.name}" updated`);
+      } else {
+        await createDepartmentApi(payload).unwrap();
+        toast.success(`Department "${formData.name}" created`);
+      }
+      closeForm();
+    } catch (err: any) {
+      console.error("Save department error:", err);
+      toast.error(err?.data?.message || err?.message || "Failed to save department. Please try again.");
     }
   };
 
@@ -319,7 +338,7 @@ export function DepartmentFormDialog() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None (Top Level Department)</SelectItem>
-                    {departments
+                    {departmentList
                       .filter((d) => d.id !== editingDepartment?.id)
                       .map((d) => (
                         <SelectItem key={d.id} value={d.name}>
@@ -345,11 +364,15 @@ export function DepartmentFormDialog() {
           </div>
 
           <DialogFooter className="gap-2 pt-2 border-t">
-            <Button type="button" variant="outline" onClick={closeForm} className="h-9 text-xs">
+            <Button type="button" variant="outline" onClick={closeForm} disabled={isSubmitting} className="h-9 text-xs">
               <X className="w-3.5 h-3.5 mr-1" /> Cancel
             </Button>
-            <Button type="submit" className="h-9 text-xs gradient-bg text-primary-foreground gap-1.5">
-              <Save className="w-3.5 h-3.5" />
+            <Button type="submit" disabled={isSubmitting} className="h-9 text-xs gradient-bg text-primary-foreground gap-1.5">
+              {isSubmitting ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Save className="w-3.5 h-3.5" />
+              )}
               <span>{editingDepartment ? "Save Changes" : "Create Department"}</span>
             </Button>
           </DialogFooter>

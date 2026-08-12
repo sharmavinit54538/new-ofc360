@@ -1,12 +1,17 @@
 import { useDepartmentStore } from "@/stores/departmentStore";
+import { Department } from "@/types/hr";
+import { useGetDepartmentsQuery } from "@/services/api/departmentApi";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Building2, ChevronRight, ChevronDown, Users, Plus } from "lucide-react";
+import { Building2, ChevronRight, ChevronDown, Users, Plus, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function DepartmentHierarchy() {
-  const { departments, openCreateForm, openDrawer } = useDepartmentStore();
+  const { openCreateForm, openDrawer } = useDepartmentStore();
+  const { data: rawDepartments, isLoading } = useGetDepartmentsQuery();
+  const departments: Department[] = Array.isArray(rawDepartments) ? rawDepartments : [];
+
   const [collapsedNodes, setCollapsedNodes] = useState<Record<string, boolean>>({});
 
   const toggleNode = (id: string) => {
@@ -16,8 +21,8 @@ export function DepartmentHierarchy() {
   const hasData = departments.length > 0;
 
   // Build tree
-  const parentMap: Record<string, typeof departments> = {};
-  const rootDepartments: typeof departments = [];
+  const parentMap: Record<string, Department[]> = {};
+  const rootDepartments: Department[] = [];
 
   departments.forEach((dept) => {
     if (!dept.parentDepartment) {
@@ -29,6 +34,15 @@ export function DepartmentHierarchy() {
       parentMap[dept.parentDepartment].push(dept);
     }
   });
+
+  if (isLoading) {
+    return (
+      <div className="glass-card rounded-xl p-12 text-center flex flex-col items-center justify-center space-y-3">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        <p className="text-xs text-muted-foreground">Loading organizational hierarchy...</p>
+      </div>
+    );
+  }
 
   if (!hasData) {
     return (
@@ -49,7 +63,7 @@ export function DepartmentHierarchy() {
     );
   }
 
-  const renderNode = (dept: (typeof departments)[0], depth = 0) => {
+  const renderNode = (dept: Department, depth = 0) => {
     const children = parentMap[dept.name] || [];
     const hasChildren = children.length > 0;
     const isCollapsed = collapsedNodes[dept.id];
@@ -73,7 +87,7 @@ export function DepartmentHierarchy() {
           )}
 
           <div className="w-9 h-9 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0 font-bold text-xs">
-            {dept.code.slice(0, 3)}
+            {dept.code ? dept.code.slice(0, 3) : "DEP"}
           </div>
 
           <div className="flex-1 min-w-0">
@@ -96,10 +110,10 @@ export function DepartmentHierarchy() {
           <div className="hidden sm:flex items-center gap-3 text-xs shrink-0">
             <span className="text-muted-foreground flex items-center gap-1">
               <Users className="w-3.5 h-3.5 text-primary" />
-              Capacity: <span className="font-semibold text-foreground">{dept.capacity || "—"}</span>
+              Capacity: <span className="font-semibold text-foreground">{dept.capacity !== null && dept.capacity !== undefined ? dept.capacity : "—"}</span>
             </span>
             <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px]">
-              {dept.status}
+              {dept.status || "Active"}
             </Badge>
           </div>
         </div>

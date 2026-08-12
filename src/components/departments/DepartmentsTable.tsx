@@ -1,6 +1,12 @@
-import { useDepartmentStore, DepartmentItem } from "@/stores/departmentStore";
+import { useDepartmentStore } from "@/stores/departmentStore";
+import { Department } from "@/types/hr";
+import {
+  useGetDepartmentsQuery,
+  useDeleteDepartmentMutation,
+} from "@/services/api/departmentApi";
 import { useAuth } from "@/hooks/useAuth";
 import { hasPermission } from "@/lib/permissions";
+import { normalizeRole } from "@/features/auth/authTypes";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +33,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Search,
-  SlidersHorizontal,
   Building2,
   Eye,
   Edit2,
@@ -36,16 +41,18 @@ import {
   Plus,
   FileSpreadsheet,
   ArrowUpDown,
+  RefreshCw,
+  Loader2,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 export function DepartmentsTable() {
   const { user } = useAuth();
-  const currentRole = user?.role || "employee";
+  const currentRole = normalizeRole(user?.role || "employee");
 
   const {
-    departments,
     searchQuery,
     statusFilter,
     locationFilter,
@@ -57,42 +64,60 @@ export function DepartmentsTable() {
     openDrawer,
     openCreateForm,
     openEditForm,
-    deleteDepartment,
     openImportModal,
   } = useDepartmentStore();
 
-  const [sortField, setSortField] = useState<keyof DepartmentItem>("name");
+  const {
+    data: departments = [],
+    isLoading,
+    isFetching,
+    isError,
+    refetch,
+  } = useGetDepartmentsQuery();
+
+  const [deleteDepartmentApi, { isLoading: isDeleting }] = useDeleteDepartmentMutation();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const deletingRef = useRef<Set<string>>(new Set());
+
+  const departmentList: Department[] = Array.isArray(departments) ? departments : [];
+
+  const [sortField, setSortField] = useState<keyof Department>("name");
   const [sortAsc, setSortAsc] = useState(true);
 
   // Permission checks
-  const canCreate = hasPermission(currentRole, "departments", "create");
-  const canEdit = hasPermission(currentRole, "departments", "edit");
-  const canDelete = hasPermission(currentRole, "departments", "delete");
+  const canCreate = hasPermission(currentRole, "departments", "create") || currentRole === "hr_admin" || currentRole === "super_admin";
+  const canEdit = hasPermission(currentRole, "departments", "edit") || currentRole === "hr_admin" || currentRole === "super_admin";
+  const canDelete = hasPermission(currentRole, "departments", "delete") || currentRole === "hr_admin" || currentRole === "super_admin";
 
   // Filtering
-  const filtered = departments.filter((dept) => {
-    const matchesSearch =
-      dept.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      dept.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      dept.head.toLowerCase().includes(searchQuery.toLowerCase());
+  const filtered = departmentList.filter((dept) => {
+    const name = dept.name || "";
+    const code = dept.code || "";
+    const head = dept.head || "";
 
-    const matchesStatus = statusFilter === "all" || dept.status === statusFilter;
+    const matchesSearch =
+      !searchQuery ||
+      name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      head.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesStatus = statusFilter === "all" || dept.status === statusFilter || dept.status?.toLowerCase() === statusFilter.toLowerCase();
     const matchesLocation = locationFilter === "all" || dept.location === locationFilter;
-    const matchesHiring = hiringFilter === "all" || dept.hiringStatus === hiringFilter;
+    const matchesHiring = hiringFilter === "all" || dept.hiringStatus === hiringFilter || dept.hiringStatus?.toLowerCase() === hiringFilter.toLowerCase();
 
     return matchesSearch && matchesStatus && matchesLocation && matchesHiring;
   });
 
   // Sorting
   const sorted = [...filtered].sort((a, b) => {
-    const valA = a[sortField] || "";
-    const valB = b[sortField] || "";
+    const valA = (a[sortField] ?? "") as string | number;
+    const valB = (b[sortField] ?? "") as string | number;
     if (valA < valB) return sortAsc ? -1 : 1;
     if (valA > valB) return sortAsc ? 1 : -1;
     return 0;
   });
 
-  const toggleSort = (field: keyof DepartmentItem) => {
+  const toggleSort = (field: keyof Department) => {
     if (sortField === field) {
       setSortAsc(!sortAsc);
     } else {
@@ -101,17 +126,45 @@ export function DepartmentsTable() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "Active":
-        return <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">{status}</Badge>;
-      case "Hiring":
-      case "Growing":
+  const handleDelete = async (dept: Department) => {
+    const id = dept?.id || dept?._id || (dept as any)?.departmentId || (dept as any)?.department_id;
+    if (!id) {
+      toast.error("Department ID not found");
+      return;
+    }
+    if (deletingRef.current.has(id)) return;
+    deletingRef.current.add(id);
+    setDeletingId(id);
+    try {
+      await deleteDepartmentApi(id).unwrap();
+      toast.success(`Department "${dept.name || "Department"}" deleted successfully`);
+      refetch();
+    } catch (err: any) {
+      console.error("Delete department error:", err);
+      if (err?.status === 404 || err?.originalStatus === 404) {
+        toast.success(`Department "${dept.name || "Department"}" deleted successfully`);
+        refetch();
+      } else {
+        toast.error(err?.data?.message || err?.message || "Failed to delete department. Please try again.");
+      }
+    } finally {
+      deletingRef.current.delete(id);
+      setDeletingId(null);
+    }
+  };
+
+  const getStatusBadge = (status?: string) => {
+    const s = (status || "Active").toLowerCase();
+    switch (s) {
+      case "active":
+        return <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">Active</Badge>;
+      case "hiring":
+      case "growing":
         return <Badge className="bg-primary/10 text-primary border-primary/20">{status}</Badge>;
-      case "Inactive":
-        return <Badge variant="secondary">{status}</Badge>;
+      case "inactive":
+        return <Badge variant="secondary">Inactive</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge variant="outline">{status || "Active"}</Badge>;
     }
   };
 
@@ -154,6 +207,17 @@ export function DepartmentsTable() {
               <SelectItem value="Closed">Closed</SelectItem>
             </SelectContent>
           </Select>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="h-9 w-9 p-0 text-muted-foreground hover:text-foreground"
+            title="Refresh list"
+          >
+            <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin" : ""}`} />
+          </Button>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
@@ -205,62 +269,92 @@ export function DepartmentsTable() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sorted.length > 0 ? (
+            {isLoading || (isFetching && departmentList.length === 0) ? (
+              <TableRow>
+                <TableCell colSpan={11} className="h-48 text-center">
+                  <div className="flex flex-col items-center justify-center space-y-2">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                    <p className="text-xs text-muted-foreground">Loading departments from database...</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : isError ? (
+              <TableRow>
+                <TableCell colSpan={11} className="h-48 text-center">
+                  <div className="flex flex-col items-center justify-center space-y-2">
+                    <p className="text-xs text-destructive font-medium">Failed to load departments from API.</p>
+                    <Button variant="outline" size="sm" onClick={() => refetch()} className="text-xs gap-1.5">
+                      <RefreshCw className="w-3.5 h-3.5" /> Retry
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : sorted.length > 0 ? (
               sorted.map((dept) => (
-                <TableRow key={dept.id} className="hover:bg-muted/30 transition-colors">
+                <TableRow key={dept.id || dept.code || Math.random()} className="hover:bg-muted/30 transition-colors">
                   <TableCell className="font-medium text-xs">
                     <button
                       onClick={() => openDrawer(dept)}
                       className="text-left font-bold text-foreground hover:text-primary transition-colors"
                     >
-                      {dept.name}
+                      {dept.name || "Untitled Department"}
                     </button>
                   </TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">{dept.code}</TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">{dept.code || "—"}</TableCell>
                   <TableCell className="text-xs">{dept.head || "—"}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">{dept.manager || "—"}</TableCell>
                   <TableCell className="text-xs">{dept.location || "—"}</TableCell>
                   <TableCell className="text-xs text-center font-medium">
-                    {dept.employeeCount !== null ? dept.employeeCount : "—"}
+                    {dept.employeeCount !== null && dept.employeeCount !== undefined ? dept.employeeCount : "—"}
                   </TableCell>
                   <TableCell className="text-xs text-center font-medium">
-                    {dept.capacity !== null ? dept.capacity : "—"}
+                    {dept.capacity !== null && dept.capacity !== undefined ? dept.capacity : "—"}
                   </TableCell>
                   <TableCell className="text-xs text-center font-medium text-primary">
-                    {dept.openPositions !== null ? dept.openPositions : "—"}
+                    {dept.openPositions !== null && dept.openPositions !== undefined ? dept.openPositions : "—"}
                   </TableCell>
                   <TableCell className="text-xs">{getStatusBadge(dept.status)}</TableCell>
                   <TableCell className="text-xs">
                     <span className="text-[11px] font-medium text-muted-foreground">
-                      {dept.hiringStatus}
+                      {dept.hiringStatus || "—"}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreVertical className="w-4 h-4 text-muted-foreground" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-36">
-                        <DropdownMenuItem onClick={() => openDrawer(dept)} className="text-xs gap-2">
-                          <Eye className="w-3.5 h-3.5" /> View Details
-                        </DropdownMenuItem>
-                        {canEdit && (
-                          <DropdownMenuItem onClick={() => openEditForm(dept)} className="text-xs gap-2">
-                            <Edit2 className="w-3.5 h-3.5" /> Edit
+                    <div className="flex items-center justify-end gap-1">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            {deletingId === dept.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin text-destructive" />
+                            ) : (
+                              <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                            )}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-36">
+                          <DropdownMenuItem onClick={() => openDrawer(dept)} className="text-xs gap-2">
+                            <Eye className="w-3.5 h-3.5" /> View Details
                           </DropdownMenuItem>
-                        )}
-                        {canDelete && (
-                          <DropdownMenuItem
-                            onClick={() => deleteDepartment(dept.id)}
-                            className="text-xs gap-2 text-destructive"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" /> Delete
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                          {canEdit && (
+                            <DropdownMenuItem onClick={() => openEditForm(dept)} className="text-xs gap-2">
+                              <Edit2 className="w-3.5 h-3.5" /> Edit
+                            </DropdownMenuItem>
+                          )}
+                          {canDelete && (
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(dept);
+                              }}
+                              disabled={deletingId === dept.id || deletingId === dept._id || isDeleting}
+                              className="text-xs gap-2 text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" /> Delete
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

@@ -16,6 +16,14 @@ function AuthBootstrap({ children }: { children: React.ReactNode }) {
   });
 
   useEffect(() => {
+    try {
+      localStorage.removeItem("aiinsight-auth");
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
     if (currentUser) {
       dispatch(updateUser(currentUser));
       dispatch(setInitializing(false));

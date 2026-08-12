@@ -1,5 +1,6 @@
 import { baseApi } from "./baseApi";
 import { AuthUser } from "@/features/auth/authTypes";
+import { RawEnvelope } from "./envelope";
 
 export interface LoginRequest {
   email: string;
@@ -13,12 +14,6 @@ export interface LoginResponse {
   refreshToken?: string;
 }
 
-interface RawAuthEnvelope<T> {
-  success: boolean;
-  message: string;
-  data: T;
-  errors: unknown;
-}
 
 interface RawLoginData {
   access_token: string;
@@ -28,7 +23,7 @@ interface RawLoginData {
   user: AuthUser;
 }
 
-const unwrapLoginResponse = (raw: RawAuthEnvelope<RawLoginData>): LoginResponse => {
+const unwrapLoginResponse = (raw: RawEnvelope<RawLoginData>): LoginResponse => {
   const data = raw?.data || (raw as unknown as RawLoginData);
   const u = data?.user;
   const computedName =
@@ -73,7 +68,7 @@ export const authApi = baseApi.injectEndpoints({
         method: "POST",
         body: credentials,
       }),
-      transformResponse: (raw: RawAuthEnvelope<RawLoginData>) => unwrapLoginResponse(raw),
+      transformResponse: (raw: RawEnvelope<RawLoginData>) => unwrapLoginResponse(raw),
       invalidatesTags: ["Auth", "User"],
     }),
 
@@ -83,13 +78,13 @@ export const authApi = baseApi.injectEndpoints({
         method: "POST",
         body: data,
       }),
-      transformResponse: (raw: RawAuthEnvelope<RawLoginData>) => unwrapLoginResponse(raw),
+      transformResponse: (raw: RawEnvelope<RawLoginData>) => unwrapLoginResponse(raw),
       invalidatesTags: ["Auth"],
     }),
 
     getCurrentUser: builder.query<AuthUser, void>({
       query: () => "/api/v1/auth/me",
-      transformResponse: (raw: RawAuthEnvelope<AuthUser>) =>
+      transformResponse: (raw: RawEnvelope<AuthUser>) =>
         raw?.data || (raw as unknown as AuthUser),
       providesTags: ["Auth", "User"],
     }),
@@ -100,7 +95,7 @@ export const authApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
-      transformResponse: (raw: RawAuthEnvelope<RawLoginData>) => ({
+      transformResponse: (raw: RawEnvelope<RawLoginData>) => ({
         token: raw.data ? raw.data.access_token : (raw as any).token || "",
         refreshToken: raw.data ? raw.data.refresh_token : (raw as any).refreshToken,
       }),
@@ -159,7 +154,7 @@ export const authApi = baseApi.injectEndpoints({
         url: "/api/v1/auth/logout",
         method: "POST",
       }),
-      transformResponse: (raw: RawAuthEnvelope<null> | void) => {
+      transformResponse: (raw: RawEnvelope<null> | void) => {
         if (raw && typeof raw === "object" && "success" in raw) {
           return { success: raw.success, message: raw.message || "Logged out" };
         }

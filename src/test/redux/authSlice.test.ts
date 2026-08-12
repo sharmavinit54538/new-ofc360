@@ -85,6 +85,31 @@ describe("authSlice", () => {
     expect(state.sessionStatus).toBe("loading");
   });
 
+  it("should normalize raw 'admin' role to 'hr_admin' on setCredentials", () => {
+    const rawAdminUser = {
+      id: "usr_admin",
+      name: "Admin User",
+      email: "admin@ofc360.com",
+      role: "admin" as any,
+    };
+    const state = authReducer(
+      initialState,
+      setCredentials({
+        user: rawAdminUser,
+        token: "admin_jwt_token",
+      })
+    );
+
+    expect(state.role).toBe("hr_admin");
+    expect(state.user?.role).toBe("hr_admin");
+  });
+
+  it("should normalize raw 'admin' role to 'hr_admin' on updateUser", () => {
+    const state = authReducer(initialState, updateUser({ role: "admin" as any }));
+    expect(state.role).toBe("hr_admin");
+    expect(state.user?.role).toBe("hr_admin");
+  });
+
   it("should handle logout", () => {
     const state = authReducer(initialState, logout());
     expect(state.user).toBeNull();
@@ -94,3 +119,4 @@ describe("authSlice", () => {
     expect(state.sessionStatus).toBe("unauthenticated");
   });
 });
+

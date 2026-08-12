@@ -35,7 +35,6 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useEmployeeStore } from "@/stores/employeeStore";
 import { useCandidateStore } from "@/stores/candidateStore";
-import { useDepartmentStore } from "@/stores/departmentStore";
 import { usePayrollStore } from "@/stores/payrollStore";
 import { useLeaveStore } from "@/stores/leaveStore";
 import { Badge } from "@/components/ui/badge";
@@ -95,10 +94,11 @@ export default function DashboardPage() {
     return <ITAdminDashboardPage />;
   }
 
-  // Live Zustand Stores (Zero Mock Data)
+  // Live Stores & Queries
   const employees = useEmployeeStore((s) => s.employees);
   const candidates = useCandidateStore((s) => s.candidates);
-  const departments = useDepartmentStore((s) => s.departments);
+  const { data: rawDepartments } = useGetDepartmentsQuery();
+  const departments = Array.isArray(rawDepartments) ? rawDepartments : [];
   const { runs, payslips, settings } = usePayrollStore();
   const PayrollIcon = getCurrencyIcon(settings?.currency);
   const leaveRequests = useLeaveStore((s) => s.leaveRequests);
