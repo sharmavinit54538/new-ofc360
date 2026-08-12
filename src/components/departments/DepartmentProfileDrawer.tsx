@@ -73,11 +73,12 @@ export function DepartmentProfileDrawer() {
   const department = fetchedDepartment || storeDepartment;
 
   const handleDelete = async () => {
-    const id = deptId || department?.id || (department as any)?._id || (department as any)?.departmentId;
-    if (!id) {
-      toast.error("Department ID not found");
+    const rawId = deptId || department?.id || (department as any)?._id || (department as any)?.department_id || (department as any)?.departmentId || (department as any)?.dept_id;
+    if (!rawId) {
+      toast.error("Department ID not found. Cannot delete department.");
       return;
     }
+    const id = String(rawId);
     try {
       await deleteDepartmentApi(id).unwrap();
       toast.success(`Department "${department?.name || "Department"}" deleted successfully`);
@@ -85,13 +86,17 @@ export function DepartmentProfileDrawer() {
       closeDrawer();
     } catch (err: any) {
       console.error("Delete department error - raw error:", err);
-      console.error("Delete department error data:", err?.data || err);
-      if (err?.status === 404 || err?.originalStatus === 404) {
-        toast.success(`Department "${department?.name || "Department"}" deleted successfully`);
-        setIsDeleteDialogOpen(false);
+      const norm = normalizeError(err);
+      if (norm.status === 409) {
+        toast.error(norm.message || "Department cannot be deleted because it has associated employees.");
+      } else if (norm.status === 404) {
+        toast.error(norm.message || "Department not found. It may have already been deleted.");
         closeDrawer();
+      } else if (norm.status === 403) {
+        toast.error(norm.message || "Permission denied: You do not have permission to delete departments.");
+      } else if (norm.status === 401) {
+        toast.error(norm.message || "Unauthorized: Please log in to delete departments.");
       } else {
-        const norm = normalizeError(err);
         toast.error(norm.message || "Failed to delete department. Please try again.");
       }
     }
@@ -326,26 +331,37 @@ export function DepartmentProfileDrawer() {
         </Tabs>
 
         {/* Delete Confirmation Alert Dialog */}
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={(open) => {
+            if (!isDeleting) {
+              setIsDeleteDialogOpen(open);
+            }
+          }}
+        >
           <AlertDialogContent className="max-w-md">
             <AlertDialogHeader>
               <AlertDialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-destructive" />
-                Delete Department — {department.name}
+                Delete Department?
               </AlertDialogTitle>
-              <AlertDialogDescription className="text-xs text-muted-foreground space-y-2">
-                {(department.employeeCount && department.employeeCount > 0) || employeesList.length > 0 ? (
-                  <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
-                    <p className="font-semibold mb-1">Active Employees Warning</p>
-                    <p>
-                      This department currently has <strong>{department.employeeCount || employeesList.length} active employee(s)</strong> assigned. The server guard will reject deletion while employees remain assigned. Please reassign them first.
-                    </p>
-                  </div>
-                ) : (
-                  <p>
-                    Are you sure you want to delete the <strong>{department.name}</strong> department? This will soft-delete the department record.
+              <AlertDialogDescription className="text-xs text-muted-foreground space-y-2" asChild>
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    Are you sure you want to delete &ldquo;{department.name}&rdquo;?
                   </p>
-                )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    This action cannot be undone.
+                  </p>
+                  {(department.employeeCount && department.employeeCount > 0) || employeesList.length > 0 ? (
+                    <div className="mt-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
+                      <p className="font-semibold mb-1">Active Employees Warning</p>
+                      <p>
+                        This department currently has <strong>{department.employeeCount || employeesList.length} active employee(s)</strong> assigned. The server guard will reject deletion while employees remain assigned. Please reassign them first.
+                      </p>
+                    </div>
+                  ) : null}
+                </div>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -360,8 +376,14 @@ export function DepartmentProfileDrawer() {
                 disabled={isDeleting}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90 text-xs font-semibold"
               >
-                {isDeleting ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
-                Confirm Delete
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete"
+                )}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

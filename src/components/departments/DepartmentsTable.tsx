@@ -141,30 +141,35 @@ export function DepartmentsTable() {
   };
 
   const handleDelete = async (dept: Department) => {
-    const id = dept?.id || dept?._id || (dept as any)?.departmentId || (dept as any)?.department_id;
-    if (!id) {
-      toast.error("Department ID not found");
+    const rawId = dept?.id ?? dept?._id ?? (dept as any)?.department_id ?? (dept as any)?.departmentId ?? (dept as any)?.dept_id;
+    if (!rawId) {
+      toast.error("Department ID not found. Cannot delete department.");
       return;
     }
+    const id = String(rawId);
     if (deletingRef.current.has(id)) return;
     deletingRef.current.add(id);
     setDeletingId(id);
+
     try {
       await deleteDepartmentApi(id).unwrap();
       toast.success(`Department "${dept.name || "Department"}" deleted successfully`);
       setIsDeleteDialogOpen(false);
       setDeptToDelete(null);
-      refetch();
+      await refetch();
     } catch (err: any) {
       console.error("Delete department error - raw error:", err);
-      console.error("Delete department error data:", err?.data || err);
-      if (err?.status === 404 || err?.originalStatus === 404) {
-        toast.success(`Department "${dept.name || "Department"}" deleted successfully`);
-        setIsDeleteDialogOpen(false);
-        setDeptToDelete(null);
+      const norm = normalizeError(err);
+      if (norm.status === 409) {
+        toast.error(norm.message || "Department cannot be deleted because it has associated employees.");
+      } else if (norm.status === 404) {
+        toast.error(norm.message || "Department not found. It may have already been deleted.");
         refetch();
+      } else if (norm.status === 403) {
+        toast.error(norm.message || "Permission denied: You do not have permission to delete departments.");
+      } else if (norm.status === 401) {
+        toast.error(norm.message || "Unauthorized: Please log in to delete departments.");
       } else {
-        const norm = normalizeError(err);
         toast.error(norm.message || "Failed to delete department. Please try again.");
       }
     } finally {
@@ -310,75 +315,80 @@ export function DepartmentsTable() {
                 </TableCell>
               </TableRow>
             ) : sorted.length > 0 ? (
-              sorted.map((dept) => (
-                <TableRow key={dept.id || dept.code || Math.random()} className="hover:bg-muted/30 transition-colors">
-                  <TableCell className="font-medium text-xs">
-                    <button
-                      onClick={() => openDrawer(dept)}
-                      className="text-left font-bold text-foreground hover:text-primary transition-colors"
-                    >
-                      {dept.name || "Untitled Department"}
-                    </button>
-                  </TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">{dept.code || "—"}</TableCell>
-                  <TableCell className="text-xs">{dept.head || "—"}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{dept.manager || "—"}</TableCell>
-                  <TableCell className="text-xs">{dept.location || "—"}</TableCell>
-                  <TableCell className="text-xs text-center font-medium">
-                    {dept.employeeCount !== null && dept.employeeCount !== undefined ? dept.employeeCount : "—"}
-                  </TableCell>
-                  <TableCell className="text-xs text-center font-medium">
-                    {dept.capacity !== null && dept.capacity !== undefined ? dept.capacity : "—"}
-                  </TableCell>
-                  <TableCell className="text-xs text-center font-medium text-primary">
-                    {dept.openPositions !== null && dept.openPositions !== undefined ? dept.openPositions : "—"}
-                  </TableCell>
-                  <TableCell className="text-xs">{getStatusBadge(dept.status)}</TableCell>
-                  <TableCell className="text-xs">
-                    <span className="text-[11px] font-medium text-muted-foreground">
-                      {dept.hiringStatus || "—"}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            {deletingId === dept.id ? (
-                              <Loader2 className="w-4 h-4 animate-spin text-destructive" />
-                            ) : (
-                              <MoreVertical className="w-4 h-4 text-muted-foreground" />
+              sorted.map((dept, index) => {
+                const rowKey = dept.id || `dept-${dept.code || dept.name || index}-${index}`;
+                const isThisDeptDeleting = deletingId === dept.id;
+
+                return (
+                  <TableRow key={rowKey} className="hover:bg-muted/30 transition-colors">
+                    <TableCell className="font-medium text-xs">
+                      <button
+                        onClick={() => openDrawer(dept)}
+                        className="text-left font-bold text-foreground hover:text-primary transition-colors"
+                      >
+                        {dept.name || "Untitled Department"}
+                      </button>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">{dept.code || "—"}</TableCell>
+                    <TableCell className="text-xs">{dept.head || "—"}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{dept.manager || "—"}</TableCell>
+                    <TableCell className="text-xs">{dept.location || "—"}</TableCell>
+                    <TableCell className="text-xs text-center font-medium">
+                      {dept.employeeCount !== null && dept.employeeCount !== undefined ? dept.employeeCount : "—"}
+                    </TableCell>
+                    <TableCell className="text-xs text-center font-medium">
+                      {dept.capacity !== null && dept.capacity !== undefined ? dept.capacity : "—"}
+                    </TableCell>
+                    <TableCell className="text-xs text-center font-medium text-primary">
+                      {dept.openPositions !== null && dept.openPositions !== undefined ? dept.openPositions : "—"}
+                    </TableCell>
+                    <TableCell className="text-xs">{getStatusBadge(dept.status)}</TableCell>
+                    <TableCell className="text-xs">
+                      <span className="text-[11px] font-medium text-muted-foreground">
+                        {dept.hiringStatus || "—"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              {isThisDeptDeleting ? (
+                                <Loader2 className="w-4 h-4 animate-spin text-destructive" />
+                              ) : (
+                                <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                              )}
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-36">
+                            <DropdownMenuItem onClick={() => openDrawer(dept)} className="text-xs gap-2">
+                              <Eye className="w-3.5 h-3.5" /> View Details
+                            </DropdownMenuItem>
+                            {canEdit && (
+                              <DropdownMenuItem onClick={() => openEditForm(dept)} className="text-xs gap-2">
+                                <Edit2 className="w-3.5 h-3.5" /> Edit
+                              </DropdownMenuItem>
                             )}
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-36">
-                          <DropdownMenuItem onClick={() => openDrawer(dept)} className="text-xs gap-2">
-                            <Eye className="w-3.5 h-3.5" /> View Details
-                          </DropdownMenuItem>
-                          {canEdit && (
-                            <DropdownMenuItem onClick={() => openEditForm(dept)} className="text-xs gap-2">
-                              <Edit2 className="w-3.5 h-3.5" /> Edit
-                            </DropdownMenuItem>
-                          )}
-                          {canDelete && (
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDeptToDelete(dept);
-                                setIsDeleteDialogOpen(true);
-                              }}
-                              disabled={deletingId === dept.id || deletingId === dept._id || isDeleting}
-                              className="text-xs gap-2 text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" /> Delete
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+                            {canDelete && (
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeptToDelete(dept);
+                                  setIsDeleteDialogOpen(true);
+                                }}
+                                disabled={isThisDeptDeleting || isDeleting}
+                                className="text-xs gap-2 text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" /> Delete
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             ) : (
               <TableRow>
                 <TableCell colSpan={11} className="h-48 text-center">
@@ -412,26 +422,38 @@ export function DepartmentsTable() {
       </div>
 
       {/* Delete Confirmation Alert Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={(open) => {
+          if (!isDeleting) {
+            setIsDeleteDialogOpen(open);
+            if (!open) setDeptToDelete(null);
+          }
+        }}
+      >
         <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-destructive" />
-              Delete Department — {deptToDelete?.name}
+              Delete Department?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-xs text-muted-foreground space-y-2">
-              {deptToDelete?.employeeCount && deptToDelete.employeeCount > 0 ? (
-                <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
-                  <p className="font-semibold mb-1">Active Employees Warning</p>
-                  <p>
-                    This department currently has <strong>{deptToDelete.employeeCount} active employee(s)</strong> assigned. The server guard will reject deletion while employees remain assigned. Please reassign them first.
-                  </p>
-                </div>
-              ) : (
-                <p>
-                  Are you sure you want to delete the <strong>{deptToDelete?.name}</strong> department? This will soft-delete the department record.
+            <AlertDialogDescription className="text-xs text-muted-foreground space-y-2" asChild>
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  Are you sure you want to delete &ldquo;{deptToDelete?.name || "this department"}&rdquo;?
                 </p>
-              )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  This action cannot be undone.
+                </p>
+                {deptToDelete?.employeeCount && deptToDelete.employeeCount > 0 ? (
+                  <div className="mt-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
+                    <p className="font-semibold mb-1">Active Employees Warning</p>
+                    <p>
+                      This department currently has <strong>{deptToDelete.employeeCount} active employee(s)</strong> assigned. The server guard will reject deletion while employees remain assigned. Please reassign them first.
+                    </p>
+                  </div>
+                ) : null}
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -443,11 +465,17 @@ export function DepartmentsTable() {
                 e.preventDefault();
                 if (deptToDelete) handleDelete(deptToDelete);
               }}
-              disabled={isDeleting}
+              disabled={isDeleting || (deletingId !== null && deletingId === deptToDelete?.id)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90 text-xs font-semibold"
             >
-              {isDeleting ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
-              Confirm Delete
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

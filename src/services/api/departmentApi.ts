@@ -15,8 +15,8 @@ export type GetDepartmentsQueryArg = GetDepartmentsQueryParams | void;
 
 export function normalizeDepartment(dept: any): Department {
   if (!dept || typeof dept !== "object") return dept;
-  const rawId = dept.id || dept._id || dept.departmentId || dept.department_id || "";
-  const id = typeof rawId === "string" ? rawId : String(rawId || "");
+  const rawId = dept.id ?? dept.department_id ?? dept._id ?? dept.departmentId ?? dept.dept_id ?? "";
+  const id = rawId !== undefined && rawId !== null ? String(rawId) : "";
   const name = dept.department_name || dept.departmentName || dept.name || dept.title || "";
   const code = dept.department_code || dept.departmentCode || dept.code || (name ? name.slice(0, 4).toUpperCase() : "DEP");
   const head = dept.manager_name || dept.managerName || dept.head || dept.headOfDepartment || dept.head_of_department || "";
@@ -187,10 +187,13 @@ export const departmentApi = baseApi.injectEndpoints({
         }
         return { success: true, id: arg };
       },
-      invalidatesTags: (_r, _e, id) => [
-        { type: "Department", id },
-        { type: "Department", id: "LIST" },
-      ],
+      invalidatesTags: (_result, error, id) =>
+        error
+          ? []
+          : [
+              { type: "Department", id },
+              { type: "Department", id: "LIST" },
+            ],
     }),
 
     assignDepartmentManager: builder.mutation<Department, { id: string; managerId: string }>({
