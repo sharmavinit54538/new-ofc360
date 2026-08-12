@@ -326,14 +326,25 @@ export default function EmployeesPage() {
               </TableRow>
             ) : (
               filtered.map((emp) => {
-                const initials = emp.name
-                  ? emp.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .slice(0, 2)
-                      .toUpperCase()
-                  : "U";
+                const displayName =
+                  emp.name ||
+                  (emp.firstName ? `${emp.firstName} ${emp.lastName || ""}`.trim() : "") ||
+                  (emp.email ? emp.email.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "") ||
+                  "Employee";
+
+                const displayEmail =
+                  emp.email ||
+                  emp.companyWorkEmail ||
+                  emp.personalEmail ||
+                  "No email specified";
+
+                const initials = displayName
+                  .split(" ")
+                  .filter(Boolean)
+                  .map((n) => n[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase() || "E";
 
                 const isEmpActive = (emp.status || "Active").toLowerCase().includes("active");
 
@@ -341,15 +352,15 @@ export default function EmployeesPage() {
                   <TableRow key={emp.id} className="hover:bg-secondary/30 transition-colors">
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9 border border-primary/20">
+                        <Avatar className="h-9 w-9 border border-primary/20 shrink-0">
                           <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
                             {initials}
                           </AvatarFallback>
                         </Avatar>
-                        <div>
-                          <p className="font-bold text-xs text-foreground">{emp.name}</p>
-                          <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                            <Mail className="w-3 h-3" /> {emp.email}
+                        <div className="min-w-0">
+                          <p className="font-bold text-xs text-foreground truncate">{displayName}</p>
+                          <p className="text-[11px] text-muted-foreground flex items-center gap-1 truncate">
+                            <Mail className="w-3 h-3 shrink-0" /> {displayEmail}
                           </p>
                         </div>
                       </div>

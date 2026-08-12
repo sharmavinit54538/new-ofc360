@@ -183,31 +183,42 @@ export default function ExecutivesManagementPage() {
               </TableRow>
             ) : (
               filtered.map((ex) => {
-                const initials = ex.name
-                  ? ex.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .slice(0, 2)
-                      .toUpperCase()
-                  : "C";
+                const displayName =
+                  ex.name ||
+                  (ex.firstName ? `${ex.firstName} ${ex.lastName || ""}`.trim() : "") ||
+                  (ex.email ? ex.email.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "") ||
+                  "Executive";
+
+                const displayEmail =
+                  ex.email ||
+                  ex.companyWorkEmail ||
+                  ex.personalEmail ||
+                  "No email specified";
+
+                const initials = displayName
+                  .split(" ")
+                  .filter(Boolean)
+                  .map((n) => n[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase() || "C";
 
                 return (
                   <TableRow key={ex.id} className="hover:bg-secondary/30 transition-colors">
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9 border border-amber-500/30">
+                        <Avatar className="h-9 w-9 border border-amber-500/30 shrink-0">
                           <AvatarFallback className="bg-amber-500/10 text-amber-500 text-xs font-bold">
                             {initials}
                           </AvatarFallback>
                         </Avatar>
-                        <div>
-                          <p className="font-bold text-xs text-foreground flex items-center gap-1">
-                            {ex.name}
-                            <Crown className="w-3 h-3 text-amber-500 fill-amber-500/20" />
+                        <div className="min-w-0">
+                          <p className="font-bold text-xs text-foreground flex items-center gap-1 truncate">
+                            {displayName}
+                            <Crown className="w-3 h-3 text-amber-500 fill-amber-500/20 shrink-0" />
                           </p>
-                          <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                            <Mail className="w-3 h-3" /> {ex.email}
+                          <p className="text-[11px] text-muted-foreground flex items-center gap-1 truncate">
+                            <Mail className="w-3 h-3 shrink-0" /> {displayEmail}
                           </p>
                         </div>
                       </div>

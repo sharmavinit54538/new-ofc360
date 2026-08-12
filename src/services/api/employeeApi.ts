@@ -337,6 +337,105 @@ function buildEmployeeUpdatePayload(input: any): Record<string, any> {
   return payload;
 }
 
+export function normalizeEmployee(raw: any): Employee {
+  if (!raw || typeof raw !== "object") {
+    return {
+      id: String(Math.random()),
+      name: "Employee",
+      email: "",
+      role: "Employee",
+      department: "General",
+      systemRole: "employee",
+      status: "Active",
+      joinedAt: new Date().toISOString().split("T")[0],
+      salary: 0,
+    };
+  }
+
+  const rawId = raw.id || raw._id || raw.employee_id || raw.user_id || "";
+  const id = typeof rawId === "string" ? rawId : String(rawId || Math.random());
+
+  const firstName = (raw.first_name || raw.firstName || raw.user?.first_name || "").trim();
+  const lastName = (raw.last_name || raw.lastName || raw.user?.last_name || "").trim();
+  const rawCombinedName = [firstName, lastName].filter(Boolean).join(" ").trim();
+
+  const name =
+    (raw.name ||
+    raw.full_name ||
+    raw.fullName ||
+    raw.user?.name ||
+    raw.user?.full_name ||
+    rawCombinedName ||
+    (raw.email ? raw.email.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) : "") ||
+    "Employee").trim();
+
+  const email = (
+    raw.email ||
+    raw.work_email ||
+    raw.company_email ||
+    raw.personal_email ||
+    raw.companyWorkEmail ||
+    raw.personalEmail ||
+    raw.user?.email ||
+    raw.user?.work_email ||
+    ""
+  ).trim();
+
+  const department = (
+    raw.department ||
+    raw.department_name ||
+    raw.dept ||
+    (typeof raw.department === "object" && raw.department?.name) ||
+    "General"
+  ).trim();
+
+  const role = (
+    raw.designation ||
+    raw.role ||
+    raw.job_title ||
+    raw.position ||
+    "Employee"
+  ).trim();
+
+  const systemRole: any = (
+    raw.systemRole ||
+    raw.system_role ||
+    (raw.role && ["super_admin", "admin", "hr_admin", "manager", "employee", "it_admin", "cxo"].includes(raw.role.toLowerCase())
+      ? raw.role.toLowerCase()
+      : "employee")
+  );
+
+  const rawStatus = raw.status || raw.employment_status || raw.user_status || "Active";
+  const status = typeof rawStatus === "string" ? rawStatus : "Active";
+
+  const rawSalary = raw.salary ?? raw.ctc ?? raw.basic_salary ?? raw.basicSalary ?? 0;
+  const salary = typeof rawSalary === "number" ? rawSalary : Number(rawSalary) || 0;
+
+  const rawDate = raw.joinedAt || raw.joining_date || raw.joiningDate || raw.created_at || raw.createdAt;
+  const joinedAt = rawDate ? String(rawDate).split("T")[0] : new Date().toISOString().split("T")[0];
+
+  const phone = (raw.phone || raw.phone_number || raw.phoneNumber || "").trim();
+  const avatar = (raw.avatar || raw.photoUrl || raw.profile_photo_url || raw.profile_image || "").trim();
+
+  return {
+    ...raw,
+    id,
+    name,
+    firstName: firstName || undefined,
+    lastName: lastName || undefined,
+    email,
+    department,
+    role,
+    systemRole,
+    status,
+    salary,
+    joinedAt,
+    phone: phone || undefined,
+    avatar: avatar || undefined,
+    ctc: salary,
+  };
+}
+
 export const employeeApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getEmployees: builder.query<Employee[], GetEmployeesQueryArg>({
@@ -358,15 +457,16 @@ export const employeeApi = baseApi.injectEndpoints({
       transformResponse: (raw: any): Employee[] => {
         if (!raw) return [];
         const payload = raw.data !== undefined ? raw.data : raw;
+        let list: any[] = [];
         if (Array.isArray(payload)) {
-          return payload;
+          list = payload;
+        } else if (payload && typeof payload === "object") {
+          if (Array.isArray(payload.items)) list = payload.items;
+          else if (Array.isArray(payload.employees)) list = payload.employees;
+          else if (Array.isArray(payload.data)) list = payload.data;
+          else if (Array.isArray(payload.results)) list = payload.results;
         }
-        if (payload && typeof payload === "object") {
-          if (Array.isArray(payload.items)) return payload.items;
-          if (Array.isArray(payload.employees)) return payload.employees;
-          if (Array.isArray(payload.data)) return payload.data;
-        }
-        return [];
+        return list.map(normalizeEmployee);
       },
       providesTags: (result) =>
         Array.isArray(result)
@@ -379,8 +479,10 @@ export const employeeApi = baseApi.injectEndpoints({
 
     getEmployeeById: builder.query<Employee, string>({
       query: (id) => `/api/v1/employees/${id}`,
-      transformResponse: (raw: RawEnvelope<Employee> | Employee) =>
-        (raw as RawEnvelope<Employee>)?.data || (raw as Employee),
+      transformResponse: (raw: any): Employee => {
+        const payload = raw?.data !== undefined ? raw.data : raw;
+        return normalizeEmployee(payload);
+      },
       providesTags: (_result, _error, id) => [{ type: "Employee", id }],
     }),
 
@@ -407,8 +509,10 @@ export const employeeApi = baseApi.injectEndpoints({
           }
         }
       },
-      transformResponse: (raw: RawEnvelope<Employee> | Employee) =>
-        (raw as RawEnvelope<Employee>)?.data || (raw as Employee),
+      transformResponse: (raw: any): Employee => {
+        const payload = raw?.data !== undefined ? raw.data : raw;
+        return normalizeEmployee(payload);
+      },
       invalidatesTags: [{ type: "Employee", id: "LIST" }],
     }),
 
@@ -435,8 +539,10 @@ export const employeeApi = baseApi.injectEndpoints({
           }
         }
       },
-      transformResponse: (raw: RawEnvelope<Employee> | Employee) =>
-        (raw as RawEnvelope<Employee>)?.data || (raw as Employee),
+      transformResponse: (raw: any): Employee => {
+        const payload = raw?.data !== undefined ? raw.data : raw;
+        return normalizeEmployee(payload);
+      },
       invalidatesTags: (_result, _error, { id }) => [
         { type: "Employee", id },
         { type: "Employee", id: "LIST" },

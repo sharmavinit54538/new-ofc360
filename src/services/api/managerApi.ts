@@ -542,6 +542,105 @@ export function buildManagerUpdatePayload(input: any): Record<string, any> {
   return payload;
 }
 
+export function normalizeManager(raw: any): Manager {
+  if (!raw || typeof raw !== "object") {
+    return {
+      id: String(Math.random()),
+      name: "Manager",
+      email: "",
+      role: "Manager",
+      department: "General",
+      systemRole: "manager",
+      status: "Active",
+      joinedAt: new Date().toISOString().split("T")[0],
+      salary: 0,
+    };
+  }
+
+  const rawId = raw.id || raw._id || raw.manager_id || raw.employee_id || raw.user_id || "";
+  const id = typeof rawId === "string" ? rawId : String(rawId || Math.random());
+
+  const firstName = (raw.first_name || raw.firstName || raw.user?.first_name || "").trim();
+  const lastName = (raw.last_name || raw.lastName || raw.user?.last_name || "").trim();
+  const rawCombinedName = [firstName, lastName].filter(Boolean).join(" ").trim();
+
+  const name =
+    (raw.name ||
+    raw.full_name ||
+    raw.fullName ||
+    raw.user?.name ||
+    raw.user?.full_name ||
+    rawCombinedName ||
+    (raw.email ? raw.email.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) : "") ||
+    "Manager").trim();
+
+  const email = (
+    raw.email ||
+    raw.work_email ||
+    raw.company_email ||
+    raw.personal_email ||
+    raw.companyWorkEmail ||
+    raw.personalEmail ||
+    raw.user?.email ||
+    raw.user?.work_email ||
+    ""
+  ).trim();
+
+  const department = (
+    raw.department ||
+    raw.department_name ||
+    raw.dept ||
+    (typeof raw.department === "object" && raw.department?.name) ||
+    "General"
+  ).trim();
+
+  const role = (
+    raw.designation ||
+    raw.role ||
+    raw.job_title ||
+    raw.position ||
+    "Manager"
+  ).trim();
+
+  const systemRole: any = (
+    raw.systemRole ||
+    raw.system_role ||
+    (raw.role && ["super_admin", "admin", "hr_admin", "manager", "employee", "it_admin", "cxo"].includes(raw.role.toLowerCase())
+      ? raw.role.toLowerCase()
+      : "manager")
+  );
+
+  const rawStatus = raw.status || raw.employment_status || raw.user_status || "Active";
+  const status = typeof rawStatus === "string" ? rawStatus : "Active";
+
+  const rawSalary = raw.salary ?? raw.ctc ?? raw.basic_salary ?? raw.basicSalary ?? 0;
+  const salary = typeof rawSalary === "number" ? rawSalary : Number(rawSalary) || 0;
+
+  const rawDate = raw.joinedAt || raw.joining_date || raw.joiningDate || raw.created_at || raw.createdAt;
+  const joinedAt = rawDate ? String(rawDate).split("T")[0] : new Date().toISOString().split("T")[0];
+
+  const phone = (raw.phone || raw.phone_number || raw.phoneNumber || "").trim();
+  const avatar = (raw.avatar || raw.photoUrl || raw.profile_photo_url || raw.profile_image || "").trim();
+
+  return {
+    ...raw,
+    id,
+    name,
+    firstName: firstName || undefined,
+    lastName: lastName || undefined,
+    email,
+    department,
+    role,
+    systemRole,
+    status,
+    salary,
+    joinedAt,
+    phone: phone || undefined,
+    avatar: avatar || undefined,
+    ctc: salary,
+  };
+}
+
 export const managerApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getManagers: builder.query<Manager[], GetManagersQueryArg>({
@@ -559,15 +658,16 @@ export const managerApi = baseApi.injectEndpoints({
       transformResponse: (raw: any): Manager[] => {
         if (!raw) return [];
         const payload = raw.data !== undefined ? raw.data : raw;
+        let list: any[] = [];
         if (Array.isArray(payload)) {
-          return payload;
+          list = payload;
+        } else if (payload && typeof payload === "object") {
+          if (Array.isArray(payload.items)) list = payload.items;
+          else if (Array.isArray(payload.managers)) list = payload.managers;
+          else if (Array.isArray(payload.data)) list = payload.data;
+          else if (Array.isArray(payload.results)) list = payload.results;
         }
-        if (payload && typeof payload === "object") {
-          if (Array.isArray(payload.items)) return payload.items;
-          if (Array.isArray(payload.managers)) return payload.managers;
-          if (Array.isArray(payload.data)) return payload.data;
-        }
-        return [];
+        return list.map(normalizeManager);
       },
       providesTags: (result) =>
         Array.isArray(result)
@@ -580,8 +680,10 @@ export const managerApi = baseApi.injectEndpoints({
 
     getManagerById: builder.query<Manager, string>({
       query: (id) => `/api/v1/managers/${id}`,
-      transformResponse: (raw: RawEnvelope<Manager> | Manager) =>
-        (raw as RawEnvelope<Manager>)?.data || (raw as Manager),
+      transformResponse: (raw: any): Manager => {
+        const payload = raw?.data !== undefined ? raw.data : raw;
+        return normalizeManager(payload);
+      },
       providesTags: (_result, _error, id) => [{ type: "Manager", id }],
     }),
 
@@ -608,8 +710,10 @@ export const managerApi = baseApi.injectEndpoints({
           }
         }
       },
-      transformResponse: (raw: RawEnvelope<Manager> | Manager) =>
-        (raw as RawEnvelope<Manager>)?.data || (raw as Manager),
+      transformResponse: (raw: any): Manager => {
+        const payload = raw?.data !== undefined ? raw.data : raw;
+        return normalizeManager(payload);
+      },
       invalidatesTags: [{ type: "Manager", id: "LIST" }],
     }),
 
@@ -636,8 +740,10 @@ export const managerApi = baseApi.injectEndpoints({
           }
         }
       },
-      transformResponse: (raw: RawEnvelope<Manager> | Manager) =>
-        (raw as RawEnvelope<Manager>)?.data || (raw as Manager),
+      transformResponse: (raw: any): Manager => {
+        const payload = raw?.data !== undefined ? raw.data : raw;
+        return normalizeManager(payload);
+      },
       invalidatesTags: (_result, _error, { id }) => [
         { type: "Manager", id },
         { type: "Manager", id: "LIST" },

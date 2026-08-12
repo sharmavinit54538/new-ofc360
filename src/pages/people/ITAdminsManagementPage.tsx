@@ -183,31 +183,42 @@ export default function ITAdminsManagementPage() {
               </TableRow>
             ) : (
               filtered.map((adm) => {
-                const initials = adm.name
-                  ? adm.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .slice(0, 2)
-                      .toUpperCase()
-                  : "A";
+                const displayName =
+                  adm.name ||
+                  (adm.firstName ? `${adm.firstName} ${adm.lastName || ""}`.trim() : "") ||
+                  (adm.email ? adm.email.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "") ||
+                  "IT Admin";
+
+                const displayEmail =
+                  adm.email ||
+                  adm.companyWorkEmail ||
+                  adm.personalEmail ||
+                  "No email specified";
+
+                const initials = displayName
+                  .split(" ")
+                  .filter(Boolean)
+                  .map((n) => n[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase() || "A";
 
                 return (
                   <TableRow key={adm.id} className="hover:bg-secondary/30 transition-colors">
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9 border border-teal-500/30">
+                        <Avatar className="h-9 w-9 border border-teal-500/30 shrink-0">
                           <AvatarFallback className="bg-teal-500/10 text-teal-600 dark:text-teal-400 text-xs font-bold">
                             {initials}
                           </AvatarFallback>
                         </Avatar>
-                        <div>
-                          <p className="font-bold text-xs text-foreground flex items-center gap-1">
-                            {adm.name}
-                            <ShieldCheck className="w-3 h-3 text-teal-600 dark:text-teal-400" />
+                        <div className="min-w-0">
+                          <p className="font-bold text-xs text-foreground flex items-center gap-1 truncate">
+                            {displayName}
+                            <ShieldCheck className="w-3 h-3 text-teal-600 dark:text-teal-400 shrink-0" />
                           </p>
-                          <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                            <Mail className="w-3 h-3" /> {adm.email}
+                          <p className="text-[11px] text-muted-foreground flex items-center gap-1 truncate">
+                            <Mail className="w-3 h-3 shrink-0" /> {displayEmail}
                           </p>
                         </div>
                       </div>

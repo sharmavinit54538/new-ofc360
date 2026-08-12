@@ -108,12 +108,12 @@ export default function ManagerTeamPage() {
                 {myTeam.map((emp) => (
                   <TableRow key={emp.id}>
                     <TableCell className="font-bold text-xs text-foreground flex items-center gap-2.5">
-                      <Avatar className="h-7 w-7 border border-primary/20">
+                      <Avatar className="h-7 w-7 border border-primary/20 shrink-0">
                         <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold">
-                          {emp.name.split(" ").map((n) => n[0]).join("")}
+                          {(emp.name || "Employee").split(" ").filter(Boolean).map((n) => n[0]).join("").slice(0, 2).toUpperCase() || "E"}
                         </AvatarFallback>
                       </Avatar>
-                      <span>{emp.name}</span>
+                      <span>{emp.name || "Employee"}</span>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">{emp.role}</TableCell>
                     <TableCell className="text-xs font-semibold">{emp.department}</TableCell>

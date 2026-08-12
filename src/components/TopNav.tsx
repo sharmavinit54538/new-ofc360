@@ -139,7 +139,7 @@ export function TopNav({ onMenuClick }: TopNavProps) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl hover:bg-secondary/60 transition-colors outline-none cursor-pointer text-left">
-              <Avatar className="h-9 w-9 border border-primary/20 shadow-sm">
+              <Avatar className="h-9 w-9 border border-primary/20 shadow-sm shrink-0">
                 <AvatarFallback className="bg-primary/15 text-primary text-xs font-bold">
                   {initials}
                 </AvatarFallback>

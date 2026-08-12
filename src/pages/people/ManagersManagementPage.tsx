@@ -288,14 +288,25 @@ export default function ManagersManagementPage() {
               </TableRow>
             ) : (
               filtered.map((mgr) => {
-                const initials = mgr.name
-                  ? mgr.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .slice(0, 2)
-                      .toUpperCase()
-                  : "M";
+                const displayName =
+                  mgr.name ||
+                  (mgr.firstName ? `${mgr.firstName} ${mgr.lastName || ""}`.trim() : "") ||
+                  (mgr.email ? mgr.email.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "") ||
+                  "Manager";
+
+                const displayEmail =
+                  mgr.email ||
+                  mgr.companyWorkEmail ||
+                  mgr.personalEmail ||
+                  "No email specified";
+
+                const initials = displayName
+                  .split(" ")
+                  .filter(Boolean)
+                  .map((n) => n[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase() || "M";
 
                 const isMgrActive = (mgr.status || "Active").toLowerCase().includes("active");
 
@@ -303,15 +314,15 @@ export default function ManagersManagementPage() {
                   <TableRow key={mgr.id} className="hover:bg-secondary/30 transition-colors">
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9 border border-primary/20">
+                        <Avatar className="h-9 w-9 border border-primary/20 shrink-0">
                           <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
                             {initials}
                           </AvatarFallback>
                         </Avatar>
-                        <div>
-                          <p className="font-bold text-xs text-foreground">{mgr.name}</p>
-                          <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                            <Mail className="w-3 h-3" /> {mgr.email}
+                        <div className="min-w-0">
+                          <p className="font-bold text-xs text-foreground truncate">{displayName}</p>
+                          <p className="text-[11px] text-muted-foreground flex items-center gap-1 truncate">
+                            <Mail className="w-3 h-3 shrink-0" /> {displayEmail}
                           </p>
                         </div>
                       </div>
