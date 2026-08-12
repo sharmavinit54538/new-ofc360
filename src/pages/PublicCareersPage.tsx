@@ -51,6 +51,7 @@ export default function PublicCareersPage() {
       experienceYears: 5,
       tags: ["Direct Applicant"],
       rating: 4,
+      notes: [],
       status: "Active"
     });
 

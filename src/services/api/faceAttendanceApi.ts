@@ -238,12 +238,12 @@ export const faceAttendanceApi = baseApi.injectEndpoints({
         }
         const formData = new FormData();
         if (body.image) {
-          if (body.image instanceof Blob || body.image instanceof File) {
-            formData.append("image", body.image, "face-checkin.jpg");
-            formData.append("photo", body.image, "face-checkin.jpg");
-          } else if (typeof body.image === "string") {
+          if (typeof body.image === "string") {
             formData.append("image", body.image);
             formData.append("photo", body.image);
+          } else {
+            formData.append("image", body.image, "face-checkin.jpg");
+            formData.append("photo", body.image, "face-checkin.jpg");
           }
         }
         if (body.location) formData.append("location", String(body.location));
@@ -278,12 +278,12 @@ export const faceAttendanceApi = baseApi.injectEndpoints({
         }
         const formData = new FormData();
         if (body.image) {
-          if (body.image instanceof Blob || body.image instanceof File) {
-            formData.append("image", body.image, "face-checkout.jpg");
-            formData.append("photo", body.image, "face-checkout.jpg");
-          } else if (typeof body.image === "string") {
+          if (typeof body.image === "string") {
             formData.append("image", body.image);
             formData.append("photo", body.image);
+          } else {
+            formData.append("image", body.image, "face-checkout.jpg");
+            formData.append("photo", body.image, "face-checkout.jpg");
           }
         }
         if (body.location) formData.append("location", String(body.location));
@@ -316,7 +316,7 @@ export const faceAttendanceApi = baseApi.injectEndpoints({
 
     // 4. GET /api/v1/attendance/face/history
     getPersonalFaceHistory: builder.query<PaginatedAttendanceResponse<FaceAttendanceRecord>, GetFaceHistoryParams | void>({
-      query: (params) => {
+      query: (params?: GetFaceHistoryParams) => {
         const qp = new URLSearchParams();
         if (params?.page) qp.append("page", String(params.page));
         if (params?.limit) qp.append("limit", String(params.limit));
@@ -333,7 +333,7 @@ export const faceAttendanceApi = baseApi.injectEndpoints({
 
     // 5. GET /api/v1/attendance/face/team
     getTeamFaceAttendance: builder.query<PaginatedAttendanceResponse<FaceAttendanceRecord>, GetTeamAttendanceParams | void>({
-      query: (params) => {
+      query: (params?: GetTeamAttendanceParams) => {
         const qp = new URLSearchParams();
         if (params?.page) qp.append("page", String(params.page));
         if (params?.limit) qp.append("limit", String(params.limit));
@@ -349,7 +349,7 @@ export const faceAttendanceApi = baseApi.injectEndpoints({
 
     // 6. GET /api/v1/attendance/face/company
     getCompanyFaceAttendance: builder.query<PaginatedAttendanceResponse<FaceAttendanceRecord>, GetCompanyAttendanceParams | void>({
-      query: (params) => {
+      query: (params?: GetCompanyAttendanceParams) => {
         const qp = new URLSearchParams();
         if (params?.page) qp.append("page", String(params.page));
         if (params?.limit) qp.append("limit", String(params.limit));
@@ -368,7 +368,7 @@ export const faceAttendanceApi = baseApi.injectEndpoints({
 
     // 7. GET /api/v1/attendance/face/analytics
     getFaceAttendanceAnalytics: builder.query<FaceAttendanceAnalyticsResponse, { date?: string; month?: string; department?: string } | void>({
-      query: (params) => {
+      query: (params?: { date?: string; month?: string; department?: string }) => {
         const qp = new URLSearchParams();
         if (params?.date) qp.append("date", params.date);
         if (params?.month) qp.append("month", params.month);

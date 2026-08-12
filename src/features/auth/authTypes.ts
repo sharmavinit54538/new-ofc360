@@ -16,6 +16,10 @@ export interface AuthUser {
   avatar?: string;
   companyId?: string;
   department?: string;
+  full_name?: string;
+  first_name?: string;
+  last_name?: string;
+  [key: string]: any;
 }
 
 export type SessionStatus = "idle" | "loading" | "authenticated" | "unauthenticated";

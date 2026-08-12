@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Sparkles, Shield, ArrowRight, ArrowLeft, CheckCircle2, Mail, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { useVerifyEmailMutation, useResendOtpMutation } from "@/services/api/authApi";
 import { normalizeError } from "@/services/api/normalizeError";
 import { toast } from "sonner";

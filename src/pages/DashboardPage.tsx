@@ -37,6 +37,7 @@ import { useEmployeeStore } from "@/stores/employeeStore";
 import { useCandidateStore } from "@/stores/candidateStore";
 import { usePayrollStore } from "@/stores/payrollStore";
 import { useLeaveStore } from "@/stores/leaveStore";
+import { useGetDepartmentsQuery } from "@/services/api/departmentApi";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

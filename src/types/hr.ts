@@ -193,6 +193,7 @@ export interface DocItem {
 
 export interface Department {
   id: string;
+  _id?: string;
   name: string;
   code: string;
   head?: string;

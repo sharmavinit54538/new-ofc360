@@ -56,6 +56,7 @@ import { roleLabels } from "@/features/auth/authTypes";
 import { type Employee, type Manager } from "@/types/hr";
 import EmployeeFormDialog from "@/components/employees/EmployeeFormDialog";
 import { toast } from "sonner";
+import { normalizeError } from "@/services/api/normalizeError";
 
 const statusStyle: Record<string, string> = {
   Active: "bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 font-bold tracking-wider",
@@ -117,8 +118,10 @@ export default function ManagersManagementPage() {
       }
       setIsFormOpen(false);
       setEditingManager(null);
-    } catch {
-      toast.error("Failed to save manager details. Please try again.");
+    } catch (err) {
+      console.error(err);
+      const norm = normalizeError(err);
+      toast.error(norm.message || "Failed to save manager details. Please try again.");
     }
   };
 
@@ -126,8 +129,10 @@ export default function ManagersManagementPage() {
     try {
       await deleteManagerApi(id).unwrap();
       toast.success(`Manager ${name} removed`);
-    } catch {
-      toast.error("Failed to remove manager. Please try again.");
+    } catch (err) {
+      console.error(err);
+      const norm = normalizeError(err);
+      toast.error(norm.message || "Failed to remove manager. Please try again.");
     }
   };
 
@@ -135,8 +140,10 @@ export default function ManagersManagementPage() {
     try {
       await sendInviteApi(id).unwrap();
       toast.success(`Invitation sent to manager ${name}`);
-    } catch {
-      toast.error(`Failed to send invitation to ${name}`);
+    } catch (err) {
+      console.error(err);
+      const norm = normalizeError(err);
+      toast.error(norm.message || `Failed to send invitation to ${name}`);
     }
   };
 
@@ -150,8 +157,10 @@ export default function ManagersManagementPage() {
         await activateManagerApi(mgr.id).unwrap();
         toast.success(`Activated account for manager ${mgr.name}`);
       }
-    } catch {
-      toast.error(`Failed to update status for ${mgr.name}`);
+    } catch (err) {
+      console.error(err);
+      const norm = normalizeError(err);
+      toast.error(norm.message || `Failed to update status for ${mgr.name}`);
     }
   };
 
@@ -163,8 +172,10 @@ export default function ManagersManagementPage() {
       } else {
         toast.success(`Password reset link sent to manager ${name}`);
       }
-    } catch {
-      toast.error(`Failed to reset password for ${name}`);
+    } catch (err) {
+      console.error(err);
+      const norm = normalizeError(err);
+      toast.error(norm.message || `Failed to reset password for ${name}`);
     }
   };
 
