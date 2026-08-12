@@ -1,0 +1,25 @@
+export const API_TAGS = [
+  "Auth",
+  "User",
+  "Company",
+  "Employee",
+  "Attendance",
+  "Leave",
+  "Payroll",
+  "Payslip",
+  "PayrollAnalytics",
+  "Recruitment",
+  "Candidate",
+  "Job",
+  "Onboarding",
+  "EmployeeOnboarding",
+  "Performance",
+  "Document",
+  "Notification",
+  "AuditLog",
+  "Intelligence",
+  "AIModel",
+  "Timeline",
+] as const;
+
+export type ApiTagType = (typeof API_TAGS)[number];

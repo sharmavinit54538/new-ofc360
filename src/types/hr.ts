@@ -1,0 +1,208 @@
+import { SystemRole } from "@/stores/authStore";
+
+export interface AddressItem {
+  id: string;
+  type: "PRESENT" | "PERMANENT" | "OFFICE";
+  line1: string;
+  line2?: string;
+  city: string;
+  state: string;
+  country: string;
+  pincode: string;
+  isSameAsCurrent?: boolean;
+}
+
+export interface KycDocumentItem {
+  id: string;
+  type: "PAN" | "AADHAAR" | "PASSPORT" | "VOTER_ID" | "DRIVING_LICENSE" | "OTHER";
+  documentNumber: string;
+  fileUrl?: string;
+  expiryDate?: string;
+}
+
+export interface EducationItem {
+  id: string;
+  degree: string;
+  institution: string;
+  fieldOfStudy?: string;
+  grade?: string;
+  startYear?: string;
+  endYear?: string;
+}
+
+export interface WorkExperienceItem {
+  id: string;
+  companyName: string;
+  designation: string;
+  employmentType: "FULL_TIME" | "PART_TIME" | "CONTRACT";
+  startDate: string;
+  endDate?: string;
+  isCurrent?: boolean;
+  responsibilities?: string;
+}
+
+export interface SkillItem {
+  id: string;
+  name: string;
+  proficiency: "Beginner" | "Intermediate" | "Advanced" | "Expert";
+  years: number;
+}
+
+export interface EmergencyContactItem {
+  id: string;
+  name: string;
+  relationship: "Spouse" | "Parent" | "Sibling" | "Friend" | "Other";
+  primaryPhone: string;
+  alternatePhone?: string;
+  email?: string;
+  address?: string;
+}
+
+export interface BankAccountItem {
+  id: string;
+  bankName: string;
+  accountHolder: string;
+  accountNumber: string;
+  ifscCode: string;
+  accountType: "SAVINGS" | "CURRENT";
+  isPrimary: boolean;
+}
+
+export interface Employee {
+  id: string;
+  name: string; // computed from firstName + lastName
+  firstName?: string;
+  lastName?: string;
+  email: string;
+  role: string; // designation
+  department: "Engineering" | "Design" | "Marketing" | "Sales" | "HR" | "Finance" | string;
+  systemRole?: SystemRole;
+  manager?: string;
+  status: "Active" | "On Leave" | "Probation" | "Notice";
+  joinedAt: string;
+  salary: number;
+  performance?: number;
+  productivity?: number;
+  attendanceRate?: number;
+  burnoutRisk?: "low" | "medium" | "high";
+  avatar?: string;
+  phone?: string;
+  location?: string;
+
+  // 11-Tab Details
+  gender?: "Male" | "Female" | "Other" | "Prefer not to say";
+  dob?: string;
+  bloodGroup?: "A+" | "A-" | "B+" | "B-" | "O+" | "O-" | "AB+" | "AB-";
+  maritalStatus?: "Single" | "Married" | "Divorced" | "Widowed";
+  photoUrl?: string;
+
+  personalEmail?: string;
+  companyWorkEmail?: string;
+  alternatePhone?: string;
+
+  designation?: string;
+  employmentType?: "FULL_TIME" | "PART_TIME" | "CONTRACT" | "INTERN";
+  joiningDate?: string;
+  reportingManager?: string;
+  shift?: "General" | "Morning" | "Evening" | "Night";
+  team?: string;
+  branchOffice?: string;
+  workLocation?: "Onsite" | "Remote" | "Hybrid";
+  probationPeriod?: number; // months
+  capacity?: number; // %
+  costCenterId?: string;
+  portalRole?: "employee" | "manager" | "hr" | "admin";
+  leaveGroup?: string;
+
+  ctc?: number;
+  basicSalary?: number;
+  hra?: number;
+  bonus?: number;
+  pfDeduction?: number;
+  esiDeduction?: number;
+  profTax?: number;
+
+  addresses?: AddressItem[];
+  kycDocuments?: KycDocumentItem[];
+  education?: EducationItem[];
+  workExperience?: WorkExperienceItem[];
+  skills?: SkillItem[];
+  emergencyContacts?: EmergencyContactItem[];
+  bankAccounts?: BankAccountItem[];
+}
+
+export interface LeaveRequest {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  department?: string;
+  type: "Sick" | "Vacation" | "Remote" | "Personal" | "Casual Leave (CL)" | "Sick Leave (SL)" | "Earned / Privilege Leave (EL)" | "Compensatory Off (Comp-Off)" | string;
+  from?: string;
+  to?: string;
+  startDate?: string;
+  endDate?: string;
+  days: number;
+  status: "Pending" | "Approved" | "Denied" | "Rejected";
+  reason?: string;
+  createdAt?: string;
+}
+
+export interface Candidate {
+  id: string;
+  name: string;
+  role: string;
+  stage: "Applied" | "Screening" | "Interview" | "Offer" | "Hired" | "Rejected";
+  aiScore: number;
+  appliedAt: string;
+  source: "LinkedIn" | "Referral" | "Website" | "Indeed";
+  email?: string;
+  phone?: string;
+  experience?: string;
+  skills?: string[];
+  notes?: string;
+}
+
+export interface DocItem {
+  id: string;
+  name: string;
+  category: "Policy" | "Contract" | "Report" | "Personal" | "Compliance";
+  size: string;
+  updatedAt: string;
+  author: string;
+  status?: "Verified" | "Pending" | "Archived";
+  url?: string;
+}
+
+export interface Department {
+  id: string;
+  name: string;
+  code: string;
+  head: string;
+  employeeCount: number;
+  budget: number;
+  location: string;
+}
+
+export interface AttendanceRecord {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  date: string;
+  status: "Present" | "Absent" | "Late" | "Remote" | "Leave";
+  checkIn: string;
+  checkOut: string;
+  hours: number;
+  location?: string;
+}
+
+export interface PayrollRow {
+  employeeId: string;
+  name: string;
+  department: string;
+  base: number;
+  bonus: number;
+  deductions: number;
+  net: number;
+  status: "Paid" | "Pending" | "Processing";
+  payDate?: string;
+}

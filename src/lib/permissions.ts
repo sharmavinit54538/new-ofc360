@@ -1,0 +1,347 @@
+import { SystemRole } from "@/stores/authStore";
+
+export type SystemModule =
+  | "dashboard"
+  | "profile"
+  | "my_team"
+  | "employees"
+  | "departments"
+  | "attendance"
+  | "leave"
+  | "payroll"
+  | "recruitment"
+  | "hiring_planning"
+  | "performance"
+  | "training"
+  | "engagement"
+  | "culture"
+  | "compliance"
+  | "documents"
+  | "onboarding"
+  | "exit"
+  | "analytics"
+  | "intelligence_hub"
+  | "rbac"
+  | "system_settings"
+  | "audit_logs"
+  | "helpdesk"
+  | "it_access"
+  | "reports"
+  | "talent_intelligence"
+  | "resource_intelligence"
+  | "people"
+  | "employee_experience"
+  | "super_admin"
+  | "platform_companies"
+  | "platform_users"
+  | "platform_subscriptions"
+  | "platform_analytics"
+  | "platform_system"
+  | "platform_security";
+
+export type ActionCapability =
+  | "view"
+  | "create"
+  | "edit"
+  | "delete"
+  | "approve"
+  | "export"
+  | "manage";
+
+export interface PermissionDefinition {
+  module: SystemModule;
+  actions: ActionCapability[];
+}
+
+export interface RoleConfig {
+  id: SystemRole;
+  name: string;
+  description: string;
+  scopeLabel: string;
+  allowedModules: SystemModule[];
+  permissions: Record<string, ActionCapability[]>;
+}
+
+export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
+  employee: {
+    id: "employee",
+    name: "Employee",
+    description: "Self-service access to personal attendance punches, regularization, leave, payslips, documents, onboarding, and helpdesk support.",
+    scopeLabel: "Employee Self-Service Portal",
+    allowedModules: [
+      "attendance",
+      "leave",
+      "payroll",
+      "documents",
+      "onboarding",
+      "helpdesk",
+    ],
+    permissions: {
+      attendance: ["view", "create"],
+      leave: ["view", "create"],
+      payroll: ["view"],
+      documents: ["view"],
+      onboarding: ["view", "edit"],
+      helpdesk: ["view", "create"],
+    },
+  },
+  manager: {
+    id: "manager",
+    name: "Manager",
+    description: "Team management scope for reviewing team goals, approving attendance regularization, approving leave, and evaluating team performance.",
+    scopeLabel: "Team Scope",
+    allowedModules: [
+      "profile",
+      "my_team",
+      "attendance",
+      "leave",
+      "performance",
+      "engagement",
+      "documents",
+      "helpdesk",
+    ],
+    permissions: {
+      profile: ["view", "edit"],
+      my_team: ["view"],
+      attendance: ["view", "approve"],
+      leave: ["view", "approve"],
+      performance: ["view", "create", "edit"],
+      engagement: ["view"],
+      documents: ["view"],
+      helpdesk: ["view", "create"],
+    },
+  },
+  hr_admin: {
+    id: "hr_admin",
+    name: "HR / Admin",
+    description: "Full HR operational authority for employee lifecycle, departments, payroll, and compliance.",
+    scopeLabel: "Organization HR Scope",
+    allowedModules: [
+      "dashboard",
+      "people",
+      "employees",
+      "departments",
+      "attendance",
+      "leave",
+      "payroll",
+      "recruitment",
+      "hiring_planning",
+      "performance",
+      "training",
+      "engagement",
+      "culture",
+      "compliance",
+      "documents",
+      "onboarding",
+      "exit",
+      "analytics",
+      "intelligence_hub",
+      "talent_intelligence",
+      "resource_intelligence",
+      "employee_experience",
+      "system_settings",
+      "helpdesk",
+      "reports",
+    ],
+    permissions: {
+      dashboard: ["view"],
+      people: ["view", "create", "edit", "delete", "export", "manage"],
+      employees: ["view", "create", "edit", "delete", "export", "manage"],
+      departments: ["view", "create", "edit", "delete", "manage"],
+      attendance: ["view", "edit", "approve", "export"],
+      leave: ["view", "create", "edit", "approve", "export"],
+      payroll: ["view", "create", "edit", "approve", "export"],
+      recruitment: ["view", "create", "edit", "manage"],
+      hiring_planning: ["view", "create", "edit"],
+      performance: ["view", "create", "edit", "manage"],
+      training: ["view", "create", "edit"],
+      engagement: ["view", "create"],
+      culture: ["view"],
+      compliance: ["view", "create", "edit", "manage"],
+      documents: ["view", "create", "edit", "delete"],
+      onboarding: ["view", "create", "edit"],
+      exit: ["view", "create", "edit"],
+      analytics: ["view", "export"],
+      intelligence_hub: ["view"],
+      talent_intelligence: ["view", "manage"],
+      resource_intelligence: ["view", "manage"],
+      employee_experience: ["view", "manage"],
+      system_settings: ["view", "edit", "manage"],
+      helpdesk: ["view", "create", "edit", "manage"],
+      reports: ["view", "export"],
+    },
+  },
+  cxo: {
+    id: "cxo",
+    name: "Executive / CXO",
+    description: "Strategic executive insight into workforce health, organizational analytics, and AI recommendations.",
+    scopeLabel: "Executive Insights",
+    allowedModules: [
+      "dashboard",
+      "people",
+      "departments",
+      "analytics",
+      "intelligence_hub",
+      "talent_intelligence",
+      "resource_intelligence",
+      "employee_experience",
+      "system_settings",
+      "reports",
+      "culture",
+      "compliance",
+    ],
+    permissions: {
+      dashboard: ["view", "export"],
+      people: ["view"],
+      departments: ["view"],
+      analytics: ["view", "export"],
+      intelligence_hub: ["view"],
+      talent_intelligence: ["view"],
+      resource_intelligence: ["view"],
+      employee_experience: ["view"],
+      system_settings: ["view", "edit"],
+      reports: ["view", "export"],
+      culture: ["view"],
+      compliance: ["view"],
+    },
+  },
+  it_admin: {
+    id: "it_admin",
+    name: "IT / System Admin",
+    description: "Technical system management, SSO, MFA, RBAC permission matrices, integrations, and audit logs.",
+    scopeLabel: "System & Infrastructure",
+    allowedModules: [
+      "dashboard",
+      "it_access",
+      "resource_intelligence",
+      "rbac",
+      "system_settings",
+      "audit_logs",
+    ],
+    permissions: {
+      dashboard: ["view"],
+      it_access: ["view", "create", "edit", "delete", "manage"],
+      resource_intelligence: ["view", "manage"],
+      rbac: ["view", "create", "edit", "delete", "manage"],
+      system_settings: ["view", "edit", "manage"],
+      audit_logs: ["view", "export"],
+    },
+  },
+  super_admin: {
+    id: "super_admin",
+    name: "Super Admin",
+    description: "Ultimate platform administrator with global multi-tenant control, subscriptions, infrastructure health, and security governance.",
+    scopeLabel: "Global Platform Administration",
+    allowedModules: [
+      "dashboard",
+      "super_admin",
+      "platform_companies",
+      "platform_users",
+      "platform_subscriptions",
+      "platform_analytics",
+      "platform_system",
+      "platform_security",
+      "people",
+      "employees",
+      "departments",
+      "attendance",
+      "leave",
+      "payroll",
+      "recruitment",
+      "hiring_planning",
+      "performance",
+      "training",
+      "engagement",
+      "culture",
+      "compliance",
+      "documents",
+      "onboarding",
+      "exit",
+      "analytics",
+      "intelligence_hub",
+      "talent_intelligence",
+      "resource_intelligence",
+      "employee_experience",
+      "system_settings",
+      "helpdesk",
+      "reports",
+      "it_access",
+      "rbac",
+      "audit_logs",
+    ],
+    permissions: {
+      dashboard: ["view", "export"],
+      super_admin: ["view", "create", "edit", "delete", "approve", "export", "manage"],
+      platform_companies: ["view", "create", "edit", "delete", "manage", "export"],
+      platform_users: ["view", "create", "edit", "delete", "manage", "export"],
+      platform_subscriptions: ["view", "create", "edit", "delete", "manage", "export"],
+      platform_analytics: ["view", "export"],
+      platform_system: ["view", "edit", "manage", "export"],
+      platform_security: ["view", "edit", "manage", "export"],
+      people: ["view", "create", "edit", "delete", "export", "manage"],
+      employees: ["view", "create", "edit", "delete", "export", "manage"],
+      departments: ["view", "create", "edit", "delete", "manage"],
+      attendance: ["view", "edit", "approve", "export"],
+      leave: ["view", "create", "edit", "approve", "export"],
+      payroll: ["view", "create", "edit", "approve", "export"],
+      recruitment: ["view", "create", "edit", "manage"],
+      hiring_planning: ["view", "create", "edit"],
+      performance: ["view", "create", "edit", "manage"],
+      training: ["view", "create", "edit"],
+      engagement: ["view", "create"],
+      culture: ["view"],
+      compliance: ["view", "create", "edit", "manage"],
+      documents: ["view", "create", "edit", "delete"],
+      onboarding: ["view", "create", "edit"],
+      exit: ["view", "create", "edit"],
+      analytics: ["view", "export"],
+      intelligence_hub: ["view"],
+      talent_intelligence: ["view", "manage"],
+      resource_intelligence: ["view", "manage"],
+      employee_experience: ["view", "manage"],
+      system_settings: ["view", "edit", "manage"],
+      helpdesk: ["view", "create", "edit", "manage"],
+      reports: ["view", "export"],
+      it_access: ["view", "create", "edit", "delete", "manage"],
+      rbac: ["view", "create", "edit", "delete", "manage"],
+      audit_logs: ["view", "export"],
+    },
+  },
+};
+
+/**
+ * Checks whether a given role can view/access a module.
+ */
+export function hasModuleAccess(role: SystemRole, module: SystemModule): boolean {
+  const config = ROLE_CONFIGS[role];
+  if (!config) return false;
+  return config.allowedModules.includes(module);
+}
+
+/**
+ * Checks whether a given role has permission to perform an action on a module.
+ */
+export function hasPermission(
+  role: SystemRole,
+  module: SystemModule,
+  action: ActionCapability
+): boolean {
+  const config = ROLE_CONFIGS[role];
+  if (!config) return false;
+  if (!config.allowedModules.includes(module)) return false;
+  const actions = config.permissions[module];
+  if (!actions) return false;
+  return actions.includes(action);
+}
+
+/**
+ * Returns allowed permissions for a specific role and module.
+ */
+export function getModulePermissions(
+  role: SystemRole,
+  module: SystemModule
+): ActionCapability[] {
+  const config = ROLE_CONFIGS[role];
+  if (!config || !config.permissions[module]) return [];
+  return config.permissions[module];
+}

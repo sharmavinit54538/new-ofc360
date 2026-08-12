@@ -1,0 +1,23 @@
+# Production Robots.txt for OFC360 (EquinoxSphere)
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /about/equinoxsphere
+Allow: /founders
+Allow: /founders/vinit-sharma
+Allow: /founders/banoth-siddarth
+Allow: /features
+Allow: /pricing
+Allow: /faq
+Allow: /contact
+Allow: /careers
+Allow: /blog
+
+Disallow: /dashboard
+Disallow: /employee/
+Disallow: /manager/
+Disallow: /executive/
+Disallow: /it-admin/
+Disallow: /settings
+
+Sitemap: https://www.ofc360.com/sitemap.xml
