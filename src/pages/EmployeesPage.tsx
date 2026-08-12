@@ -55,6 +55,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { roleLabels } from "@/features/auth/authTypes";
 import { type Employee } from "@/types/hr";
 import EmployeeFormDialog from "@/components/employees/EmployeeFormDialog";
+import { normalizeError } from "@/services/api/normalizeError";
 import { toast } from "sonner";
 
 const getStatusBadgeStyle = (status?: string) => {
@@ -115,14 +116,8 @@ export default function EmployeesPage() {
       setEditingEmp(null);
     } catch (err: any) {
       console.error("Save employee error:", err);
-      const errMsg =
-        err?.data?.message ||
-        err?.data?.error ||
-        (Array.isArray(err?.data?.errors) ? err.data.errors.join(", ") : undefined) ||
-        err?.error ||
-        err?.message ||
-        "Failed to save employee. Please check required fields.";
-      toast.error(typeof errMsg === "string" ? errMsg : JSON.stringify(errMsg));
+      const norm = normalizeError(err);
+      toast.error(norm.message);
     }
   };
 
@@ -132,8 +127,8 @@ export default function EmployeesPage() {
       toast.success(`User ${name} removed`);
     } catch (err: any) {
       console.error("Delete employee error:", err);
-      const errMsg = err?.data?.message || err?.message || "Failed to remove employee. Please try again.";
-      toast.error(errMsg);
+      const norm = normalizeError(err);
+      toast.error(norm.message || "Failed to remove employee. Please try again.");
     }
   };
 
@@ -143,8 +138,8 @@ export default function EmployeesPage() {
       toast.success(`Invitation sent to ${name}`);
     } catch (err: any) {
       console.error("Send invite error:", err);
-      const errMsg = err?.data?.message || err?.message || `Failed to send invitation to ${name}`;
-      toast.error(errMsg);
+      const norm = normalizeError(err);
+      toast.error(norm.message || `Failed to send invitation to ${name}`);
     }
   };
 
@@ -158,8 +153,9 @@ export default function EmployeesPage() {
         await activateEmployeeApi(emp.id).unwrap();
         toast.success(`Activated account for ${emp.name}`);
       }
-    } catch {
-      toast.error(`Failed to update status for ${emp.name}`);
+    } catch (err: any) {
+      const norm = normalizeError(err);
+      toast.error(norm.message || `Failed to update status for ${emp.name}`);
     }
   };
 
@@ -171,8 +167,9 @@ export default function EmployeesPage() {
       } else {
         toast.success(`Password reset link sent to ${name}`);
       }
-    } catch {
-      toast.error(`Failed to reset password for ${name}`);
+    } catch (err: any) {
+      const norm = normalizeError(err);
+      toast.error(norm.message || `Failed to reset password for ${name}`);
     }
   };
 

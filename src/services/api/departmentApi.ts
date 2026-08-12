@@ -167,6 +167,19 @@ export const departmentApi = baseApi.injectEndpoints({
         url: `/api/v1/departments/${id}`,
         method: "DELETE",
       }),
+      onQueryStarted: async (id, { queryFulfilled }) => {
+        console.log(`[deleteDepartment] Starting deletion for department ID: ${id}`);
+        try {
+          const result = await queryFulfilled;
+          console.log(`[deleteDepartment] Successfully deleted department ${id}:`, result.data);
+        } catch (error: any) {
+          const errorData = error?.error?.data || error?.data || error?.error || error;
+          console.error(`[deleteDepartment] Failed to delete department ${id}:`, errorData);
+          if (errorData?.detail) {
+            console.error(`[deleteDepartment] FastAPI validation / constraint details:`, errorData.detail);
+          }
+        }
+      },
       transformResponse: (raw: any, _meta, arg) => {
         const payload = raw?.data !== undefined ? raw.data : raw;
         if (payload && typeof payload === "object" && "success" in payload) {

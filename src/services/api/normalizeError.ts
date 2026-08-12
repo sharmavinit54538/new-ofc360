@@ -19,6 +19,72 @@ const DEFAULT_ERROR_MESSAGES: Record<number, string> = {
   504: "Gateway Timeout: Upstream server failed to respond in time.",
 };
 
+function extractErrorMessage(
+  data: Record<string, unknown>,
+  fallbackMessage: string
+): { message: string; details?: Record<string, unknown> } {
+  let details: Record<string, unknown> | undefined = undefined;
+
+  if (data.details && typeof data.details === "object" && !Array.isArray(data.details)) {
+    details = data.details as Record<string, unknown>;
+  }
+
+  // 1. Array or object of validation errors in data.errors (e.g. Laravel / Express / Zod)
+  if (data.errors) {
+    if (Array.isArray(data.errors) && data.errors.length > 0) {
+      const msgs = data.errors.map((e: any) => {
+        if (typeof e === "string") return e;
+        if (e && typeof e === "object") {
+          return e.message || e.msg || (e.field ? `${e.field}: ${e.message || "invalid"}` : JSON.stringify(e));
+        }
+        return String(e);
+      });
+      return { message: msgs.join(" | "), details: details || (data.errors as any) };
+    } else if (typeof data.errors === "object" && Object.keys(data.errors).length > 0) {
+      const errObj = data.errors as Record<string, any>;
+      const fieldMsgs = Object.entries(errObj).map(([field, val]) => {
+        const valText = Array.isArray(val)
+          ? val.join(", ")
+          : typeof val === "object"
+          ? JSON.stringify(val)
+          : String(val);
+        return `${field}: ${valText}`;
+      });
+      return { message: fieldMsgs.join(" | "), details: details || errObj };
+    }
+  }
+
+  // 2. data.detail (FastAPI / DRF format)
+  if (Array.isArray(data.detail) && data.detail.length > 0) {
+    const detailMsgs = data.detail.map((item: any) => {
+      if (typeof item === "string") return item;
+      const field = Array.isArray(item?.loc) ? item.loc[item.loc.length - 1] : item?.field || "";
+      const msg = item?.msg || item?.message || "invalid value";
+      return field ? `${field}: ${msg}` : msg;
+    });
+    return { message: detailMsgs.join(" | "), details };
+  } else if (typeof data.detail === "string" && data.detail.trim().length > 0) {
+    return { message: data.detail, details };
+  }
+
+  // 3. data.message as Array (NestJS class-validator format)
+  if (Array.isArray(data.message) && data.message.length > 0) {
+    return { message: data.message.join(" | "), details };
+  }
+
+  // 4. data.message as string
+  if (typeof data.message === "string" && data.message.trim().length > 0) {
+    return { message: data.message, details };
+  }
+
+  // 5. data.error as string
+  if (typeof data.error === "string" && data.error.trim().length > 0) {
+    return { message: data.error, details };
+  }
+
+  return { message: fallbackMessage, details };
+}
+
 export function normalizeError(error: unknown): ApiError {
   if (!error) {
     return {
@@ -52,29 +118,15 @@ export function normalizeError(error: unknown): ApiError {
         message = "Request Timeout: Server took too long to respond.";
       }
 
-      // Check if server payload provided detail/message
+      // Check if server payload provided detail/message/errors
       if (errObj.data && typeof errObj.data === "object") {
         const data = errObj.data as Record<string, unknown>;
-        if (typeof data.message === "string" && data.message.trim().length > 0) {
-          message = data.message;
-        } else if (typeof data.error === "string" && data.error.trim().length > 0) {
-          message = data.error;
-        } else if (typeof data.detail === "string" && data.detail.trim().length > 0) {
-          message = data.detail;
-        } else if (Array.isArray(data.detail) && data.detail.length > 0) {
-          message = data.detail
-            .map((item: any) => {
-              const field = Array.isArray(item?.loc) ? item.loc[item.loc.length - 1] : "";
-              const msg = item?.msg || "invalid value";
-              return field ? `${field}: ${msg}` : msg;
-            })
-            .join(" | ");
-        }
+        const extracted = extractErrorMessage(data, message);
+        message = extracted.message;
+        details = extracted.details;
+
         if (typeof data.code === "string") {
           code = data.code;
-        }
-        if (data.details && typeof data.details === "object") {
-          details = data.details as Record<string, unknown>;
         }
       }
 
