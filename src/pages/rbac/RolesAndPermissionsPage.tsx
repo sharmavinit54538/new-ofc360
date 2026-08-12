@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useAuthStore, roleLabels, SystemRole } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
+import { roleLabels, SystemRole } from "@/features/auth/authTypes";
 import { ROLE_CONFIGS, SystemModule, ActionCapability } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,7 +44,7 @@ const matrixActions: { key: ActionCapability; label: string }[] = [
 ];
 
 export default function RolesAndPermissionsPage() {
-  const { user, setRole } = useAuthStore();
+  const { user, setRole } = useAuth();
   const [selectedRole, setSelectedRole] = useState<SystemRole>(user?.role || "hr_admin");
 
   const config = ROLE_CONFIGS[selectedRole];

@@ -43,7 +43,7 @@ import {
   type EmergencyContactItem,
   type BankAccountItem
 } from "@/types/hr";
-import { SystemRole } from "@/stores/authStore";
+import { SystemRole } from "@/features/auth/authTypes";
 import { toast } from "sonner";
 
 interface EmployeeFormDialogProps {

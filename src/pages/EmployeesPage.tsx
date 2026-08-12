@@ -38,7 +38,8 @@ import {
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { useEmployeeStore } from "@/stores/employeeStore";
-import { useAuthStore, roleLabels, SystemRole } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
+import { roleLabels, SystemRole } from "@/features/auth/authTypes";
 import { type Employee } from "@/types/hr";
 import EmployeeFormDialog from "@/components/employees/EmployeeFormDialog";
 import { toast } from "sonner";
@@ -51,7 +52,7 @@ const statusStyle: Record<string, string> = {
 };
 
 export default function EmployeesPage() {
-  const { setRole } = useAuthStore();
+  const { setRole } = useAuth();
   const {
     employees,
     searchQuery,

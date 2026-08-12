@@ -1,4 +1,4 @@
-import { SystemRole } from "@/stores/authStore";
+import { SystemRole } from "@/features/auth/authTypes";
 
 export type SystemModule =
   | "dashboard"

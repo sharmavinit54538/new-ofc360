@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
 import { useHRAdminOnboardingStore } from "@/stores/hrAdminOnboardingStore";
 import { StepCompanyDetails } from "@/components/onboarding/StepCompanyDetails";
 import { StepHRAdminProfile } from "@/components/onboarding/StepHRAdminProfile";
@@ -37,7 +37,7 @@ const STEP_LABELS = [
 
 export default function HRAdminOnboardingPage() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const companyId = user?.id || "default_company";
 
   const {

@@ -8,13 +8,14 @@ import {
   Boxes, Settings, Globe, Award, Key, Zap, FileCode2, Server, Cpu, Lock,
   Activity, ShieldAlert
 } from "lucide-react";
-import { useAuthStore, SystemRole } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
+import { SystemRole } from "@/features/auth/authTypes";
 import { usePayrollStore } from "@/stores/payrollStore";
 import { getCurrencyIcon } from "@/utils/currency";
 
 export function AppSidebar({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   const location = useLocation();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const currentRole: SystemRole = user?.role || "hr_admin";
   const payrollSettings = usePayrollStore((state) => state.settings);
   const PayrollIcon = getCurrencyIcon(payrollSettings?.currency);

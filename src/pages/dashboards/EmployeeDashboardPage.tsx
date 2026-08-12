@@ -1,4 +1,4 @@
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
 import { usePayrollStore } from "@/stores/payrollStore";
 import { useLeaveStore } from "@/stores/leaveStore";
 import { RoleGuard } from "@/components/auth/RoleGuard";
@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 
 export default function EmployeeDashboardPage() {
-  const user = useAuthStore((s) => s.user);
+  const { user } = useAuth();
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const { payslips } = usePayrollStore();
   const { leaveRequests } = useLeaveStore();

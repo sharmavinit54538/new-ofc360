@@ -12,7 +12,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useAuthStore, SystemRole, roleLabels } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
+import { SystemRole, roleLabels } from "@/features/auth/authTypes";
 import { toast } from "sonner";
 
 interface ActiveSession {
@@ -25,7 +26,7 @@ interface ActiveSession {
 }
 
 export default function AccessPage() {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
 
   // Initialize active session dynamically from authenticated user state

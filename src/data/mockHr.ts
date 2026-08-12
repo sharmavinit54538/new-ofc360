@@ -1,4 +1,4 @@
-import type { Role } from "@/stores/authStore";
+import type { Role } from "@/features/auth/authTypes";
 import type {
   Employee,
   Candidate,

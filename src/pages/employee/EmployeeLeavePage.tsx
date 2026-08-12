@@ -29,12 +29,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useLeaveStore } from "@/stores/leaveStore";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 export default function EmployeeLeavePage() {
   const { leaveRequests, addLeaveRequest, cancelLeaveRequest } = useLeaveStore();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
 
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [leaveType, setLeaveType] = useState<"Paid Leave" | "Casual Leave" | "Sick Leave">("Casual Leave");

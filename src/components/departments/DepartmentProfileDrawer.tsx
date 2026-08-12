@@ -15,11 +15,11 @@ import {
   Edit2,
   X,
 } from "lucide-react";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
 import { hasPermission } from "@/lib/permissions";
 
 export function DepartmentProfileDrawer() {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const currentRole = user?.role || "employee";
 
   const { selectedDepartment, isDrawerOpen, closeDrawer, openEditForm } = useDepartmentStore();

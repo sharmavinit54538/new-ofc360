@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { roleLabels, SystemRole } from "@/stores/authStore";
+import { roleLabels, SystemRole } from "@/features/auth/authTypes";
 import { useAppSelector } from "@/app/hooks";
 import { selectCurrentUser, selectCurrentRole } from "@/features/auth/authSelectors";
 import { hasModuleAccess, SystemModule } from "@/lib/permissions";

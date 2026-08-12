@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 export default function ITAdminDashboardPage() {
-  const user = useAuthStore((s) => s.user);
+  const { user } = useAuth();
 
   const [ssoEnabled, setSsoEnabled] = useState(true);
   const [mfaEnforced, setMfaEnforced] = useState(true);

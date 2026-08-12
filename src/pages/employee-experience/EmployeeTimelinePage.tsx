@@ -48,7 +48,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useEmployeeStore } from "@/stores/employeeStore";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
 import { useTimelineStore } from "@/stores/timelineStore";
 import { type TimelineCategory, type TimelineEvent } from "@/utils/timelineEngine";
 import { toast } from "sonner";
@@ -93,7 +93,7 @@ const categoryCards = [
 ];
 
 export default function EmployeeTimelinePage() {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const { employees } = useEmployeeStore();
   const {
     events,

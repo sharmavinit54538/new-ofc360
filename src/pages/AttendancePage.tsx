@@ -59,7 +59,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
 import { useEmployeeStore } from "@/stores/employeeStore";
 import { useLeaveStore } from "@/stores/leaveStore";
 import {
@@ -108,7 +108,7 @@ export default function AttendancePage() {
   const activeTab = searchParams.get("tab") || "overview";
   const setTab = (tab: string) => setSearchParams({ tab });
 
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const { employees } = useEmployeeStore();
   const { leaveRequests, addLeaveRequest, updateLeaveStatus } = useLeaveStore();
   const {

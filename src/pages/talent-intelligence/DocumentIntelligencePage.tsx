@@ -30,13 +30,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TalentIntelligenceLayout } from "@/components/talent-intelligence/TalentIntelligenceLayout";
 import { useEmployeeStore } from "@/stores/employeeStore";
 import { useDocumentStore } from "@/stores/documentStore";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 export default function DocumentIntelligencePage() {
   const { employees } = useEmployeeStore();
   const { addDocument } = useDocumentStore();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState<"studio" | "modules">("studio");
 

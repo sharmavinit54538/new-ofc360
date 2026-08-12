@@ -32,7 +32,7 @@ import {
   Area,
 } from "recharts";
 import { Link } from "react-router-dom";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
 import { useEmployeeStore } from "@/stores/employeeStore";
 import { useCandidateStore } from "@/stores/candidateStore";
 import { useDepartmentStore } from "@/stores/departmentStore";
@@ -76,7 +76,7 @@ const container = {
 };
 
 export default function DashboardPage() {
-  const user = useAuthStore((s) => s.user);
+  const { user } = useAuth();
 
   // Role-aware dashboard dispatch
   if (user?.role === "super_admin") {

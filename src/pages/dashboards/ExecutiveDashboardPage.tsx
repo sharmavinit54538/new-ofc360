@@ -1,4 +1,4 @@
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -64,7 +64,7 @@ const executiveIntelligenceModules = [
 ];
 
 export default function ExecutiveDashboardPage() {
-  const user = useAuthStore((s) => s.user);
+  const { user } = useAuth();
 
   return (
     <RoleGuard allowedRoles={["cxo", "hr_admin"]}>

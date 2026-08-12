@@ -1,5 +1,5 @@
 import { useDepartmentStore, DepartmentItem } from "@/stores/departmentStore";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
 import { hasPermission } from "@/lib/permissions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Search,
+  SlidersHorizontal,
   Building2,
   Eye,
   Edit2,
@@ -40,7 +41,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 
 export function DepartmentsTable() {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const currentRole = user?.role || "employee";
 
   const {

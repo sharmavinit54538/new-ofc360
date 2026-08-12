@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { useSuperAdminStore } from "@/stores/superAdminStore";
-import { useAuthStore } from "@/stores/authStore";
+import { store } from "@/app/store";
+import { setCredentials, setRole } from "@/features/auth/authSlice";
 import { hasModuleAccess, hasPermission, ROLE_CONFIGS } from "@/lib/permissions";
 
 describe("Super Admin RBAC & Architecture Test Suite", () => {
@@ -34,13 +35,13 @@ describe("Super Admin RBAC & Architecture Test Suite", () => {
   });
 
   it("should have all required CRUD capabilities on Super Admin store", () => {
-    const store = useSuperAdminStore.getState();
+    const adminStore = useSuperAdminStore.getState();
 
     // Zero-mock initial state
-    expect(store.companies).toBeDefined();
+    expect(adminStore.companies).toBeDefined();
 
     // Add new company
-    store.addCompany({
+    adminStore.addCompany({
       name: "Test Aerospace Corp",
       domain: "testaerospace.com",
       plan: "Enterprise",
@@ -61,23 +62,36 @@ describe("Super Admin RBAC & Architecture Test Suite", () => {
 
     // Toggle status
     if (addedCompany) {
-      store.toggleCompanyStatus(addedCompany.id);
+      adminStore.toggleCompanyStatus(addedCompany.id);
       const toggled = useSuperAdminStore.getState().companies.find((c) => c.id === addedCompany.id);
       expect(toggled?.status).toBe("Suspended");
 
       // Delete company
-      store.deleteCompany(addedCompany.id);
+      adminStore.deleteCompany(addedCompany.id);
       const deleted = useSuperAdminStore.getState().companies.find((c) => c.id === addedCompany.id);
       expect(deleted).toBeUndefined();
     }
   });
 
-  it("should correctly support role switching to super_admin in authStore", () => {
-    const auth = useAuthStore.getState();
-    auth.login("superadmin@ofc360.com", "super_admin", "Super Administrator");
+  it("should correctly support role switching to super_admin in Redux auth store", () => {
+    store.dispatch(
+      setCredentials({
+        user: {
+          id: "usr_sa_1",
+          name: "Super Administrator",
+          email: "superadmin@ofc360.com",
+          role: "super_admin",
+        },
+        token: "fake_token_sa",
+      })
+    );
 
-    const currentUser = useAuthStore.getState().user;
+    const currentUser = store.getState().auth.user;
     expect(currentUser?.role).toBe("super_admin");
     expect(currentUser?.email).toBe("superadmin@ofc360.com");
+
+    store.dispatch(setRole("super_admin"));
+    expect(store.getState().auth.role).toBe("super_admin");
   });
 });
+

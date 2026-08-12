@@ -57,7 +57,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
 import { useEmployeeStore } from "@/stores/employeeStore";
 import {
   usePayrollStore,
@@ -87,7 +87,7 @@ export default function PayrollPage() {
   const activeTab = searchParams.get("tab") || "salary-processing";
   const setTab = (tab: string) => setSearchParams({ tab });
 
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const { employees } = useEmployeeStore();
   const {
     runs,

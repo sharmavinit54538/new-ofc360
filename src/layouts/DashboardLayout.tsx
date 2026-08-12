@@ -5,7 +5,7 @@ import { TopNav } from "@/components/TopNav";
 import { FloatingAIAssistant } from "@/components/FloatingAIAssistant";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AnimatePresence, motion } from "framer-motion";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
 import { getStoredData } from "@/utils/storage";
 
 interface LayoutContextType {
@@ -20,7 +20,7 @@ export default function DashboardLayout() {
   const isMobile = useIsMobile();
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 

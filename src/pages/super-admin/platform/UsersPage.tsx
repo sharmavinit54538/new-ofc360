@@ -51,7 +51,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useSuperAdminStore, PlatformUser } from "@/stores/superAdminStore";
-import { roleLabels, SystemRole } from "@/stores/authStore";
+import { roleLabels, SystemRole } from "@/features/auth/authTypes";
 import { toast } from "sonner";
 
 export default function UsersPage() {

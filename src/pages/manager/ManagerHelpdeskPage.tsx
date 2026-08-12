@@ -21,12 +21,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useHelpdeskStore, SupportTicket } from "@/stores/helpdeskStore";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 export default function ManagerHelpdeskPage() {
   const { tickets, createTicket, addComment } = useHelpdeskStore();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [category, setCategory] = useState<SupportTicket["category"]>("HR Query");

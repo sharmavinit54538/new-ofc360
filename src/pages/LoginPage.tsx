@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuthStore, SystemRole, roleLabels } from "@/stores/authStore";
+import { SystemRole, roleLabels } from "@/features/auth/authTypes";
 import { useLoginMutation, useRegisterMutation } from "@/services/api/authApi";
 import { useAppDispatch } from "@/app/hooks";
 import { setCredentials } from "@/features/auth/authSlice";
@@ -25,7 +25,6 @@ export default function LoginPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { login: syncZustandAuth } = useAuthStore();
 
   const [loginApi, { isLoading: isLoggingIn }] = useLoginMutation();
   const [registerApi, { isLoading: isRegistering }] = useRegisterMutation();
@@ -157,7 +156,6 @@ export default function LoginPage() {
             refreshToken: res.refreshToken,
           })
         );
-        syncZustandAuth(res.user.email, res.user.role, res.user.name);
         const activeRole = res.user.role || "employee";
         toast.success(
           `Welcome back to OFC360! Signed in as ${roleLabels[activeRole] || activeRole}.`

@@ -12,12 +12,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { usePayrollStore } from "@/stores/payrollStore";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 export default function EmployeePayslipsPage() {
   const { payslips } = usePayrollStore();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
 
   // Filter payslips belonging ONLY to authenticated employee
   const myPayslips = payslips.filter(

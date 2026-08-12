@@ -4,12 +4,12 @@ import { FileText, Download, ShieldCheck, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useDocumentStore } from "@/stores/documentStore";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 export default function EmployeeDocumentsPage() {
   const { documents } = useDocumentStore();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
 
   // Filter documents assigned to current logged-in employee
   const myDocs = documents.filter((d) =>

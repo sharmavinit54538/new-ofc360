@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
-import { useAuthStore, SystemRole } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
+import { SystemRole } from "@/features/auth/authTypes";
 import { hasPermission, SystemModule, ActionCapability } from "@/lib/permissions";
 
 interface PermissionGuardProps {
@@ -15,7 +16,7 @@ export function PermissionGuard({
   children,
   fallback = null,
 }: PermissionGuardProps) {
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const currentRole: SystemRole = user?.role || "employee";
 
   const allowed = hasPermission(currentRole, module, action);

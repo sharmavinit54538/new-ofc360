@@ -1,4 +1,4 @@
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
 import { useLeaveStore } from "@/stores/leaveStore";
 import { useEmployeeStore } from "@/stores/employeeStore";
 import { RoleGuard } from "@/components/auth/RoleGuard";
@@ -21,7 +21,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 export default function ManagerDashboardPage() {
-  const user = useAuthStore((s) => s.user);
+  const { user } = useAuth();
   const { leaveRequests, approveLeaveRequest, rejectLeaveRequest } = useLeaveStore();
   const employees = useEmployeeStore((s) => s.employees);
 

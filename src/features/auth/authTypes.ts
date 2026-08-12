@@ -30,3 +30,18 @@ export interface AuthState {
   companyId: string | null;
   sessionStatus: SessionStatus;
 }
+
+export const roleLabels: Record<SystemRole, string> = {
+  employee: "Employee",
+  manager: "Manager",
+  hr_admin: "HR / Admin",
+  cxo: "Executive / CXO",
+  it_admin: "IT / System Admin",
+  super_admin: "Super Admin",
+};
+
+export const roleLabel = (r: SystemRole | "admin"): string => {
+  const norm: SystemRole = r === "admin" ? "hr_admin" : r;
+  return roleLabels[norm] || "Employee";
+};
+

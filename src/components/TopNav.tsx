@@ -27,7 +27,8 @@ import {
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuthStore, roleLabels, SystemRole } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
+import { roleLabels, SystemRole } from "@/features/auth/authTypes";
 import { Badge } from "@/components/ui/badge";
 import { BackButton } from "@/components/common/BackButton";
 import { toast } from "sonner";
@@ -56,7 +57,7 @@ export function TopNav({ onMenuClick }: TopNavProps) {
   const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout, setRole } = useAuthStore();
+  const { user, logout, setRole } = useAuth();
   const currentRole: SystemRole = user?.role || "hr_admin";
   const isRootDashboard = ROOT_DASHBOARD_PATHS.includes(location.pathname);
 

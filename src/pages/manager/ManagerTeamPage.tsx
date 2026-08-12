@@ -14,11 +14,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useEmployeeStore } from "@/stores/employeeStore";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function ManagerTeamPage() {
   const { employees } = useEmployeeStore();
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   const [search, setSearch] = useState("");
 
   // Filter employees belonging to manager's team / department
