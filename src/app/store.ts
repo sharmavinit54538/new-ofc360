@@ -4,6 +4,7 @@ import uiReducer from "@/features/ui/uiSlice";
 import companyReducer from "@/features/company/companySlice";
 import attendanceReducer from "@/features/attendance/attendanceSlice";
 import payrollUiReducer from "@/features/payroll/payrollUiSlice";
+import reportsUiReducer from "@/features/reports/reportsUiSlice";
 import { baseApi } from "@/services/api/baseApi";
 
 export const store = configureStore({
@@ -13,6 +14,7 @@ export const store = configureStore({
     company: companyReducer,
     attendance: attendanceReducer,
     payrollUi: payrollUiReducer,
+    reportsUi: reportsUiReducer,
     [baseApi.reducerPath]: baseApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>

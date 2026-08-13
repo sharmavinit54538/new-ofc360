@@ -46,6 +46,12 @@ export const API_TAGS = [
   "HRAdminNewHire",
   "HRAdminDocument",
   "HRAdminTask",
+  "Report",
+  "WorkforceReport",
+  "PerformanceReport",
+  "ComplianceReport",
+  "EngagementReport",
+  "CultureReport",
 ] as const;
 
 export type ApiTagType = (typeof API_TAGS)[number];
