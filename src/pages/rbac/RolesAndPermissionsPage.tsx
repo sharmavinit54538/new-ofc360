@@ -68,7 +68,7 @@ export default function RolesAndPermissionsPage() {
             Roles & System Permissions
           </h1>
           <p className="text-xs md:text-sm text-muted-foreground max-w-2xl">
-            Configure system authorization matrices, scope boundaries, and action capabilities across all 5 system roles.
+            Configure system authorization matrices, scope boundaries, and action capabilities across all 6 system roles.
           </p>
         </div>
 
@@ -84,7 +84,7 @@ export default function RolesAndPermissionsPage() {
       </div>
 
       {/* Role Selection Tabs */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {(Object.keys(ROLE_CONFIGS) as SystemRole[]).map((r) => {
           const roleCfg = ROLE_CONFIGS[r];
           const isSelected = selectedRole === r;

@@ -80,7 +80,7 @@ export default function UserGrowthPage() {
       employee: users.filter((u) => u.role === "employee").length,
       manager: users.filter((u) => u.role === "manager").length,
       hr_admin: users.filter((u) => u.role === "hr_admin").length,
-      cxo: users.filter((u) => u.role === "cxo").length,
+      executive: users.filter((u) => u.role === "executive" || u.role === ("cxo" as any)).length,
     };
 
     return [
@@ -89,7 +89,7 @@ export default function UserGrowthPage() {
         employee: roleCounts.employee,
         manager: roleCounts.manager,
         hr_admin: roleCounts.hr_admin,
-        cxo: roleCounts.cxo,
+        executive: roleCounts.executive,
       },
     ];
   }, [users]);
@@ -214,7 +214,7 @@ export default function UserGrowthPage() {
                   <Bar dataKey="employee" name="Employees" fill="hsl(var(--primary))" />
                   <Bar dataKey="manager" name="Managers" fill="hsl(262, 60%, 55%)" />
                   <Bar dataKey="hr_admin" name="HR Admins" fill="hsl(38, 92%, 50%)" />
-                  <Bar dataKey="cxo" name="Executives" fill="hsl(210, 80%, 55%)" />
+                  <Bar dataKey="executive" name="Executives" fill="hsl(210, 80%, 55%)" />
                 </BarChart>
               </ResponsiveContainer>
             )}

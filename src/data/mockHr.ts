@@ -1,4 +1,27 @@
-import type { Role } from "@/features/auth/authTypes";
+import type { SystemRole } from "@/features/auth/authTypes";
+
+export const aiInsightsByRole: Record<SystemRole, { tone: "positive" | "warn" | "info" | "primary"; text: string }[]> = {
+  super_admin: [
+    { tone: "positive", text: "Multi-tenant platform infrastructure 100% operational." },
+    { tone: "info", text: "Zero tenant security anomalies detected." },
+  ],
+  hr_admin: [
+    { tone: "positive", text: "OFC360 Workforce Intelligence connected and ready." },
+    { tone: "info", text: "Real-time compliance monitoring active." },
+  ],
+  executive: [
+    { tone: "positive", text: "Executive workforce forecasting synchronized." },
+  ],
+  it_admin: [
+    { tone: "positive", text: "System security and identity governance ready." },
+  ],
+  manager: [
+    { tone: "positive", text: "Team performance metrics synchronized." },
+  ],
+  employee: [
+    { tone: "positive", text: "Self-service time-off and compensation portal active." },
+  ],
+};
 import type {
   Employee,
   Candidate,
@@ -54,30 +77,3 @@ export const hiringTrend = [
   { month: "May", hired: 0, left: 0 },
   { month: "Jun", hired: 0, left: 0 },
 ];
-
-export const aiInsightsByRole: Record<Role, { tone: "positive" | "warn" | "info" | "primary"; text: string }[]> = {
-  super_admin: [
-    { tone: "positive", text: "Multi-tenant platform infrastructure 100% operational." },
-    { tone: "info", text: "Zero tenant security anomalies detected." },
-  ],
-  admin: [
-    { tone: "positive", text: "OFC360 Workforce Intelligence connected and ready." },
-    { tone: "info", text: "Real-time compliance monitoring active." },
-  ],
-  hr_admin: [
-    { tone: "positive", text: "OFC360 Workforce Intelligence connected and ready." },
-    { tone: "info", text: "Real-time compliance monitoring active." },
-  ],
-  cxo: [
-    { tone: "positive", text: "Executive workforce forecasting synchronized." },
-  ],
-  it_admin: [
-    { tone: "positive", text: "System security and identity governance ready." },
-  ],
-  manager: [
-    { tone: "positive", text: "Team performance metrics synchronized." },
-  ],
-  employee: [
-    { tone: "positive", text: "Self-service time-off and compensation portal active." },
-  ],
-};

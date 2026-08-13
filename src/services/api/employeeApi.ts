@@ -1,5 +1,6 @@
 import { baseApi } from "./baseApi";
 import { Employee } from "@/types/hr";
+import { normalizeRole } from "@/features/auth/authTypes";
 import { RawEnvelope } from "./envelope";
 
 export interface GetEmployeesQueryParams {
@@ -78,14 +79,14 @@ function buildEmployeeCreatePayload(input: any): Record<string, any> {
   ).trim();
 
   const department = (b.department || b.department_name || "General").trim();
-  const designation = (b.designation || b.role || "Employee").trim();
+  const designation = (b.designation || "Employee").trim();
   const rawDate = b.joining_date || b.joiningDate || b.joinedAt;
   const joiningDate = rawDate
     ? String(rawDate).split("T")[0]
     : new Date().toISOString().split("T")[0];
 
   const employmentType = (b.employment_type || b.employmentType || "FULL_TIME").trim();
-  const role = (b.role || b.systemRole || b.system_role || "employee").toLowerCase().trim();
+  const role = normalizeRole(b.role || b.systemRole || b.system_role || b.backendRole || "employee");
 
   const payload: Record<string, any> = {
     first_name: firstName,
@@ -306,8 +307,10 @@ function buildEmployeeUpdatePayload(input: any): Record<string, any> {
   if (alternatePhone) payload.alternate_phone = alternatePhone;
 
   if (b.department || b.department_name) payload.department = (b.department || b.department_name).trim();
-  if (b.designation || b.role) payload.designation = (b.designation || b.role).trim();
-  if (b.role || b.systemRole || b.system_role) payload.role = (b.role || b.systemRole || b.system_role).toLowerCase().trim();
+  if (b.designation) payload.designation = b.designation.trim();
+  if (b.role || b.systemRole || b.system_role || b.backendRole) {
+    payload.role = normalizeRole(b.role || b.systemRole || b.system_role || b.backendRole);
+  }
 
   const rawJoiningDate = b.joining_date || b.joiningDate || b.joinedAt;
   if (rawJoiningDate) payload.joining_date = String(rawJoiningDate).split("T")[0];
@@ -389,21 +392,16 @@ export function normalizeEmployee(raw: any): Employee {
     "General"
   ).trim();
 
-  const role = (
+  const designation = (
     raw.designation ||
-    raw.role ||
     raw.job_title ||
     raw.position ||
     "Employee"
   ).trim();
 
-  const systemRole: any = (
-    raw.systemRole ||
-    raw.system_role ||
-    (raw.role && ["super_admin", "admin", "hr_admin", "manager", "employee", "it_admin", "cxo"].includes(raw.role.toLowerCase())
-      ? raw.role.toLowerCase()
-      : "employee")
-  );
+  const rawRole = raw.role || raw.systemRole || raw.system_role || raw.backendRole;
+  const role = normalizeRole(rawRole);
+  const systemRole = role;
 
   const rawStatus = raw.status || raw.employment_status || raw.user_status || "Active";
   const status = typeof rawStatus === "string" ? rawStatus : "Active";
@@ -425,7 +423,10 @@ export function normalizeEmployee(raw: any): Employee {
     lastName: lastName || undefined,
     email,
     department,
+    designation,
     role,
+    backendRole: role,
+    portalRole: role,
     systemRole,
     status,
     salary,

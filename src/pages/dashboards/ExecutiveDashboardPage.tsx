@@ -67,7 +67,7 @@ export default function ExecutiveDashboardPage() {
   const { user } = useAuth();
 
   return (
-    <RoleGuard allowedRoles={["cxo", "hr_admin"]}>
+    <RoleGuard allowedRoles={["executive", "hr_admin"]}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-border/50">

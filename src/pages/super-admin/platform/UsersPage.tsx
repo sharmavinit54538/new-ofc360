@@ -51,7 +51,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useSuperAdminStore, PlatformUser } from "@/stores/superAdminStore";
-import { roleLabels, SystemRole } from "@/features/auth/authTypes";
+import { roleLabels, SystemRole, ROLE_OPTIONS } from "@/features/auth/authTypes";
 import { toast } from "sonner";
 
 export default function UsersPage() {
@@ -221,11 +221,11 @@ export default function UsersPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">All Roles</SelectItem>
-              <SelectItem value="hr_admin">HR Admin</SelectItem>
-              <SelectItem value="manager">Manager</SelectItem>
-              <SelectItem value="cxo">Executive / CXO</SelectItem>
-              <SelectItem value="employee">Employee</SelectItem>
-              <SelectItem value="it_admin">IT Admin</SelectItem>
+              {ROLE_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
@@ -396,11 +396,11 @@ export default function UsersPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="hr_admin">HR Admin</SelectItem>
-                    <SelectItem value="manager">Manager</SelectItem>
-                    <SelectItem value="cxo">Executive / CXO</SelectItem>
-                    <SelectItem value="employee">Employee</SelectItem>
-                    <SelectItem value="it_admin">IT Admin</SelectItem>
+                    {ROLE_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -489,11 +489,11 @@ export default function UsersPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="hr_admin">HR Admin</SelectItem>
-                    <SelectItem value="manager">Manager</SelectItem>
-                    <SelectItem value="cxo">Executive / CXO</SelectItem>
-                    <SelectItem value="employee">Employee</SelectItem>
-                    <SelectItem value="it_admin">IT Admin</SelectItem>
+                    {ROLE_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

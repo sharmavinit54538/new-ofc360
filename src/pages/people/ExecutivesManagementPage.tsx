@@ -60,9 +60,9 @@ export default function ExecutivesManagementPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingExec, setEditingExec] = useState<Employee | null>(null);
 
-  // Executives are employees with systemRole === 'cxo'
+  // Executives are employees with systemRole === 'executive'
   const executives = employees.filter(
-    (e) => (e.systemRole || "employee") === "cxo"
+    (e) => (e.systemRole || (e as any).role || "employee") === "executive"
   );
 
   const filtered = executives.filter((ex) => {
@@ -88,9 +88,9 @@ export default function ExecutivesManagementPage() {
 
   const handleSave = (empData: Omit<Employee, "id">) => {
     if (editingExec) {
-      updateEmployee(editingExec.id, { ...empData, systemRole: "cxo" });
+      updateEmployee(editingExec.id, { ...empData, role: "executive", systemRole: "executive" });
     } else {
-      addEmployee({ ...empData, systemRole: "cxo" });
+      addEmployee({ ...empData, role: "executive", systemRole: "executive" });
     }
   };
 
@@ -264,8 +264,8 @@ export default function ExecutivesManagementPage() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => {
-                              setRole("cxo");
-                              toast.success(`Switched active view to Executive CXO Dashboard (${ex.name})`);
+                              setRole("executive");
+                              toast.success(`Switched active view to Executive Dashboard (${ex.name})`);
                             }}
                             className="text-xs gap-2 text-teal-600 dark:text-teal-400 font-semibold cursor-pointer py-2"
                           >
@@ -289,11 +289,11 @@ export default function ExecutivesManagementPage() {
         </Table>
       </div>
 
-      {/* Employee Form Dialog with Preset CXO Role */}
+      {/* Employee Form Dialog with Preset Executive Role */}
       <EmployeeFormDialog
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
-        employee={editingExec ? editingExec : ({ systemRole: "cxo" } as any)}
+        employee={editingExec ? editingExec : ({ role: "executive", systemRole: "executive" } as any)}
         onSave={handleSave}
       />
     </motion.div>

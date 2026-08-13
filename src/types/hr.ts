@@ -74,7 +74,7 @@ export interface Employee {
   firstName?: string;
   lastName?: string;
   email: string;
-  role: string; // designation
+  role: SystemRole;
   department: "Engineering" | "Design" | "Marketing" | "Sales" | "HR" | "Finance" | string;
   systemRole?: SystemRole;
   manager?: string;
@@ -111,7 +111,7 @@ export interface Employee {
   probationPeriod?: number; // months
   capacity?: number; // %
   costCenterId?: string;
-  portalRole?: "employee" | "manager" | "hr" | "admin";
+  portalRole?: SystemRole;
   leaveGroup?: string;
 
   ctc?: number;

@@ -88,7 +88,7 @@ export default function DashboardPage() {
   if (user?.role === "manager") {
     return <ManagerDashboardPage />;
   }
-  if (user?.role === "cxo") {
+  if (user?.role === "executive") {
     return <ExecutiveDashboardPage />;
   }
   if (user?.role === "it_admin") {

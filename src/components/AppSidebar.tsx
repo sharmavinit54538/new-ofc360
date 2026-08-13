@@ -69,7 +69,7 @@ export function AppSidebar({ open, onToggle }: { open: boolean; onToggle: () => 
           },
         ];
 
-      case "cxo":
+      case "executive":
         return [
           {
             sectionTitle: "Executive",

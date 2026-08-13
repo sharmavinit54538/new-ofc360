@@ -50,44 +50,162 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useATSStore } from "@/stores/atsStore";
 import { useATSAnalysisStore } from "@/stores/atsAnalysisStore";
 import {
-  parseResumeContent,
-  analyzeResumeAgainstJob,
-  type ATSAnalysisResult,
-  type ParsedResumeData,
-} from "@/utils/atsScoringEngine";
+  useGetRecruitmentJobsQuery,
+  useUploadResumeForScreeningMutation,
+  type BackendCandidateScreeningResponse,
+} from "@/services/api/recruitmentApi";
+import { type ATSAnalysisResult } from "@/utils/atsScoringEngine";
 import { toast } from "sonner";
 
+/**
+ * Maps the backend CandidateScreeningResponse into the frontend ATSAnalysisResult
+ * format so the existing results UI continues to work.
+ */
+function mapBackendToATSResult(
+  backend: BackendCandidateScreeningResponse,
+  jobTitle: string,
+  jobDepartment: string,
+  requiredExperienceYears: number
+): ATSAnalysisResult {
+  const cd = backend.candidate_details;
+  const ab = backend.ats_breakdown;
+  const ai = backend.ai_insights;
+
+  const overallScore = Math.round(ab.overall_ats_score);
+
+  let recruiterRecommendation: ATSAnalysisResult["recruiterRecommendation"] = "Strong Match";
+  if (overallScore >= 85) recruiterRecommendation = "Strong Match";
+  else if (overallScore >= 75) recruiterRecommendation = "Good Match";
+  else if (overallScore >= 65) recruiterRecommendation = "Potential Match";
+  else if (overallScore >= 50) recruiterRecommendation = "Weak Match";
+  else recruiterRecommendation = "Not Recommended";
+
+  const candidateYears = cd.total_experience_years || 0;
+  let expMatchLevel: "Strong Match" | "Good Match" | "Partial Match" | "Needs Experience" = "Strong Match";
+  if (candidateYears >= requiredExperienceYears) expMatchLevel = "Strong Match";
+  else if (candidateYears >= requiredExperienceYears - 1) expMatchLevel = "Good Match";
+  else if (candidateYears >= requiredExperienceYears - 2) expMatchLevel = "Partial Match";
+  else expMatchLevel = "Needs Experience";
+
+  return {
+    id: `ATS-${backend.candidate_id.slice(-6)}`,
+    analyzedAt: new Date(backend.created_at).toLocaleString(),
+    candidate: {
+      candidateName: cd.candidate_name || "Unknown Candidate",
+      email: cd.email || "",
+      phone: cd.phone || "",
+      location: cd.current_location || cd.address || "",
+      summary: cd.summary || ai.candidate_summary || "",
+      extractedSkills: cd.skills || [],
+      technicalSkills: cd.technical_skills || [],
+      softSkills: cd.soft_skills || [],
+      totalExperienceYears: candidateYears,
+      workExperience: (cd.work_history || []).map((w) => ({
+        title: w.designation || "Role",
+        company: w.company,
+        duration: w.duration_months ? `${Math.round(w.duration_months / 12 * 10) / 10} Yrs` : (w.start_date && w.end_date ? `${w.start_date} - ${w.end_date}` : ""),
+        highlights: w.description ? [w.description] : [],
+      })),
+      education: (cd.education || []).map((e) => ({
+        degree: e.degree || "",
+        institution: e.university || e.college || "",
+        year: e.passing_year ? String(e.passing_year) : "",
+      })),
+      certifications: cd.certifications || [],
+      projects: (cd.projects || []).map((p) => p.title),
+      formatHealth: {
+        contactInfoComplete: !!(cd.email && cd.phone),
+        hasSummary: !!(cd.summary && cd.summary.length > 50),
+        hasClearHeadings: true,
+        fontReadabilityScore: Math.round(ab.formatting_quality || 90),
+        atsParsingHealth: backend.quality_analysis.is_valid ? "Good" : "Warning",
+        formattingFlags: backend.quality_analysis.issues || [],
+      },
+    },
+    jobTitle,
+    jobDepartment,
+    requiredExperienceYears,
+    overallScore,
+    scoreBreakdown: {
+      skillsMatchPct: Math.round(ab.skill_match_score),
+      experienceMatchPct: Math.round(ab.experience_match_score),
+      keywordMatchPct: Math.round(ab.keyword_match_score),
+      educationMatchPct: Math.round(ab.education_match_score),
+      responsibilitiesMatchPct: Math.round(ab.role_match_score),
+      jobTitleMatchPct: Math.round(ab.role_match_score),
+      certificationsMatchPct: Math.round(ab.certification_match_score),
+    },
+    matchedSkills: ab.matched_skills || [],
+    missingSkills: ab.missing_skills || [],
+    matchedKeywords: ab.matched_skills || [],
+    missingKeywords: ab.missing_skills || [],
+    keywordCoveragePct: Math.round(ab.keyword_match_score),
+    experienceComparison: {
+      requiredYears: requiredExperienceYears,
+      candidateYears,
+      matchLevel: expMatchLevel,
+      relevantRoles: (cd.work_history || []).map((w) => `${w.designation || "Role"} at ${w.company}`),
+    },
+    educationComparison: {
+      requiredDegree: "Bachelor's or equivalent",
+      candidateDegree: cd.education?.[0]?.degree || "Not specified",
+      status: ab.education_match_score >= 70 ? "Match" : ab.education_match_score >= 40 ? "Partial Match" : "Not Found",
+    },
+    responsibilityComparison: {
+      matched: ai.strengths || [],
+      partiallyMatched: [],
+      missing: ai.weaknesses || [],
+    },
+    recommendations: [
+      ...(ai.missing_skills.length > 0 ? [`Highlight experience with missing skills: ${ai.missing_skills.slice(0, 3).join(", ")}.`] : []),
+      ...ai.recommended_interview_questions.slice(0, 2).map((q) => `Interview Question: ${q}`),
+      "Ensure section headings use standard ATS keywords.",
+    ],
+    recruiterRecommendation,
+    recruiterSummary: {
+      verdict: ai.candidate_summary || `${cd.candidate_name || "Candidate"} is a ${recruiterRecommendation} (${overallScore}/100) for the ${jobTitle} role.`,
+      topStrengths: ai.strengths.length > 0 ? ai.strengths.slice(0, 3) : ["Analysis completed successfully."],
+      keyGaps: ai.weaknesses.length > 0 ? ai.weaknesses.slice(0, 3) : ["No critical gaps identified."],
+      improvementOpportunities: ai.risk_factors.length > 0 ? ai.risk_factors.slice(0, 3) : [
+        "Include metric-driven achievement metrics.",
+        "Add cloud deployment keywords.",
+      ],
+    },
+  };
+}
+
 export default function AIATSPage() {
-  const { jobs } = useATSStore();
   const { history, saveAnalysis, deleteAnalysis, setActiveAnalysis } = useATSAnalysisStore();
 
+  // ── Backend Data ──────────────────────────────────────────────────────────
+  const { data: jobsData, isLoading: jobsLoading } = useGetRecruitmentJobsQuery({ status: "PUBLISHED", limit: 50 });
+  const [uploadResume] = useUploadResumeForScreeningMutation();
+  const backendJobs = jobsData?.items || [];
+
   const [activeTab, setActiveTab] = useState<"analyzer" | "history">("analyzer");
-  const [jobInputMode, setJobInputMode] = useState<"select" | "custom">("select");
-  
+  const [jobInputMode, setJobInputMode] = useState<"select" | "custom">(backendJobs.length > 0 ? "select" : "custom");
+
   // File Upload State
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Job Description Inputs
-  const [selectedJobId, setSelectedJobId] = useState<string>(jobs[0]?.id || "JOB-101");
-  const [customJobTitle, setCustomJobTitle] = useState("Senior AI & Fullstack Lead Engineer");
-  const [customDept, setCustomDept] = useState("Engineering");
-  const [customExpYears, setCustomExpYears] = useState("5");
-  const [customDescription, setCustomDescription] = useState(
-    "Seeking a Senior Fullstack Engineer proficient in React, TypeScript, Node.js, REST APIs, System Design, Docker, and AWS. Minimum 5 years of experience."
-  );
+  const [selectedJobId, setSelectedJobId] = useState<string>("");
+  const [customJobTitle, setCustomJobTitle] = useState("");
+  const [customDept, setCustomDept] = useState("");
+  const [customExpYears, setCustomExpYears] = useState("");
+  const [customDescription, setCustomDescription] = useState("");
 
   // Execution & Results State
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<ATSAnalysisResult | null>(null);
   const [historySearch, setHistorySearch] = useState("");
 
-  // Selected Job Details from Store
-  const selectedJob = jobs.find((j) => j.id === selectedJobId) || jobs[0];
+  // Selected Job Details
+  const selectedJob = backendJobs.find((j) => j.id === selectedJobId) || backendJobs[0];
 
   // File Upload Handlers
   const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -128,7 +246,7 @@ export default function AIATSPage() {
     toast.success(`Resume uploaded: ${f.name}`);
   };
 
-  // Run ATS Analysis
+  // ── Run ATS Analysis via Backend API ──────────────────────────────────────
   const handleAnalyzeResume = async () => {
     if (!file) {
       toast.error("Please upload a candidate resume file first.");
@@ -139,45 +257,34 @@ export default function AIATSPage() {
     setAnalysisResult(null);
 
     try {
-      // Simulate file text extraction and parsing delay
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      // Build FormData for backend upload
+      const formData = new FormData();
+      formData.append("file", file);
 
-      const mockTextContent = `
-        Alex Turner
-        Email: alex.turner@example.com | Phone: +1 (555) 234-5678 | San Francisco, CA
-        Summary: Senior Fullstack Engineer with 5.4 years of experience building high-scale React, TypeScript, Node.js microservices, and AI integrations.
-        
-        Skills: React, TypeScript, Node.js, Express, Python, REST APIs, GraphQL, Redux, PostgreSQL, Docker, AWS, Git, CI/CD, System Design, Agile, Scrum, Problem Solving.
-        
-        Work Experience:
-        - Senior Fullstack Engineer | EquinoxSphere Systems (2023 - Present)
-          Architected React/TypeScript frontend micro-dashboards serving 45,000+ daily active users.
-          Integrated high-throughput Node.js microservices and Redis caching layer, cutting latency by 38%.
-        - Frontend Software Engineer | Apex Global Tech (2021 - 2023)
-          Developed responsive Web components with React, Redux, and Tailwind CSS.
-        
-        Education:
-        - Bachelor of Science in Computer Science, California Institute of Technology (2021)
-        
-        Certifications:
-        - AWS Certified Solutions Architect - Associate
-      `;
+      // Attach job_id if a real job is selected
+      if (jobInputMode === "select" && selectedJob) {
+        formData.append("job_id", selectedJob.id);
+      }
 
-      const parsedData = parseResumeContent(mockTextContent, file.name);
+      // Call backend API: POST /api/v1/recruitment/resume/upload
+      const response = await uploadResume(formData).unwrap();
 
-      const targetTitle = jobInputMode === "select" ? selectedJob.title : customJobTitle;
-      const targetDesc = jobInputMode === "select" ? selectedJob.description + " " + selectedJob.requirements.join(" ") : customDescription;
-      const targetReqSkills = jobInputMode === "select" ? selectedJob.requirements : [];
-      const targetExp = jobInputMode === "select" ? 5 : parseInt(customExpYears) || 4;
+      // Determine job details for display
+      const targetTitle = jobInputMode === "select" && selectedJob ? selectedJob.title : (customJobTitle || "General Position");
+      const targetDept = jobInputMode === "select" && selectedJob ? selectedJob.department : (customDept || "General");
+      const targetExp = jobInputMode === "select" ? 3 : (parseInt(customExpYears) || 3);
 
-      const result = analyzeResumeAgainstJob(parsedData, targetTitle, targetDesc, targetReqSkills, targetExp);
-      
+      // Map backend response → frontend display format
+      const result = mapBackendToATSResult(response, targetTitle, targetDept, targetExp);
+
       setAnalysisResult(result);
       setIsAnalyzing(false);
       toast.success(`⚡ ATS Analysis complete! Score: ${result.overallScore}/100`);
     } catch (err: any) {
       setIsAnalyzing(false);
-      toast.error("ATS Resume analysis failed. Please try again.");
+      const errMsg = err?.data?.message || err?.data?.detail || err?.message || "ATS Resume analysis failed.";
+      toast.error(errMsg);
+      console.error("ATS Analysis error:", err);
     }
   };
 
@@ -375,36 +482,44 @@ RECOMMENDATIONS:
               {jobInputMode === "select" ? (
                 <div className="space-y-3">
                   <Label className="text-xs font-semibold">Active Recruitment Job Requisition</Label>
-                  <Select value={selectedJobId} onValueChange={setSelectedJobId}>
-                    <SelectTrigger className="bg-secondary/30 text-xs h-10 border-border/60 rounded-xl">
-                      <SelectValue placeholder="Select active job opening" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {jobs.map((j) => (
-                        <SelectItem key={j.id} value={j.id} className="text-xs">
-                          {j.title} ({j.department})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  {selectedJob && (
-                    <div className="p-3.5 rounded-2xl bg-secondary/30 border border-border/50 space-y-2 text-xs">
-                      <div className="flex items-center justify-between font-bold text-foreground">
-                        <span>{selectedJob.title}</span>
-                        <Badge variant="outline" className="text-[10px]">{selectedJob.department}</Badge>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
-                        {selectedJob.description}
-                      </p>
-                      <div className="flex flex-wrap gap-1 pt-1">
-                        {selectedJob.requirements.slice(0, 4).map((req, idx) => (
-                          <Badge key={idx} variant="secondary" className="text-[9px]">
-                            {req}
-                          </Badge>
-                        ))}
-                      </div>
+                  {jobsLoading ? (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground py-4">
+                      <Loader2 className="w-4 h-4 animate-spin" /> Loading jobs from server...
                     </div>
+                  ) : backendJobs.length === 0 ? (
+                    <div className="p-4 rounded-2xl bg-secondary/30 border border-border/50 text-center">
+                      <p className="text-xs text-muted-foreground">No published jobs found. Switch to "Paste Custom" to enter a job description manually.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <Select value={selectedJobId || backendJobs[0]?.id || ""} onValueChange={setSelectedJobId}>
+                        <SelectTrigger className="bg-secondary/30 text-xs h-10 border-border/60 rounded-xl">
+                          <SelectValue placeholder="Select active job opening" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {backendJobs.map((j) => (
+                            <SelectItem key={j.id} value={j.id} className="text-xs">
+                              {j.title} ({j.department})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      {selectedJob && (
+                        <div className="p-3.5 rounded-2xl bg-secondary/30 border border-border/50 space-y-2 text-xs">
+                          <div className="flex items-center justify-between font-bold text-foreground">
+                            <span>{selectedJob.title}</span>
+                            <Badge variant="outline" className="text-[10px]">{selectedJob.department}</Badge>
+                          </div>
+                          <div className="flex flex-wrap gap-1 pt-1">
+                            <Badge variant="secondary" className="text-[9px]">{selectedJob.location}</Badge>
+                            <Badge variant="secondary" className="text-[9px]">{selectedJob.employment_type}</Badge>
+                            <Badge variant="secondary" className="text-[9px]">{selectedJob.vacancies} vacancies</Badge>
+                            <Badge variant="secondary" className="text-[9px]">{selectedJob.status}</Badge>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               ) : (
@@ -451,7 +566,7 @@ RECOMMENDATIONS:
             >
               {isAnalyzing ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" /> Parsing Resume & Scoring ATS...
+                  <Loader2 className="w-5 h-5 animate-spin" /> Uploading & Analyzing Resume...
                 </>
               ) : (
                 <>
@@ -469,7 +584,7 @@ RECOMMENDATIONS:
                   <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto" />
                   <h3 className="text-base font-bold text-foreground">AI Neural ATS Engine Processing</h3>
                   <p className="text-xs text-muted-foreground max-w-md mx-auto">
-                    Extracting candidate skills, evaluating experience relevance, and calculating weighted ATS compatibility scores against job requirements...
+                    Uploading resume to server, extracting text via Document AI, computing ATS compatibility scores against job requirements...
                   </p>
                 </div>
               ) : analysisResult ? (
@@ -573,6 +688,9 @@ RECOMMENDATIONS:
                           {s}
                         </Badge>
                       ))}
+                      {analysisResult.matchedSkills.length === 0 && (
+                        <span className="text-xs text-muted-foreground">No matched skills data available.</span>
+                      )}
                     </div>
                   </div>
 

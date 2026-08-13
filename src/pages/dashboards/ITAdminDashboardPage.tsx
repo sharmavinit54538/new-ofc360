@@ -38,7 +38,7 @@ export default function ITAdminDashboardPage() {
   };
 
   return (
-    <RoleGuard allowedRoles={["it_admin", "hr_admin", "cxo"]}>
+    <RoleGuard allowedRoles={["it_admin", "hr_admin", "executive"]}>
       <div className="space-y-6">
 
         {/* System Health Overview Cards */}

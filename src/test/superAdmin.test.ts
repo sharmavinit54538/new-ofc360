@@ -30,8 +30,8 @@ describe("Super Admin RBAC & Architecture Test Suite", () => {
     // Employee MUST NOT have access to platform modules
     expect(hasModuleAccess("employee", "platform_companies")).toBe(false);
 
-    // CXO MUST NOT have access to platform modules
-    expect(hasModuleAccess("cxo", "platform_companies")).toBe(false);
+    // Executive MUST NOT have access to platform modules
+    expect(hasModuleAccess("executive", "platform_companies")).toBe(false);
   });
 
   it("should have all required CRUD capabilities on Super Admin store", () => {

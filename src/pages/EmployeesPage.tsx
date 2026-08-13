@@ -52,7 +52,7 @@ import {
   useResetEmployeePasswordMutation,
 } from "@/services/api/employeeApi";
 import { useAuth } from "@/hooks/useAuth";
-import { roleLabels } from "@/features/auth/authTypes";
+import { roleLabels, ROLE_OPTIONS, normalizeRole } from "@/features/auth/authTypes";
 import { type Employee } from "@/types/hr";
 import EmployeeFormDialog from "@/components/employees/EmployeeFormDialog";
 import { normalizeError } from "@/services/api/normalizeError";
@@ -184,7 +184,8 @@ export default function EmployeesPage() {
 
     const matchesDept = departmentFilter === "ALL" || e.department === departmentFilter;
     const matchesStatus = statusFilter === "ALL" || (e.status || "Active").toLowerCase() === statusFilter.toLowerCase();
-    const matchesRole = roleFilter === "ALL" || (e.systemRole || "employee") === roleFilter;
+    const empRole = normalizeRole(e.role || e.systemRole || (e as any).backendRole);
+    const matchesRole = roleFilter === "ALL" || empRole === roleFilter;
 
     return matchesSearch && matchesDept && matchesStatus && matchesRole;
   });
@@ -194,26 +195,34 @@ export default function EmployeesPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-foreground">Employees & Workforce Directory</h2>
+          <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
+            <span>Employee Directory</span>
+            <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20 font-mono">
+              {allEmployees.length} Total
+            </Badge>
+          </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {employeeList.length} active employee profiles and system user accounts
+            Manage corporate headcount, system role assignments, department mappings, and employee records.
           </p>
         </div>
-        <Button
-          size="sm"
-          onClick={handleOpenAdd}
-          className="gap-1.5 gradient-bg text-primary-foreground font-bold h-10 px-4 rounded-xl shadow-sm"
-        >
-          <UserPlus className="w-4 h-4" /> Add User / Employee
-        </Button>
+
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={handleCreateOpen}
+            className="gradient-bg text-primary-foreground text-xs h-10 px-4 font-semibold shadow-md gap-1.5"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Employee</span>
+          </Button>
+        </div>
       </div>
 
-      {/* Controls Bar */}
-      <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      {/* Filter Toolbar */}
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between glass-card p-3 rounded-xl border border-border/60">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search by name, email, job title or department..."
+            placeholder="Search employees by name, email, designation, department..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9 text-xs h-10 bg-secondary/30 border-border/60"
@@ -229,11 +238,11 @@ export default function EmployeesPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">All Roles</SelectItem>
-              <SelectItem value="employee">Employee</SelectItem>
-              <SelectItem value="manager">Manager</SelectItem>
-              <SelectItem value="hr_admin">HR / Admin</SelectItem>
-              <SelectItem value="cxo">Executive / CXO</SelectItem>
-              <SelectItem value="it_admin">IT / System Admin</SelectItem>
+              {ROLE_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 

@@ -178,9 +178,9 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
       connect: ["view", "create", "edit", "delete", "manage", "export"],
     },
   },
-  cxo: {
-    id: "cxo",
-    name: "Executive / CXO",
+  executive: {
+    id: "executive",
+    name: "Executive",
     description: "Strategic executive insight into workforce health, organizational analytics, and AI recommendations.",
     scopeLabel: "Executive Insights",
     allowedModules: [
@@ -330,7 +330,7 @@ function getResolvedRoleConfig(role?: string): RoleConfig | undefined {
   if (lower.includes("super")) return ROLE_CONFIGS["super_admin"];
   if (lower.includes("hr") || lower.includes("admin")) return ROLE_CONFIGS["hr_admin"];
   if (lower.includes("manager")) return ROLE_CONFIGS["manager"];
-  if (lower.includes("cxo") || lower.includes("exec")) return ROLE_CONFIGS["cxo"];
+  if (lower.includes("cxo") || lower.includes("exec")) return ROLE_CONFIGS["executive"];
   return ROLE_CONFIGS["employee"];
 }
 

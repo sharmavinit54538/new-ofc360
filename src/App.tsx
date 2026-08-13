@@ -201,24 +201,24 @@ const App = () => (
             <Route path="/super-admin/security/events" element={<RoleGuard allowedRoles={["super_admin"]}><SecurityEventsPage /></RoleGuard>} />
 
             <Route path="/employee" element={<EmployeeDashboardPage />} />
-            <Route path="/employee/leave" element={<RoleGuard allowedRoles={["employee", "hr_admin", "manager", "cxo", "it_admin"]}><EmployeeLeavePage /></RoleGuard>} />
-            <Route path="/employee/payslips" element={<RoleGuard allowedRoles={["employee", "hr_admin", "manager", "cxo", "it_admin"]}><EmployeePayslipsPage /></RoleGuard>} />
-            <Route path="/employee/documents" element={<RoleGuard allowedRoles={["employee", "hr_admin", "manager", "cxo", "it_admin"]}><EmployeeDocumentsPage /></RoleGuard>} />
-            <Route path="/employee/onboarding" element={<RoleGuard allowedRoles={["employee", "hr_admin", "manager", "cxo", "it_admin"]}><EmployeeOnboardingPage /></RoleGuard>} />
-            <Route path="/employee/helpdesk" element={<RoleGuard allowedRoles={["employee", "hr_admin", "manager", "cxo", "it_admin"]}><EmployeeHelpdeskPage /></RoleGuard>} />
+            <Route path="/employee/leave" element={<RoleGuard allowedRoles={["employee", "hr_admin", "manager", "executive", "it_admin"]}><EmployeeLeavePage /></RoleGuard>} />
+            <Route path="/employee/payslips" element={<RoleGuard allowedRoles={["employee", "hr_admin", "manager", "executive", "it_admin"]}><EmployeePayslipsPage /></RoleGuard>} />
+            <Route path="/employee/documents" element={<RoleGuard allowedRoles={["employee", "hr_admin", "manager", "executive", "it_admin"]}><EmployeeDocumentsPage /></RoleGuard>} />
+            <Route path="/employee/onboarding" element={<RoleGuard allowedRoles={["employee", "hr_admin", "manager", "executive", "it_admin"]}><EmployeeOnboardingPage /></RoleGuard>} />
+            <Route path="/employee/helpdesk" element={<RoleGuard allowedRoles={["employee", "hr_admin", "manager", "executive", "it_admin"]}><EmployeeHelpdeskPage /></RoleGuard>} />
             <Route path="/manager" element={<ManagerDashboardPage />} />
-            <Route path="/manager/team" element={<RoleGuard allowedRoles={["manager", "hr_admin", "cxo"]}><ManagerTeamPage /></RoleGuard>} />
-            <Route path="/manager/approvals" element={<RoleGuard allowedRoles={["manager", "hr_admin", "cxo"]}><ManagerApprovalsPage /></RoleGuard>} />
-            <Route path="/manager/goals" element={<RoleGuard allowedRoles={["manager", "hr_admin", "cxo"]}><ManagerGoalsPage /></RoleGuard>} />
-            <Route path="/manager/engagement" element={<RoleGuard allowedRoles={["manager", "hr_admin", "cxo"]}><ManagerEngagementPage /></RoleGuard>} />
-            <Route path="/manager/helpdesk" element={<RoleGuard allowedRoles={["manager", "hr_admin", "cxo"]}><ManagerHelpdeskPage /></RoleGuard>} />
+            <Route path="/manager/team" element={<RoleGuard allowedRoles={["manager", "hr_admin", "executive"]}><ManagerTeamPage /></RoleGuard>} />
+            <Route path="/manager/approvals" element={<RoleGuard allowedRoles={["manager", "hr_admin", "executive"]}><ManagerApprovalsPage /></RoleGuard>} />
+            <Route path="/manager/goals" element={<RoleGuard allowedRoles={["manager", "hr_admin", "executive"]}><ManagerGoalsPage /></RoleGuard>} />
+            <Route path="/manager/engagement" element={<RoleGuard allowedRoles={["manager", "hr_admin", "executive"]}><ManagerEngagementPage /></RoleGuard>} />
+            <Route path="/manager/helpdesk" element={<RoleGuard allowedRoles={["manager", "hr_admin", "executive"]}><ManagerHelpdeskPage /></RoleGuard>} />
             <Route path="/executive" element={<ExecutiveDashboardPage />} />
-            <Route path="/executive/organization" element={<RoleGuard allowedRoles={["cxo", "hr_admin"]}><ExecutiveOrgPage /></RoleGuard>} />
-            <Route path="/executive/kpis" element={<RoleGuard allowedRoles={["cxo", "hr_admin"]}><ExecutiveKPIsPage /></RoleGuard>} />
-            <Route path="/executive/outcomes" element={<RoleGuard allowedRoles={["cxo", "hr_admin"]}><ExecutiveOutcomesPage /></RoleGuard>} />
-            <Route path="/executive/workforce" element={<RoleGuard allowedRoles={["cxo", "hr_admin"]}><ExecutiveWorkforcePage /></RoleGuard>} />
-            <Route path="/executive/insights" element={<RoleGuard allowedRoles={["cxo", "hr_admin"]}><ExecutiveInsightsPage /></RoleGuard>} />
-            <Route path="/executive/reports" element={<RoleGuard allowedRoles={["cxo", "hr_admin"]}><ExecutiveReportsPage /></RoleGuard>} />
+            <Route path="/executive/organization" element={<RoleGuard allowedRoles={["executive", "hr_admin"]}><ExecutiveOrgPage /></RoleGuard>} />
+            <Route path="/executive/kpis" element={<RoleGuard allowedRoles={["executive", "hr_admin"]}><ExecutiveKPIsPage /></RoleGuard>} />
+            <Route path="/executive/outcomes" element={<RoleGuard allowedRoles={["executive", "hr_admin"]}><ExecutiveOutcomesPage /></RoleGuard>} />
+            <Route path="/executive/workforce" element={<RoleGuard allowedRoles={["executive", "hr_admin"]}><ExecutiveWorkforcePage /></RoleGuard>} />
+            <Route path="/executive/insights" element={<RoleGuard allowedRoles={["executive", "hr_admin"]}><ExecutiveInsightsPage /></RoleGuard>} />
+            <Route path="/executive/reports" element={<RoleGuard allowedRoles={["executive", "hr_admin"]}><ExecutiveReportsPage /></RoleGuard>} />
             <Route path="/it-admin" element={<ITAdminDashboardPage />} />
             <Route path="/it-admin/sso" element={<RoleGuard allowedRoles={["it_admin", "hr_admin"]}><SSOPage /></RoleGuard>} />
             <Route path="/it-admin/access" element={<RoleGuard allowedRoles={["it_admin", "hr_admin"]}><AccessPage /></RoleGuard>} />

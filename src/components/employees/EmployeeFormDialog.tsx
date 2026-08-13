@@ -43,7 +43,7 @@ import {
   type EmergencyContactItem,
   type BankAccountItem
 } from "@/types/hr";
-import { SystemRole } from "@/features/auth/authTypes";
+import { SystemRole, ROLE_OPTIONS, normalizeRole } from "@/features/auth/authTypes";
 import { toast } from "sonner";
 
 interface EmployeeFormDialogProps {
@@ -88,7 +88,7 @@ export default function EmployeeFormDialog({
   const [probationPeriod, setProbationPeriod] = useState(3);
   const [capacity, setCapacity] = useState(100);
   const [costCenterId, setCostCenterId] = useState("");
-  const [portalRole, setPortalRole] = useState<SystemRole>("employee");
+  const [role, setRole] = useState<SystemRole>("employee");
   const [leaveGroup, setLeaveGroup] = useState("Standard India Policy");
   const [status, setStatus] = useState<Employee["status"]>("Active");
 
@@ -134,7 +134,7 @@ export default function EmployeeFormDialog({
       setAlternatePhone(employee.alternatePhone || "");
 
       setDepartment(employee.department || "Engineering");
-      setDesignation(employee.designation || employee.role || "");
+      setDesignation(employee.designation || "");
       setEmploymentType(employee.employmentType || "FULL_TIME");
       setJoiningDate(employee.joiningDate || employee.joinedAt || new Date().toISOString().split("T")[0]);
       setReportingManager(employee.reportingManager || employee.manager || "");
@@ -145,7 +145,8 @@ export default function EmployeeFormDialog({
       setProbationPeriod(employee.probationPeriod ?? 3);
       setCapacity(employee.capacity ?? 100);
       setCostCenterId(employee.costCenterId || "CC-ENG-01");
-      setPortalRole((employee.systemRole as SystemRole) || "employee");
+      const rawRole = (employee as any).role || (employee as any).systemRole || (employee as any).backendRole || (employee as any).portalRole;
+      setRole(normalizeRole(rawRole));
       setLeaveGroup(employee.leaveGroup || "Standard India Policy");
       setStatus(employee.status || "Active");
 
@@ -192,6 +193,7 @@ export default function EmployeeFormDialog({
       setProbationPeriod(3);
       setCapacity(100);
       setCostCenterId("CC-001");
+      setBackendRole("employee");
       setPortalRole("employee");
       setLeaveGroup("Standard India Policy");
       setStatus("Active");
@@ -285,10 +287,11 @@ export default function EmployeeFormDialog({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       email: companyWorkEmail.trim() || personalEmail.trim(),
-      role: designation.trim(),
+      role,
       designation: designation.trim(),
       department,
-      systemRole: portalRole,
+      systemRole: role,
+      portalRole: role,
       status,
       joinedAt: joiningDate,
       joiningDate,
@@ -523,7 +526,7 @@ export default function EmployeeFormDialog({
                 <Briefcase className="w-4 h-4 text-primary" />
                 <span>3. Job Role & Organization Assignment</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold">Department *</Label>
                   <Select value={department} onValueChange={(v) => setDepartment(v as Employee["department"])}>
@@ -537,6 +540,21 @@ export default function EmployeeFormDialog({
                       <SelectItem value="Marketing">Marketing</SelectItem>
                       <SelectItem value="Sales">Sales</SelectItem>
                       <SelectItem value="Finance">Finance</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Role *</Label>
+                  <Select value={role} onValueChange={(v) => setRole(v as SystemRole)}>
+                    <SelectTrigger className="bg-secondary/30 text-xs h-10 border-border/60 font-semibold text-primary">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ROLE_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -602,7 +620,7 @@ export default function EmployeeFormDialog({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold">Team</Label>
                   <Input
@@ -631,21 +649,6 @@ export default function EmployeeFormDialog({
                       <SelectItem value="Onsite">Onsite</SelectItem>
                       <SelectItem value="Remote">Remote</SelectItem>
                       <SelectItem value="Hybrid">Hybrid</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Portal System Role</Label>
-                  <Select value={portalRole} onValueChange={(v) => setPortalRole(v as SystemRole)}>
-                    <SelectTrigger className="bg-secondary/30 text-xs h-10 border-border/60 font-semibold text-primary">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="employee">Employee</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
-                      <SelectItem value="hr_admin">HR / Admin</SelectItem>
-                      <SelectItem value="cxo">Executive / CXO</SelectItem>
-                      <SelectItem value="it_admin">IT / System Admin</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

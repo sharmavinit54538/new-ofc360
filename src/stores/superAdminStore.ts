@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { getStoredData, setStoredData } from "@/utils/storage";
+import { SystemRole } from "@/features/auth/authTypes";
 
 export interface PlatformCompany {
   id: string;
@@ -23,7 +24,7 @@ export interface PlatformUser {
   email: string;
   companyId: string;
   companyName: string;
-  role: "hr_admin" | "manager" | "employee" | "cxo" | "it_admin";
+  role: SystemRole;
   status: "Active" | "Inactive" | "Pending";
   lastLogin: string;
   createdAt: string;

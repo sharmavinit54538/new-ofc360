@@ -1,5 +1,6 @@
 import { baseApi } from "./baseApi";
 import { Manager, ManagerPermissions } from "@/types/hr";
+import { normalizeRole } from "@/features/auth/authTypes";
 import { RawEnvelope } from "./envelope";
 
 export interface GetManagersQueryParams {
@@ -420,16 +421,15 @@ export function buildManagerUpdatePayload(input: any): Record<string, any> {
     payload.department_name = department;
   }
 
-  const designation = (b.designation || b.role)?.trim();
-  if (designation !== undefined) {
-    payload.designation = designation;
-    payload.role = designation;
+  if (b.designation) {
+    payload.designation = String(b.designation).trim();
   }
 
-  const systemRole = (b.systemRole || b.system_role || (b.role && ["super_admin", "admin", "hr_admin", "manager", "employee", "it_admin", "executive"].includes(b.role.toLowerCase()) ? b.role : undefined))?.toLowerCase()?.trim();
-  if (systemRole !== undefined) {
-    payload.systemRole = systemRole;
-    payload.system_role = systemRole;
+  if (b.role || b.systemRole || b.system_role) {
+    const roleVal = normalizeRole(b.role || b.systemRole || b.system_role);
+    payload.role = roleVal;
+    payload.systemRole = roleVal;
+    payload.system_role = roleVal;
   }
 
   const rawJoiningDate = b.joining_date || b.joiningDate || b.joinedAt;
@@ -602,13 +602,7 @@ export function normalizeManager(raw: any): Manager {
     "Manager"
   ).trim();
 
-  const systemRole: any = (
-    raw.systemRole ||
-    raw.system_role ||
-    (raw.role && ["super_admin", "admin", "hr_admin", "manager", "employee", "it_admin", "cxo"].includes(raw.role.toLowerCase())
-      ? raw.role.toLowerCase()
-      : "manager")
-  );
+  const systemRole = normalizeRole(raw.systemRole || raw.system_role || raw.role || "manager");
 
   const rawStatus = raw.status || raw.employment_status || raw.user_status || "Active";
   const status = typeof rawStatus === "string" ? rawStatus : "Active";
