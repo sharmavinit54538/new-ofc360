@@ -6,7 +6,7 @@ import {
   FileText, Monitor, UserMinus, BrainCircuit, Building2, ShieldCheck,
   Heart, BarChart3, PieChart, TrendingUp, Lightbulb, Target, PanelLeft,
   Boxes, Settings, Globe, Award, Key, Zap, FileCode2, Server, Cpu, Lock,
-  Activity, ShieldAlert
+  Activity, ShieldAlert, MessageSquare
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { SystemRole } from "@/features/auth/authTypes";
@@ -30,6 +30,7 @@ export function AppSidebar({ open, onToggle }: { open: boolean; onToggle: () => 
             items: [
               { label: "Dashboard", icon: LayoutDashboard, path: "/super-admin" },
               { label: "Platform", icon: Building2, path: "/super-admin/platform" },
+              { label: "Connect", icon: MessageSquare, path: "/connect" },
               { label: "Analytics", icon: BarChart3, path: "/super-admin/analytics" },
               { label: "System", icon: Server, path: "/super-admin/system" },
               { label: "Security", icon: Lock, path: "/super-admin/security" },
@@ -42,6 +43,7 @@ export function AppSidebar({ open, onToggle }: { open: boolean; onToggle: () => 
           {
             sectionTitle: "Employee",
             items: [
+              { label: "Connect", icon: MessageSquare, path: "/connect" },
               { label: "My Leave", icon: Clock, path: "/employee/leave" },
               { label: "My Payslips", icon: PayrollIcon, path: "/employee/payslips" },
               { label: "My Documents", icon: FileText, path: "/employee/documents" },
@@ -57,6 +59,7 @@ export function AppSidebar({ open, onToggle }: { open: boolean; onToggle: () => 
             sectionTitle: "Manager",
             items: [
               { label: "Home", icon: LayoutDashboard, path: "/manager" },
+              { label: "Connect", icon: MessageSquare, path: "/connect" },
               { label: "My Team", icon: Users, path: "/manager/team" },
               { label: "Approvals", icon: ShieldCheck, path: "/manager/approvals" },
               { label: "Goals", icon: Target, path: "/manager/goals" },
@@ -72,6 +75,7 @@ export function AppSidebar({ open, onToggle }: { open: boolean; onToggle: () => 
             sectionTitle: "Executive",
             items: [
               { label: "Home", icon: LayoutDashboard, path: "/executive" },
+              { label: "Connect", icon: MessageSquare, path: "/connect" },
               { label: "Organization", icon: Building2, path: "/executive/organization" },
               { label: "KPIs", icon: Target, path: "/executive/kpis" },
               { label: "Outcomes", icon: Award, path: "/executive/outcomes" },
@@ -88,6 +92,7 @@ export function AppSidebar({ open, onToggle }: { open: boolean; onToggle: () => 
             sectionTitle: "IT Admin",
             items: [
               { label: "Home", icon: LayoutDashboard, path: "/it-admin" },
+              { label: "Connect", icon: MessageSquare, path: "/connect" },
               { label: "SSO", icon: Key, path: "/it-admin/sso" },
               { label: "Access", icon: ShieldCheck, path: "/it-admin/access" },
               { label: "Security", icon: Lock, path: "/it-admin/security" },
@@ -106,6 +111,7 @@ export function AppSidebar({ open, onToggle }: { open: boolean; onToggle: () => 
             sectionTitle: "Core HR",
             items: [
               { label: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
+              { label: "Connect", icon: MessageSquare, path: "/connect" },
               { label: "People", icon: Users, path: "/people" },
               { label: "Attend", icon: Clock, path: "/attendance" },
               { label: "Payroll", icon: PayrollIcon, path: "/payroll" },
@@ -176,6 +182,7 @@ export function AppSidebar({ open, onToggle }: { open: boolean; onToggle: () => 
                 open={open}
                 active={
                   location.pathname === item.path ||
+                  (item.path === "/connect" && location.pathname.startsWith("/connect")) ||
                   (item.path !== "/super-admin" && item.path.startsWith("/super-admin") && location.pathname.startsWith(item.path)) ||
                   (item.path === "/people" && (location.pathname.startsWith("/people") || location.pathname.startsWith("/employees") || location.pathname.startsWith("/departments"))) ||
                   (item.path === "/intelligence" && location.pathname.startsWith("/intelligence")) ||

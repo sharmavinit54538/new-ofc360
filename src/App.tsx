@@ -58,6 +58,16 @@ import PeoplePage from "@/pages/people/PeoplePage";
 import DepartmentsPage from "@/pages/departments/DepartmentsPage";
 import RolesAndPermissionsPage from "@/pages/rbac/RolesAndPermissionsPage";
 import EmployeeDashboardPage from "@/pages/dashboards/EmployeeDashboardPage";
+
+// OFC360 Connect Module
+import ConnectOverviewPage from "@/pages/connect/ConnectOverviewPage";
+import ConnectChatPage from "@/pages/connect/ConnectChatPage";
+import ConnectChannelsPage from "@/pages/connect/ConnectChannelsPage";
+import ConnectCallsPage from "@/pages/connect/ConnectCallsPage";
+import ConnectMeetingsPage from "@/pages/connect/ConnectMeetingsPage";
+import MeetingRoomPage from "@/pages/connect/MeetingRoomPage";
+import ConnectFilesPage from "@/pages/connect/ConnectFilesPage";
+import ConnectContactsPage from "@/pages/connect/ConnectContactsPage";
 import ManagerDashboardPage from "@/pages/dashboards/ManagerDashboardPage";
 import ExecutiveDashboardPage from "@/pages/dashboards/ExecutiveDashboardPage";
 import ITAdminDashboardPage from "@/pages/dashboards/ITAdminDashboardPage";
@@ -262,6 +272,18 @@ const App = () => (
 
             {/* Settings Route */}
             <Route path="/settings" element={<RoleGuard module="system_settings"><SettingsPage /></RoleGuard>} />
+
+            {/* OFC360 Connect Routes */}
+            <Route path="/connect" element={<RoleGuard module="connect"><ConnectOverviewPage /></RoleGuard>} />
+            <Route path="/connect/chat" element={<RoleGuard module="connect"><ConnectChatPage /></RoleGuard>} />
+            <Route path="/connect/chat/:conversationId" element={<RoleGuard module="connect"><ConnectChatPage /></RoleGuard>} />
+            <Route path="/connect/channels" element={<RoleGuard module="connect"><ConnectChannelsPage /></RoleGuard>} />
+            <Route path="/connect/channels/:channelId" element={<RoleGuard module="connect"><ConnectChannelsPage /></RoleGuard>} />
+            <Route path="/connect/calls" element={<RoleGuard module="connect"><ConnectCallsPage /></RoleGuard>} />
+            <Route path="/connect/meetings" element={<RoleGuard module="connect"><ConnectMeetingsPage /></RoleGuard>} />
+            <Route path="/connect/meeting/:meetingId" element={<RoleGuard module="connect"><MeetingRoomPage /></RoleGuard>} />
+            <Route path="/connect/files" element={<RoleGuard module="connect"><ConnectFilesPage /></RoleGuard>} />
+            <Route path="/connect/contacts" element={<RoleGuard module="connect"><ConnectContactsPage /></RoleGuard>} />
 
             {/* Legacy AI Routes */}
             <Route path="/ai-chat" element={<AIChatPage />} />

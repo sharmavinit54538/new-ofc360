@@ -31,6 +31,7 @@ export type SystemModule =
   | "resource_intelligence"
   | "people"
   | "employee_experience"
+  | "connect"
   | "super_admin"
   | "platform_companies"
   | "platform_users"
@@ -75,6 +76,7 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
       "documents",
       "onboarding",
       "helpdesk",
+      "connect",
     ],
     permissions: {
       attendance: ["view", "create"],
@@ -83,6 +85,7 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
       documents: ["view"],
       onboarding: ["view", "edit"],
       helpdesk: ["view", "create"],
+      connect: ["view", "create", "edit", "manage"],
     },
   },
   manager: {
@@ -99,6 +102,7 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
       "engagement",
       "documents",
       "helpdesk",
+      "connect",
     ],
     permissions: {
       profile: ["view", "edit"],
@@ -109,6 +113,7 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
       engagement: ["view"],
       documents: ["view"],
       helpdesk: ["view", "create"],
+      connect: ["view", "create", "edit", "manage"],
     },
   },
   hr_admin: {
@@ -142,6 +147,7 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
       "system_settings",
       "helpdesk",
       "reports",
+      "connect",
     ],
     permissions: {
       dashboard: ["view"],
@@ -169,6 +175,7 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
       system_settings: ["view", "edit", "manage"],
       helpdesk: ["view", "create", "edit", "manage"],
       reports: ["view", "export"],
+      connect: ["view", "create", "edit", "delete", "manage", "export"],
     },
   },
   cxo: {
@@ -189,6 +196,7 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
       "reports",
       "culture",
       "compliance",
+      "connect",
     ],
     permissions: {
       dashboard: ["view", "export"],
@@ -203,6 +211,7 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
       reports: ["view", "export"],
       culture: ["view"],
       compliance: ["view"],
+      connect: ["view", "create", "manage"],
     },
   },
   it_admin: {
@@ -217,6 +226,7 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
       "rbac",
       "system_settings",
       "audit_logs",
+      "connect",
     ],
     permissions: {
       dashboard: ["view"],
@@ -225,6 +235,7 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
       rbac: ["view", "create", "edit", "delete", "manage"],
       system_settings: ["view", "edit", "manage"],
       audit_logs: ["view", "export"],
+      connect: ["view", "create", "manage"],
     },
   },
   super_admin: {
@@ -268,6 +279,7 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
       "it_access",
       "rbac",
       "audit_logs",
+      "connect",
     ],
     permissions: {
       dashboard: ["view", "export"],
@@ -305,6 +317,7 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
       it_access: ["view", "create", "edit", "delete", "manage"],
       rbac: ["view", "create", "edit", "delete", "manage"],
       audit_logs: ["view", "export"],
+      connect: ["view", "create", "edit", "delete", "manage", "export"],
     },
   },
 };
