@@ -84,6 +84,12 @@ export const API_TAGS = [
   "SecuritySettings",
   "BillingSettings",
   "HRDirectory",
+  "Asset",
+  "AssetAnalytics",
+  "AssetFilterOptions",
+  "EnterpriseVendor",
+  "VendorAnalytics",
+  "ProcurementRequest",
 ] as const;
 
 export type ApiTagType = (typeof API_TAGS)[number];

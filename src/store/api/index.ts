@@ -16,3 +16,10 @@ export * from "./reimbursementsApi";
 // Settings & HR Directory API
 export * from "./settingsApi";
 
+// Asset Intelligence API
+export * from "./assetsApi";
+
+// Enterprise Vendor Intelligence & Procurement API
+export * from "./enterpriseVendorsApi";
+
+
