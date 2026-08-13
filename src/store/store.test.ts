@@ -17,6 +17,7 @@ describe('Redux Central Store & RTK Query Architecture', () => {
   it('should handle auth credentials dispatch', () => {
     const mockUser = {
       id: 'usr-1',
+      name: 'Admin User',
       email: 'admin@ofc360.com',
       fullName: 'Admin User',
       role: 'Admin',
