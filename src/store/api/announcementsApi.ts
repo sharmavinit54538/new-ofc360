@@ -1,162 +1,72 @@
-import { baseApi } from "./baseApi";
-
-export interface Announcement {
-  id: string;
-  title: string;
-  content: string;
-  category?: string;
-  status: "draft" | "published" | "archived" | string;
-  priority?: "low" | "medium" | "high" | "urgent" | string;
-  target_audience?: string[];
-  created_at?: string;
-  updated_at?: string;
-  published_at?: string;
-  author_id?: string;
-  author_name?: string;
-}
-
-export interface AnnouncementQueryParams {
-  page?: number;
-  limit?: number;
-  status?: string;
-  category?: string;
-}
-
-export interface AnnouncementListResponse {
-  items: Announcement[];
-  total: number;
-  page: number;
-  limit: number;
-}
-
-export interface CreateAnnouncementRequest {
-  title: string;
-  content: string;
-  category?: string;
-  priority?: string;
-  target_audience?: string[];
-  status?: string;
-}
-
-export interface UpdateAnnouncementRequest {
-  id: string;
-  title?: string;
-  content?: string;
-  category?: string;
-  priority?: string;
-  target_audience?: string[];
-  status?: string;
-}
-
-export interface APIResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
-
-function transformApiResponse<T>(response: APIResponse<T> | T): T {
-  if (response && typeof response === "object" && "data" in response && "success" in response) {
-    return (response as APIResponse<T>).data;
-  }
-  return response as T;
-}
+import { baseApi } from './baseApi';
+import { ApiResponse } from '@/types/api';
 
 export const announcementsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getAnnouncements: builder.query<Announcement[] | AnnouncementListResponse, AnnouncementQueryParams | void>({
-      query: (params) => {
-        const searchParams = new URLSearchParams();
-        if (params?.page) searchParams.append("page", params.page.toString());
-        if (params?.limit) searchParams.append("limit", params.limit.toString());
-        if (params?.status) searchParams.append("status", params.status);
-        if (params?.category) searchParams.append("category", params.category);
-        const q = searchParams.toString();
-        return `/api/v1/announcements${q ? `?${q}` : ""}`;
-      },
-      keepUnusedDataFor: 60,
-      transformResponse: transformApiResponse,
-      providesTags: (result) => {
-        const items = Array.isArray(result) ? result : result?.items || [];
-        return [
-          ...items.map(({ id }) => ({ type: "Announcement" as const, id })),
-          { type: "Announcement", id: "LIST" },
-        ];
-      },
-    }),
-
-    getAnnouncementById: builder.query<Announcement, string>({
-      query: (id) => `/api/v1/announcements/${id}`,
-      transformResponse: transformApiResponse,
-      providesTags: (_result, _error, id) => [{ type: "Announcement", id }],
-    }),
-
-    createAnnouncement: builder.mutation<Announcement, CreateAnnouncementRequest>({
-      query: (body) => ({
-        url: "/api/v1/announcements",
-        method: "POST",
-        body,
+    createAnnouncements: builder.mutation<ApiResponse<any>, any>({
+      query: (data) => ({
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/announcements` : typeof data === 'object' && data?.id ? `/api/v1/announcements` : '/api/v1/announcements',
+        method: 'POST',
+        body: typeof data === 'object' ? data : undefined,
       }),
-      transformResponse: transformApiResponse,
-      invalidatesTags: [{ type: "Announcement", id: "LIST" }],
+      invalidatesTags: ['Event'],
     }),
-
-    updateAnnouncement: builder.mutation<Announcement, UpdateAnnouncementRequest>({
-      query: ({ id, ...body }) => ({
-        url: `/api/v1/announcements/${id}`,
-        method: "PUT",
-        body,
+    getAnnouncements: builder.query<ApiResponse<any>, any>({
+      query: (params) => ({
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/announcements` : typeof params === 'object' && params?.id ? `/api/v1/announcements` : '/api/v1/announcements',
+        params: typeof params === 'object' ? params : undefined,
       }),
-      transformResponse: transformApiResponse,
-      invalidatesTags: (_result, _error, { id }) => [
-        { type: "Announcement", id },
-        { type: "Announcement", id: "LIST" },
-      ],
+      providesTags: ['Event'],
     }),
-
-    deleteAnnouncement: builder.mutation<{ success: boolean; message?: string }, string>({
-      query: (id) => ({
-        url: `/api/v1/announcements/${id}`,
-        method: "DELETE",
+    getAnnouncementsId: builder.query<ApiResponse<any>, any>({
+      query: (params) => ({
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/announcements/${paramsid` : typeof params === 'object' && params?.id ? `/api/v1/announcements/${params.id}` : '/api/v1/announcements/{id}',
+        params: typeof params === 'object' ? params : undefined,
       }),
-      transformResponse: transformApiResponse,
-      invalidatesTags: (_result, _error, id) => [
-        { type: "Announcement", id },
-        { type: "Announcement", id: "LIST" },
-      ],
+      providesTags: ['Event'],
     }),
-
-    publishAnnouncement: builder.mutation<Announcement, string>({
-      query: (id) => ({
-        url: `/api/v1/announcements/${id}/publish`,
-        method: "PATCH",
+    updateAnnouncementsId: builder.mutation<ApiResponse<any>, any>({
+      query: (data) => ({
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/announcements/${data.id` : typeof data === 'object' && data?.id ? `/api/v1/announcements/${data.id}` : '/api/v1/announcements/{id}',
+        method: 'PUT',
+        body: typeof data === 'object' ? data : undefined,
       }),
-      transformResponse: transformApiResponse,
-      invalidatesTags: (_result, _error, id) => [
-        { type: "Announcement", id },
-        { type: "Announcement", id: "LIST" },
-      ],
+      invalidatesTags: ['Event'],
     }),
-
-    archiveAnnouncement: builder.mutation<Announcement, string>({
-      query: (id) => ({
-        url: `/api/v1/announcements/${id}/archive`,
-        method: "PATCH",
+    deleteAnnouncementsId: builder.mutation<ApiResponse<any>, any>({
+      query: (data) => ({
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/announcements/${data.id` : typeof data === 'object' && data?.id ? `/api/v1/announcements/${data.id}` : '/api/v1/announcements/{id}',
+        method: 'DELETE',
+        body: typeof data === 'object' ? data : undefined,
       }),
-      transformResponse: transformApiResponse,
-      invalidatesTags: (_result, _error, id) => [
-        { type: "Announcement", id },
-        { type: "Announcement", id: "LIST" },
-      ],
+      invalidatesTags: ['Event'],
+    }),
+    updateAnnouncementsIdPublish: builder.mutation<ApiResponse<any>, any>({
+      query: (data) => ({
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/announcements/${data.id/publish` : typeof data === 'object' && data?.id ? `/api/v1/announcements/${data.id}/publish` : '/api/v1/announcements/{id}/publish',
+        method: 'PATCH',
+        body: typeof data === 'object' ? data : undefined,
+      }),
+      invalidatesTags: ['Event'],
+    }),
+    updateAnnouncementsIdArchive: builder.mutation<ApiResponse<any>, any>({
+      query: (data) => ({
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/announcements/${data.id/archive` : typeof data === 'object' && data?.id ? `/api/v1/announcements/${data.id}/archive` : '/api/v1/announcements/{id}/archive',
+        method: 'PATCH',
+        body: typeof data === 'object' ? data : undefined,
+      }),
+      invalidatesTags: ['Event'],
     }),
   }),
+  overrideExisting: false,
 });
 
 export const {
+  useCreateAnnouncementsMutation,
   useGetAnnouncementsQuery,
-  useGetAnnouncementByIdQuery,
-  useCreateAnnouncementMutation,
-  useUpdateAnnouncementMutation,
-  useDeleteAnnouncementMutation,
-  usePublishAnnouncementMutation,
-  useArchiveAnnouncementMutation,
+  useGetAnnouncementsIdQuery,
+  useUpdateAnnouncementsIdMutation,
+  useDeleteAnnouncementsIdMutation,
+  useUpdateAnnouncementsIdPublishMutation,
+  useUpdateAnnouncementsIdArchiveMutation,
 } = announcementsApi;

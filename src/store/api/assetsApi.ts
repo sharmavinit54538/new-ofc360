@@ -1,308 +1,124 @@
-import { baseApi } from "./baseApi";
-
-// ==========================================
-// Types & Interfaces
-// ==========================================
-
-/**
- * Physical Hardware Asset Interface
- * Note: Software license tracking / license optimization is NOT covered by this backend API.
- * This API strictly covers physical hardware assets (laptops, monitors, mobile devices, etc.).
- * Do not build license-specific UI against this slice.
- */
-export interface Asset {
-  id: string;
-  tag: string;
-  name: string;
-  category: string; // default "laptop"
-  serial?: string;
-  vendor?: string;
-  purchase_date?: string;
-  warranty_until?: string;
-  status: string; // available | assigned | lost | retired | maintenance
-  employee_id?: string;
-  assigned_at?: string;
-  next_maintenance?: string;
-  notes?: string;
-  brand?: string;
-  model?: string;
-  purchase_cost?: number;
-  location?: string;
-  description?: string;
-  image_url?: string;
-  timeline?: Array<{ id: string; event: string; performedBy: string; timestamp: string; notes?: string }>;
-}
-
-export interface AssetAssignmentHistory {
-  id: string;
-  employee: string;
-  department: string;
-  assignDate: string;
-  expectedReturnDate?: string;
-  actualReturnDate?: string;
-  notes?: string;
-}
-
-export interface AssetMaintenanceRecord {
-  id: string;
-  requestDate: string;
-  serviceDate?: string;
-  vendor: string;
-  cost: number;
-  notes?: string;
-}
-
-export interface AssetQueryParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-  status?: string;
-  category?: string;
-  vendor?: string;
-  employee_id?: string;
-}
-
-export interface AssetListResponse {
-  items: Asset[];
-  total: number;
-  page?: number;
-  limit?: number;
-}
-
-export interface AssetAnalyticsResponse {
-  total_assets: number;
-  available: number;
-  assigned: number;
-  maintenance: number;
-  lost: number;
-  retired: number;
-  total_value?: number;
-  category_breakdown?: Record<string, number>;
-  status_breakdown?: Record<string, number>;
-}
-
-export interface AssetFilterOptionsResponse {
-  categories: string[];
-  statuses: string[];
-  vendors: string[];
-  locations: string[];
-}
-
-export interface APIResponse<T> {
-  success: boolean;
-  message?: string;
-  data: T;
-  errors?: unknown;
-}
-
-function transformApiResponse<T>(response: APIResponse<T> | T): T {
-  if (response && typeof response === "object" && "data" in response && "success" in response) {
-    return (response as APIResponse<T>).data;
-  }
-  return response as T;
-}
-
-// ==========================================
-// Asset Intelligence RTK Query Endpoints
-// ==========================================
+import { baseApi } from './baseApi';
+import { ApiResponse } from '@/types/api';
 
 export const assetsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getAssets: builder.query<Asset[] | AssetListResponse, AssetQueryParams | void>({
-      query: (params) => {
-        const searchParams = new URLSearchParams();
-        if (params?.page) searchParams.append("page", params.page.toString());
-        if (params?.limit) searchParams.append("limit", params.limit.toString());
-        if (params?.search) searchParams.append("search", params.search);
-        if (params?.status) searchParams.append("status", params.status);
-        if (params?.category) searchParams.append("category", params.category);
-        if (params?.vendor) searchParams.append("vendor", params.vendor);
-        if (params?.employee_id) searchParams.append("employee_id", params.employee_id);
-        const q = searchParams.toString();
-        return `/api/v1/assets${q ? `?${q}` : ""}`;
-      },
-      transformResponse: transformApiResponse,
-      providesTags: (result) => {
-        const items = Array.isArray(result) ? result : result?.items || [];
-        return [
-          ...items.map(({ id }) => ({ type: "Asset" as const, id })),
-          { type: "Asset", id: "LIST" },
-        ];
-      },
-    }),
-
-    getAssetAnalytics: builder.query<AssetAnalyticsResponse, void>({
-      query: () => "/api/v1/assets/analytics",
-      transformResponse: transformApiResponse,
-      providesTags: ["AssetAnalytics"],
-    }),
-
-    getAssetFilterOptions: builder.query<AssetFilterOptionsResponse, void>({
-      query: () => "/api/v1/assets/filter-options",
-      keepUnusedDataFor: 600,
-      transformResponse: transformApiResponse,
-      providesTags: ["AssetFilterOptions"],
-    }),
-
-    uploadAssetImage: builder.mutation<{ image_url: string }, FormData>({
-      query: (body) => ({
-        url: "/api/v1/assets/upload-image",
-        method: "POST",
-        body,
+    getAssets: builder.query<ApiResponse<any>, any>({
+      query: (params) => ({
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/assets` : typeof params === 'object' && params?.id ? `/api/v1/assets` : '/api/v1/assets',
+        params: typeof params === 'object' ? params : undefined,
       }),
-      transformResponse: transformApiResponse,
-      invalidatesTags: [{ type: "Asset", id: "LIST" }],
+      providesTags: ['Asset'],
     }),
-
-    createAsset: builder.mutation<Asset, Partial<Asset>>({
-      query: (body) => ({
-        url: "/api/v1/assets",
-        method: "POST",
-        body,
+    createAssets: builder.mutation<ApiResponse<any>, any>({
+      query: (data) => ({
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/assets` : typeof data === 'object' && data?.id ? `/api/v1/assets` : '/api/v1/assets',
+        method: 'POST',
+        body: typeof data === 'object' ? data : undefined,
       }),
-      transformResponse: transformApiResponse,
-      invalidatesTags: [{ type: "Asset", id: "LIST" }, "AssetAnalytics"],
+      invalidatesTags: ['Asset'],
     }),
-
-    getAssetById: builder.query<Asset, string>({
-      query: (id) => `/api/v1/assets/${id}`,
-      transformResponse: transformApiResponse,
-      providesTags: (_result, _error, id) => [{ type: "Asset", id }],
-    }),
-
-    getPublicAssetById: builder.query<Asset, string>({
-      query: (id) => `/api/v1/assets/public/${id}`,
-      transformResponse: transformApiResponse,
-      providesTags: (_result, _error, id) => [{ type: "Asset", id }],
-    }),
-
-    updateAsset: builder.mutation<Asset, { id: string } & Partial<Asset>>({
-      query: ({ id, ...body }) => ({
-        url: `/api/v1/assets/${id}`,
-        method: "PUT",
-        body,
+    getAssetsAnalytics: builder.query<ApiResponse<any>, any>({
+      query: (params) => ({
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/assets/analytics` : typeof params === 'object' && params?.id ? `/api/v1/assets/analytics` : '/api/v1/assets/analytics',
+        params: typeof params === 'object' ? params : undefined,
       }),
-      transformResponse: transformApiResponse,
-      invalidatesTags: (_result, _error, { id }) => [
-        { type: "Asset", id },
-        { type: "Asset", id: "LIST" },
-        "AssetAnalytics",
-      ],
+      providesTags: ['Asset'],
     }),
-
-    deleteAsset: builder.mutation<{ success: boolean }, string>({
-      query: (id) => ({
-        url: `/api/v1/assets/${id}`,
-        method: "DELETE",
+    getAssetsFilterOptions: builder.query<ApiResponse<any>, any>({
+      query: (params) => ({
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/assets/filter-options` : typeof params === 'object' && params?.id ? `/api/v1/assets/filter-options` : '/api/v1/assets/filter-options',
+        params: typeof params === 'object' ? params : undefined,
       }),
-      transformResponse: transformApiResponse,
-      invalidatesTags: (_result, _error, id) => [
-        { type: "Asset", id },
-        { type: "Asset", id: "LIST" },
-        "AssetAnalytics",
-      ],
+      providesTags: ['Asset'],
     }),
-
-    assignAsset: builder.mutation<Asset, { id: string; employee_id: string; notes?: string }>({
-      query: ({ id, ...body }) => ({
-        url: `/api/v1/assets/${id}/assign`,
-        method: "POST",
-        body,
+    getAssetsId: builder.query<ApiResponse<any>, any>({
+      query: (params) => ({
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/assets/${paramsid` : typeof params === 'object' && params?.id ? `/api/v1/assets/${params.id}` : '/api/v1/assets/{id}',
+        params: typeof params === 'object' ? params : undefined,
       }),
-      transformResponse: transformApiResponse,
-      invalidatesTags: (_result, _error, { id }) => [
-        { type: "Asset", id },
-        { type: "Asset", id: "LIST" },
-        "AssetAnalytics",
-      ],
+      providesTags: ['Asset'],
     }),
-
-    returnAsset: builder.mutation<Asset, { id: string; notes?: string }>({
-      query: ({ id, ...body }) => ({
-        url: `/api/v1/assets/${id}/return`,
-        method: "POST",
-        body,
+    updateAssetsId: builder.mutation<ApiResponse<any>, any>({
+      query: (data) => ({
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/assets/${data.id` : typeof data === 'object' && data?.id ? `/api/v1/assets/${data.id}` : '/api/v1/assets/{id}',
+        method: 'PUT',
+        body: typeof data === 'object' ? data : undefined,
       }),
-      transformResponse: transformApiResponse,
-      invalidatesTags: (_result, _error, { id }) => [
-        { type: "Asset", id },
-        { type: "Asset", id: "LIST" },
-        "AssetAnalytics",
-      ],
+      invalidatesTags: ['Asset'],
     }),
-
-    transferAsset: builder.mutation<Asset, { id: string; target_employee_id: string; notes?: string }>({
-      query: ({ id, ...body }) => ({
-        url: `/api/v1/assets/${id}/transfer`,
-        method: "POST",
-        body,
+    deleteAssetsId: builder.mutation<ApiResponse<any>, any>({
+      query: (data) => ({
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/assets/${data.id` : typeof data === 'object' && data?.id ? `/api/v1/assets/${data.id}` : '/api/v1/assets/{id}',
+        method: 'DELETE',
+        body: typeof data === 'object' ? data : undefined,
       }),
-      transformResponse: transformApiResponse,
-      invalidatesTags: (_result, _error, { id }) => [
-        { type: "Asset", id },
-        { type: "Asset", id: "LIST" },
-        "AssetAnalytics",
-      ],
+      invalidatesTags: ['Asset'],
     }),
-
-    markAssetLost: builder.mutation<Asset, { id: string; notes?: string }>({
-      query: ({ id, ...body }) => ({
-        url: `/api/v1/assets/${id}/lost`,
-        method: "POST",
-        body,
+    createAssetsIdAssign: builder.mutation<ApiResponse<any>, any>({
+      query: (data) => ({
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/assets/${data.id/assign` : typeof data === 'object' && data?.id ? `/api/v1/assets/${data.id}/assign` : '/api/v1/assets/{id}/assign',
+        method: 'POST',
+        body: typeof data === 'object' ? data : undefined,
       }),
-      transformResponse: transformApiResponse,
-      invalidatesTags: (_result, _error, { id }) => [
-        { type: "Asset", id },
-        { type: "Asset", id: "LIST" },
-        "AssetAnalytics",
-      ],
+      invalidatesTags: ['Asset'],
     }),
-
-    retireAsset: builder.mutation<Asset, { id: string; notes?: string }>({
-      query: ({ id, ...body }) => ({
-        url: `/api/v1/assets/${id}/retired`,
-        method: "POST",
-        body,
+    createAssetsIdReturn: builder.mutation<ApiResponse<any>, any>({
+      query: (data) => ({
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/assets/${data.id/return` : typeof data === 'object' && data?.id ? `/api/v1/assets/${data.id}/return` : '/api/v1/assets/{id}/return',
+        method: 'POST',
+        body: typeof data === 'object' ? data : undefined,
       }),
-      transformResponse: transformApiResponse,
-      invalidatesTags: (_result, _error, { id }) => [
-        { type: "Asset", id },
-        { type: "Asset", id: "LIST" },
-        "AssetAnalytics",
-      ],
+      invalidatesTags: ['Asset'],
     }),
-
-    logAssetMaintenance: builder.mutation<Asset, { id: string; serviceDate?: string; vendor?: string; cost?: number; notes?: string }>({
-      query: ({ id, ...body }) => ({
-        url: `/api/v1/assets/${id}/maintenance`,
-        method: "POST",
-        body,
+    createAssetsIdTransfer: builder.mutation<ApiResponse<any>, any>({
+      query: (data) => ({
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/assets/${data.id/transfer` : typeof data === 'object' && data?.id ? `/api/v1/assets/${data.id}/transfer` : '/api/v1/assets/{id}/transfer',
+        method: 'POST',
+        body: typeof data === 'object' ? data : undefined,
       }),
-      transformResponse: transformApiResponse,
-      invalidatesTags: (_result, _error, { id }) => [
-        { type: "Asset", id },
-        { type: "Asset", id: "LIST" },
-        "AssetAnalytics",
-      ],
+      invalidatesTags: ['Asset'],
+    }),
+    createAssetsIdLost: builder.mutation<ApiResponse<any>, any>({
+      query: (data) => ({
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/assets/${data.id/lost` : typeof data === 'object' && data?.id ? `/api/v1/assets/${data.id}/lost` : '/api/v1/assets/{id}/lost',
+        method: 'POST',
+        body: typeof data === 'object' ? data : undefined,
+      }),
+      invalidatesTags: ['Asset'],
+    }),
+    createAssetsIdRetired: builder.mutation<ApiResponse<any>, any>({
+      query: (data) => ({
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/assets/${data.id/retired` : typeof data === 'object' && data?.id ? `/api/v1/assets/${data.id}/retired` : '/api/v1/assets/{id}/retired',
+        method: 'POST',
+        body: typeof data === 'object' ? data : undefined,
+      }),
+      invalidatesTags: ['Asset'],
+    }),
+    createAssetsIdMaintenance: builder.mutation<ApiResponse<any>, any>({
+      query: (data) => ({
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/assets/${data.id/maintenance` : typeof data === 'object' && data?.id ? `/api/v1/assets/${data.id}/maintenance` : '/api/v1/assets/{id}/maintenance',
+        method: 'POST',
+        body: typeof data === 'object' ? data : undefined,
+      }),
+      invalidatesTags: ['Asset'],
     }),
   }),
+  overrideExisting: false,
 });
 
 export const {
   useGetAssetsQuery,
-  useGetAssetAnalyticsQuery,
-  useGetAssetFilterOptionsQuery,
-  useUploadAssetImageMutation,
-  useCreateAssetMutation,
-  useGetAssetByIdQuery,
-  useGetPublicAssetByIdQuery,
-  useUpdateAssetMutation,
-  useDeleteAssetMutation,
-  useAssignAssetMutation,
-  useReturnAssetMutation,
-  useTransferAssetMutation,
-  useMarkAssetLostMutation,
-  useRetireAssetMutation,
-  useLogAssetMaintenanceMutation,
+  useCreateAssetsMutation,
+  useGetAssetsAnalyticsQuery,
+  useGetAssetsFilterOptionsQuery,
+  useGetAssetsIdQuery,
+  useUpdateAssetsIdMutation,
+  useDeleteAssetsIdMutation,
+  useCreateAssetsIdAssignMutation,
+  useCreateAssetsIdReturnMutation,
+  useCreateAssetsIdTransferMutation,
+  useCreateAssetsIdLostMutation,
+  useCreateAssetsIdRetiredMutation,
+  useCreateAssetsIdMaintenanceMutation,
 } = assetsApi;

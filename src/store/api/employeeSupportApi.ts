@@ -1,150 +1,90 @@
-import { baseApi } from "./baseApi";
-
-export interface TicketComment {
-  id: string;
-  author: string;
-  content: string;
-  created_at: string;
-}
-
-export interface SupportTicket {
-  id: string;
-  ticket_number?: string;
-  user_id?: string;
-  user_name?: string;
-  subject: string;
-  description: string;
-  category?: string;
-  priority: "low" | "medium" | "high" | "urgent" | string;
-  status: "open" | "in_progress" | "resolved" | "closed" | string;
-  comments?: TicketComment[];
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface CreateTicketRequest {
-  subject: string;
-  description: string;
-  category?: string;
-  priority?: "low" | "medium" | "high" | "urgent" | string;
-}
-
-export interface UpdateTicketRequest {
-  status?: string;
-  comment?: string;
-  priority?: string;
-  category?: string;
-}
-
-export interface TicketQueryParams {
-  status?: string;
-  priority?: string;
-  page?: number;
-  limit?: number;
-}
-
-export interface CopilotChatRequest {
-  message: string;
-  conversation_id?: string;
-  context?: Record<string, unknown>;
-}
-
-export interface CopilotChatResponse {
-  response: string;
-  conversation_id?: string;
-  suggestions?: string[];
-  metadata?: Record<string, unknown>;
-}
-
-export interface HrCopilotStats {
-  total_conversations: number;
-  total_tickets_created: number;
-  avg_response_time_ms: number;
-  sla_compliance_rate: number;
-  resolved_by_copilot_count: number;
-  escalated_to_hr_count: number;
-}
-
-export interface APIResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
-
-function transformApiResponse<T>(response: APIResponse<T> | T): T {
-  if (response && typeof response === "object" && "data" in response && "success" in response) {
-    return (response as APIResponse<T>).data;
-  }
-  return response as T;
-}
+import { baseApi } from './baseApi';
+import { ApiResponse } from '@/types/api';
 
 export const employeeSupportApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    chatCopilot: builder.mutation<CopilotChatResponse, CopilotChatRequest>({
-      query: (body) => ({
-        url: "/api/v2/employee-support/chat",
-        method: "POST",
-        body,
+    createV2EmployeeSupportChat: builder.mutation<ApiResponse<any>, any>({
+      query: (data) => ({
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/employee-support/chat` : typeof data === 'object' && data?.id ? `/api/v2/employee-support/chat` : '/api/v2/employee-support/chat',
+        method: 'POST',
+        body: typeof data === 'object' ? data : undefined,
       }),
-      transformResponse: transformApiResponse,
+      invalidatesTags: ['EmployeeSupport'],
     }),
-
-    createTicket: builder.mutation<SupportTicket, CreateTicketRequest>({
-      query: (body) => ({
-        url: "/api/v2/employee-support/tickets",
-        method: "POST",
-        body,
+    createV2EmployeeSupportTickets: builder.mutation<ApiResponse<any>, any>({
+      query: (data) => ({
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/employee-support/tickets` : typeof data === 'object' && data?.id ? `/api/v2/employee-support/tickets` : '/api/v2/employee-support/tickets',
+        method: 'POST',
+        body: typeof data === 'object' ? data : undefined,
       }),
-      transformResponse: transformApiResponse,
-      invalidatesTags: [{ type: "SupportTicket", id: "LIST" }],
+      invalidatesTags: ['EmployeeSupport'],
     }),
-
-    getMyTickets: builder.query<SupportTicket[], TicketQueryParams | void>({
-      query: (params) => {
-        const searchParams = new URLSearchParams();
-        if (params?.status) searchParams.append("status", params.status);
-        if (params?.priority) searchParams.append("priority", params.priority);
-        if (params?.page) searchParams.append("page", params.page.toString());
-        if (params?.limit) searchParams.append("limit", params.limit.toString());
-        const q = searchParams.toString();
-        return `/api/v2/employee-support/tickets/my${q ? `?${q}` : ""}`;
-      },
-      keepUnusedDataFor: 60,
-      transformResponse: transformApiResponse,
-      providesTags: (result) => {
-        const items = Array.isArray(result) ? result : [];
-        return [
-          ...items.map(({ id }) => ({ type: "SupportTicket" as const, id })),
-          { type: "SupportTicket", id: "LIST" },
-        ];
-      },
-    }),
-
-    updateTicket: builder.mutation<SupportTicket, { ticket_id: string; body: UpdateTicketRequest }>({
-      query: ({ ticket_id, body }) => ({
-        url: `/api/v2/employee-support/tickets/${ticket_id}`,
-        method: "PATCH",
-        body,
+    getV2EmployeeSupportTicketsMy: builder.query<ApiResponse<any>, any>({
+      query: (params) => ({
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v2/employee-support/tickets/my` : typeof params === 'object' && params?.id ? `/api/v2/employee-support/tickets/my` : '/api/v2/employee-support/tickets/my',
+        params: typeof params === 'object' ? params : undefined,
       }),
-      transformResponse: transformApiResponse,
-      invalidatesTags: (_result, _error, { ticket_id }) => [
-        { type: "SupportTicket", id: ticket_id },
-        { type: "SupportTicket", id: "LIST" },
-      ],
+      providesTags: ['EmployeeSupport'],
     }),
-
-    getHrCopilotStats: builder.query<HrCopilotStats, void>({
-      query: () => "/api/v2/employee-support/hr-copilot/stats",
-      transformResponse: transformApiResponse,
-      providesTags: ["HrCopilotStats"],
+    updateV2EmployeeSupportTicketsTicketId: builder.mutation<ApiResponse<any>, any>({
+      query: (data) => ({
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/employee-support/tickets/${data.ticket_id` : typeof data === 'object' && data?.id ? `/api/v2/employee-support/tickets/{ticket_id}` : '/api/v2/employee-support/tickets/{ticket_id}',
+        method: 'PATCH',
+        body: typeof data === 'object' ? data : undefined,
+      }),
+      invalidatesTags: ['EmployeeSupport'],
+    }),
+    getV2EmployeeSupportHrCopilotStats: builder.query<ApiResponse<any>, any>({
+      query: (params) => ({
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v2/employee-support/hr-copilot/stats` : typeof params === 'object' && params?.id ? `/api/v2/employee-support/hr-copilot/stats` : '/api/v2/employee-support/hr-copilot/stats',
+        params: typeof params === 'object' ? params : undefined,
+      }),
+      providesTags: ['EmployeeSupport'],
+    }),
+    createV2WellnessCheckins: builder.mutation<ApiResponse<any>, any>({
+      query: (data) => ({
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/wellness/checkins` : typeof data === 'object' && data?.id ? `/api/v2/wellness/checkins` : '/api/v2/wellness/checkins',
+        method: 'POST',
+        body: typeof data === 'object' ? data : undefined,
+      }),
+      invalidatesTags: ['EmployeeSupport'],
+    }),
+    createV2WellnessEscalationRules: builder.mutation<ApiResponse<any>, any>({
+      query: (data) => ({
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/wellness/escalation-rules` : typeof data === 'object' && data?.id ? `/api/v2/wellness/escalation-rules` : '/api/v2/wellness/escalation-rules',
+        method: 'POST',
+        body: typeof data === 'object' ? data : undefined,
+      }),
+      invalidatesTags: ['EmployeeSupport'],
+    }),
+    createV2WellnessAnonymousChats: builder.mutation<ApiResponse<any>, any>({
+      query: (data) => ({
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/wellness/anonymous-chats` : typeof data === 'object' && data?.id ? `/api/v2/wellness/anonymous-chats` : '/api/v2/wellness/anonymous-chats',
+        method: 'POST',
+        body: typeof data === 'object' ? data : undefined,
+      }),
+      invalidatesTags: ['EmployeeSupport'],
+    }),
+    createV2WellnessAnonymousChatsSessionIdMessages: builder.mutation<ApiResponse<any>, any>({
+      query: (data) => ({
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/wellness/anonymous-chats/${data.session_id/messages` : typeof data === 'object' && data?.id ? `/api/v2/wellness/anonymous-chats/{session_id}/messages` : '/api/v2/wellness/anonymous-chats/{session_id}/messages',
+        method: 'POST',
+        body: typeof data === 'object' ? data : undefined,
+      }),
+      invalidatesTags: ['EmployeeSupport'],
     }),
   }),
+  overrideExisting: false,
 });
 
 export const {
-  useChatCopilotMutation,
-  useCreateTicketMutation,
-  useGetMyTicketsQuery,
-  useUpdateTicketMutation,
-  useGetHrCopilotStatsQuery,
+  useCreateV2EmployeeSupportChatMutation,
+  useCreateV2EmployeeSupportTicketsMutation,
+  useGetV2EmployeeSupportTicketsMyQuery,
+  useUpdateV2EmployeeSupportTicketsTicketIdMutation,
+  useGetV2EmployeeSupportHrCopilotStatsQuery,
+  useCreateV2WellnessCheckinsMutation,
+  useCreateV2WellnessEscalationRulesMutation,
+  useCreateV2WellnessAnonymousChatsMutation,
+  useCreateV2WellnessAnonymousChatsSessionIdMessagesMutation,
 } = employeeSupportApi;

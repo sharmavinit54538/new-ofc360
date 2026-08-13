@@ -19,10 +19,11 @@ export const candidatesApi = baseApi.injectEndpoints({
 
     getCandidates: builder.query<APIResponse<Candidate[]>, CandidateFilters | void>({
       query: (params) => {
+        const p = params || {};
         const queryParams = new URLSearchParams();
-        if (params?.search) queryParams.append("search", params.search);
-        if (params?.stage) queryParams.append("stage", params.stage);
-        if (params?.jobId) queryParams.append("jobId", params.jobId);
+        if (p.search) queryParams.append("search", p.search);
+        if (p.stage) queryParams.append("stage", p.stage);
+        if (p.jobId) queryParams.append("jobId", p.jobId);
         const queryStr = queryParams.toString();
         return `/api/v1/recruitment/candidates${queryStr ? `?${queryStr}` : ""}`;
       },

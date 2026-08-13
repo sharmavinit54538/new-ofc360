@@ -13,8 +13,9 @@ export const requisitionsApi = baseApi.injectEndpoints({
       { status?: string } | void
     >({
       query: (params) => {
+        const p = params || {};
         const queryParams = new URLSearchParams();
-        if (params?.status) queryParams.append("status", params.status);
+        if (p.status) queryParams.append("status", p.status);
         const queryStr = queryParams.toString();
         return `/api/v1/requisitions${queryStr ? `?${queryStr}` : ""}`;
       },

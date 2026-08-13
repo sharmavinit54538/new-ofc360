@@ -1,0 +1,399 @@
+=== Authentication (14) ===
+  POST /api/v1/auth/register
+  POST /api/v1/auth/verify-email
+  POST /api/v1/auth/resend-otp
+  POST /api/v1/auth/login
+  POST /api/v1/auth/refresh-token
+  POST /api/v1/auth/refresh
+  POST /api/v1/auth/logout
+  POST /api/v1/auth/forgot-password
+  POST /api/v1/auth/reset-password
+  GET /api/v1/auth/me
+  PATCH /api/v1/auth/change-password
+  PATCH /api/v1/auth/change-email
+  POST /api/v1/auth/verify-new-email
+  PATCH /api/v1/auth/change-phone
+=== Employee Management (14) ===
+  POST /api/v1/employees
+  GET /api/v1/employees
+  GET /api/v1/employees/{id}
+  PUT /api/v1/employees/{id}
+  DELETE /api/v1/employees/{id}
+  POST /api/v1/employees/{id}/send-invitation
+  POST /api/v1/employees/{id}/send-invite
+  POST /api/v1/employees/{id}/deactivate
+  POST /api/v1/employees/{id}/activate-by-admin
+  POST /api/v1/employees/{id}/activate
+  POST /api/v1/employees/{id}/approve
+  POST /api/v1/employees/{id}/reject
+  POST /api/v1/employees/{id}/reset-password
+  GET /api/v1/employees/{id}/onboarding-status
+=== Manager Management (15) ===
+  POST /api/v1/managers
+  GET /api/v1/managers
+  GET /api/v1/managers/onboarding/validate
+  POST /api/v1/managers/onboarding/activate
+  GET /api/v1/managers/profile
+  POST /api/v1/managers/send-invite
+  GET /api/v1/managers/{id}
+  PUT /api/v1/managers/{id}
+  DELETE /api/v1/managers/{id}
+  POST /api/v1/managers/{id}/send-invitation
+  POST /api/v1/managers/{id}/activate
+  POST /api/v1/managers/{id}/reset-password
+  POST /api/v1/managers/onboarding/complete
+  POST /api/v1/managers/{id}/deactivate
+  POST /api/v1/managers/{id}/activate-by-admin
+=== Department Management (12) ===
+  POST /api/v1/departments
+  GET /api/v1/departments
+  GET /api/v1/departments/{id}
+  PUT /api/v1/departments/{id}
+  DELETE /api/v1/departments/{id}
+  POST /api/v1/departments/{id}/assign-manager
+  POST /api/v1/departments/{id}/assign-employees
+  DELETE /api/v1/departments/{id}/remove-manager
+  DELETE /api/v1/departments/{id}/remove-employee/{employee_id}
+  GET /api/v1/departments/{id}/employees
+  GET /api/v1/departments/{id}/manager
+  GET /api/v1/departments/{id}/stats
+=== Job Management (11) ===
+  POST /api/v1/jobs
+  GET /api/v1/jobs
+  GET /api/v1/jobs/{id}
+  PUT /api/v1/jobs/{id}
+  DELETE /api/v1/jobs/{id}
+  POST /api/v1/jobs/{id}/publish
+  POST /api/v1/jobs/{id}/close
+  POST /api/v1/jobs/{id}/draft
+  POST /api/v1/jobs/{id}/duplicate
+  POST /api/v1/jobs/generate-description
+  POST /api/v1/jobs/ai-autofill
+=== Asset Management (13) ===
+  GET /api/v1/assets
+  POST /api/v1/assets
+  GET /api/v1/assets/analytics
+  GET /api/v1/assets/filter-options
+  GET /api/v1/assets/{id}
+  PUT /api/v1/assets/{id}
+  DELETE /api/v1/assets/{id}
+  POST /api/v1/assets/{id}/assign
+  POST /api/v1/assets/{id}/return
+  POST /api/v1/assets/{id}/transfer
+  POST /api/v1/assets/{id}/lost
+  POST /api/v1/assets/{id}/retired
+  POST /api/v1/assets/{id}/maintenance
+=== Application Management (9) ===
+  GET /api/v1/applications/stats
+  GET /api/v1/applications
+  GET /api/v1/applications/{id}
+  PATCH /api/v1/applications/{id}/shortlist
+  PATCH /api/v1/applications/{id}/reject
+  PATCH /api/v1/applications/{id}/hold
+  PATCH /api/v1/applications/{id}/stage
+  POST /api/v1/applications/bulk-move
+  POST /api/v1/applications/bulk-tag
+=== Interview Management (7) ===
+  POST /api/v1/applications/{id}/send-interview
+  POST /api/v1/interviews/{id}/schedule
+  GET /api/v1/interviews
+  GET /api/v1/interviews/{id}
+  PATCH /api/v1/interviews/rounds/{round_id}/pass
+  PATCH /api/v1/interviews/rounds/{round_id}/reject
+  PATCH /api/v1/interviews/rounds/{round_id}/hold
+=== Offer Management (5) ===
+  POST /api/v1/applications/{id}/offer
+  PATCH /api/v1/offers/{id}/accept
+  PATCH /api/v1/offers/{id}/reject
+  POST /api/v1/applications/{id}/convert
+  GET /api/v1/offers
+=== Exit Management (20) ===
+  POST /api/v1/exits/resign
+  GET /api/v1/exits/my-request
+  DELETE /api/v1/exits/my-request
+  GET /api/v1/exits/stats
+  GET /api/v1/exits
+  GET /api/v1/exits/{id}
+  PATCH /api/v1/exits/{id}/approve
+  PATCH /api/v1/exits/{id}/reject
+  PATCH /api/v1/exits/{id}/start-notice-period
+  PATCH /api/v1/exits/{id}/complete
+  PATCH /api/v1/exits/{id}/manager-approve
+  PATCH /api/v1/exits/{id}/manager-reject
+  PATCH /api/v1/exits/{id}/knowledge-transfer-complete
+  GET /api/v1/exits/{id}/assets
+  PATCH /api/v1/exits/{id}/asset-return
+  PATCH /api/v1/exits/{id}/clearance
+  POST /api/v1/exits/{id}/exit-interview
+  PATCH /api/v1/exits/{id}/fnf
+  GET /api/v1/exits/{id}/documents
+  POST /api/v1/exits/{id}/generate-documents
+=== Calendar Management (17) ===
+  POST /api/v1/calendar/events
+  GET /api/v1/calendar/events
+  GET /api/v1/calendar/events/{id}
+  PUT /api/v1/calendar/events/{id}
+  DELETE /api/v1/calendar/events/{id}
+  POST /api/v1/calendar/holidays
+  GET /api/v1/calendar/holidays
+  PUT /api/v1/calendar/holidays/{id}
+  DELETE /api/v1/calendar/holidays/{id}
+  POST /api/v1/calendar/meetings
+  GET /api/v1/calendar/meetings
+  GET /api/v1/calendar/meetings/{id}
+  PUT /api/v1/calendar/meetings/{id}
+  DELETE /api/v1/calendar/meetings/{id}
+  GET /api/v1/calendar/birthdays
+  GET /api/v1/calendar/anniversaries
+  GET /api/v1/calendar/dashboard
+=== Document Management (17) ===
+  POST /api/v1/documents/employees
+  GET /api/v1/documents/employees
+  GET /api/v1/documents/employees/{id}
+  PUT /api/v1/documents/employees/{id}
+  DELETE /api/v1/documents/employees/{id}
+  GET /api/v1/documents/employees/{id}/download
+  POST /api/v1/documents/company
+  GET /api/v1/documents/company
+  GET /api/v1/documents/company/{id}
+  DELETE /api/v1/documents/company/{id}
+  POST /api/v1/documents/{id}/request-signature
+  POST /api/v1/documents/{id}/sign
+  GET /api/v1/documents/{id}/signature-status
+  PATCH /api/v1/documents/{id}/verify
+  PATCH /api/v1/documents/{id}/reject
+  GET /api/v1/documents/expiring
+  GET /api/v1/documents/expired
+=== Timesheet Management (6) ===
+  GET /api/v1/timesheets/weekly
+  POST /api/v1/timesheets/weekly
+  POST /api/v1/timesheets/weekly/submit
+  GET /api/v1/timesheets/history
+  GET /api/v1/timesheets/pending
+  POST /api/v1/timesheets/{timesheet_id}/review
+=== Leave Management (6) ===
+  GET /api/v1/leaves/balances
+  POST /api/v1/leaves/apply
+  GET /api/v1/leaves/history
+  GET /api/v1/leaves/pending
+  POST /api/v1/leaves/{leave_id}/review
+  GET /api/v1/leaves/balances/{employee_id}
+=== Document Template Management (3) ===
+  GET /api/v1/document-templates
+  POST /api/v1/document-templates
+  POST /api/v1/document-templates/{id}/generate
+=== Announcements Management (7) ===
+  POST /api/v1/announcements
+  GET /api/v1/announcements
+  GET /api/v1/announcements/{id}
+  PUT /api/v1/announcements/{id}
+  DELETE /api/v1/announcements/{id}
+  PATCH /api/v1/announcements/{id}/publish
+  PATCH /api/v1/announcements/{id}/archive
+=== Company News Management (6) ===
+  POST /api/v1/news
+  GET /api/v1/news
+  GET /api/v1/news/{id}
+  PUT /api/v1/news/{id}
+  DELETE /api/v1/news/{id}
+  PATCH /api/v1/news/{id}/publish
+=== Company Events Management (8) ===
+  POST /api/v1/events
+  GET /api/v1/events
+  GET /api/v1/events/{id}
+  PUT /api/v1/events/{id}
+  DELETE /api/v1/events/{id}
+  PATCH /api/v1/events/{id}/publish
+  PATCH /api/v1/events/{id}/cancel
+  POST /api/v1/events/{id}/register
+=== Polls Management (6) ===
+  POST /api/v1/polls
+  GET /api/v1/polls
+  GET /api/v1/polls/{id}
+  DELETE /api/v1/polls/{id}
+  POST /api/v1/polls/{id}/vote
+  PATCH /api/v1/polls/{id}/close
+=== Communication Dashboard (1) ===
+  GET /api/v1/internal/dashboard
+=== AI Hiring Copilot (10) ===
+  POST /api/v1/ai/upload-resume
+  POST /api/v1/ai/extract
+  POST /api/v1/ai/embedding
+  POST /api/v1/ai/match
+  POST /api/v1/ai/analyze
+  POST /api/v1/ai/rank
+  POST /api/v1/ai/interview
+  GET /api/v1/ai/dashboard/{resume_document_id}
+  GET /api/v1/ai/job-ranking/{job_id}
+  POST /api/v1/ai/copilot
+=== AI Chat Assistant (7) ===
+  POST /api/v1/ai/chat
+  GET /api/v1/ai/history
+  GET /api/v1/ai/history/{conversation_id}
+  PATCH /api/v1/ai/history/{conversation_id}
+  DELETE /api/v1/ai/history/{conversation_id}
+  POST /api/v1/ai/clear
+  GET /api/v1/ai/suggestions
+=== Onboarding (12) ===
+  GET /api/v1/onboarding/status
+  GET /api/v1/onboarding/progress
+  POST /api/v1/onboarding/company
+  POST /api/v1/onboarding/admin-profile
+  POST /api/v1/onboarding/hr-settings
+  POST /api/v1/onboarding/departments
+  POST /api/v1/onboarding/designations
+  POST /api/v1/onboarding/invite-employees
+  POST /api/v1/onboarding/complete
+  GET /api/v1/onboarding/validate
+  GET /api/v1/onboarding/validate-token
+  POST /api/v1/onboarding/activate
+=== Exports (7) ===
+  GET /api/v1/exports/employees
+  GET /api/v1/exports/departments
+  GET /api/v1/exports/managers
+  GET /api/v1/exports/attendance
+  GET /api/v1/exports/leaves
+  GET /api/v1/exports/payroll
+  GET /api/v1/exports/performance
+=== Candidate Management (7) ===
+  POST /api/v1/candidates
+  GET /api/v1/candidates
+  GET /api/v1/candidates/{id}
+  PUT /api/v1/candidates/{id}
+  DELETE /api/v1/candidates/{id}
+  POST /api/v1/candidates/import
+  GET /api/v1/candidates/export/csv
+=== Requisition Management (4) ===
+  POST /api/v1/requisitions
+  GET /api/v1/requisitions
+  GET /api/v1/requisitions/{id}
+  POST /api/v1/requisitions/{id}/approve
+=== Recruitment Vendors (5) ===
+  POST /api/v1/vendors
+  GET /api/v1/vendors
+  GET /api/v1/vendors/{id}
+  PUT /api/v1/vendors/{id}
+  DELETE /api/v1/vendors/{id}
+=== Recruitment CRM (2) ===
+  POST /api/v1/crm/notes
+  GET /api/v1/crm/notes/{candidate_id}
+=== Employee Referrals (3) ===
+  POST /api/v1/referrals
+  GET /api/v1/referrals
+  PUT /api/v1/referrals/{id}/status
+=== Recruitment Automation (2) ===
+  POST /api/v1/automations/rules
+  GET /api/v1/automations/rules
+=== Interview Scorecards (4) ===
+  POST /api/v1/scorecards/templates
+  GET /api/v1/scorecards/templates
+  POST /api/v1/scorecards/submissions
+  GET /api/v1/scorecards/submissions/{round_id}
+=== Recruitment Analytics & Alerts (3) ===
+  GET /api/v1/recruitment/analytics
+  GET /api/v1/recruitment/notifications
+  PUT /api/v1/recruitment/notifications/{id}/read
+=== Public Career Portal (5) ===
+  GET /api/public/careers
+  GET /api/public/careers/search
+  GET /api/public/careers/filter
+  GET /api/public/careers/{slug}
+  POST /api/public/careers/{slug}/apply
+=== Document Intelligence v2 (9) ===
+  POST /api/v2/document-intelligence/upload
+  POST /api/v2/document-intelligence/classify
+  POST /api/v2/document-intelligence/extract
+  POST /api/v2/document-intelligence/analyze
+  POST /api/v2/document-intelligence/compare
+  POST /api/v2/document-intelligence/validate
+  POST /api/v2/document-intelligence/search
+  POST /api/v2/document-intelligence/query
+  GET /api/v2/document-intelligence/insights
+=== Employee Support AI Agent v2 (5) ===
+  POST /api/v2/employee-support/chat
+  POST /api/v2/employee-support/tickets
+  GET /api/v2/employee-support/tickets/my
+  PATCH /api/v2/employee-support/tickets/{ticket_id}
+  GET /api/v2/employee-support/hr-copilot/stats
+=== AI Interview Bot v2 (5) ===
+  POST /api/v2/interview-bot/sessions
+  POST /api/v2/interview-bot/sessions/{session_id}/start
+  POST /api/v2/interview-bot/sessions/{session_id}/answer
+  POST /api/v2/interview-bot/sessions/{session_id}/proctor-alert
+  POST /api/v2/interview-bot/sessions/{session_id}/finalize
+=== HR Analytics Engine v2 (4) ===
+  GET /api/v2/hr-analytics/dashboard
+  POST /api/v2/hr-analytics/snapshots
+  POST /api/v2/hr-analytics/attrition-prediction/{employee_id}
+  POST /api/v2/hr-analytics/forecast
+=== AI Workflow Automation v2 (4) ===
+  POST /api/v2/workflows/definitions
+  POST /api/v2/workflows/trigger
+  PATCH /api/v2/workflows/steps/{step_id}/decision
+  GET /api/v2/workflows/instances/my-pending
+=== AI Payroll Intelligence v2 (5) ===
+  POST /api/v2/payroll/runs
+  POST /api/v2/payroll/runs/{run_id}/process
+  POST /api/v2/payroll/runs/{run_id}/approve
+  POST /api/v2/payroll/runs/{run_id}/pay
+  POST /api/v2/payroll/runs/{run_id}/anomalies
+=== AI Performance Management v2 (4) ===
+  POST /api/v2/performance/cycles
+  POST /api/v2/performance/goals
+  POST /api/v2/performance/reviews
+  POST /api/v2/performance/reviews/{review_id}/evaluate
+=== AI Policy Explainer v2 (2) ===
+  POST /api/v2/policies/documents
+  POST /api/v2/policies/chat
+=== AI Wellness Coach v2 (4) ===
+  POST /api/v2/wellness/checkins
+  POST /api/v2/wellness/escalation-rules
+  POST /api/v2/wellness/anonymous-chats
+  POST /api/v2/wellness/anonymous-chats/{session_id}/messages
+=== AI Productivity Tracking v2 (2) ===
+  POST /api/v2/productivity/logs
+  POST /api/v2/productivity/forecast/{employee_id}
+=== AI Goal Generator v2 (2) ===
+  POST /api/v2/goals/generate
+  POST /api/v2/goals/adjust
+=== AI Compensation Engine v2 (2) ===
+  POST /api/v2/compensation/benchmarks
+  POST /api/v2/compensation/recommendations/{employee_id}
+=== AI Behavioural Interview v2 (2) ===
+  POST /api/v2/behavioural/sessions
+  POST /api/v2/behavioural/questions/{question_id}/respond
+=== AI Email Generator v2 (1) ===
+  POST /api/v2/emails/generate
+=== AI Emotion Aware Chatbot v2 (2) ===
+  POST /api/v2/emotions/sessions
+  POST /api/v2/emotions/sessions/{session_id}/messages
+=== AI Org Intelligence Map v2 (1) ===
+  POST /api/v2/org-map/generate
+=== AI Skill Gap Analysis v2 (1) ===
+  POST /api/v2/skill-gap/analyze
+=== AI Shift Planner v2 (1) ===
+  POST /api/v2/shifts/plans
+=== AI Employee Digital Twin v2 (1) ===
+  POST /api/v2/digital-twin/sync
+=== AI HR Voice Assistant v2 (1) ===
+  POST /api/v2/voice/command
+=== AI Mood Detection Engine v2 (1) ===
+  POST /api/v2/mood/detect
+=== AI Career Path Generator v2 (1) ===
+  POST /api/v2/career-path/predict
+=== AI Learning Recommendation v2 (1) ===
+  POST /api/v2/learning/recommend
+=== AI Workforce Forecasting v2 (1) ===
+  POST /api/v2/workforce/forecast
+=== AI Talent Marketplace v2 (1) ===
+  POST /api/v2/talent/match
+=== AI Meeting Intelligence v2 (1) ===
+  POST /api/v2/meetings/analyze
+=== AI Compliance Monitor v2 (1) ===
+  POST /api/v2/compliance/audit
+=== AI Employee Risk Engine v2 (1) ===
+  POST /api/v2/risk/assess
+=== AI Executive Copilot v2 (1) ===
+  POST /api/v2/copilot/query
+=== Health (1) ===
+  GET /health
