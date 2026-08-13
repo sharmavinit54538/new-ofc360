@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useConnectStore } from "@/stores/connectStore";
+import { connectAudioManager } from "@/services/connectAudioManager";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +22,22 @@ export function CallScreen() {
   const endActiveCall = useConnectStore((s) => s.endActiveCall);
   const updateCallControls = useConnectStore((s) => s.updateCallControls);
   const incrementCallDuration = useConnectStore((s) => s.incrementCallDuration);
+
+  // Play outgoing ringtone / call status sounds
+  useEffect(() => {
+    if (!activeCall || activeCall.type !== "audio") return;
+
+    if (activeCall.status === "calling") {
+      connectAudioManager.playOutgoingCall();
+    } else if (activeCall.status === "connected") {
+      connectAudioManager.stopOutgoingCall();
+      connectAudioManager.playCallConnected();
+    }
+
+    return () => {
+      connectAudioManager.stopOutgoingCall();
+    };
+  }, [activeCall?.status, activeCall?.type]);
 
   // Use real local audio media
   const { startMedia, stopMedia, isMuted, toggleMicrophone } = useLocalMedia({
@@ -48,6 +65,7 @@ export function CallScreen() {
   };
 
   const handleEndCall = () => {
+    connectAudioManager.playCallEnded();
     stopMedia();
     endActiveCall();
   };

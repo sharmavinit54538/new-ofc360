@@ -141,6 +141,13 @@ export interface HRAdminOnboardingStoreState {
   updateTask: (id: string, updates: Partial<OnboardingTaskItem>) => void;
   deleteTask: (id: string) => void;
   resetOnboardingData: (companyId?: string) => void;
+
+  /** Hydrate local store from backend API response (new /hr-admin/onboarding endpoints) */
+  syncFromBackend: (data: {
+    companyName?: string; industry?: string; country?: string; city?: string;
+    companySize?: string; timezone?: string; address?: string; fullName?: string;
+    phone?: string; avatar?: string; completed?: boolean; current_step?: number;
+  }) => void;
 }
 
 export const useHRAdminOnboardingStore = create<HRAdminOnboardingStoreState>((set, get) => ({
@@ -365,6 +372,36 @@ export const useHRAdminOnboardingStore = create<HRAdminOnboardingStoreState>((se
       branding: initialBranding,
       preferences: initialPreferences,
       onboarding: initialStatus,
+    });
+  },
+
+  syncFromBackend: (data) => {
+    const current = get();
+    set({
+      company: {
+        ...current.company,
+        ...(data.companyName !== undefined && { company_name: data.companyName }),
+        ...(data.industry !== undefined && { industry: data.industry }),
+        ...(data.country !== undefined && { country: data.country }),
+        ...(data.city !== undefined && { city: data.city }),
+        ...(data.companySize !== undefined && { company_size: data.companySize as any }),
+        ...(data.timezone !== undefined && { timezone: data.timezone }),
+        ...(data.address !== undefined && { address: data.address }),
+      },
+      hr_admin: {
+        ...current.hr_admin,
+        ...(data.fullName !== undefined && {
+          first_name: data.fullName.split(" ")[0] || "",
+          last_name: data.fullName.split(" ").slice(1).join(" ") || "",
+        }),
+        ...(data.phone !== undefined && { mobile_number: data.phone }),
+        ...(data.avatar !== undefined && { profile_photo: data.avatar }),
+      },
+      onboarding: {
+        ...current.onboarding,
+        ...(data.completed !== undefined && { is_completed: data.completed }),
+        ...(data.current_step !== undefined && { current_step: data.current_step }),
+      },
     });
   },
 }));

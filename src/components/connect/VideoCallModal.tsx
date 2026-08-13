@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useConnectStore } from "@/stores/connectStore";
+import { connectAudioManager } from "@/services/connectAudioManager";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -75,6 +76,22 @@ export function VideoCallModal() {
     }
   }, [screenStream, isSharing]);
 
+  // Play outgoing ringtone / call status sounds
+  useEffect(() => {
+    if (!activeCall || activeCall.type !== "video") return;
+
+    if (activeCall.status === "calling") {
+      connectAudioManager.playOutgoingCall();
+    } else if (activeCall.status === "connected") {
+      connectAudioManager.stopOutgoingCall();
+      connectAudioManager.playCallConnected();
+    }
+
+    return () => {
+      connectAudioManager.stopOutgoingCall();
+    };
+  }, [activeCall?.status, activeCall?.type]);
+
   // Duration timer
   useEffect(() => {
     if (activeCall && activeCall.status === "connected") {
@@ -94,6 +111,7 @@ export function VideoCallModal() {
   };
 
   const handleEndCall = () => {
+    connectAudioManager.playCallEnded();
     stopMedia();
     stopScreenShare();
     endActiveCall();
@@ -102,8 +120,10 @@ export function VideoCallModal() {
   const handleToggleScreenShare = async () => {
     if (isSharing) {
       stopScreenShare();
+      connectAudioManager.playScreenShareStopped();
     } else {
       await startScreenShare();
+      connectAudioManager.playScreenShareStarted();
     }
   };
 
@@ -186,15 +206,20 @@ export function VideoCallModal() {
 
           {/* Picture-in-Picture Local Video Tile */}
           <div className="absolute bottom-6 right-6 w-48 sm:w-64 aspect-video rounded-2xl overflow-hidden bg-black/80 border-2 border-white/20 shadow-2xl z-20 group">
-            {isCameraOn && localStream ? (
-              <video
-                ref={localVideoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-cover mirror scale-x-[-1]"
-              />
-            ) : (
+            <video
+              ref={(el) => {
+                if (el && localStream) {
+                  el.srcObject = localStream;
+                }
+              }}
+              autoPlay
+              playsInline
+              muted
+              className={`w-full h-full object-cover mirror scale-x-[-1] ${
+                isCameraOn && localStream ? "block" : "hidden"
+              }`}
+            />
+            {(!isCameraOn || !localStream) && (
               <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-800 text-white/60 p-2">
                 <VideoOff className="w-6 h-6 mb-1 text-white/40" />
                 <span className="text-[11px] font-medium">Camera Off</span>

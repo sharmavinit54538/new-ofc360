@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { useConnectStore } from "@/stores/connectStore";
+import { connectAudioManager } from "@/services/connectAudioManager";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Phone, PhoneOff, Video } from "lucide-react";
@@ -9,7 +11,27 @@ export function IncomingCallModal() {
   const acceptIncomingCall = useConnectStore((s) => s.acceptIncomingCall);
   const rejectIncomingCall = useConnectStore((s) => s.rejectIncomingCall);
 
+  // Play incoming ringtone while ringing
+  useEffect(() => {
+    if (incomingCall) {
+      connectAudioManager.playIncomingCall();
+      return () => {
+        connectAudioManager.stopIncomingCall();
+      };
+    }
+  }, [incomingCall]);
+
   if (!incomingCall) return null;
+
+  const handleAccept = () => {
+    connectAudioManager.playCallConnected();
+    acceptIncomingCall();
+  };
+
+  const handleReject = () => {
+    connectAudioManager.playCallRejected();
+    rejectIncomingCall();
+  };
 
   const initials = incomingCall.targetUser.name
     .split(" ")
@@ -53,7 +75,7 @@ export function IncomingCallModal() {
           <Button
             type="button"
             variant="destructive"
-            onClick={rejectIncomingCall}
+            onClick={handleReject}
             className="flex-1 h-9 rounded-xl text-xs gap-1.5 font-semibold bg-rose-600 hover:bg-rose-700"
           >
             <PhoneOff className="w-3.5 h-3.5" />
@@ -62,7 +84,7 @@ export function IncomingCallModal() {
 
           <Button
             type="button"
-            onClick={acceptIncomingCall}
+            onClick={handleAccept}
             className="flex-1 h-9 rounded-xl text-xs gap-1.5 font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
           >
             {incomingCall.type === "video" ? <Video className="w-3.5 h-3.5" /> : <Phone className="w-3.5 h-3.5" />}

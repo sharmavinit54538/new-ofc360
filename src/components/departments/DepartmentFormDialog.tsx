@@ -6,6 +6,7 @@ import {
   useCreateDepartmentMutation,
   useUpdateDepartmentMutation,
 } from "@/services/api/departmentApi";
+import { useGetEmployeesQuery } from "@/services/api/employeeApi";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,9 @@ export function DepartmentFormDialog() {
   const { isFormOpen, editingDepartment, closeForm } = useDepartmentStore();
 
   const { data: rawDepartments } = useGetDepartmentsQuery(undefined, {
+    skip: !isFormOpen,
+  });
+  const { data: employeesList = [] } = useGetEmployeesQuery(undefined, {
     skip: !isFormOpen,
   });
   const departmentList: Department[] = Array.isArray(rawDepartments) ? rawDepartments : [];
@@ -205,21 +209,48 @@ export function DepartmentFormDialog() {
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold">Department Head</Label>
                 <Input
-                  placeholder="Name of Department Head"
+                  placeholder="Select or type Department Head"
                   value={formData.head}
                   onChange={(e) => setFormData({ ...formData, head: e.target.value })}
+                  list="dept-head-options"
                   className="h-9 text-xs"
                 />
+                <datalist id="dept-head-options">
+                  <option value="Vinit Sharma (VP Engineering)" />
+                  <option value="Priya Sharma (HR Director)" />
+                  <option value="Banoth Siddarth (Co-Founder & Director)" />
+                  <option value="Alex Johnson (Lead Architect)" />
+                  <option value="Sarah Chen (Engineering Lead)" />
+                  <option value="Ananya Roy (Finance Controller)" />
+                  <option value="Aarav Patel (Design Lead)" />
+                  {employeesList.map((emp) => {
+                    const empName = emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim();
+                    return empName ? <option key={emp.id} value={`${empName}${emp.role ? ` (${emp.role})` : ""}`} /> : null;
+                  })}
+                </datalist>
               </div>
 
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold">Reporting Manager</Label>
                 <Input
-                  placeholder="Name of Senior Executive Manager"
+                  placeholder="Select or type Reporting Manager"
                   value={formData.manager}
                   onChange={(e) => setFormData({ ...formData, manager: e.target.value })}
+                  list="reporting-manager-options"
                   className="h-9 text-xs"
                 />
+                <datalist id="reporting-manager-options">
+                  <option value="Vinit Sharma (VP Engineering)" />
+                  <option value="Banoth Siddarth (Co-Founder & Director)" />
+                  <option value="Priya Sharma (HR Director)" />
+                  <option value="Sarah Chen (Engineering Lead)" />
+                  <option value="Alex Johnson (Lead Architect)" />
+                  <option value="Ananya Roy (Finance Controller)" />
+                  {employeesList.map((emp) => {
+                    const empName = emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim();
+                    return empName ? <option key={emp.id} value={`${empName}${emp.role ? ` (${emp.role})` : ""}`} /> : null;
+                  })}
+                </datalist>
               </div>
 
               <div className="space-y-1.5 sm:col-span-2">

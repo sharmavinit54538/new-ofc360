@@ -69,6 +69,63 @@ describe("Department Module — Delete & Normalization Functionality", () => {
       const normalized = normalizeDepartment(raw);
       expect(normalized.id).toBe("777");
     });
+
+    it("should correctly resolve Department Head and Reporting Manager from all API property aliases", () => {
+      const raw1 = {
+        id: "101",
+        name: "Technology",
+        department_head: "Alex Johnson",
+        reporting_manager_name: "Sarah Chen",
+      };
+      const norm1 = normalizeDepartment(raw1);
+      expect(norm1.head).toBe("Alex Johnson");
+      expect(norm1.manager).toBe("Sarah Chen");
+
+      const raw2 = {
+        id: "102",
+        name: "Human Resources",
+        head_of_department: "Priya Sharma",
+      };
+      const norm2 = normalizeDepartment(raw2);
+      expect(norm2.head).toBe("Priya Sharma");
+      expect(norm2.manager).toBe("Priya Sharma");
+
+      const raw3 = {
+        id: "103",
+        name: "Engineering",
+      };
+      const norm3 = normalizeDepartment(raw3);
+      expect(norm3.head).toBe("Vinit Sharma");
+      expect(norm3.manager).toContain("Vinit Sharma");
+    });
+
+    it("should correctly resolve Open Reqs (openPositions) from property aliases or calculate from capacity", () => {
+      const raw1 = {
+        id: "201",
+        name: "Cloud Platform",
+        open_requisitions: 8,
+      };
+      const norm1 = normalizeDepartment(raw1);
+      expect(norm1.openPositions).toBe(8);
+
+      const raw2 = {
+        id: "202",
+        name: "Security",
+        employee_capacity: 40,
+        employee_count: 25,
+      };
+      const norm2 = normalizeDepartment(raw2);
+      expect(norm2.openPositions).toBe(15);
+
+      const raw3 = {
+        id: "203",
+        name: "QA Engineering",
+        hiring_status: "Open",
+      };
+      const norm3 = normalizeDepartment(raw3);
+      expect(typeof norm3.openPositions).toBe("number");
+      expect(norm3.openPositions).toBeGreaterThan(0);
+    });
   });
 
   describe("Duplicate Department Names Handling", () => {

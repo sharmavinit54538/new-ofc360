@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { connectAudioManager } from "@/services/connectAudioManager";
 import {
   ConnectUser,
   ConnectMessage,
@@ -387,6 +388,7 @@ export const useConnectStore = create<ConnectState>((set, get) => ({
     };
 
     set({ activeCall: newCall });
+    connectAudioManager.playOutgoingCall();
   },
 
   receiveIncomingCall: (caller, type) => {
@@ -402,6 +404,7 @@ export const useConnectStore = create<ConnectState>((set, get) => ({
       isScreenSharing: false,
     };
     set({ incomingCall: incoming });
+    connectAudioManager.playIncomingCall();
   },
 
   acceptIncomingCall: () => {
@@ -415,13 +418,16 @@ export const useConnectStore = create<ConnectState>((set, get) => ({
         startTime: Date.now(),
       },
     });
+    connectAudioManager.playCallConnected();
   },
 
   rejectIncomingCall: () => {
+    connectAudioManager.playCallRejected();
     set({ incomingCall: null });
   },
 
   endActiveCall: () => {
+    connectAudioManager.playCallEnded();
     set({ activeCall: null, incomingCall: null });
   },
 
@@ -536,6 +542,15 @@ export const useConnectStore = create<ConnectState>((set, get) => ({
     const updated = [newNotification, ...get().notifications];
     setStoredData(STORAGE_KEYS.NOTIFICATIONS, updated);
     set({ notifications: updated });
+
+    // Sound notification trigger
+    if (newNotification.type === "mention") {
+      connectAudioManager.playMention({ eventId: newNotification.id });
+    } else if (newNotification.type === "message") {
+      connectAudioManager.playMessage({ eventId: newNotification.id });
+    } else {
+      connectAudioManager.playNotification({ eventId: newNotification.id });
+    }
   },
 
   markNotificationAsRead: (notificationId) => {

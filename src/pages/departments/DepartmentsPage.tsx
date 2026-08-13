@@ -16,21 +16,7 @@ export default function DepartmentsPage() {
   return (
     <RoleGuard module="departments">
       <div className="space-y-6">
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-border/50">
-          <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-              <Building2 className="w-3.5 h-3.5" />
-              <span>Organizational Structure</span>
-            </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground">
-              Departments Module
-            </h1>
-            <p className="text-xs md:text-sm text-muted-foreground max-w-2xl">
-              Manage organizational units, reporting lines, capacity planning, cost centers, and departmental telemetry.
-            </p>
-          </div>
-        </div>
+
 
         {/* Stats Cards */}
         <DepartmentStatsCards />

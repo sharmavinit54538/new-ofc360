@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useConnectStore } from "@/stores/connectStore";
+import { connectAudioManager } from "@/services/connectAudioManager";
 import { useAuth } from "@/hooks/useAuth";
 import { ConnectMeeting, ConnectUser, ConnectMessage } from "@/types/connect";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -144,12 +145,14 @@ export function MeetingRoom({ meetingId }: MeetingRoomProps) {
   };
 
   const handleJoin = () => {
+    connectAudioManager.playMeetingStarted({ eventId: `meet_start_${meetingId}` });
     joinMeetingRoom(meetingId, currentConnectUser);
     setMeetingState("joined");
     toast.success("Joined meeting room");
   };
 
   const handleLeave = () => {
+    connectAudioManager.playMeetingEnded({ eventId: `meet_end_${meetingId}` });
     stopMedia();
     stopScreenShare();
     leaveMeetingRoom();
@@ -185,8 +188,10 @@ export function MeetingRoom({ meetingId }: MeetingRoomProps) {
   const handleToggleScreen = async () => {
     if (isSharing) {
       stopScreenShare();
+      connectAudioManager.playScreenShareStopped();
     } else {
       await startScreenShare();
+      connectAudioManager.playScreenShareStarted();
     }
   };
 
@@ -207,15 +212,20 @@ export function MeetingRoom({ meetingId }: MeetingRoomProps) {
 
           {/* Camera Preview Tile */}
           <div className="relative aspect-video max-h-72 w-full mx-auto rounded-2xl overflow-hidden bg-black/90 border border-border/70 shadow-lg flex items-center justify-center">
-            {isCameraOn && localStream ? (
-              <video
-                ref={localVideoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-cover mirror scale-x-[-1]"
-              />
-            ) : (
+            <video
+              ref={(el) => {
+                if (el && localStream) {
+                  el.srcObject = localStream;
+                }
+              }}
+              autoPlay
+              playsInline
+              muted
+              className={`w-full h-full object-cover mirror scale-x-[-1] ${
+                isCameraOn && localStream ? "block" : "hidden"
+              }`}
+            />
+            {(!isCameraOn || !localStream) && (
               <div className="flex flex-col items-center justify-center text-white/50 space-y-2">
                 <VideoOff className="w-10 h-10 opacity-60" />
                 <span className="text-xs font-medium">Camera is turned off</span>

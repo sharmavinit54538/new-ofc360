@@ -112,6 +112,11 @@ import BlogPage from "@/pages/BlogPage";
 import FAQPage from "@/pages/FAQPage";
 import ContactPage from "@/pages/ContactPage";
 import HRAdminOnboardingPage from "@/pages/onboarding/HRAdminOnboardingPage";
+import OnboardingHubPage from "@/pages/onboarding/OnboardingHubPage";
+import WorkflowsManagementPage from "@/pages/onboarding/WorkflowsManagementPage";
+import NewHiresManagementPage from "@/pages/onboarding/NewHiresManagementPage";
+import DocumentsManagementPage from "@/pages/onboarding/DocumentsManagementPage";
+import TasksManagementPage from "@/pages/onboarding/TasksManagementPage";
 import SuperAdminDashboardPage from "@/pages/super-admin/SuperAdminDashboardPage";
 import PlatformLandingPage from "@/pages/super-admin/platform/PlatformLandingPage";
 import CompaniesPage from "@/pages/super-admin/platform/CompaniesPage";
@@ -165,6 +170,13 @@ const App = () => (
         <Route element={<ProtectedRoute />}>
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
+
+            {/* HR Admin Onboarding Management Routes */}
+            <Route path="/hr-admin/onboarding/hub" element={<RoleGuard allowedRoles={["hr_admin"]}><OnboardingHubPage /></RoleGuard>} />
+            <Route path="/hr-admin/onboarding/workflows" element={<RoleGuard allowedRoles={["hr_admin"]}><WorkflowsManagementPage /></RoleGuard>} />
+            <Route path="/hr-admin/onboarding/new-hires" element={<RoleGuard allowedRoles={["hr_admin"]}><NewHiresManagementPage /></RoleGuard>} />
+            <Route path="/hr-admin/onboarding/documents" element={<RoleGuard allowedRoles={["hr_admin"]}><DocumentsManagementPage /></RoleGuard>} />
+            <Route path="/hr-admin/onboarding/tasks" element={<RoleGuard allowedRoles={["hr_admin"]}><TasksManagementPage /></RoleGuard>} />
 
             {/* Super Admin Routes */}
             <Route path="/super-admin" element={<RoleGuard allowedRoles={["super_admin"]}><SuperAdminDashboardPage /></RoleGuard>} />

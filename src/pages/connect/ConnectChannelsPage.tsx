@@ -23,20 +23,25 @@ export default function ConnectChannelsPage() {
     navigate(`/connect/channels/${id}`);
   };
 
+  const currentActiveChannel = channelId || activeChannelId;
+  const hasActiveChannel = Boolean(currentActiveChannel);
+
   return (
     <ConnectLayout>
       <div className="flex-1 flex w-full h-full overflow-hidden">
         {/* Channel List */}
         <ChannelList
           onSelectChannel={handleSelectChannel}
-          className="w-full sm:w-80 md:w-88 shrink-0"
+          className={hasActiveChannel ? "w-full sm:w-80 md:w-96 shrink-0" : "w-full flex-1 border-r-0"}
         />
 
         {/* Active Channel View */}
-        <ChannelView
-          channelId={activeChannelId}
-          className="hidden sm:flex flex-1"
-        />
+        {hasActiveChannel && (
+          <ChannelView
+            channelId={currentActiveChannel!}
+            className="flex-1 flex"
+          />
+        )}
       </div>
     </ConnectLayout>
   );

@@ -122,8 +122,8 @@ export function ConnectSidebar({ className = "" }: ConnectSidebarProps) {
         </DropdownMenu>
       </div>
 
-      {/* Navigation List */}
-      <div className="flex-1 py-2 px-2 space-y-1 overflow-y-auto scrollbar-thin">
+      {/* Navigation List (Card Format) */}
+      <div className="flex-1 py-2 px-2 space-y-1.5 overflow-y-auto scrollbar-thin">
         <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-2 py-1 block">
           Connect Modules
         </span>
@@ -137,27 +137,29 @@ export function ConnectSidebar({ className = "" }: ConnectSidebarProps) {
             <NavLink
               key={item.id}
               to={item.path}
-              className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-150 group ${
+              className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer border ${
                 isActive
-                  ? "bg-primary/15 text-primary border border-primary/25 shadow-2xs"
-                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                  ? "bg-card text-primary shadow-sm font-bold border-border/60 ring-1 ring-border/50"
+                  : "bg-card/40 text-muted-foreground border-border/30 hover:bg-card hover:text-foreground hover:border-border/60"
               }`}
             >
               <div className="flex items-center gap-2.5 min-w-0">
-                <Icon
-                  className={`w-4 h-4 shrink-0 transition-colors ${
-                    isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                <div
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                    isActive ? "bg-primary/10 text-primary" : "bg-muted/60 text-muted-foreground"
                   }`}
-                />
+                >
+                  <Icon className="w-4 h-4" />
+                </div>
                 <span className="truncate">{item.label}</span>
               </div>
 
               {item.badge ? (
-                <span className="text-[10px] bg-primary text-primary-foreground font-bold px-1.5 py-0.2 rounded-full">
+                <span className="text-[10px] bg-primary text-primary-foreground font-bold px-2 py-0.5 rounded-full shadow-xs">
                   {item.badge}
                 </span>
               ) : item.count !== undefined && item.count > 0 ? (
-                <span className="text-[10px] bg-muted text-muted-foreground font-semibold px-1.5 py-0.2 rounded-md">
+                <span className="text-[10px] bg-secondary text-secondary-foreground font-semibold px-2 py-0.5 rounded-md border border-border/40">
                   {item.count}
                 </span>
               ) : null}

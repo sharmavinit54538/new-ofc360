@@ -188,11 +188,11 @@ export function DepartmentProfileDrawer() {
                     <span className="text-muted-foreground flex items-center gap-1.5">
                       <UserCheck className="w-3.5 h-3.5 text-primary" /> Department Head
                     </span>
-                    <span className="font-semibold text-foreground">{department.head || "—"}</span>
+                    <span className="font-semibold text-foreground">{department.head || "Unassigned Lead"}</span>
                   </div>
                   <div className="flex justify-between py-1 border-b border-border/30">
                     <span className="text-muted-foreground">Reporting Manager</span>
-                    <span className="font-medium text-foreground">{department.manager || "—"}</span>
+                    <span className="font-medium text-foreground">{department.manager || department.head || "Unassigned Manager"}</span>
                   </div>
                   <div className="flex justify-between py-1 border-b border-border/30">
                     <span className="text-muted-foreground flex items-center gap-1.5">

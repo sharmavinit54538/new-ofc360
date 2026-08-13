@@ -330,17 +330,17 @@ export function DepartmentsTable() {
                       </button>
                     </TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">{dept.code || "—"}</TableCell>
-                    <TableCell className="text-xs">{dept.head || "—"}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{dept.manager || "—"}</TableCell>
+                    <TableCell className="text-xs font-semibold text-foreground">{dept.head || "Unassigned Lead"}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{dept.manager || dept.head || "Unassigned Manager"}</TableCell>
                     <TableCell className="text-xs">{dept.location || "—"}</TableCell>
                     <TableCell className="text-xs text-center font-medium">
-                      {dept.employeeCount !== null && dept.employeeCount !== undefined ? dept.employeeCount : "—"}
+                      {dept.employeeCount !== null && dept.employeeCount !== undefined ? dept.employeeCount : 0}
                     </TableCell>
                     <TableCell className="text-xs text-center font-medium">
-                      {dept.capacity !== null && dept.capacity !== undefined ? dept.capacity : "—"}
+                      {dept.capacity !== null && dept.capacity !== undefined ? dept.capacity : 25}
                     </TableCell>
-                    <TableCell className="text-xs text-center font-medium text-primary">
-                      {dept.openPositions !== null && dept.openPositions !== undefined ? dept.openPositions : "—"}
+                    <TableCell className="text-xs text-center font-medium text-primary font-bold">
+                      {dept.openPositions !== null && dept.openPositions !== undefined ? dept.openPositions : 0}
                     </TableCell>
                     <TableCell className="text-xs">{getStatusBadge(dept.status)}</TableCell>
                     <TableCell className="text-xs">

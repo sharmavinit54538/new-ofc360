@@ -31,6 +31,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { roleLabels, SystemRole } from "@/features/auth/authTypes";
 import { Badge } from "@/components/ui/badge";
 import { BackButton } from "@/components/common/BackButton";
+import { NotificationPanel } from "@/components/connect/NotificationPanel";
 import { toast } from "sonner";
 
 const ROOT_DASHBOARD_PATHS = [
@@ -129,11 +130,8 @@ export function TopNav({ onMenuClick }: TopNavProps) {
           {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </Button>
 
-        {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative text-muted-foreground h-9 w-9">
-          <Bell className="w-4 h-4" />
-          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-destructive" />
-        </Button>
+        {/* Global Notifications Bell Panel */}
+        <NotificationPanel />
 
         {/* Profile Dropdown */}
         <DropdownMenu>

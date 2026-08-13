@@ -23,20 +23,25 @@ export default function ConnectChatPage() {
     navigate(`/connect/chat/${id}`);
   };
 
+  const currentActiveId = conversationId || activeConversationId;
+  const hasActiveConversation = Boolean(currentActiveId);
+
   return (
     <ConnectLayout>
       <div className="flex-1 flex w-full h-full overflow-hidden">
-        {/* Chat List (left side of chat workspace) */}
+        {/* Chat List (Full width when browsing, master sidebar when chatting) */}
         <ChatList
           onSelectConversation={handleSelectConversation}
-          className="w-full sm:w-80 md:w-88 shrink-0"
+          className={hasActiveConversation ? "w-full sm:w-80 md:w-96 shrink-0" : "w-full flex-1 border-r-0"}
         />
 
         {/* Active Chat Conversation Area */}
-        <ChatWindow
-          conversationId={activeConversationId}
-          className="hidden sm:flex flex-1"
-        />
+        {hasActiveConversation && (
+          <ChatWindow
+            conversationId={currentActiveId}
+            className="flex-1 flex"
+          />
+        )}
       </div>
     </ConnectLayout>
   );

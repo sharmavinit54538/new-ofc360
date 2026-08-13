@@ -101,7 +101,7 @@ export function FloatingAIAssistant() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.96 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
-            className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 w-[calc(100vw-2rem)] sm:w-[380px] md:w-[400px] h-[520px] max-h-[82vh] rounded-2xl bg-card border border-border/70 shadow-2xl z-40 flex flex-col overflow-hidden backdrop-blur-xl"
+            className="fixed bottom-20 left-4 sm:bottom-24 sm:left-6 w-[calc(100vw-2rem)] sm:w-[380px] md:w-[400px] h-[520px] max-h-[82vh] rounded-2xl bg-card border border-border/70 shadow-2xl z-40 flex flex-col overflow-hidden backdrop-blur-xl"
           >
             {/* Header */}
             <div className="p-4 border-b border-border/50 bg-gradient-to-r from-primary/15 via-card to-accent/10 flex items-center justify-between">
@@ -233,7 +233,7 @@ export function FloatingAIAssistant() {
             whileTap={{ scale: 0.94 }}
             onClick={() => setOpen(!open)}
             aria-label="Open OFC360 AI Assistant"
-            className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 md:bottom-6 md:right-6 w-14 h-14 rounded-full gradient-bg shadow-xl shadow-primary/25 border border-white/20 flex items-center justify-center z-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer transition-shadow"
+            className="fixed bottom-4 left-4 sm:bottom-5 sm:left-5 md:bottom-6 md:left-6 w-14 h-14 rounded-full gradient-bg shadow-xl shadow-primary/25 border border-white/20 flex items-center justify-center z-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer transition-shadow"
           >
             <span className="absolute inset-0 rounded-full gradient-bg opacity-30 animate-ping pointer-events-none" />
             {open ? (
@@ -243,7 +243,7 @@ export function FloatingAIAssistant() {
             )}
           </motion.button>
         </TooltipTrigger>
-        <TooltipContent side="left" className="text-xs font-semibold px-2.5 py-1 shadow-md">
+        <TooltipContent side="right" className="text-xs font-semibold px-2.5 py-1 shadow-md">
           OFC360 AI Assistant
         </TooltipContent>
       </Tooltip>
