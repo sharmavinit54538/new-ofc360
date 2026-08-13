@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "@/features/auth/authSlice";
 import uiReducer from "@/features/ui/uiSlice";
 import companyReducer from "@/features/company/companySlice";
+import attendanceReducer from "@/features/attendance/attendanceSlice";
 import { baseApi } from "@/services/api/baseApi";
 
 export const store = configureStore({
@@ -9,6 +10,7 @@ export const store = configureStore({
     auth: authReducer,
     ui: uiReducer,
     company: companyReducer,
+    attendance: attendanceReducer,
     [baseApi.reducerPath]: baseApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>

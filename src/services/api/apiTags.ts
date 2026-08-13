@@ -6,6 +6,7 @@ export const API_TAGS = [
   "Manager",
   "Department",
   "Attendance",
+  "AttendanceAnalytics",
   "Leave",
   "Payroll",
   "Payslip",
