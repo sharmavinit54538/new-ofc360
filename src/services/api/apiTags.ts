@@ -65,6 +65,9 @@ export const API_TAGS = [
   "ComplianceReport",
   "EngagementReport",
   "CultureReport",
+  "HrDocument",
+  "ExitDocument",
+  "LetterGenerator",
 ] as const;
 
 export type ApiTagType = (typeof API_TAGS)[number];
