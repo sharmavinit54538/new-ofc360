@@ -80,6 +80,10 @@ export const API_TAGS = [
   "HrCopilotStats",
   "ReimbursementAudit",
   "ReimbursementInsights",
+  "CompanySettings",
+  "SecuritySettings",
+  "BillingSettings",
+  "HRDirectory",
 ] as const;
 
 export type ApiTagType = (typeof API_TAGS)[number];
