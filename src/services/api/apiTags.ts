@@ -11,6 +11,24 @@ export const API_TAGS = [
   "Payroll",
   "Payslip",
   "PayrollAnalytics",
+  "PayCycle",
+  "SalaryProcessing",
+  "SalaryStructure",
+  "Overtime",
+  "Bonus",
+  "Deduction",
+  "Reimbursement",
+  "Advance",
+  "BankTransfer",
+  "Compliance",
+  "PayrollDashboard",
+  "PayrollSettings",
+  "Tax",
+  "SalaryComponent",
+  "Allowance",
+  "Template",
+  "Security",
+  "AiPayroll",
   "Recruitment",
   "Candidate",
   "Job",
@@ -31,3 +49,4 @@ export const API_TAGS = [
 ] as const;
 
 export type ApiTagType = (typeof API_TAGS)[number];
+
