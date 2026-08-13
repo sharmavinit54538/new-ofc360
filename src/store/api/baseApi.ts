@@ -5,7 +5,7 @@ import {
   FetchArgs,
   FetchBaseQueryError,
 } from "@reduxjs/toolkit/query/react";
-import { setCredentials, logout } from "../slices/authSlice";
+import { setCredentials, logout } from "@/features/auth/authSlice";
 
 export const API_TAGS = [
   "User",

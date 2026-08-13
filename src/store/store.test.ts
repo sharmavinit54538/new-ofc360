@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { store } from './index';
-import { setCredentials, logout } from './slices/authSlice';
+import { setCredentials, logout } from '@/features/auth/authSlice';
 import { getInventoryAuditReport } from './api/apiRegistry';
 
 describe('Redux Central Store & RTK Query Architecture', () => {

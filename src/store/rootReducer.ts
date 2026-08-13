@@ -1,5 +1,5 @@
 import { combineReducers } from "@reduxjs/toolkit";
-import authReducer from "./slices/authSlice";
+import authReducer from "@/features/auth/authSlice";
 import userReducer from "./slices/userSlice";
 import uiReducer from "./slices/uiSlice";
 import notificationReducer from "./slices/notificationSlice";
@@ -11,7 +11,7 @@ import reportsUiReducer from "@/features/reports/reportsUiSlice";
 import recruitmentUiReducer from "@/features/recruitment/recruitmentUiSlice";
 import hrDocumentsUiReducer from "@/features/hrDocuments/hrDocumentsUiSlice";
 import onboardingUiReducer from "@/features/onboarding/onboardingUiSlice";
-import { baseApi } from "./api/baseApi";
+import { baseApi } from "@/services/api/baseApi";
 
 export const rootReducer = combineReducers({
   auth: authReducer,

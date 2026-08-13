@@ -1,3 +1,3 @@
-import { baseApi } from "./api/baseApi";
+import { baseApi } from "@/services/api/baseApi";
 
 export const customMiddleware = [baseApi.middleware];
