@@ -99,6 +99,11 @@ export default function LoginPage() {
         toast.error("Please enter your work email.");
         return;
       }
+      const cleanPhone = phone.replace(/\D/g, "").slice(-10);
+      if (!cleanPhone || !/^[6-9]\d{9}$/.test(cleanPhone)) {
+        toast.error("Please enter a valid 10-digit Indian mobile number (e.g., 9876543210).");
+        return;
+      }
       if (password.length < 8) {
         toast.error("Password must be at least 8 characters.");
         return;
@@ -123,15 +128,22 @@ export default function LoginPage() {
           name: fullName.trim(),
           full_name: fullName.trim(),
           email: workEmail.trim(),
+          phone: cleanPhone,
           password,
-          company_name: companyName.trim() || undefined,
+          company_name: companyName.trim(),
         }).unwrap();
 
         toast.success(`Account created! Please check your email for the verification code.`);
         navigate(`/verify-email?email=${encodeURIComponent(workEmail.trim())}`);
-      } catch (err) {
+      } catch (err: any) {
         const norm = normalizeError(err);
-        toast.error(norm.message);
+        const serverErrors = err?.data?.errors;
+        if (Array.isArray(serverErrors) && serverErrors.length > 0) {
+          const detailMsg = serverErrors.map((e: any) => e.message || `${e.field} is invalid`).join(". ");
+          toast.error(detailMsg);
+        } else {
+          toast.error(norm.message);
+        }
       }
     } else {
       if (!workEmail.trim()) {
@@ -292,13 +304,15 @@ export default function LoginPage() {
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-xs font-semibold">Phone</Label>
+                    <Label className="text-xs font-semibold">Phone Number</Label>
                     <Input
                       type="tel"
-                      placeholder="9876543210 (10-digit Indian mobile)"
+                      placeholder="9876543210"
+                      maxLength={10}
                       value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
                       className="bg-secondary/30 text-xs h-10 border-border/60"
+                      required
                     />
                   </div>
                 </div>
