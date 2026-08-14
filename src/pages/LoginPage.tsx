@@ -51,31 +51,20 @@ export default function LoginPage() {
     }
   }, [location.pathname]);
 
-  const checkOnboardingAndNavigate = (role: SystemRole, userId: string) => {
+  const checkOnboardingAndNavigate = (role: SystemRole, _userId?: string) => {
     if (role === "super_admin") {
       navigate("/super-admin");
       return;
     }
 
-    if (role === "hr_admin") {
-      try {
-        const item = localStorage.getItem(`ofc360_hr_onboarding_v1_${userId}`);
-        const parsed = item ? JSON.parse(item) : null;
-        if (!parsed?.onboarding?.is_completed) {
-          navigate("/hr-admin/onboarding");
-          return;
-        }
-      } catch {
-        navigate("/hr-admin/onboarding");
-        return;
-      }
-    }
-
     if (role === "employee") {
       navigate("/employee");
-    } else {
-      navigate("/dashboard");
+      return;
     }
+
+    // For hr_admin and other roles, navigate to /dashboard.
+    // DashboardLayout / HRAdminOnboardingGuard authoritative backend check handles routing.
+    navigate("/dashboard");
   };
 
   const handleSSOLogin = (provider: "Google" | "GitHub") => {

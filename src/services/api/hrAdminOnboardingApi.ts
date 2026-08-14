@@ -18,7 +18,21 @@ import type {
   ListFilters,
 } from "@/types/hrAdminOnboardingApi.types";
 
-const BASE = "/api/v1/hr-admin/onboarding";
+export function normalizeOnboardingStatusResponse(
+  raw: RawEnvelope<OnboardingStatusResponse> | any
+): OnboardingStatusResponse {
+  const data = unwrapEnvelope(raw) || {};
+  const completed = Boolean(
+    data.completed ?? data.is_completed ?? data.onboarding_completed ?? false
+  );
+  const current_step = typeof data.current_step === "number" ? data.current_step : 0;
+  const total_steps = typeof data.total_steps === "number" ? data.total_steps : 4;
+  return {
+    completed,
+    current_step,
+    total_steps,
+  };
+}
 
 export const hrAdminOnboardingApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -27,8 +41,8 @@ export const hrAdminOnboardingApi = baseApi.injectEndpoints({
     // 1. GET /status
     getHRAdminOnboardingStatus: builder.query<OnboardingStatusResponse, void>({
       query: () => `${BASE}/status`,
-      transformResponse: (raw: RawEnvelope<OnboardingStatusResponse>) =>
-        unwrapEnvelope(raw),
+      transformResponse: (raw: RawEnvelope<OnboardingStatusResponse> | any) =>
+        normalizeOnboardingStatusResponse(raw),
       providesTags: ["HRAdminOnboarding"],
     }),
 

@@ -104,6 +104,13 @@ export default function HRAdminOnboardingPage() {
     }
   }, [statusData]);
 
+  // Redirect if already completed
+  useEffect(() => {
+    if (statusData?.completed) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [statusData, navigate]);
+
   const isMutating = isSaving || isCompleting;
   const isLoading = isStatusLoading || isWizardLoading;
   const isError = isStatusError || isWizardError;
@@ -162,8 +169,13 @@ export default function HRAdminOnboardingPage() {
   const handleComplete = async () => {
     try {
       await completeOnboarding().unwrap();
-      toast.success("🎉 Onboarding completed! Welcome to your HR workspace.");
-      setTimeout(() => navigate("/dashboard"), 1200);
+      const updated = await refetchStatus().unwrap();
+      if (updated?.completed) {
+        toast.success("🎉 Onboarding completed! Welcome to your HR workspace.");
+      } else {
+        toast.success("Setup complete! Entering workspace...");
+      }
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       const norm = normalizeError(err);
       toast.error(norm.message);

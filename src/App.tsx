@@ -112,6 +112,7 @@ import BlogPage from "@/pages/BlogPage";
 import FAQPage from "@/pages/FAQPage";
 import ContactPage from "@/pages/ContactPage";
 import HRAdminOnboardingPage from "@/pages/onboarding/HRAdminOnboardingPage";
+import { HRAdminOnboardingGuard } from "@/components/auth/HRAdminOnboardingGuard";
 import OnboardingHubPage from "@/pages/onboarding/OnboardingHubPage";
 import WorkflowsManagementPage from "@/pages/onboarding/WorkflowsManagementPage";
 import NewHiresManagementPage from "@/pages/onboarding/NewHiresManagementPage";
@@ -166,7 +167,7 @@ const App = () => (
         <Route path="/verify-reset-otp" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ForgotPasswordPage />} />
         <Route path="/careers" element={<PublicCareersPage />} />
-        <Route path="/hr-admin/onboarding" element={<RoleGuard allowedRoles={["hr_admin"]}><HRAdminOnboardingPage /></RoleGuard>} />
+        <Route path="/hr-admin/onboarding" element={<HRAdminOnboardingGuard><HRAdminOnboardingPage /></HRAdminOnboardingGuard>} />
         <Route element={<ProtectedRoute />}>
           <Route element={<DashboardLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
