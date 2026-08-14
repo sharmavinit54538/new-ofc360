@@ -1,3 +1,4 @@
+import { memo } from "react"; // Added React.memo to prevent unnecessary re-renders when props (mostly primitive values) don't change
 import { LucideIcon } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -10,7 +11,8 @@ interface StatCardProps {
   iconColor?: string;
 }
 
-export function StatCard({ title, value, change, changeType = "neutral", icon: Icon, iconColor }: StatCardProps) {
+// Wrapped StatCard with memo to prevent unnecessary re-renders in heavily loaded pages
+export const StatCard = memo(function StatCard({ title, value, change, changeType = "neutral", icon: Icon, iconColor }: StatCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -35,4 +37,4 @@ export function StatCard({ title, value, change, changeType = "neutral", icon: I
       )}
     </motion.div>
   );
-}
+});
