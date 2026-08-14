@@ -34,6 +34,8 @@ export function normalizeOnboardingStatusResponse(
   };
 }
 
+const BASE = "/api/v1/hr-admin/onboarding";
+
 export const hrAdminOnboardingApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     // ─── A. Wizard ───────────────────────────────────────────────────

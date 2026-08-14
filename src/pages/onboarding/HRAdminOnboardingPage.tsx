@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { useAppDispatch } from "@/app/hooks";
+import { updateUser } from "@/features/auth/authSlice";
 import {
   useGetHRAdminOnboardingStatusQuery,
   useGetHRAdminOnboardingWizardDataQuery,
@@ -48,6 +50,7 @@ const TIMEZONES = [
 
 export default function HRAdminOnboardingPage() {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const { user } = useAuth();
 
   // RTK Query
@@ -89,25 +92,12 @@ export default function HRAdminOnboardingPage() {
     }
   }, [wizardData]);
 
-  // Redirect if already completed
-  useEffect(() => {
-    if (statusData?.completed) {
-      toast.success("Onboarding already completed!");
-      navigate("/dashboard");
-    }
-  }, [statusData, navigate]);
-
-  // Set active step from backend status
-  useEffect(() => {
-    if (statusData && !statusData.completed) {
-      setActiveStep(statusData.current_step);
-    }
-  }, [statusData]);
-
-  // Redirect if already completed
+  // Set active step from backend status or redirect if completed
   useEffect(() => {
     if (statusData?.completed) {
       navigate("/dashboard", { replace: true });
+    } else if (statusData && typeof statusData.current_step === "number") {
+      setActiveStep(statusData.current_step);
     }
   }, [statusData, navigate]);
 
@@ -169,16 +159,13 @@ export default function HRAdminOnboardingPage() {
   const handleComplete = async () => {
     try {
       await completeOnboarding().unwrap();
-      const updated = await refetchStatus().unwrap();
-      if (updated?.completed) {
-        toast.success("🎉 Onboarding completed! Welcome to your HR workspace.");
-      } else {
-        toast.success("Setup complete! Entering workspace...");
-      }
+      dispatch(updateUser({ onboarding_completed: true }));
+      await refetchStatus().unwrap();
+      toast.success("🎉 Onboarding completed! Welcome to your HR workspace.");
       navigate("/dashboard", { replace: true });
     } catch (err) {
       const norm = normalizeError(err);
-      toast.error(norm.message);
+      toast.error(norm.message || "Failed to complete onboarding.");
     }
   };
 

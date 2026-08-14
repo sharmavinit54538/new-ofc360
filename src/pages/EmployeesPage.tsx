@@ -14,6 +14,7 @@ import {
   KeyRound,
   UserX,
   CheckCircle2,
+  Plus,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -198,7 +199,7 @@ export default function EmployeesPage() {
           <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
             <span>Employee Directory</span>
             <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20 font-mono">
-              {allEmployees.length} Total
+              {employeeList.length} Total
             </Badge>
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -208,7 +209,7 @@ export default function EmployeesPage() {
 
         <div className="flex items-center gap-2">
           <Button
-            onClick={handleCreateOpen}
+            onClick={handleOpenAdd}
             className="gradient-bg text-primary-foreground text-xs h-10 px-4 font-semibold shadow-md gap-1.5"
           >
             <Plus className="w-4 h-4" />
