@@ -183,10 +183,12 @@ export default function LoginPage() {
         className={`w-full ${isSignup ? "max-w-lg" : "max-w-md"} relative z-10 space-y-5`}
       >
         {/* Brand Header */}
-        <div className="text-center space-y-1.5">
-          <div className="w-11 h-11 rounded-xl gradient-bg flex items-center justify-center mx-auto shadow-md">
-            <Sparkles className="w-5 h-5 text-primary-foreground" />
-          </div>
+        <div className="text-center space-y-2">
+          <img
+            src="/logo.png"
+            alt="OFC360 Logo"
+            className="w-14 h-14 rounded-2xl object-contain bg-white mx-auto shadow-md"
+          />
           <h1 className="text-2xl font-black gradient-text tracking-tight">OFC360</h1>
           <p className="text-xs text-muted-foreground">
             Enterprise AI Workforce & Human Resource Intelligence

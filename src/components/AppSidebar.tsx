@@ -2,7 +2,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Users, UserSearch, Clock, DollarSign,
-  ChevronLeft, Sparkles, Briefcase, UserPlus, GraduationCap,
+  ChevronLeft, Briefcase, UserPlus, GraduationCap,
   FileText, Monitor, UserMinus, BrainCircuit, Building2, ShieldCheck,
   Heart, BarChart3, PieChart, TrendingUp, Lightbulb, Target, PanelLeft,
   Boxes, Settings, Globe, Award, Key, Zap, FileCode2, Server, Cpu, Lock,
@@ -137,36 +137,40 @@ export function AppSidebar({ open, onToggle }: { open: boolean; onToggle: () => 
     >
       {/* Logo & Top Toggle */}
       <div className="h-16 flex items-center justify-between px-3.5 border-b border-sidebar-border">
-        <div
-          onClick={!open ? onToggle : undefined}
-          className={`flex items-center gap-2.5 ${!open ? "cursor-pointer" : ""}`}
-          title={!open ? "Click to expand sidebar" : undefined}
-        >
-          <div className="w-8 h-8 rounded-lg gradient-bg flex items-center justify-center shrink-0 shadow-sm">
-            <Sparkles className="w-4 h-4 text-primary-foreground" />
-          </div>
-          <AnimatePresence>
-            {open && (
-              <motion.span
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -8 }}
-                className="font-bold text-base gradient-text whitespace-nowrap tracking-tight"
-              >
+        {open ? (
+          <>
+            <div className="flex items-center gap-2.5">
+              <img
+                src="/logo.png"
+                alt="OFC360 Logo"
+                className="w-8 h-8 rounded-lg object-contain bg-white shadow-xs shrink-0"
+              />
+              <span className="font-bold text-lg gradient-text whitespace-nowrap tracking-tight">
                 OFC360
-              </motion.span>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {open && (
-          <button
-            onClick={onToggle}
-            title="Collapse Sidebar"
-            className="p-1.5 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-primary transition-colors shrink-0"
-          >
-            <PanelLeft className="w-4 h-4" />
-          </button>
+              </span>
+            </div>
+            <button
+              onClick={onToggle}
+              title="Collapse Sidebar"
+              className="p-1.5 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-primary transition-colors shrink-0"
+            >
+              <PanelLeft className="w-4 h-4" />
+            </button>
+          </>
+        ) : (
+          <div className="w-full flex items-center justify-center">
+            <button
+              onClick={onToggle}
+              title="Expand Sidebar"
+              className="p-0.5 rounded-lg hover:ring-2 hover:ring-primary/40 transition-all cursor-pointer"
+            >
+              <img
+                src="/logo.png"
+                alt="OFC360 Logo"
+                className="w-8 h-8 rounded-lg object-contain bg-white shadow-xs"
+              />
+            </button>
+          </div>
         )}
       </div>
 

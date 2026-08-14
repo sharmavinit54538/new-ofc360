@@ -258,3 +258,13 @@ export interface PayrollRow {
   status: "Paid" | "Pending" | "Processing";
   payDate?: string;
 }
+
+export const stageColor: Record<string, string> = {
+  Applied: "bg-muted text-muted-foreground",
+  Screening: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  Interview: "bg-primary/10 text-primary border-primary/20",
+  Offer: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+  Hired: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+  Rejected: "bg-destructive/10 text-destructive border-destructive/20",
+};
+

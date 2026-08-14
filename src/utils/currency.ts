@@ -151,3 +151,8 @@ export function formatCurrency(amount: number, currencyStr?: string): string {
     return `${cfg.symbol}${amount.toLocaleString()}`;
   }
 }
+
+export function fmtMoney(amount: number, currencyStr?: string): string {
+  return formatCurrency(amount, currencyStr);
+}
+

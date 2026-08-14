@@ -52,7 +52,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { type AIToolItem } from "@/data/aiToolsData";
+import { type AIToolItem } from "@/types/ai";
 import { useEmployeeStore } from "@/stores/employeeStore";
 import { useATSStore } from "@/stores/atsStore";
 import { useAIStore } from "@/stores/aiStore";

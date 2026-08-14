@@ -45,12 +45,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAssetStore, type AssetItem } from "@/stores/assetStore";
-import { useEmployeeStore } from "@/stores/employeeStore";
+import { useGetEmployeesQuery } from "@/services/api/employeeApi";
 import { toast } from "sonner";
 
 export default function AssetIntelligencePage() {
   const { assets, addAsset, updateAssetStatus, deleteAsset } = useAssetStore();
-  const { employees } = useEmployeeStore();
+  const { data: rawEmployees = [] } = useGetEmployeesQuery();
+  const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
 
   const [activeTab, setActiveTab] = useState<"inventory" | "analytics">("inventory");
   const [statusFilter, setStatusFilter] = useState<string>("All");

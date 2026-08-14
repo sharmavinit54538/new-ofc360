@@ -205,118 +205,21 @@ const DEFAULT_SETTINGS: PayrollSettings = {
   roundingRule: "Nearest Integer",
 };
 
-const DEFAULT_STRUCTURES: SalaryStructure[] = [
-  {
-    id: "GRD-01",
-    gradeName: "Grade A: Senior Leadership & Executives",
-    basicPct: 50,
-    hraPct: 20,
-    daPct: 10,
-    specialAllowancePct: 20,
-    conveyance: 1600,
-    lta: 1250,
-  },
-  {
-    id: "GRD-02",
-    gradeName: "Grade B: Engineering & Tech Leads",
-    basicPct: 50,
-    hraPct: 20,
-    daPct: 10,
-    specialAllowancePct: 20,
-    conveyance: 1600,
-    lta: 1250,
-  },
-  {
-    id: "GRD-03",
-    gradeName: "Grade C: Associates & Operations",
-    basicPct: 50,
-    hraPct: 20,
-    daPct: 10,
-    specialAllowancePct: 20,
-    conveyance: 1600,
-    lta: 1250,
-  },
-];
-
-const DEFAULT_DEDUCTIONS: StatutoryDeduction[] = [
-  {
-    id: "DED-01",
-    name: "Employees' Provident Fund (EPF)",
-    type: "PF (Provident Fund)",
-    ratePercentage: 12.0,
-    fixedAmount: 0,
-    mandatory: true,
-  },
-  {
-    id: "DED-02",
-    name: "Employees' State Insurance (ESIC)",
-    type: "ESI",
-    ratePercentage: 0.75,
-    fixedAmount: 0,
-    mandatory: true,
-  },
-  {
-    id: "DED-03",
-    name: "State Professional Tax (PT)",
-    type: "Professional Tax",
-    ratePercentage: 0,
-    fixedAmount: 200,
-    mandatory: true,
-  },
-  {
-    id: "DED-04",
-    name: "Corporate Health Cover (Group Mediclaim)",
-    type: "Health Insurance",
-    ratePercentage: 0,
-    fixedAmount: 500,
-    mandatory: false,
-  },
-];
-
-const DEFAULT_APPROVALS: PayrollApproval[] = [
-  {
-    id: "APP-01",
-    runMonth: "August 2026",
-    tier: "Tier 1: HR Executive Draft",
-    approverName: "Sarah Jenkins (HR Ops)",
-    status: "Approved",
-    comments: "Monthly attendance & LOP verified against roster.",
-    updatedAt: "2026-08-01",
-  },
-  {
-    id: "APP-02",
-    runMonth: "August 2026",
-    tier: "Tier 2: Finance Verification",
-    approverName: "Rajesh Malhotra (Finance Lead)",
-    status: "Approved",
-    comments: "Tax declarations and TDS calculations audited.",
-    updatedAt: "2026-08-02",
-  },
-  {
-    id: "APP-03",
-    runMonth: "August 2026",
-    tier: "Tier 3: CXO Final Sign-Off",
-    approverName: "Vinit Sharma (Co-Founder)",
-    status: "Pending",
-    comments: "Awaiting final bank payout authorization.",
-    updatedAt: "2026-08-03",
-  },
-];
-
 export const usePayrollStore = create<PayrollState>((set, get) => ({
   runs: getStoredData<PayrollRun[]>(STORAGE_KEYS.RUNS, []),
-  structures: getStoredData<SalaryStructure[]>(STORAGE_KEYS.STRUCTURES, DEFAULT_STRUCTURES),
+  structures: getStoredData<SalaryStructure[]>(STORAGE_KEYS.STRUCTURES, []),
   payslips: getStoredData<PayslipItem[]>(STORAGE_KEYS.PAYSLIPS, []),
   reimbursements: getStoredData<ReimbursementClaim[]>(STORAGE_KEYS.REIMBURSEMENTS, []),
   bonuses: getStoredData<BonusPayout[]>(STORAGE_KEYS.BONUSES, []),
-  deductions: getStoredData<StatutoryDeduction[]>(STORAGE_KEYS.DEDUCTIONS, DEFAULT_DEDUCTIONS),
+  deductions: getStoredData<StatutoryDeduction[]>(STORAGE_KEYS.DEDUCTIONS, []),
   advances: getStoredData<SalaryAdvance[]>(STORAGE_KEYS.ADVANCES, []),
   overtimePays: getStoredData<OvertimePayment[]>(STORAGE_KEYS.OVERTIMES, []),
   taxDeclarations: getStoredData<TaxDeclaration[]>(STORAGE_KEYS.TAX, []),
-  approvals: getStoredData<PayrollApproval[]>(STORAGE_KEYS.APPROVALS, DEFAULT_APPROVALS),
+  approvals: getStoredData<PayrollApproval[]>(STORAGE_KEYS.APPROVALS, []),
   bankTransfers: getStoredData<BankTransferBatch[]>(STORAGE_KEYS.BANK, []),
   complianceFilings: getStoredData<StatutoryFiling[]>(STORAGE_KEYS.FILINGS, []),
   settings: getStoredData<PayrollSettings>(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS),
+
 
   addRun: (run) => {
     const newRun: PayrollRun = {

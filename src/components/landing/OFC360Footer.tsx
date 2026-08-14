@@ -9,9 +9,11 @@ export function OFC360Footer() {
           {/* Brand Col */}
           <div className="col-span-2 space-y-3.5">
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
-                <Sparkles className="w-4 h-4" />
-              </div>
+              <img
+                src="/logo.png"
+                alt="OFC360 Logo"
+                className="w-8 h-8 rounded-lg object-contain bg-white shrink-0 shadow-xs"
+              />
               <span className="font-bold text-foreground text-base tracking-tight">
                 OFC<span className="text-primary font-extrabold">360</span>
               </span>

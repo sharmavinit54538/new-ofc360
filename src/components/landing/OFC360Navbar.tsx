@@ -29,9 +29,11 @@ export function OFC360Navbar() {
       <div className="max-w-7xl mx-auto h-full px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* Brand Logo */}
         <Link to="/" className="flex items-center gap-2.5 group">
-          <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-105 transition-transform shadow-sm">
-            <Sparkles className="w-4 h-4 text-primary" />
-          </div>
+          <img
+            src="/logo.png"
+            alt="OFC360 Logo"
+            className="w-9 h-9 rounded-xl object-contain bg-white group-hover:scale-105 transition-transform shadow-xs shrink-0"
+          />
           <div className="flex flex-col">
             <span className="font-bold text-base tracking-tight text-foreground flex items-center gap-1">
               OFC<span className="text-primary font-extrabold">360</span>

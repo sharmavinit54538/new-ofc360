@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useEmployeeStore } from "@/stores/employeeStore";
+import { useGetEmployeesQuery } from "@/services/api/employeeApi";
 import { toast } from "sonner";
 
 interface Goal {
@@ -33,7 +33,8 @@ interface Goal {
 }
 
 export default function ManagerGoalsPage() {
-  const { employees } = useEmployeeStore();
+  const { data: rawEmployees = [] } = useGetEmployeesQuery();
+  const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
 
   const [goals, setGoals] = useState<Goal[]>([
     {

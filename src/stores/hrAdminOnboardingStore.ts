@@ -74,92 +74,17 @@ const initialStatus: OnboardingStatus = {
   is_completed: false,
 };
 
-const initialWorkflows: OnboardingWorkflow[] = [
-  { id: "wf-01", name: "Engineering Onboarding Track", department: "Engineering", tasks_count: 8, is_active: true },
-  { id: "wf-02", name: "Sales & Marketing Playbook", department: "Sales", tasks_count: 6, is_active: true },
-  { id: "wf-03", name: "Executive & Ops Onboarding", department: "Executive", tasks_count: 10, is_active: true },
-];
-
-const initialNewHires: NewHireOnboardingRecord[] = [
-  { id: "hire-01", name: "Priya Sharma", email: "priya.sharma@example.com", role: "Frontend Engineer", join_date: "2026-04-01", progress: 75, status: "in_progress" },
-  { id: "hire-02", name: "Alex Kim", email: "alex.kim@example.com", role: "Product Designer", join_date: "2026-04-05", progress: 40, status: "in_progress" },
-  { id: "hire-03", name: "Jordan Lee", email: "jordan.lee@example.com", role: "Data Analyst", join_date: "2026-04-10", progress: 100, status: "completed" },
-];
-
-const initialDocuments: OnboardingDocumentItem[] = [
-  { id: "doc-01", name: "Aadhar Card", type: "Identity", is_mandatory: true, status: "verified" },
-  { id: "doc-02", name: "PAN Card", type: "Tax", is_mandatory: true, status: "verified" },
-  { id: "doc-03", name: "Degree Certificate", type: "Education", is_mandatory: true, status: "pending" },
-  { id: "doc-04", name: "Previous Offer Letter", type: "Employment", is_mandatory: false, status: "uploaded" },
-];
-
-const initialTasks: OnboardingTaskItem[] = [
-  { id: "task-01", title: "Background Verification", category: "Security", assigned_to: "HR Team", due_days: 1, is_completed: true },
-  { id: "task-02", title: "Document Upload (Aadhar, PAN)", category: "Compliance", assigned_to: "Employee", due_days: 2, is_completed: true },
-  { id: "task-03", title: "Email & System Accounts Created", category: "IT", assigned_to: "IT Admin", due_days: 3, is_completed: false },
-  { id: "task-04", title: "Welcome Kit & ID Card Issued", category: "Operations", assigned_to: "Admin", due_days: 5, is_completed: false },
-];
-
-export interface HRAdminOnboardingStoreState {
-  company: CompanyDetails;
-  hr_admin: HRAdminProfile;
-  branding: CompanyBranding;
-  preferences: OnboardingPreferences;
-  onboarding: OnboardingStatus;
-  workflows: OnboardingWorkflow[];
-  newHires: NewHireOnboardingRecord[];
-  documents: OnboardingDocumentItem[];
-  tasks: OnboardingTaskItem[];
-  
-  // Storage initialization per company
-  loadForCompany: (companyId: string) => void;
-  
-  // Step Actions
-  saveStep: (
-    stepIndex: number,
-    data: {
-      company?: Partial<CompanyDetails>;
-      hr_admin?: Partial<HRAdminProfile>;
-      branding?: Partial<CompanyBranding>;
-      preferences?: Partial<OnboardingPreferences>;
-    },
-    companyId?: string
-  ) => { success: boolean; error?: string; status?: OnboardingStatus };
-
-  completeOnboarding: (companyId?: string) => { success: boolean; error?: string; status?: OnboardingStatus };
-  
-  // API auxiliary methods
-  addWorkflow: (wf: Omit<OnboardingWorkflow, "id">) => void;
-  deleteWorkflow: (id: string) => void;
-  addNewHire: (hire: Omit<NewHireOnboardingRecord, "id">) => void;
-  updateNewHire: (id: string, updates: Partial<NewHireOnboardingRecord>) => void;
-  deleteNewHire: (id: string) => void;
-  addDocument: (doc: Omit<OnboardingDocumentItem, "id">) => void;
-  updateDocument: (id: string, updates: Partial<OnboardingDocumentItem>) => void;
-  deleteDocument: (id: string) => void;
-  addTask: (task: Omit<OnboardingTaskItem, "id">) => void;
-  updateTask: (id: string, updates: Partial<OnboardingTaskItem>) => void;
-  deleteTask: (id: string) => void;
-  resetOnboardingData: (companyId?: string) => void;
-
-  /** Hydrate local store from backend API response (new /hr-admin/onboarding endpoints) */
-  syncFromBackend: (data: {
-    companyName?: string; industry?: string; country?: string; city?: string;
-    companySize?: string; timezone?: string; address?: string; fullName?: string;
-    phone?: string; avatar?: string; completed?: boolean; current_step?: number;
-  }) => void;
-}
-
 export const useHRAdminOnboardingStore = create<HRAdminOnboardingStoreState>((set, get) => ({
   company: initialCompany,
   hr_admin: initialHRAdmin,
   branding: initialBranding,
   preferences: initialPreferences,
   onboarding: initialStatus,
-  workflows: initialWorkflows,
-  newHires: initialNewHires,
-  documents: initialDocuments,
-  tasks: initialTasks,
+  workflows: [],
+  newHires: [],
+  documents: [],
+  tasks: [],
+
 
   loadForCompany: (companyId: string) => {
     const key = `${STORAGE_KEY_PREFIX}_${companyId || "default"}`;

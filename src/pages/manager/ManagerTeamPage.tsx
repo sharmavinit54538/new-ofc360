@@ -13,11 +13,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useEmployeeStore } from "@/stores/employeeStore";
+import { useGetEmployeesQuery } from "@/services/api/employeeApi";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function ManagerTeamPage() {
-  const { employees } = useEmployeeStore();
+  const { data: rawEmployees = [] } = useGetEmployeesQuery();
+  const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
   const { user } = useAuth();
   const [search, setSearch] = useState("");
 

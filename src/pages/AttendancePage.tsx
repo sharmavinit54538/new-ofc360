@@ -60,7 +60,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAuth } from "@/hooks/useAuth";
-import { useEmployeeStore } from "@/stores/employeeStore";
+import { useGetEmployeesQuery } from "@/services/api/employeeApi";
 import { useLeaveStore } from "@/stores/leaveStore";
 import {
   useAttendanceStore,
@@ -109,7 +109,8 @@ export default function AttendancePage() {
   const setTab = (tab: string) => setSearchParams({ tab });
 
   const { user } = useAuth();
-  const { employees } = useEmployeeStore();
+  const { data: rawEmployees = [] } = useGetEmployeesQuery();
+  const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
   const { leaveRequests, addLeaveRequest, updateLeaveStatus } = useLeaveStore();
   const {
     punches,

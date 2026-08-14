@@ -5,7 +5,6 @@ import {
   Upload,
   CheckCircle2,
   AlertCircle,
-  Eye,
   FileCheck,
   Award,
   ShieldCheck,
@@ -14,12 +13,9 @@ import {
   AlertTriangle,
   UserCheck,
   X,
-  Printer,
-  Download,
 } from "lucide-react";
-import { useGenerateMockLetterMutation } from "../letterGeneratorMock";
 import { useUploadEmployeeDocumentMutation, useGetCategoriesQuery } from "../documentsApi";
-import { MockLetterType, DocumentTypeInfo } from "../types";
+import { DocumentTypeInfo } from "../types";
 
 export const DOCUMENT_TYPES: DocumentTypeInfo[] = [
   {
@@ -43,31 +39,28 @@ export const DOCUMENT_TYPES: DocumentTypeInfo[] = [
   {
     key: "salary_verif",
     title: "Employment & Salary Verification",
-    description: "Generic upload/e-sign backing system. Mock AI generator preview available.",
+    description: "Generic upload and e-signature repository with backend security verification.",
     categoryCode: "SALARY_VERIF",
     hasRealGenerator: false,
-    generatorType: "mock",
-    mockType: "salary_verification",
+    generatorType: "upload",
     iconName: "ShieldCheck",
   },
   {
     key: "noc",
     title: "No Objection Certificate (NOC)",
-    description: "NOC letter for higher study, visa, or external clearance. Upload or preview.",
+    description: "NOC letter for higher study, visa, or external clearance.",
     categoryCode: "NOC",
     hasRealGenerator: false,
-    generatorType: "mock",
-    mockType: "noc",
+    generatorType: "upload",
     iconName: "FileText",
   },
   {
     key: "promotion_inc",
     title: "Promotion & Salary Increment Letter",
-    description: "Formal appraisal & salary revision document. Upload or preview mock generator.",
+    description: "Formal appraisal & salary revision document repository.",
     categoryCode: "PROMOTION_LETTER",
     hasRealGenerator: false,
-    generatorType: "mock",
-    mockType: "promotion_increment",
+    generatorType: "upload",
     iconName: "TrendingUp",
   },
   {
@@ -76,8 +69,7 @@ export const DOCUMENT_TYPES: DocumentTypeInfo[] = [
     description: "Certificate of completion for university interns & trainees.",
     categoryCode: "INTERNSHIP_CERT",
     hasRealGenerator: false,
-    generatorType: "mock",
-    mockType: "internship_completion",
+    generatorType: "upload",
     iconName: "GraduationCap",
   },
   {
@@ -86,8 +78,7 @@ export const DOCUMENT_TYPES: DocumentTypeInfo[] = [
     description: "Formal performance improvement plan notice and warning letter repository.",
     categoryCode: "WARNING_PIP",
     hasRealGenerator: false,
-    generatorType: "mock",
-    mockType: "warning_pip",
+    generatorType: "upload",
     iconName: "AlertTriangle",
   },
   {
@@ -96,8 +87,7 @@ export const DOCUMENT_TYPES: DocumentTypeInfo[] = [
     description: "Proof of employment for bank loans, passport, or official verification.",
     categoryCode: "BONAFIDE",
     hasRealGenerator: false,
-    generatorType: "mock",
-    mockType: "bonafide",
+    generatorType: "upload",
     iconName: "UserCheck",
   },
 ];
@@ -113,24 +103,9 @@ export const DocumentTypeGrid: React.FC<DocumentTypeGridProps> = ({
   onSelectExitFlow,
   onSelectOfferFlow,
   employeeId = "EMP-1029",
-  employeeName = "Jane Doe",
 }) => {
-  const [generateMock, { isLoading: isGeneratingMock }] = useGenerateMockLetterMutation();
   const [uploadDocument, { isLoading: isUploading }] = useUploadEmployeeDocumentMutation();
   const { data: categoriesRes } = useGetCategoriesQuery();
-
-  // Modal states
-  const [previewModal, setPreviewModal] = useState<{
-    isOpen: boolean;
-    title: string;
-    html: string;
-    docType: string;
-  }>({
-    isOpen: false,
-    title: "",
-    html: "",
-    docType: "",
-  });
 
   const [uploadModal, setUploadModal] = useState<{
     isOpen: boolean;
@@ -147,7 +122,7 @@ export const DocumentTypeGrid: React.FC<DocumentTypeGridProps> = ({
   const [uploadSuccessMsg, setUploadSuccessMsg] = useState("");
   const [uploadErrorMsg, setUploadErrorMsg] = useState("");
 
-  const handleGenerateClick = async (docInfo: DocumentTypeInfo) => {
+  const handleGenerateClick = (docInfo: DocumentTypeInfo) => {
     if (docInfo.generatorType === "exit") {
       if (onSelectExitFlow) onSelectExitFlow();
       return;
@@ -158,26 +133,7 @@ export const DocumentTypeGrid: React.FC<DocumentTypeGridProps> = ({
       return;
     }
 
-    if (docInfo.mockType) {
-      try {
-        const res = await generateMock({
-          letterType: docInfo.mockType,
-          employeeId,
-          employeeName,
-        }).unwrap();
-
-        if (res.data) {
-          setPreviewModal({
-            isOpen: true,
-            title: docInfo.title,
-            html: res.data.previewHtml,
-            docType: docInfo.key,
-          });
-        }
-      } catch (err) {
-        console.error("Mock generation failed", err);
-      }
-    }
+    handleOpenUpload(docInfo);
   };
 
   const handleOpenUpload = (docInfo: DocumentTypeInfo) => {
@@ -211,7 +167,7 @@ export const DocumentTypeGrid: React.FC<DocumentTypeGridProps> = ({
         status_field: "PENDING",
       }).unwrap();
 
-      setUploadSuccessMsg("Document uploaded successfully to documentsApi generic repository!");
+      setUploadSuccessMsg("Document uploaded successfully to backend repository!");
       setTimeout(() => {
         setUploadModal({ isOpen: false });
         setUploadFile(null);
@@ -258,15 +214,15 @@ export const DocumentTypeGrid: React.FC<DocumentTypeGridProps> = ({
             </div>
             <h2 className="text-2xl font-bold tracking-tight">Standard Employee Certificates</h2>
             <p className="text-slate-300 text-sm mt-1 max-w-2xl">
-              Real template generators backed for Offboarding & Offers. Generic e-signature storage enabled for all 8 categories.
+              Backend template generators enabled for Offboarding & Offers. Direct e-signature repository upload enabled for all categories.
             </p>
           </div>
           <div className="flex items-center gap-3">
             <span className="px-3 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-medium flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5" /> 2 Real Backend Generators
+              <CheckCircle2 className="w-3.5 h-3.5" /> 2 Backend Generators
             </span>
             <span className="px-3 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-medium flex items-center gap-1.5">
-              <Upload className="w-3.5 h-3.5" /> 6 Upload + Mock Preview
+              <Upload className="w-3.5 h-3.5" /> 6 Secure Upload Categories
             </span>
           </div>
         </div>
@@ -314,99 +270,17 @@ export const DocumentTypeGrid: React.FC<DocumentTypeGridProps> = ({
                 </button>
               ) : (
                 <button
-                  onClick={() => handleGenerateClick(doc)}
-                  disabled={isGeneratingMock}
-                  className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 transition-all border border-slate-700"
+                  onClick={() => handleOpenUpload(doc)}
+                  className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-all"
                 >
-                  <Eye className="w-3.5 h-3.5 text-amber-400" />
-                  Generate (Mock Preview)
+                  <Upload className="w-3.5 h-3.5" />
+                  Upload & Manage Document
                 </button>
               )}
-
-              <button
-                onClick={() => handleOpenUpload(doc)}
-                className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-all"
-              >
-                <Upload className="w-3.5 h-3.5 text-slate-400" />
-                Upload manually
-              </button>
             </div>
           </div>
         ))}
       </div>
-
-      {/* Preview Modal for Mock Generator */}
-      {previewModal.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in">
-          <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wide uppercase bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
-                    Mock AI Preview
-                  </span>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                    {previewModal.title}
-                  </h3>
-                </div>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  // TODO: backend has no template-fill generator for this doc type yet. Real flow: upload manually via documentsApi.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => window.print()}
-                  className="p-2 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800"
-                  title="Print Preview"
-                >
-                  <Printer className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setPreviewModal({ isOpen: false, title: "", html: "", docType: "" })}
-                  className="p-2 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Modal Body HTML content */}
-            <div className="flex-1 overflow-y-auto p-6 bg-slate-100 dark:bg-slate-950">
-              <div
-                className="bg-white rounded-lg shadow-md p-4"
-                dangerouslySetInnerHTML={{ __html: previewModal.html }}
-              />
-            </div>
-
-            {/* Modal Footer */}
-            <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-              <span className="text-xs text-slate-500">
-                To issue officially, save or upload the final signed copy.
-              </span>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => {
-                    const docInfo = DOCUMENT_TYPES.find((d) => d.key === previewModal.docType);
-                    setPreviewModal({ isOpen: false, title: "", html: "", docType: "" });
-                    if (docInfo) handleOpenUpload(docInfo);
-                  }}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-all"
-                >
-                  <Upload className="w-3.5 h-3.5" /> Save & Upload to Repository
-                </button>
-                <button
-                  onClick={() => setPreviewModal({ isOpen: false, title: "", html: "", docType: "" })}
-                  className="px-4 py-2 rounded-lg text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
-                >
-                  Close Preview
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Upload Modal */}
       {uploadModal.isOpen && (
@@ -418,7 +292,7 @@ export const DocumentTypeGrid: React.FC<DocumentTypeGridProps> = ({
                   Upload Document — {uploadModal.docTypeInfo?.title}
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Generic upload endpoint: <code>POST /api/v1/documents/employees</code>
+                  Backend Repository: <code>POST /api/v1/documents/employees</code>
                 </p>
               </div>
               <button

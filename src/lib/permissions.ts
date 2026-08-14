@@ -70,6 +70,7 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
     description: "Self-service access to personal attendance punches, regularization, leave, payslips, documents, onboarding, and helpdesk support.",
     scopeLabel: "Employee Self-Service Portal",
     allowedModules: [
+      "departments",
       "attendance",
       "leave",
       "payroll",
@@ -79,6 +80,7 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
       "connect",
     ],
     permissions: {
+      departments: ["view"],
       attendance: ["view", "create"],
       leave: ["view", "create"],
       payroll: ["view"],
@@ -96,8 +98,10 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
     allowedModules: [
       "profile",
       "my_team",
+      "departments",
       "attendance",
       "leave",
+      "payroll",
       "performance",
       "engagement",
       "documents",
@@ -107,8 +111,10 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
     permissions: {
       profile: ["view", "edit"],
       my_team: ["view"],
+      departments: ["view"],
       attendance: ["view", "approve"],
       leave: ["view", "approve"],
+      payroll: ["view", "approve"],
       performance: ["view", "create", "edit"],
       engagement: ["view"],
       documents: ["view"],
@@ -187,6 +193,7 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
       "dashboard",
       "people",
       "departments",
+      "payroll",
       "analytics",
       "intelligence_hub",
       "talent_intelligence",
@@ -202,6 +209,7 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
       dashboard: ["view", "export"],
       people: ["view"],
       departments: ["view"],
+      payroll: ["view", "export"],
       analytics: ["view", "export"],
       intelligence_hub: ["view"],
       talent_intelligence: ["view"],

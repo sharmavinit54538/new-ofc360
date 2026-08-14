@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Video, Calendar, Users, Search, Check, Sparkles } from "lucide-react";
 import { useConnectStore } from "@/stores/connectStore";
 import { useGetEmployeesQuery } from "@/services/api/employeeApi";
-import { useEmployeeStore } from "@/stores/employeeStore";
 import { useAuth } from "@/hooks/useAuth";
 import { ConnectUser } from "@/types/connect";
 import { toast } from "sonner";
@@ -37,7 +36,6 @@ export function NewMeetingDialog({ open, onOpenChange }: NewMeetingDialogProps) 
   const { createMeeting } = useConnectStore();
 
   const { data: employeesResponse } = useGetEmployeesQuery(undefined, { skip: !open });
-  const storeEmployees = useEmployeeStore((s) => s.employees);
 
   const employeesList = useMemo(() => {
     let list: any[] = [];
@@ -45,12 +43,9 @@ export function NewMeetingDialog({ open, onOpenChange }: NewMeetingDialogProps) 
       list = employeesResponse;
     } else if (employeesResponse && (employeesResponse as any).data && Array.isArray((employeesResponse as any).data)) {
       list = (employeesResponse as any).data;
-    } else if (storeEmployees && storeEmployees.length > 0) {
-      list = storeEmployees;
     }
-
     return list.filter((emp) => emp.id !== currentUser?.id && emp.email !== currentUser?.email);
-  }, [employeesResponse, storeEmployees, currentUser]);
+  }, [employeesResponse, currentUser]);
 
   const filteredEmployees = useMemo(() => {
     if (!memberSearch.trim()) return employeesList;

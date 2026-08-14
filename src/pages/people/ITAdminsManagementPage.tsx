@@ -37,7 +37,12 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
-import { useEmployeeStore } from "@/stores/employeeStore";
+import {
+  useGetEmployeesQuery,
+  useCreateEmployeeMutation,
+  useUpdateEmployeeFullMutation,
+  useDeactivateEmployeeMutation,
+} from "@/services/api/employeeApi";
 import { useAuth } from "@/hooks/useAuth";
 import { roleLabels } from "@/features/auth/authTypes";
 import { type Employee } from "@/types/hr";
@@ -53,7 +58,11 @@ const statusStyle: Record<string, string> = {
 
 export default function ITAdminsManagementPage() {
   const { setRole } = useAuth();
-  const { employees, addEmployee, updateEmployee, deleteEmployee } = useEmployeeStore();
+  const { data: rawEmployees = [], isLoading } = useGetEmployeesQuery();
+  const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
+  const [createEmployee] = useCreateEmployeeMutation();
+  const [updateEmployee] = useUpdateEmployeeFullMutation();
+  const [deactivateEmployee] = useDeactivateEmployeeMutation();
 
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("ALL");
@@ -65,14 +74,12 @@ export default function ITAdminsManagementPage() {
     (e) => (e.systemRole || "employee") === "it_admin"
   );
 
-  const filtered = admins.filter((adm) => {
+  const filteredAdmins = admins.filter((admin) => {
     const matchesSearch =
-      adm.name.toLowerCase().includes(search.toLowerCase()) ||
-      adm.email.toLowerCase().includes(search.toLowerCase()) ||
-      adm.role.toLowerCase().includes(search.toLowerCase()) ||
-      adm.department.toLowerCase().includes(search.toLowerCase());
-
-    const matchesDept = deptFilter === "ALL" || adm.department === deptFilter;
+      admin.name.toLowerCase().includes(search.toLowerCase()) ||
+      admin.email.toLowerCase().includes(search.toLowerCase()) ||
+      admin.id.toLowerCase().includes(search.toLowerCase());
+    const matchesDept = deptFilter === "ALL" || admin.department === deptFilter;
     return matchesSearch && matchesDept;
   });
 
@@ -86,17 +93,29 @@ export default function ITAdminsManagementPage() {
     setIsFormOpen(true);
   };
 
-  const handleSave = (empData: Omit<Employee, "id">) => {
-    if (editingAdmin) {
-      updateEmployee(editingAdmin.id, { ...empData, systemRole: "it_admin" });
-    } else {
-      addEmployee({ ...empData, systemRole: "it_admin" });
+  const handleSave = async (data: Omit<Employee, "id">) => {
+    try {
+      if (editingAdmin) {
+        await updateEmployee({ id: editingAdmin.id, ...data }).unwrap();
+        toast.success(`IT Admin ${data.name} updated successfully.`);
+      } else {
+        await createEmployee({ ...data, systemRole: "it_admin" }).unwrap();
+        toast.success(`New IT Admin ${data.name} created successfully.`);
+      }
+      setIsFormOpen(false);
+      setEditingAdmin(null);
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Failed to save IT Admin.");
     }
   };
 
-  const handleDelete = (id: string, name: string) => {
-    deleteEmployee(id);
-    toast.success(`IT Admin ${name} removed`);
+  const handleDelete = async (id: string, name: string) => {
+    try {
+      await deactivateEmployee(id).unwrap();
+      toast.success(`IT Admin ${name} deactivated.`);
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Failed to deactivate IT Admin.");
+    }
   };
 
   return (

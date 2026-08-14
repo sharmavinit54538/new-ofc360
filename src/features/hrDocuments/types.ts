@@ -118,31 +118,13 @@ export interface ExitDocumentResponse {
   status: "GENERATED" | "PENDING" | "FAILED";
 }
 
-export type MockLetterType =
-  | "salary_verification"
-  | "noc"
-  | "promotion_increment"
-  | "internship_completion"
-  | "warning_pip"
-  | "bonafide";
-
-export interface MockGeneratedLetter {
-  letterType: MockLetterType;
-  employeeId: string;
-  employeeName?: string;
-  designation?: string;
-  department?: string;
-  previewHtml: string;
-  generatedAt: string;
-}
-
 export interface DocumentTypeInfo {
   key: string;
   title: string;
   description: string;
   categoryCode: string;
   hasRealGenerator: boolean;
-  generatorType?: "exit" | "offer" | "mock";
-  mockType?: MockLetterType;
+  generatorType?: "exit" | "offer" | "upload";
   iconName: string;
 }
+

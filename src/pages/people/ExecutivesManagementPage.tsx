@@ -37,7 +37,12 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
-import { useEmployeeStore } from "@/stores/employeeStore";
+import {
+  useGetEmployeesQuery,
+  useCreateEmployeeMutation,
+  useUpdateEmployeeFullMutation,
+  useDeactivateEmployeeMutation,
+} from "@/services/api/employeeApi";
 import { useAuth } from "@/hooks/useAuth";
 import { roleLabels } from "@/features/auth/authTypes";
 import { type Employee } from "@/types/hr";
@@ -53,7 +58,11 @@ const statusStyle: Record<string, string> = {
 
 export default function ExecutivesManagementPage() {
   const { setRole } = useAuth();
-  const { employees, addEmployee, updateEmployee, deleteEmployee } = useEmployeeStore();
+  const { data: rawEmployees = [], isLoading } = useGetEmployeesQuery();
+  const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
+  const [createEmployee] = useCreateEmployeeMutation();
+  const [updateEmployee] = useUpdateEmployeeFullMutation();
+  const [deactivateEmployee] = useDeactivateEmployeeMutation();
 
   const [search, setSearch] = useState("");
   const [deptFilter, setDeptFilter] = useState("ALL");
@@ -86,17 +95,29 @@ export default function ExecutivesManagementPage() {
     setIsFormOpen(true);
   };
 
-  const handleSave = (empData: Omit<Employee, "id">) => {
-    if (editingExec) {
-      updateEmployee(editingExec.id, { ...empData, role: "executive", systemRole: "executive" });
-    } else {
-      addEmployee({ ...empData, role: "executive", systemRole: "executive" });
+  const handleSave = async (empData: Omit<Employee, "id">) => {
+    try {
+      if (editingExec) {
+        await updateEmployee({ id: editingExec.id, ...empData, role: "executive", systemRole: "executive" }).unwrap();
+        toast.success(`Executive ${empData.name} updated successfully.`);
+      } else {
+        await createEmployee({ ...empData, role: "executive", systemRole: "executive" }).unwrap();
+        toast.success(`New Executive ${empData.name} created successfully.`);
+      }
+      setIsFormOpen(false);
+      setEditingExec(null);
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Failed to save executive.");
     }
   };
 
-  const handleDelete = (id: string, name: string) => {
-    deleteEmployee(id);
-    toast.success(`Executive ${name} removed`);
+  const handleDelete = async (id: string, name: string) => {
+    try {
+      await deactivateEmployee(id).unwrap();
+      toast.success(`Executive ${name} removed`);
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Failed to remove executive.");
+    }
   };
 
   return (

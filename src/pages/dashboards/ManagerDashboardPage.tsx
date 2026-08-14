@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useLeaveStore } from "@/stores/leaveStore";
-import { useEmployeeStore } from "@/stores/employeeStore";
+import { useGetEmployeesQuery } from "@/services/api/employeeApi";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,8 @@ import { toast } from "sonner";
 export default function ManagerDashboardPage() {
   const { user } = useAuth();
   const { leaveRequests, approveLeaveRequest, rejectLeaveRequest } = useLeaveStore();
-  const employees = useEmployeeStore((s) => s.employees);
+  const { data: rawEmployees = [] } = useGetEmployeesQuery();
+  const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
 
   // Filter direct reports / team members
   const myTeam = employees.filter((emp) => {

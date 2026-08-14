@@ -58,7 +58,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useAuth } from "@/hooks/useAuth";
-import { useEmployeeStore } from "@/stores/employeeStore";
+import { useGetEmployeesQuery } from "@/services/api/employeeApi";
 import {
   usePayrollStore,
   type PayrollRun,
@@ -88,7 +88,8 @@ export default function PayrollPage() {
   const setTab = (tab: string) => setSearchParams({ tab });
 
   const { user } = useAuth();
-  const { employees } = useEmployeeStore();
+  const { data: rawEmployees = [] } = useGetEmployeesQuery();
+  const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
   const {
     runs,
     structures,

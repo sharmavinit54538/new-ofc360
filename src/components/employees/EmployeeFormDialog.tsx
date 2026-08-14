@@ -193,8 +193,7 @@ export default function EmployeeFormDialog({
       setProbationPeriod(3);
       setCapacity(100);
       setCostCenterId("CC-001");
-      setBackendRole("employee");
-      setPortalRole("employee");
+      setRole("employee");
       setLeaveGroup("Standard India Policy");
       setStatus("Active");
 

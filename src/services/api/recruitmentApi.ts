@@ -250,12 +250,33 @@ export const recruitmentApi = baseApi.injectEndpoints({
     }),
 
     // ── Job Matching ─────────────────────────────────────────────────────
-    matchCandidatesForJob: builder.mutation<{ job_id: string; total_candidates_matched: number; top_matched_candidates: Record<string, unknown>[]; average_ats_score: number; message: string }, string>({
-      query: (jobId) => ({
-        url: `/api/v1/recruitment/jobs/${jobId}/match`,
+    getJobs: builder.query<BackendJobListResponse, { status?: string; search?: string; page?: number; limit?: number } | void>({
+      query: (params) => {
+        const p = params as { status?: string; search?: string; page?: number; limit?: number } | undefined;
+        const search = new URLSearchParams();
+        if (p?.status) search.append("status", p.status);
+        if (p?.search) search.append("search", p.search);
+        if (p?.page) search.append("page", String(p.page));
+        if (p?.limit) search.append("limit", String(p.limit));
+        const q = search.toString();
+        return `/api/v1/jobs${q ? `?${q}` : ""}`;
+      },
+      transformResponse: (response: APIResponse<BackendJobListResponse>) => response.data,
+      providesTags: ["Job", "Recruitment"],
+    }),
+
+    uploadResume: builder.mutation<BackendCandidateScreeningResponse, FormData>({
+      query: (formData) => ({
+        url: "/api/v1/recruitment/resume/upload",
         method: "POST",
+        body: formData,
       }),
-      transformResponse: (response: APIResponse<{ job_id: string; total_candidates_matched: number; top_matched_candidates: Record<string, unknown>[]; average_ats_score: number; message: string }>) => response.data,
+      transformResponse: (response: BackendCandidateScreeningResponse | APIResponse<BackendCandidateScreeningResponse>) => {
+        if ("data" in response && "success" in response) {
+          return (response as APIResponse<BackendCandidateScreeningResponse>).data;
+        }
+        return response as BackendCandidateScreeningResponse;
+      },
       invalidatesTags: ["Candidate", "Recruitment"],
     }),
   }),
@@ -263,10 +284,13 @@ export const recruitmentApi = baseApi.injectEndpoints({
 
 export const {
   useGetRecruitmentJobsQuery,
+  useGetJobsQuery,
   useGetRecruitmentJobByIdQuery,
   useUploadResumeForScreeningMutation,
+  useUploadResumeMutation,
   useGetRecruitmentCandidatesQuery,
   useGetRecruitmentCandidateByIdQuery,
   useGetCandidateATSAnalysisQuery,
   useMatchCandidatesForJobMutation,
 } = recruitmentApi;
+

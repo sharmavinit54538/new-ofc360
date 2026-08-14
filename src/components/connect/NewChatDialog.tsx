@@ -6,7 +6,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, MessageSquare, Users, UserCheck } from "lucide-react";
 import { useConnectStore } from "@/stores/connectStore";
 import { useGetEmployeesQuery } from "@/services/api/employeeApi";
-import { useEmployeeStore } from "@/stores/employeeStore";
 import { useAuth } from "@/hooks/useAuth";
 import { ConnectUser } from "@/types/connect";
 import { PresenceIndicator } from "./PresenceIndicator";
@@ -22,11 +21,10 @@ export function NewChatDialog({ open, onOpenChange, onSelectConversation }: NewC
   const { user: currentUser } = useAuth();
   const { startDirectConversation } = useConnectStore();
 
-  // Load real employees from RTK Query with fallback to employeeStore
+  // Load real employees from RTK Query
   const { data: employeesResponse, isLoading: isRtkLoading } = useGetEmployeesQuery(undefined, {
     skip: !open,
   });
-  const storeEmployees = useEmployeeStore((s) => s.employees);
 
   const employeesList = useMemo(() => {
     let list: any[] = [];
@@ -34,12 +32,9 @@ export function NewChatDialog({ open, onOpenChange, onSelectConversation }: NewC
       list = employeesResponse;
     } else if (employeesResponse && (employeesResponse as any).data && Array.isArray((employeesResponse as any).data)) {
       list = (employeesResponse as any).data;
-    } else if (storeEmployees && storeEmployees.length > 0) {
-      list = storeEmployees;
     }
-
     return list.filter((emp) => emp.id !== currentUser?.id && emp.email !== currentUser?.email);
-  }, [employeesResponse, storeEmployees, currentUser]);
+  }, [employeesResponse, currentUser]);
 
   const filteredEmployees = useMemo(() => {
     if (!search.trim()) return employeesList;

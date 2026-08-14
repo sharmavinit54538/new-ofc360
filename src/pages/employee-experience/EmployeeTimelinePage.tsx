@@ -47,7 +47,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useEmployeeStore } from "@/stores/employeeStore";
+import { useGetEmployeesQuery } from "@/services/api/employeeApi";
 import { useAuth } from "@/hooks/useAuth";
 import { useTimelineStore } from "@/stores/timelineStore";
 import { type TimelineCategory, type TimelineEvent } from "@/utils/timelineEngine";
@@ -94,7 +94,8 @@ const categoryCards = [
 
 export default function EmployeeTimelinePage() {
   const { user } = useAuth();
-  const { employees } = useEmployeeStore();
+  const { data: rawEmployees = [] } = useGetEmployeesQuery();
+  const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
   const {
     events,
     addEvent,

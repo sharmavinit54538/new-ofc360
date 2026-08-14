@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { ConnectLayout } from "@/components/connect/ConnectLayout";
 import { useConnectStore } from "@/stores/connectStore";
 import { useGetEmployeesQuery } from "@/services/api/employeeApi";
-import { useEmployeeStore } from "@/stores/employeeStore";
 import { useAuth } from "@/hooks/useAuth";
 import { ConnectUser } from "@/types/connect";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -37,7 +36,6 @@ export default function ConnectContactsPage() {
   }, [setActiveTab]);
 
   const { data: employeesResponse, isLoading } = useGetEmployeesQuery();
-  const storeEmployees = useEmployeeStore((s) => s.employees);
 
   const employeesList = useMemo(() => {
     let list: any[] = [];
@@ -45,11 +43,9 @@ export default function ConnectContactsPage() {
       list = employeesResponse;
     } else if (employeesResponse && (employeesResponse as any).data && Array.isArray((employeesResponse as any).data)) {
       list = (employeesResponse as any).data;
-    } else if (storeEmployees && storeEmployees.length > 0) {
-      list = storeEmployees;
     }
     return list.filter((emp) => emp.id !== currentUser?.id && emp.email !== currentUser?.email);
-  }, [employeesResponse, storeEmployees, currentUser]);
+  }, [employeesResponse, currentUser]);
 
   const departments = useMemo(() => {
     const set = new Set<string>();

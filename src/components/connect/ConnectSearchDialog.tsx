@@ -5,7 +5,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, Users, Hash, MessageSquare, FileText, Calendar, ArrowRight } from "lucide-react";
 import { useConnectStore } from "@/stores/connectStore";
 import { useGetEmployeesQuery } from "@/services/api/employeeApi";
-import { useEmployeeStore } from "@/stores/employeeStore";
 import { ConnectUser } from "@/types/connect";
 import { formatFileSize } from "./FileCard";
 
@@ -28,7 +27,6 @@ export function ConnectSearchDialog({
   const { conversations, channels, messages, sharedFiles, startDirectConversation } = useConnectStore();
 
   const { data: employeesResponse } = useGetEmployeesQuery(undefined, { skip: !open });
-  const storeEmployees = useEmployeeStore((s) => s.employees);
 
   const employeesList = useMemo(() => {
     let list: any[] = [];
@@ -36,11 +34,9 @@ export function ConnectSearchDialog({
       list = employeesResponse;
     } else if (employeesResponse && (employeesResponse as any).data && Array.isArray((employeesResponse as any).data)) {
       list = (employeesResponse as any).data;
-    } else if (storeEmployees && storeEmployees.length > 0) {
-      list = storeEmployees;
     }
     return list;
-  }, [employeesResponse, storeEmployees]);
+  }, [employeesResponse]);
 
   // People results
   const peopleResults = useMemo(() => {

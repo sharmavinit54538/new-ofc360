@@ -23,7 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   PieChart as RechartsPie, Pie, Cell, Tooltip, ResponsiveContainer
 } from "recharts";
-import { useEmployeeStore } from "@/stores/employeeStore";
+import { useGetEmployeesQuery } from "@/services/api/employeeApi";
 import { useAttendanceStore } from "@/stores/attendanceStore";
 import { usePayrollStore } from "@/stores/payrollStore";
 import { useLeaveStore } from "@/stores/leaveStore";
@@ -46,7 +46,8 @@ export default function ReportsPage() {
   const activeTab = searchParams.get("tab") || "workforce";
   const [dateRange, setDateRange] = useState("Q2-2026");
 
-  const { employees } = useEmployeeStore();
+  const { data: rawEmployees = [] } = useGetEmployeesQuery();
+  const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
   const { punches, overtimes } = useAttendanceStore();
   const { runs, payslips, complianceFilings } = usePayrollStore();
   const { leaveRequests } = useLeaveStore();

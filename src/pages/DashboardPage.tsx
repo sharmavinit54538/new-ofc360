@@ -38,6 +38,7 @@ import { useCandidateStore } from "@/stores/candidateStore";
 import { usePayrollStore } from "@/stores/payrollStore";
 import { useLeaveStore } from "@/stores/leaveStore";
 import { useGetDepartmentsQuery } from "@/services/api/departmentApi";
+import { useGetEmployeesQuery } from "@/services/api/employeeApi";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,8 +49,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { fmtMoney, stageColor } from "@/data/mockHr";
-import { getCurrencyIcon } from "@/utils/currency";
+import { stageColor } from "@/types/hr";
+import { fmtMoney, getCurrencyIcon } from "@/utils/currency";
 
 import EmployeeDashboardPage from "./dashboards/EmployeeDashboardPage";
 import ManagerDashboardPage from "./dashboards/ManagerDashboardPage";
@@ -95,14 +96,16 @@ export default function DashboardPage() {
     return <ITAdminDashboardPage />;
   }
 
-  // Live Stores & Queries
-  const employees = useEmployeeStore((s) => s.employees);
+  // Live Queries & Stores
+  const { data: rawEmployees = [] } = useGetEmployeesQuery();
+  const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
   const candidates = useCandidateStore((s) => s.candidates);
-  const { data: rawDepartments } = useGetDepartmentsQuery();
+  const { data: rawDepartments = [] } = useGetDepartmentsQuery();
   const departments = Array.isArray(rawDepartments) ? rawDepartments : [];
-  const { runs, payslips, settings } = usePayrollStore();
+  const { runs = [], payslips = [], settings } = usePayrollStore();
   const PayrollIcon = getCurrencyIcon(settings?.currency);
   const leaveRequests = useLeaveStore((s) => s.leaveRequests);
+
 
   // Computed Real-Time Metrics
   const totalWorkforce = employees.length;
