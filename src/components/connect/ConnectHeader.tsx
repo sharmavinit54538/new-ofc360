@@ -1,6 +1,17 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useConnectStore } from "@/stores/connectStore";
-import { useConnectSoundStore } from "@/stores/connectSoundStore";
+import { useConnect } from "@/features/connect/hooks";
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
+import {
+  selectMasterVolume,
+  selectIsMutedAll,
+} from "@/features/connect/selectors";
+import { setIsSettingsOpen } from "@/features/connect/soundSettingsSlice";
+import {
+  useGetConversationsQuery,
+  useGetChannelsQuery,
+  useGetMeetingsQuery,
+  useGetFilesQuery,
+} from "@/services/api/connectApi";
 import { Button } from "@/components/ui/button";
 import { PresenceSelector } from "./PresenceSelector";
 import {
@@ -20,55 +31,56 @@ import {
 export function ConnectHeader() {
   const navigate = useNavigate();
   const location = useLocation();
-  const activeTab = useConnectStore((s) => s.activeTab);
-  const setIsSearchOpen = useConnectStore((s) => s.setIsSearchOpen);
-  const setIsNewMeetingOpen = useConnectStore((s) => s.setIsNewMeetingOpen);
+  const dispatch = useAppDispatch();
+  const { activeTab, setIsSearchOpen, setIsNewMeetingOpen } = useConnect();
 
-  const isMutedAll = useConnectSoundStore((s) => s.isMutedAll);
-  const masterVolume = useConnectSoundStore((s) => s.masterVolume);
-  const setIsSoundSettingsOpen = useConnectSoundStore((s) => s.setIsSettingsOpen);
+  const isMutedAll = useAppSelector(selectIsMutedAll);
+  const masterVolume = useAppSelector(selectMasterVolume);
 
-  const conversations = useConnectStore((s) => s.conversations);
-  const channels = useConnectStore((s) => s.channels);
-  const meetings = useConnectStore((s) => s.meetings);
-  const sharedFiles = useConnectStore((s) => s.sharedFiles);
+  // RTK Query hooks
+  const { data: conversations = [] } = useGetConversationsQuery();
+  const { data: channels = [] } = useGetChannelsQuery();
+  const { data: meetings = [] } = useGetMeetingsQuery();
+  const { data: sharedFiles = [] } = useGetFilesQuery();
 
   const unreadMessagesCount = conversations.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
 
   const tabs = [
-    { id: "chat", label: "Chat", icon: MessageSquare, path: "/connect/chat", badge: unreadMessagesCount > 0 ? unreadMessagesCount : undefined },
-    { id: "channels", label: "Channels", icon: Hash, path: "/connect/channels", count: channels.filter((c) => !c.isArchived).length },
+    {
+      id: "chat",
+      label: "Chat",
+      icon: MessageSquare,
+      path: "/connect/chat",
+      badge: unreadMessagesCount > 0 ? unreadMessagesCount : undefined,
+    },
+    {
+      id: "channels",
+      label: "Channels",
+      icon: Hash,
+      path: "/connect/channels",
+      count: channels.filter((c) => !c.isArchived).length,
+    },
     { id: "calls", label: "Calls", icon: PhoneCall, path: "/connect/calls" },
-    { id: "meetings", label: "Meetings", icon: Calendar, path: "/connect/meetings", count: meetings.length > 0 ? meetings.length : undefined },
-    { id: "files", label: "Files", icon: Folder, path: "/connect/files", count: sharedFiles.length > 0 ? sharedFiles.length : undefined },
+    {
+      id: "meetings",
+      label: "Meetings",
+      icon: Calendar,
+      path: "/connect/meetings",
+      count: meetings.length > 0 ? meetings.length : undefined,
+    },
+    {
+      id: "files",
+      label: "Files",
+      icon: Folder,
+      path: "/connect/files",
+      count: sharedFiles.length > 0 ? sharedFiles.length : undefined,
+    },
     { id: "contacts", label: "Contacts", icon: Users, path: "/connect/contacts" },
   ];
 
-  const getSectionTitle = () => {
-    switch (activeTab) {
-      case "chat":
-        return { label: "Chat & Messaging", icon: MessageSquare };
-      case "channels":
-        return { label: "Team Channels", icon: Hash };
-      case "calls":
-        return { label: "Calls & Voice", icon: PhoneCall };
-      case "meetings":
-        return { label: "Meetings & Video Rooms", icon: Calendar };
-      case "files":
-        return { label: "Shared Files Hub", icon: Folder };
-      case "contacts":
-        return { label: "Colleagues & Directory", icon: Users };
-      default:
-        return { label: "OFC360 Connect", icon: Sparkles };
-    }
-  };
-
-  const currentSection = getSectionTitle();
-  const IconComponent = currentSection.icon;
-
   return (
     <div className="h-16 px-4 md:px-6 border-b border-border/70 bg-card/60 backdrop-blur-md flex items-center justify-between gap-3 shrink-0 select-none">
-      {/* Horizontal Card Format Tabs (Matching People Page Tab Style) */}
+      {/* Horizontal Card Format Tabs */}
       <div className="flex items-center bg-secondary/60 p-1 rounded-xl border border-border/50 overflow-x-auto scrollbar-none max-w-full">
         {tabs.map((t) => {
           const Icon = t.icon;
@@ -120,13 +132,13 @@ export function ConnectHeader() {
         <Button
           variant={isMutedAll ? "destructive" : "outline"}
           size="sm"
-          onClick={() => setIsSoundSettingsOpen(true)}
+          onClick={() => dispatch(setIsSettingsOpen(true))}
           className={`h-8 px-2.5 text-xs border-border/60 gap-1.5 transition-all ${
             isMutedAll
               ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/40"
               : "text-muted-foreground hover:text-foreground"
           }`}
-          title={isMutedAll ? "Connect Sounds Muted (Click to configure)" : `Notification Sound Settings (${masterVolume}%)`}
+          title={isMutedAll ? "Connect Sounds Muted" : `Sound Settings (${masterVolume}%)`}
         >
           {isMutedAll ? (
             <VolumeX className="w-3.5 h-3.5 text-rose-500 animate-pulse" />

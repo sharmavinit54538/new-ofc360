@@ -1,14 +1,14 @@
 import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, MessageSquare, Users, UserCheck } from "lucide-react";
-import { useConnectStore } from "@/stores/connectStore";
-import { useGetEmployeesQuery } from "@/services/api/employeeApi";
+import { useConnect } from "@/features/connect/hooks";
+import { useGetColleaguesQuery, useCreateConversationMutation } from "@/services/api/connectApi";
 import { useAuth } from "@/hooks/useAuth";
 import { ConnectUser } from "@/types/connect";
 import { PresenceIndicator } from "./PresenceIndicator";
+import { toast } from "sonner";
 
 interface NewChatDialogProps {
   open: boolean;
@@ -19,22 +19,24 @@ interface NewChatDialogProps {
 export function NewChatDialog({ open, onOpenChange, onSelectConversation }: NewChatDialogProps) {
   const [search, setSearch] = useState("");
   const { user: currentUser } = useAuth();
-  const { startDirectConversation } = useConnectStore();
+  const { setActiveConversationId, setActiveTab } = useConnect();
 
-  // Load real employees from RTK Query
-  const { data: employeesResponse, isLoading: isRtkLoading } = useGetEmployeesQuery(undefined, {
+  // Load colleagues from connectApi
+  const { data: colleaguesData, isLoading } = useGetColleaguesQuery(undefined, {
     skip: !open,
   });
 
-  const employeesList = useMemo(() => {
-    let list: any[] = [];
-    if (Array.isArray(employeesResponse)) {
-      list = employeesResponse;
-    } else if (employeesResponse && (employeesResponse as any).data && Array.isArray((employeesResponse as any).data)) {
-      list = (employeesResponse as any).data;
+  const [createConversation] = useCreateConversationMutation();
+
+  const employeesList: ConnectUser[] = useMemo(() => {
+    let list: ConnectUser[] = [];
+    if (Array.isArray(colleaguesData)) {
+      list = colleaguesData;
+    } else if (colleaguesData && (colleaguesData as any).colleagues) {
+      list = (colleaguesData as any).colleagues;
     }
     return list.filter((emp) => emp.id !== currentUser?.id && emp.email !== currentUser?.email);
-  }, [employeesResponse, currentUser]);
+  }, [colleaguesData, currentUser]);
 
   const filteredEmployees = useMemo(() => {
     if (!search.trim()) return employeesList;
@@ -42,8 +44,6 @@ export function NewChatDialog({ open, onOpenChange, onSelectConversation }: NewC
     return employeesList.filter(
       (e) =>
         (e.name && e.name.toLowerCase().includes(q)) ||
-        (e.firstName && e.firstName.toLowerCase().includes(q)) ||
-        (e.lastName && e.lastName.toLowerCase().includes(q)) ||
         (e.email && e.email.toLowerCase().includes(q)) ||
         (e.department && e.department.toLowerCase().includes(q)) ||
         (e.role && e.role.toLowerCase().includes(q)) ||
@@ -51,21 +51,21 @@ export function NewChatDialog({ open, onOpenChange, onSelectConversation }: NewC
     );
   }, [employeesList, search]);
 
-  const handleStartChat = (emp: any) => {
-    const fullName = emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || emp.email;
-    const targetUser: ConnectUser = {
-      id: String(emp.id),
-      name: fullName,
-      email: emp.email || "",
-      role: emp.designation || emp.role || "Team Member",
-      department: emp.department || "General",
-      avatar: emp.avatar || emp.photoUrl,
-      presence: "online",
-    };
-
-    const convId = startDirectConversation(targetUser);
-    onOpenChange(false);
-    onSelectConversation?.(convId);
+  const handleStartChat = async (emp: ConnectUser) => {
+    try {
+      const res = await createConversation({ participantId: emp.id }).unwrap();
+      const convId = res.id;
+      setActiveConversationId(convId);
+      setActiveTab("chat");
+      onOpenChange(false);
+      onSelectConversation?.(convId);
+    } catch {
+      const convId = `conv_${emp.id}`;
+      setActiveConversationId(convId);
+      setActiveTab("chat");
+      onOpenChange(false);
+      onSelectConversation?.(convId);
+    }
   };
 
   return (
@@ -97,7 +97,13 @@ export function NewChatDialog({ open, onOpenChange, onSelectConversation }: NewC
 
         {/* Contact List */}
         <div className="max-h-80 overflow-y-auto p-2 scrollbar-thin space-y-1">
-          {filteredEmployees.length === 0 ? (
+          {isLoading ? (
+            <div className="space-y-2 p-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-12 rounded-xl bg-card/60 animate-pulse border border-border/40" />
+              ))}
+            </div>
+          ) : filteredEmployees.length === 0 ? (
             <div className="text-center py-8 px-4 text-muted-foreground">
               <Users className="w-8 h-8 mx-auto mb-2 opacity-40" />
               <p className="text-xs font-medium">No colleagues found</p>
@@ -105,7 +111,7 @@ export function NewChatDialog({ open, onOpenChange, onSelectConversation }: NewC
             </div>
           ) : (
             filteredEmployees.map((emp) => {
-              const fullName = emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || emp.email;
+              const fullName = emp.name || emp.email;
               const initials = fullName
                 .split(" ")
                 .map((n: string) => n[0])
@@ -128,7 +134,7 @@ export function NewChatDialog({ open, onOpenChange, onSelectConversation }: NewC
                         </AvatarFallback>
                       </Avatar>
                       <PresenceIndicator
-                        status="online"
+                        status={emp.presence || "online"}
                         size="sm"
                         className="absolute -bottom-0.5 -right-0.5 ring-2 ring-background"
                       />

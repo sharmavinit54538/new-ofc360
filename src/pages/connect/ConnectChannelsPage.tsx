@@ -3,14 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ConnectLayout } from "@/components/connect/ConnectLayout";
 import { ChannelList } from "@/components/connect/ChannelList";
 import { ChannelView } from "@/components/connect/ChannelView";
-import { useConnectStore } from "@/stores/connectStore";
+import { useConnect } from "@/features/connect/hooks";
 
 export default function ConnectChannelsPage() {
   const { channelId } = useParams<{ channelId?: string }>();
   const navigate = useNavigate();
-  const setActiveTab = useConnectStore((s) => s.setActiveTab);
-  const activeChannelId = useConnectStore((s) => s.activeChannelId);
-  const setActiveChannelId = useConnectStore((s) => s.setActiveChannelId);
+  const { activeTab, setActiveTab, activeChannelId, setActiveChannelId } = useConnect();
 
   useEffect(() => {
     setActiveTab("channels");

@@ -2,16 +2,18 @@ import { useState } from "react";
 import { ConnectChannel } from "@/types/connect";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
 import {
   Hash,
   Lock,
   Users,
   Search,
   MoreVertical,
-  Pin,
   Archive,
   LogOut,
   Info,
+  UserPlus,
+  Trash2,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -26,7 +28,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useConnectStore } from "@/stores/connectStore";
+import {
+  useArchiveChannelMutation,
+  useLeaveChannelMutation,
+  useAddChannelMembersMutation,
+  useRemoveChannelMemberMutation,
+  useGetColleaguesQuery,
+} from "@/services/api/connectApi";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
@@ -37,18 +45,58 @@ interface ChannelHeaderProps {
 
 export function ChannelHeader({ channel, onToggleSearch }: ChannelHeaderProps) {
   const [showMembersDialog, setShowMembersDialog] = useState(false);
-  const { user: currentUser } = useAuth();
-  const { archiveChannel, leaveChannel } = useConnectStore();
+  const [showAddMember, setShowAddMember] = useState(false);
+  const [selectedUserToAdd, setSelectedUserToAdd] = useState("");
 
-  const handleArchive = () => {
-    archiveChannel(channel.id);
-    toast.success(`Channel #${channel.name} archived.`);
+  const { user: currentUser } = useAuth();
+  const currentUserId = String(currentUser?.id || "");
+
+  // RTK Query mutations
+  const [archiveChannel] = useArchiveChannelMutation();
+  const [leaveChannel] = useLeaveChannelMutation();
+  const [addChannelMembers] = useAddChannelMembersMutation();
+  const [removeChannelMember] = useRemoveChannelMemberMutation();
+  const { data: colleagues = [] } = useGetColleaguesQuery(undefined, { skip: !showAddMember });
+
+  const handleArchive = async () => {
+    try {
+      await archiveChannel({ channelId: channel.id, isArchived: true }).unwrap();
+      toast.success(`Channel #${channel.name} archived.`);
+    } catch {
+      toast.error("Failed to archive channel.");
+    }
   };
 
-  const handleLeave = () => {
-    if (currentUser) {
-      leaveChannel(channel.id, String(currentUser.id));
+  const handleLeave = async () => {
+    try {
+      await leaveChannel(channel.id).unwrap();
       toast.info(`Left channel #${channel.name}.`);
+    } catch {
+      toast.error("Failed to leave channel.");
+    }
+  };
+
+  const handleAddMember = async () => {
+    if (!selectedUserToAdd) return;
+    try {
+      await addChannelMembers({
+        channelId: channel.id,
+        memberIds: [selectedUserToAdd],
+      }).unwrap();
+      toast.success("Member added to channel");
+      setSelectedUserToAdd("");
+      setShowAddMember(false);
+    } catch {
+      toast.error("Failed to add member.");
+    }
+  };
+
+  const handleRemoveMember = async (userId: string) => {
+    try {
+      await removeChannelMember({ channelId: channel.id, userId }).unwrap();
+      toast.success("Member removed from channel");
+    } catch {
+      toast.error("Failed to remove member.");
     }
   };
 
@@ -143,12 +191,45 @@ export function ChannelHeader({ channel, onToggleSearch }: ChannelHeaderProps) {
       {/* Members Dialog */}
       <Dialog open={showMembersDialog} onOpenChange={setShowMembersDialog}>
         <DialogContent className="sm:max-w-md p-0 gap-0 overflow-hidden bg-background/95 backdrop-blur-xl border border-border/80 rounded-2xl shadow-2xl">
-          <DialogHeader className="p-4 border-b border-border/50">
+          <DialogHeader className="p-4 border-b border-border/50 flex flex-row items-center justify-between">
             <DialogTitle className="text-base font-semibold flex items-center gap-2">
               <Users className="w-4 h-4 text-primary" />
               #{channel.name} Members ({channel.members?.length || 1})
             </DialogTitle>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowAddMember(!showAddMember)}
+              className="h-7 text-xs gap-1"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>Add Member</span>
+            </Button>
           </DialogHeader>
+
+          {/* Add member form */}
+          {showAddMember && (
+            <div className="p-3 border-b border-border/40 bg-muted/20 flex gap-2">
+              <select
+                value={selectedUserToAdd}
+                onChange={(e) => setSelectedUserToAdd(e.target.value)}
+                className="flex-1 h-8 rounded-lg border border-input bg-background px-2 text-xs"
+              >
+                <option value="">Select a colleague to add...</option>
+                {colleagues
+                  .filter((c) => !channel.members?.some((m) => m.id === c.id))
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.department || "General"})
+                    </option>
+                  ))}
+              </select>
+              <Button size="sm" onClick={handleAddMember} className="h-8 text-xs">
+                Add
+              </Button>
+            </div>
+          )}
+
           <div className="max-h-72 overflow-y-auto p-3 space-y-2 scrollbar-thin">
             {channel.members?.map((m) => (
               <div key={m.id} className="flex items-center justify-between p-2 rounded-xl bg-muted/20 text-xs">
@@ -164,11 +245,24 @@ export function ChannelHeader({ channel, onToggleSearch }: ChannelHeaderProps) {
                     <p className="text-[10px] text-muted-foreground">{m.role || "Member"} • {m.department || "General"}</p>
                   </div>
                 </div>
-                {m.id === channel.createdBy && (
-                  <span className="text-[10px] bg-primary/15 text-primary font-bold px-1.5 py-0.5 rounded-md">
-                    Host
-                  </span>
-                )}
+
+                <div className="flex items-center gap-1.5">
+                  {m.id === channel.createdBy ? (
+                    <span className="text-[10px] bg-primary/15 text-primary font-bold px-1.5 py-0.5 rounded-md">
+                      Host
+                    </span>
+                  ) : channel.createdBy === currentUserId && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => handleRemoveMember(m.id)}
+                      className="w-6 h-6 text-muted-foreground hover:text-destructive"
+                      title="Remove member"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

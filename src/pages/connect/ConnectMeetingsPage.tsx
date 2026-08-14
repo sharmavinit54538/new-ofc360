@@ -1,19 +1,18 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ConnectLayout } from "@/components/connect/ConnectLayout";
-import { useConnectStore } from "@/stores/connectStore";
+import { useConnect } from "@/features/connect/hooks";
+import { useGetMeetingsQuery } from "@/services/api/connectApi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Video,
   Calendar,
-  Plus,
   Clock,
   Users,
   Copy,
   Check,
   ArrowRight,
-  Sparkles,
   Link2,
 } from "lucide-react";
 import { ConnectEmptyState } from "@/components/connect/ConnectEmptyState";
@@ -21,9 +20,10 @@ import { toast } from "sonner";
 
 export default function ConnectMeetingsPage() {
   const navigate = useNavigate();
-  const setActiveTab = useConnectStore((s) => s.setActiveTab);
-  const meetings = useConnectStore((s) => s.meetings);
-  const setIsNewMeetingOpen = useConnectStore((s) => s.setIsNewMeetingOpen);
+  const { setActiveTab, setIsNewMeetingOpen } = useConnect();
+
+  // RTK Query hook
+  const { data: meetings = [], isLoading } = useGetMeetingsQuery();
 
   const [joinMeetingId, setJoinMeetingId] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -69,7 +69,7 @@ export default function ConnectMeetingsPage() {
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             <Button
               onClick={() => setIsNewMeetingOpen(true)}
-              className="bg-white text-primary hover:bg-white/90 font-bold text-xs h-10 px-5 rounded-xl shadow-md gap-2"
+              className="bg-white text-primary hover:bg-white/90 font-bold text-xs h-10 px-5 rounded-xl shadow-md gap-2 cursor-pointer"
             >
               <Video className="w-4 h-4" />
               <span>Start / Schedule Meeting</span>
@@ -96,7 +96,7 @@ export default function ConnectMeetingsPage() {
               placeholder="e.g. meet_xyz123"
               className="h-9 text-xs rounded-xl w-full sm:w-60 bg-background"
             />
-            <Button type="submit" size="sm" className="gradient-bg text-primary-foreground h-9 px-4 rounded-xl text-xs font-semibold shrink-0">
+            <Button type="submit" size="sm" className="gradient-bg text-primary-foreground h-9 px-4 rounded-xl text-xs font-semibold shrink-0 cursor-pointer">
               Join
             </Button>
           </form>
@@ -114,7 +114,13 @@ export default function ConnectMeetingsPage() {
             </span>
           </div>
 
-          {meetings.length === 0 ? (
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-44 rounded-2xl bg-card/60 animate-pulse border border-border/40" />
+              ))}
+            </div>
+          ) : meetings.length === 0 ? (
             <ConnectEmptyState
               variant="meetings"
               actionLabel="Schedule a Meeting"
@@ -174,7 +180,7 @@ export default function ConnectMeetingsPage() {
 
                   <Button
                     onClick={() => navigate(`/connect/meeting/${meeting.id}`)}
-                    className="w-full gradient-bg text-primary-foreground font-semibold text-xs h-8 rounded-xl gap-1.5 shadow-xs"
+                    className="w-full gradient-bg text-primary-foreground font-semibold text-xs h-8 rounded-xl gap-1.5 shadow-xs cursor-pointer"
                   >
                     <span>Enter Room</span>
                     <ArrowRight className="w-3.5 h-3.5" />

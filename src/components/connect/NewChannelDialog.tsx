@@ -7,8 +7,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Hash, Lock, Users, Search, Check } from "lucide-react";
-import { useConnectStore } from "@/stores/connectStore";
-import { useGetEmployeesQuery } from "@/services/api/employeeApi";
+import { useConnect } from "@/features/connect/hooks";
+import { useGetColleaguesQuery, useCreateChannelMutation } from "@/services/api/connectApi";
 import { useAuth } from "@/hooks/useAuth";
 import { ConnectUser } from "@/types/connect";
 import { toast } from "sonner";
@@ -27,19 +27,21 @@ export function NewChannelDialog({ open, onOpenChange, onChannelCreated }: NewCh
   const [memberSearch, setMemberSearch] = useState("");
 
   const { user: currentUser } = useAuth();
-  const { createChannel } = useConnectStore();
+  const { setActiveChannelId, setActiveTab } = useConnect();
 
-  const { data: employeesResponse } = useGetEmployeesQuery(undefined, { skip: !open });
+  // RTK Query hooks
+  const { data: colleaguesData } = useGetColleaguesQuery(undefined, { skip: !open });
+  const [createChannel, { isLoading: isCreating }] = useCreateChannelMutation();
 
-  const employeesList = useMemo(() => {
-    let list: any[] = [];
-    if (Array.isArray(employeesResponse)) {
-      list = employeesResponse;
-    } else if (employeesResponse && (employeesResponse as any).data && Array.isArray((employeesResponse as any).data)) {
-      list = (employeesResponse as any).data;
+  const employeesList: ConnectUser[] = useMemo(() => {
+    let list: ConnectUser[] = [];
+    if (Array.isArray(colleaguesData)) {
+      list = colleaguesData;
+    } else if (colleaguesData && (colleaguesData as any).colleagues) {
+      list = (colleaguesData as any).colleagues;
     }
     return list.filter((emp) => emp.id !== currentUser?.id && emp.email !== currentUser?.email);
-  }, [employeesResponse, currentUser]);
+  }, [colleaguesData, currentUser]);
 
   const filteredEmployees = useMemo(() => {
     if (!memberSearch.trim()) return employeesList;
@@ -47,9 +49,9 @@ export function NewChannelDialog({ open, onOpenChange, onChannelCreated }: NewCh
     return employeesList.filter(
       (e) =>
         (e.name && e.name.toLowerCase().includes(q)) ||
-        (e.firstName && e.firstName.toLowerCase().includes(q)) ||
         (e.email && e.email.toLowerCase().includes(q)) ||
-        (e.department && e.department.toLowerCase().includes(q))
+        (e.department && e.department.toLowerCase().includes(q)) ||
+        (e.role && e.role.toLowerCase().includes(q))
     );
   }, [employeesList, memberSearch]);
 
@@ -59,47 +61,33 @@ export function NewChannelDialog({ open, onOpenChange, onChannelCreated }: NewCh
     );
   };
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
       toast.error("Please provide a channel name.");
       return;
     }
 
-    const currentConnectUser: ConnectUser = {
-      id: currentUser?.id ? String(currentUser.id) : "usr_current",
-      name: currentUser?.name || currentUser?.email?.split("@")[0] || "User",
-      email: currentUser?.email || "",
-      role: currentUser?.role,
-    };
+    try {
+      const channel = await createChannel({
+        name: name.trim().toLowerCase().replace(/\s+/g, "-"),
+        description: description.trim(),
+        isPrivate,
+        memberIds: selectedMemberIds,
+      }).unwrap();
 
-    const selectedMembers: ConnectUser[] = selectedMemberIds.map((id) => {
-      const emp = employeesList.find((e) => String(e.id) === id);
-      return {
-        id: String(emp?.id || id),
-        name: emp?.name || `${emp?.firstName || ""} ${emp?.lastName || ""}`.trim() || "Colleague",
-        email: emp?.email || "",
-        role: emp?.designation || emp?.role,
-        department: emp?.department,
-        avatar: emp?.avatar || emp?.photoUrl,
-      };
-    });
-
-    const newChannel = createChannel({
-      name: name.trim().toLowerCase().replace(/\s+/g, "-"),
-      description: description.trim(),
-      isPrivate,
-      createdBy: currentConnectUser.id,
-      members: [currentConnectUser, ...selectedMembers],
-    });
-
-    toast.success(`Channel #${newChannel.name} created successfully.`);
-    setName("");
-    setDescription("");
-    setIsPrivate(false);
-    setSelectedMemberIds([]);
-    onOpenChange(false);
-    onChannelCreated?.(newChannel.id);
+      toast.success(`Channel #${channel.name} created successfully.`);
+      setName("");
+      setDescription("");
+      setIsPrivate(false);
+      setSelectedMemberIds([]);
+      onOpenChange(false);
+      setActiveChannelId(channel.id);
+      setActiveTab("channels");
+      onChannelCreated?.(channel.id);
+    } catch {
+      toast.error("Failed to create channel.");
+    }
   };
 
   return (
@@ -186,7 +174,7 @@ export function NewChannelDialog({ open, onOpenChange, onChannelCreated }: NewCh
                   <p className="text-center py-4 text-[11px] text-muted-foreground">No colleagues found</p>
                 ) : (
                   filteredEmployees.map((emp) => {
-                    const fullName = emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || emp.email;
+                    const fullName = emp.name || emp.email;
                     const isSelected = selectedMemberIds.includes(String(emp.id));
 
                     return (
@@ -228,8 +216,13 @@ export function NewChannelDialog({ open, onOpenChange, onChannelCreated }: NewCh
             >
               Cancel
             </Button>
-            <Button type="submit" size="sm" className="gradient-bg text-primary-foreground text-xs h-8 rounded-lg shadow-sm">
-              Create Channel
+            <Button
+              type="submit"
+              size="sm"
+              disabled={isCreating}
+              className="gradient-bg text-primary-foreground text-xs h-8 rounded-lg shadow-sm"
+            >
+              {isCreating ? "Creating..." : "Create Channel"}
             </Button>
           </DialogFooter>
         </form>

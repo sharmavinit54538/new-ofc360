@@ -1,5 +1,11 @@
 import { useMemo, useRef, useEffect } from "react";
-import { useConnectStore } from "@/stores/connectStore";
+import { useConnect } from "@/features/connect/hooks";
+import {
+  useGetMessageThreadQuery,
+  usePostThreadReplyMutation,
+  useToggleReactionMutation,
+  useDeleteMessageMutation,
+} from "@/services/api/connectApi";
 import { useAuth } from "@/hooks/useAuth";
 import { ConnectUser } from "@/types/connect";
 import { Button } from "@/components/ui/button";
@@ -7,26 +13,25 @@ import { X, MessageCircle, CornerDownRight } from "lucide-react";
 import { MessageBubble } from "./MessageBubble";
 import { ChatComposer } from "./ChatComposer";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 
 export function ThreadPanel() {
-  const activeThreadMessage = useConnectStore((s) => s.activeThreadMessage);
-  const setActiveThreadMessage = useConnectStore((s) => s.setActiveThreadMessage);
-  const messagesMap = useConnectStore((s) => s.messages);
-  const sendThreadReply = useConnectStore((s) => s.sendThreadReply);
-  const toggleReaction = useConnectStore((s) => s.toggleReaction);
-  const deleteMessage = useConnectStore((s) => s.deleteMessage);
-
+  const { activeThreadMessage, setActiveThreadMessage } = useConnect();
   const { user: currentUser } = useAuth();
   const currentUserId = currentUser?.id ? String(currentUser.id) : "usr_current";
 
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const parentMessageId = activeThreadMessage?.id || "";
 
-  // Get thread replies for this parent message
-  const replies = useMemo(() => {
-    if (!activeThreadMessage) return [];
-    const list = messagesMap[activeThreadMessage.conversationId] || [];
-    return list.filter((m) => m.replyToMessageId === activeThreadMessage.id);
-  }, [messagesMap, activeThreadMessage]);
+  // RTK Query hooks
+  const { data: replies = [], isLoading } = useGetMessageThreadQuery(parentMessageId, {
+    skip: !parentMessageId,
+  });
+
+  const [postThreadReply] = usePostThreadReplyMutation();
+  const [toggleReaction] = useToggleReactionMutation();
+  const [deleteMessage] = useDeleteMessageMutation();
+
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -34,27 +39,23 @@ export function ThreadPanel() {
 
   if (!activeThreadMessage) return null;
 
-  const currentConnectUser: ConnectUser = {
-    id: currentUserId,
-    name: currentUser?.name || currentUser?.email?.split("@")[0] || "User",
-    email: currentUser?.email || "",
-    role: currentUser?.role,
-    avatar: undefined,
-  };
-
-  const handleSendReply = ({
+  const handleSendReply = async ({
     content,
     attachments,
   }: {
     content: string;
     attachments?: any[];
   }) => {
-    sendThreadReply(activeThreadMessage.id, {
-      targetId: activeThreadMessage.conversationId,
-      sender: currentConnectUser,
-      content,
-      attachments,
-    });
+    try {
+      await postThreadReply({
+        parentMessageId: activeThreadMessage.id,
+        content,
+        attachments,
+        conversationId: activeThreadMessage.conversationId,
+      }).unwrap();
+    } catch {
+      toast.error("Failed to post thread reply.");
+    }
   };
 
   return (
@@ -96,7 +97,11 @@ export function ThreadPanel() {
               isOutgoing={activeThreadMessage.senderId === currentUserId}
               currentUserId={currentUserId}
               onToggleReaction={(msgId, emoji) =>
-                toggleReaction(activeThreadMessage.conversationId, msgId, emoji, currentUserId)
+                toggleReaction({
+                  messageId: msgId,
+                  emoji,
+                  conversationId: activeThreadMessage.conversationId,
+                })
               }
             />
           </div>
@@ -112,7 +117,11 @@ export function ThreadPanel() {
           </div>
 
           {/* Reply bubbles */}
-          {replies.length === 0 ? (
+          {isLoading ? (
+            <div className="space-y-2 py-3">
+              <div className="h-10 rounded-xl bg-card/60 animate-pulse border border-border/40" />
+            </div>
+          ) : replies.length === 0 ? (
             <p className="text-center py-6 text-xs text-muted-foreground">
               No replies yet. Be the first to start the discussion!
             </p>
@@ -124,9 +133,18 @@ export function ThreadPanel() {
                 isOutgoing={reply.senderId === currentUserId}
                 currentUserId={currentUserId}
                 onToggleReaction={(msgId, emoji) =>
-                  toggleReaction(activeThreadMessage.conversationId, msgId, emoji, currentUserId)
+                  toggleReaction({
+                    messageId: msgId,
+                    emoji,
+                    conversationId: activeThreadMessage.conversationId,
+                  })
                 }
-                onDelete={(msgId) => deleteMessage(activeThreadMessage.conversationId, msgId)}
+                onDelete={(msgId) =>
+                  deleteMessage({
+                    messageId: msgId,
+                    conversationId: activeThreadMessage.conversationId,
+                  })
+                }
               />
             ))
           )}

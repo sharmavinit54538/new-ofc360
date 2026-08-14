@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { useConnectStore } from "@/stores/connectStore";
+import { useConnectCall } from "@/features/connect/hooks";
+import { useEndCallMutation } from "@/services/api/connectApi";
 import { connectAudioManager } from "@/services/connectAudioManager";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -11,78 +12,77 @@ import {
   Monitor,
   MonitorOff,
   PhoneOff,
-  Maximize,
-  Minimize,
-  MessageSquare,
-  Users,
-  ShieldCheck,
   Wifi,
-  Sparkles,
 } from "lucide-react";
-import { useLocalMedia } from "@/hooks/useLocalMedia";
-import { useScreenShare } from "@/hooks/useScreenShare";
+import { useWebRTC } from "@/hooks/useWebRTC";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "sonner";
 
 export function VideoCallModal() {
-  const activeCall = useConnectStore((s) => s.activeCall);
-  const endActiveCall = useConnectStore((s) => s.endActiveCall);
-  const updateCallControls = useConnectStore((s) => s.updateCallControls);
-  const incrementCallDuration = useConnectStore((s) => s.incrementCallDuration);
-
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showInCallChat, setShowInCallChat] = useState(false);
-
-  const localVideoRef = useRef<HTMLVideoElement>(null);
-  const screenVideoRef = useRef<HTMLVideoElement>(null);
-
-  // Local media hook
   const {
-    stream: localStream,
-    isCameraOn,
+    activeCall,
+    status,
+    type,
+    remoteUser,
     isMuted,
-    startMedia,
-    stopMedia,
+    isCameraEnabled,
+    isScreenSharing,
+    duration,
+    endCall,
+    toggleMute,
     toggleCamera,
-    toggleMicrophone,
-    error: mediaError,
-    permissionDenied: mediaPermissionDenied,
-  } = useLocalMedia({
-    audio: true,
-    video: true,
-    autoStart: true,
-  });
+    toggleScreenShare,
+    incrementDuration,
+  } = useConnectCall();
 
-  // Screen share hook
+  const [endCallMutation] = useEndCallMutation();
+  const screenVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+
+  // WebRTC hook
   const {
+    localStream,
+    remoteStream,
     screenStream,
     isSharing,
+    startMedia,
     startScreenShare,
     stopScreenShare,
-    error: screenError,
-  } = useScreenShare();
+    cleanup,
+  } = useWebRTC({
+    targetUserId: remoteUser?.id,
+    callId: activeCall?.id,
+  });
 
-  // Attach local media stream to video element
   useEffect(() => {
-    if (localVideoRef.current && localStream) {
-      localVideoRef.current.srcObject = localStream;
+    if (activeCall && type === "video") {
+      startMedia(true, true);
     }
-  }, [localStream, isCameraOn]);
+    return () => {
+      cleanup();
+    };
+  }, [activeCall?.id, type]);
 
-  // Attach screen share stream to screen video element
+  // Screen video stream attachment
   useEffect(() => {
     if (screenVideoRef.current && screenStream) {
       screenVideoRef.current.srcObject = screenStream;
     }
   }, [screenStream, isSharing]);
 
-  // Play outgoing ringtone / call status sounds
+  // Remote video stream attachment
   useEffect(() => {
-    if (!activeCall || activeCall.type !== "video") return;
+    if (remoteVideoRef.current && remoteStream) {
+      remoteVideoRef.current.srcObject = remoteStream;
+    }
+  }, [remoteStream]);
 
-    if (activeCall.status === "calling") {
+  // Sounds
+  useEffect(() => {
+    if (!activeCall || type !== "video") return;
+
+    if (status === "calling") {
       connectAudioManager.playOutgoingCall();
-    } else if (activeCall.status === "connected") {
+    } else if (status === "connected") {
       connectAudioManager.stopOutgoingCall();
       connectAudioManager.playCallConnected();
     }
@@ -90,19 +90,19 @@ export function VideoCallModal() {
     return () => {
       connectAudioManager.stopOutgoingCall();
     };
-  }, [activeCall?.status, activeCall?.type]);
+  }, [status, type, activeCall]);
 
   // Duration timer
   useEffect(() => {
-    if (activeCall && activeCall.status === "connected") {
+    if (status === "connected") {
       const timer = setInterval(() => {
-        incrementCallDuration();
+        incrementDuration();
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [activeCall?.status, incrementCallDuration]);
+  }, [status, incrementDuration]);
 
-  if (!activeCall || activeCall.type !== "video") return null;
+  if (!activeCall || type !== "video" || !remoteUser) return null;
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -110,24 +110,32 @@ export function VideoCallModal() {
     return `${mins < 10 ? `0${mins}` : mins}:${secs < 10 ? `0${secs}` : secs}`;
   };
 
-  const handleEndCall = () => {
+  const handleEndCall = async () => {
     connectAudioManager.playCallEnded();
-    stopMedia();
-    stopScreenShare();
-    endActiveCall();
+    if (activeCall?.id) {
+      try {
+        await endCallMutation(activeCall.id).unwrap();
+      } catch {}
+    }
+    cleanup();
+    endCall();
   };
 
   const handleToggleScreenShare = async () => {
     if (isSharing) {
-      stopScreenShare();
+      await stopScreenShare();
+      toggleScreenShare(false);
       connectAudioManager.playScreenShareStopped();
     } else {
-      await startScreenShare();
-      connectAudioManager.playScreenShareStarted();
+      const stream = await startScreenShare();
+      if (stream) {
+        toggleScreenShare(true);
+        connectAudioManager.playScreenShareStarted();
+      }
     }
   };
 
-  const initials = activeCall.targetUser.name
+  const initials = remoteUser.name
     .split(" ")
     .map((n) => n[0])
     .join("")
@@ -150,13 +158,13 @@ export function VideoCallModal() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-white">{activeCall.targetUser.name}</span>
+                <span className="text-sm font-bold text-white">{remoteUser.name}</span>
                 <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-white/10 text-white/80 font-medium">
                   1-on-1 Call
                 </span>
               </div>
               <p className="text-[11px] text-white/60">
-                {activeCall.targetUser.role || "Team Member"} • {activeCall.targetUser.department || "General"}
+                {remoteUser.role || "Team Member"} • {remoteUser.department || "General"}
               </p>
             </div>
           </div>
@@ -164,15 +172,15 @@ export function VideoCallModal() {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
               <Wifi className="w-3.5 h-3.5" />
-              <span>{activeCall.status === "connected" ? "Connected" : "Calling..."}</span>
-              <span className="font-mono ml-1 font-bold">{formatDuration(activeCall.duration)}</span>
+              <span>{status === "connected" ? "Connected" : "Calling..."}</span>
+              <span className="font-mono ml-1 font-bold">{formatDuration(duration)}</span>
             </div>
           </div>
         </div>
 
         {/* Center Video Area */}
         <div className="flex-1 relative flex items-center justify-center p-4 overflow-hidden">
-          {/* Main Display: Screen Share or Remote Peer Placeholder */}
+          {/* Main Display: Screen Share or Remote Peer / Placeholder */}
           {isSharing && screenStream ? (
             <div className="relative w-full h-full max-h-[80vh] flex items-center justify-center rounded-2xl overflow-hidden bg-zinc-900 border border-white/10">
               <video
@@ -186,20 +194,29 @@ export function VideoCallModal() {
                 <span>You are sharing your screen</span>
               </div>
             </div>
+          ) : remoteStream ? (
+            <div className="relative w-full h-full max-h-[80vh] flex items-center justify-center rounded-2xl overflow-hidden bg-zinc-900 border border-white/10">
+              <video
+                ref={remoteVideoRef}
+                autoPlay
+                playsInline
+                className="w-full h-full object-cover"
+              />
+            </div>
           ) : (
             <div className="relative w-full h-full max-h-[80vh] flex flex-col items-center justify-center rounded-2xl bg-zinc-900/80 border border-white/10 p-6 text-center">
               <div className="relative mb-4">
                 <span className="absolute inset-0 rounded-full bg-primary/20 animate-ping opacity-50" />
                 <Avatar className="w-28 h-28 border-4 border-white/10 shadow-2xl">
-                  <AvatarImage src={activeCall.targetUser.avatar} alt={activeCall.targetUser.name} />
+                  <AvatarImage src={remoteUser.avatar} alt={remoteUser.name} />
                   <AvatarFallback className="text-2xl font-bold bg-primary/20 text-primary">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
               </div>
-              <h3 className="text-base font-bold text-white mb-1">{activeCall.targetUser.name}</h3>
+              <h3 className="text-base font-bold text-white mb-1">{remoteUser.name}</h3>
               <p className="text-xs text-white/50 max-w-sm">
-                Waiting for remote video stream to establish. Real camera and screen share functionality is live locally.
+                WebRTC stream initializing with peer. Dynamic STUN/TURN gathering active.
               </p>
             </div>
           )}
@@ -216,10 +233,10 @@ export function VideoCallModal() {
               playsInline
               muted
               className={`w-full h-full object-cover mirror scale-x-[-1] ${
-                isCameraOn && localStream ? "block" : "hidden"
+                isCameraEnabled && localStream ? "block" : "hidden"
               }`}
             />
-            {(!isCameraOn || !localStream) && (
+            {(!isCameraEnabled || !localStream) && (
               <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-800 text-white/60 p-2">
                 <VideoOff className="w-6 h-6 mb-1 text-white/40" />
                 <span className="text-[11px] font-medium">Camera Off</span>
@@ -238,7 +255,7 @@ export function VideoCallModal() {
             type="button"
             variant={isMuted ? "destructive" : "secondary"}
             size="icon"
-            onClick={toggleMicrophone}
+            onClick={() => toggleMute()}
             className="w-12 h-12 rounded-full shadow-lg transition-transform hover:scale-105"
             title={isMuted ? "Unmute Mic" : "Mute Mic"}
           >
@@ -248,13 +265,13 @@ export function VideoCallModal() {
           {/* Toggle Camera */}
           <Button
             type="button"
-            variant={!isCameraOn ? "destructive" : "secondary"}
+            variant={!isCameraEnabled ? "destructive" : "secondary"}
             size="icon"
-            onClick={toggleCamera}
+            onClick={() => toggleCamera()}
             className="w-12 h-12 rounded-full shadow-lg transition-transform hover:scale-105"
-            title={!isCameraOn ? "Turn On Camera" : "Turn Off Camera"}
+            title={!isCameraEnabled ? "Turn On Camera" : "Turn Off Camera"}
           >
-            {!isCameraOn ? <VideoOff className="w-5 h-5" /> : <VideoIcon className="w-5 h-5" />}
+            {!isCameraEnabled ? <VideoOff className="w-5 h-5" /> : <VideoIcon className="w-5 h-5" />}
           </Button>
 
           {/* Screen Share */}

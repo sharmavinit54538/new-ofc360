@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
-import { useConnectStore } from "@/stores/connectStore";
+import { useConnect } from "@/features/connect/hooks";
+import { useGetChannelsQuery } from "@/services/api/connectApi";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Hash, Lock, Plus, Search, Archive, Users } from "lucide-react";
+import { Hash, Lock, Plus, Search } from "lucide-react";
 import { ConnectEmptyState } from "./ConnectEmptyState";
 
 interface ChannelListProps {
@@ -12,10 +13,10 @@ interface ChannelListProps {
 
 export function ChannelList({ onSelectChannel, className = "" }: ChannelListProps) {
   const [search, setSearch] = useState("");
-  const channels = useConnectStore((s) => s.channels);
-  const activeChannelId = useConnectStore((s) => s.activeChannelId);
-  const setActiveChannelId = useConnectStore((s) => s.setActiveChannelId);
-  const setIsNewChannelOpen = useConnectStore((s) => s.setIsNewChannelOpen);
+  const { activeChannelId, setActiveChannelId, setIsNewChannelOpen } = useConnect();
+
+  // RTK Query hook
+  const { data: channels = [], isLoading } = useGetChannelsQuery();
 
   const filteredChannels = useMemo(() => {
     const activeList = channels.filter((c) => !c.isArchived);
@@ -69,7 +70,13 @@ export function ChannelList({ onSelectChannel, className = "" }: ChannelListProp
 
       {/* Channels Stream */}
       <div className="flex-1 overflow-y-auto p-2 space-y-4 scrollbar-thin">
-        {channels.filter((c) => !c.isArchived).length === 0 ? (
+        {isLoading ? (
+          <div className="space-y-2 p-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-9 rounded-xl bg-card/60 animate-pulse border border-border/40" />
+            ))}
+          </div>
+        ) : channels.filter((c) => !c.isArchived).length === 0 ? (
           <ConnectEmptyState
             variant="channels"
             actionLabel="Create a Channel"

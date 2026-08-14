@@ -1,16 +1,20 @@
-import { useConnectStore } from "@/stores/connectStore";
+import {
+  useGetConnectNotificationsQuery,
+  useMarkNotificationReadMutation,
+  useClearAllNotificationsMutation,
+} from "@/services/api/connectApi";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Bell, MessageSquare, PhoneCall, Video, AtSign, FileText, Check, Trash2 } from "lucide-react";
+import { Bell, MessageSquare, PhoneCall, Video, AtSign, FileText } from "lucide-react";
 
 export function NotificationPanel() {
-  const notifications = useConnectStore((s) => s.notifications);
-  const markAsRead = useConnectStore((s) => s.markNotificationAsRead);
-  const clearAll = useConnectStore((s) => s.clearAllNotifications);
+  const { data: notifications = [] } = useGetConnectNotificationsQuery();
+  const [markAsRead] = useMarkNotificationReadMutation();
+  const [clearAll] = useClearAllNotificationsMutation();
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -36,7 +40,7 @@ export function NotificationPanel() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground"
+          className="relative w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
           title="Connect Notifications"
         >
           <Bell className="w-4 h-4" />
@@ -59,8 +63,8 @@ export function NotificationPanel() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={clearAll}
-              className="text-[11px] h-6 px-2 text-muted-foreground hover:text-destructive"
+              onClick={() => clearAll()}
+              className="text-[11px] h-6 px-2 text-muted-foreground hover:text-destructive cursor-pointer"
             >
               Clear All
             </Button>

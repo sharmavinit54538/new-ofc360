@@ -1,11 +1,23 @@
 import { useState, useMemo } from "react";
-import { useConnectStore } from "@/stores/connectStore";
+import { useConnect } from "@/features/connect/hooks";
+import {
+  useGetConversationsQuery,
+  usePinConversationMutation,
+  useMuteConversationMutation,
+} from "@/services/api/connectApi";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Plus, MessageSquare, Pin } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Search, Plus, Pin, BellOff, Bell, MoreVertical } from "lucide-react";
 import { PresenceIndicator } from "./PresenceIndicator";
 import { ConnectEmptyState } from "./ConnectEmptyState";
+import { toast } from "sonner";
 
 interface ChatListProps {
   onSelectConversation?: (conversationId: string) => void;
@@ -14,10 +26,12 @@ interface ChatListProps {
 
 export function ChatList({ onSelectConversation, className = "" }: ChatListProps) {
   const [search, setSearch] = useState("");
-  const conversations = useConnectStore((s) => s.conversations);
-  const activeConversationId = useConnectStore((s) => s.activeConversationId);
-  const setActiveConversationId = useConnectStore((s) => s.setActiveConversationId);
-  const setIsNewChatOpen = useConnectStore((s) => s.setIsNewChatOpen);
+  const { activeConversationId, setActiveConversationId, setIsNewChatOpen } = useConnect();
+
+  // RTK Query hooks
+  const { data: conversations = [], isLoading } = useGetConversationsQuery();
+  const [pinConversation] = usePinConversationMutation();
+  const [muteConversation] = useMuteConversationMutation();
 
   const filteredConversations = useMemo(() => {
     if (!search.trim()) return conversations;
@@ -34,6 +48,26 @@ export function ChatList({ onSelectConversation, className = "" }: ChatListProps
   const handleSelect = (id: string) => {
     setActiveConversationId(id);
     onSelectConversation?.(id);
+  };
+
+  const handleTogglePin = async (e: React.MouseEvent, convId: string, currentPinned?: boolean) => {
+    e.stopPropagation();
+    try {
+      await pinConversation({ conversationId: convId, isPinned: !currentPinned }).unwrap();
+      toast.success(currentPinned ? "Unpinned conversation" : "Pinned conversation");
+    } catch {
+      toast.error("Failed to update pin state");
+    }
+  };
+
+  const handleToggleMute = async (e: React.MouseEvent, convId: string, currentMuted?: boolean) => {
+    e.stopPropagation();
+    try {
+      await muteConversation({ conversationId: convId, isMuted: !currentMuted }).unwrap();
+      toast.success(currentMuted ? "Unmuted conversation" : "Muted conversation");
+    } catch {
+      toast.error("Failed to update mute state");
+    }
   };
 
   return (
@@ -71,7 +105,13 @@ export function ChatList({ onSelectConversation, className = "" }: ChatListProps
 
       {/* Conversations Stream */}
       <div className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-thin">
-        {conversations.length === 0 ? (
+        {isLoading ? (
+          <div className="space-y-2 p-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="h-14 rounded-xl bg-card/60 animate-pulse border border-border/40" />
+            ))}
+          </div>
+        ) : conversations.length === 0 ? (
           <ConnectEmptyState
             variant="chats"
             actionLabel="Start a Conversation"
@@ -90,11 +130,10 @@ export function ChatList({ onSelectConversation, className = "" }: ChatListProps
               .toUpperCase();
 
             return (
-              <button
+              <div
                 key={conv.id}
-                type="button"
                 onClick={() => handleSelect(conv.id)}
-                className={`w-full flex items-center gap-3 p-2.5 rounded-xl transition-all text-left relative ${
+                className={`group w-full flex items-center gap-3 p-2.5 rounded-xl transition-all text-left relative cursor-pointer ${
                   isActive
                     ? "bg-primary/10 border border-primary/30 text-foreground font-medium shadow-xs"
                     : "hover:bg-accent/40 text-muted-foreground hover:text-foreground"
@@ -136,18 +175,43 @@ export function ChatList({ onSelectConversation, className = "" }: ChatListProps
                           : conv.lastMessage.content
                         : `${conv.participant.role || "Team Member"}`}
                     </p>
-                    {conv.unreadCount > 0 && (
-                      <span className="shrink-0 ml-1 bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.2 rounded-full">
-                        {conv.unreadCount}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1 shrink-0 ml-1">
+                      {conv.unreadCount > 0 && (
+                        <span className="bg-primary text-primary-foreground text-[10px] font-bold px-1.5 py-0.2 rounded-full">
+                          {conv.unreadCount}
+                        </span>
+                      )}
+                      {conv.isPinned && (
+                        <Pin className="w-3 h-3 text-amber-500 fill-amber-500" />
+                      )}
+                      {conv.isMuted && (
+                        <BellOff className="w-3 h-3 text-muted-foreground" />
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {conv.isPinned && (
-                  <Pin className="w-3 h-3 text-amber-500 fill-amber-500 shrink-0 ml-1" />
-                )}
-              </button>
+                {/* Actions Dropdown */}
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                      <Button variant="ghost" size="icon" className="w-6 h-6 rounded-md">
+                        <MoreVertical className="w-3.5 h-3.5 text-muted-foreground" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-36 text-xs">
+                      <DropdownMenuItem onClick={(e) => handleTogglePin(e, conv.id, conv.isPinned)}>
+                        <Pin className="w-3.5 h-3.5 mr-2" />
+                        <span>{conv.isPinned ? "Unpin" : "Pin to top"}</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={(e) => handleToggleMute(e, conv.id, conv.isMuted)}>
+                        {conv.isMuted ? <Bell className="w-3.5 h-3.5 mr-2" /> : <BellOff className="w-3.5 h-3.5 mr-2" />}
+                        <span>{conv.isMuted ? "Unmute" : "Mute notifications"}</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
             );
           })
         )}

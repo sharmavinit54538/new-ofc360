@@ -90,6 +90,19 @@ export const API_TAGS = [
   "EnterpriseVendor",
   "VendorAnalytics",
   "ProcurementRequest",
+  "Colleagues",
+  "Search",
+  "Conversations",
+  "Messages",
+  "Threads",
+  "Channels",
+  "Calls",
+  "Meetings",
+  "MeetingParticipants",
+  "Files",
+  "Presence",
+  "Notifications",
+  "SoundSettings",
 ] as const;
 
 export type ApiTagType = (typeof API_TAGS)[number];

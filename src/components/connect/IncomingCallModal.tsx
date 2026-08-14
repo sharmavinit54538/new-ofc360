@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { useConnectStore } from "@/stores/connectStore";
+import { useConnectCall } from "@/features/connect/hooks";
+import { useAcceptCallMutation, useRejectCallMutation } from "@/services/api/connectApi";
 import { connectAudioManager } from "@/services/connectAudioManager";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -7,9 +8,9 @@ import { Phone, PhoneOff, Video } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function IncomingCallModal() {
-  const incomingCall = useConnectStore((s) => s.incomingCall);
-  const acceptIncomingCall = useConnectStore((s) => s.acceptIncomingCall);
-  const rejectIncomingCall = useConnectStore((s) => s.rejectIncomingCall);
+  const { incomingCall, acceptIncomingCall, rejectIncomingCall } = useConnectCall();
+  const [acceptCall] = useAcceptCallMutation();
+  const [rejectCall] = useRejectCallMutation();
 
   // Play incoming ringtone while ringing
   useEffect(() => {
@@ -23,13 +24,23 @@ export function IncomingCallModal() {
 
   if (!incomingCall) return null;
 
-  const handleAccept = () => {
+  const handleAccept = async () => {
     connectAudioManager.playCallConnected();
+    if (incomingCall.id) {
+      try {
+        await acceptCall(incomingCall.id).unwrap();
+      } catch {}
+    }
     acceptIncomingCall();
   };
 
-  const handleReject = () => {
+  const handleReject = async () => {
     connectAudioManager.playCallRejected();
+    if (incomingCall.id) {
+      try {
+        await rejectCall(incomingCall.id).unwrap();
+      } catch {}
+    }
     rejectIncomingCall();
   };
 

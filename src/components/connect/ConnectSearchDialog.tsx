@@ -1,10 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Users, Hash, MessageSquare, FileText, Calendar, ArrowRight } from "lucide-react";
-import { useConnectStore } from "@/stores/connectStore";
-import { useGetEmployeesQuery } from "@/services/api/employeeApi";
+import { Search, Users, Hash, MessageSquare, FileText, ArrowRight } from "lucide-react";
+import { useConnect } from "@/features/connect/hooks";
+import { useGlobalSearchQuery, useCreateConversationMutation } from "@/services/api/connectApi";
 import { ConnectUser } from "@/types/connect";
 import { formatFileSize } from "./FileCard";
 
@@ -22,86 +22,55 @@ export function ConnectSearchDialog({
   onNavigateToChannel,
 }: ConnectSearchDialogProps) {
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<"all" | "people" | "channels" | "messages" | "files">("all");
 
-  const { conversations, channels, messages, sharedFiles, startDirectConversation } = useConnectStore();
+  const { setActiveConversationId, setActiveChannelId, setActiveTab } = useConnect();
+  const [createConversation] = useCreateConversationMutation();
 
-  const { data: employeesResponse } = useGetEmployeesQuery(undefined, { skip: !open });
+  // Debounce search query (300ms)
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(query.trim());
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [query]);
 
-  const employeesList = useMemo(() => {
-    let list: any[] = [];
-    if (Array.isArray(employeesResponse)) {
-      list = employeesResponse;
-    } else if (employeesResponse && (employeesResponse as any).data && Array.isArray((employeesResponse as any).data)) {
-      list = (employeesResponse as any).data;
+  // Only call API if query is >= 2 characters
+  const shouldSearch = open && debouncedQuery.length >= 2;
+
+  const { data: searchResults, isLoading } = useGlobalSearchQuery(
+    {
+      q: debouncedQuery,
+      type: activeCategory,
+    },
+    { skip: !shouldSearch }
+  );
+
+  const peopleResults = searchResults?.people || [];
+  const channelResults = searchResults?.channels || [];
+  const messageResults = searchResults?.messages || [];
+  const fileResults = searchResults?.files || [];
+
+  const handleSelectPerson = async (emp: ConnectUser) => {
+    try {
+      const res = await createConversation({ participantId: emp.id }).unwrap();
+      setActiveConversationId(res.id);
+      setActiveTab("chat");
+      onOpenChange(false);
+      onNavigateToChat?.(res.id);
+    } catch {
+      const convId = `conv_${emp.id}`;
+      setActiveConversationId(convId);
+      setActiveTab("chat");
+      onOpenChange(false);
+      onNavigateToChat?.(convId);
     }
-    return list;
-  }, [employeesResponse]);
-
-  // People results
-  const peopleResults = useMemo(() => {
-    if (!query.trim()) return [];
-    const q = query.toLowerCase();
-    return employeesList.filter(
-      (e) =>
-        (e.name && e.name.toLowerCase().includes(q)) ||
-        (e.firstName && e.firstName.toLowerCase().includes(q)) ||
-        (e.email && e.email.toLowerCase().includes(q)) ||
-        (e.department && e.department.toLowerCase().includes(q)) ||
-        (e.role && e.role.toLowerCase().includes(q))
-    );
-  }, [employeesList, query]);
-
-  // Channel results
-  const channelResults = useMemo(() => {
-    if (!query.trim()) return [];
-    const q = query.toLowerCase();
-    return channels.filter(
-      (c) => c.name.toLowerCase().includes(q) || (c.description && c.description.toLowerCase().includes(q))
-    );
-  }, [channels, query]);
-
-  // Message results
-  const messageResults = useMemo(() => {
-    if (!query.trim()) return [];
-    const q = query.toLowerCase();
-    const results: { message: any; targetId: string; senderName: string }[] = [];
-
-    Object.entries(messages).forEach(([targetId, msgList]) => {
-      msgList.forEach((m) => {
-        if (m.content.toLowerCase().includes(q)) {
-          results.push({ message: m, targetId, senderName: m.senderName });
-        }
-      });
-    });
-    return results;
-  }, [messages, query]);
-
-  // File results
-  const fileResults = useMemo(() => {
-    if (!query.trim()) return [];
-    const q = query.toLowerCase();
-    return sharedFiles.filter((f) => f.name.toLowerCase().includes(q));
-  }, [sharedFiles, query]);
-
-  const handleSelectPerson = (emp: any) => {
-    const fullName = emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || emp.email;
-    const targetUser: ConnectUser = {
-      id: String(emp.id),
-      name: fullName,
-      email: emp.email || "",
-      role: emp.designation || emp.role,
-      department: emp.department,
-      avatar: emp.avatar || emp.photoUrl,
-    };
-    const convId = startDirectConversation(targetUser);
-    onOpenChange(false);
-    onNavigateToChat?.(convId);
   };
 
   const handleSelectChannel = (channelId: string) => {
-    useConnectStore.getState().setActiveChannelId(channelId);
-    useConnectStore.getState().setActiveTab("channels");
+    setActiveChannelId(channelId);
+    setActiveTab("channels");
     onOpenChange(false);
     onNavigateToChannel?.(channelId);
   };
@@ -110,8 +79,8 @@ export function ConnectSearchDialog({
     if (targetId.startsWith("chn_")) {
       handleSelectChannel(targetId);
     } else {
-      useConnectStore.getState().setActiveConversationId(targetId);
-      useConnectStore.getState().setActiveTab("chat");
+      setActiveConversationId(targetId);
+      setActiveTab("chat");
       onOpenChange(false);
       onNavigateToChat?.(targetId);
     }
@@ -123,6 +92,7 @@ export function ConnectSearchDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden bg-background/95 backdrop-blur-xl border border-border/80 rounded-2xl shadow-2xl">
         <DialogHeader className="p-4 pb-3 border-b border-border/40">
+          <DialogTitle className="sr-only">Search Workspace</DialogTitle>
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -160,11 +130,17 @@ export function ConnectSearchDialog({
 
         {/* Results Stream */}
         <div className="max-h-[60vh] overflow-y-auto p-3 space-y-4 scrollbar-thin">
-          {!query.trim() ? (
+          {!query.trim() || query.length < 2 ? (
             <div className="text-center py-12 text-muted-foreground">
               <Search className="w-8 h-8 mx-auto mb-2 opacity-30" />
-              <p className="text-xs font-medium">Type a search query to explore your workspace</p>
-              <p className="text-[11px] opacity-75 mt-0.5">Find colleagues, channels, conversations, and files</p>
+              <p className="text-xs font-medium">Type at least 2 characters to explore your workspace</p>
+              <p className="text-[11px] opacity-75 mt-0.5">Search colleagues, channels, messages, and shared files</p>
+            </div>
+          ) : isLoading ? (
+            <div className="space-y-2 py-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-12 rounded-xl bg-card/60 animate-pulse border border-border/40" />
+              ))}
             </div>
           ) : totalResults === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
@@ -180,7 +156,7 @@ export function ConnectSearchDialog({
                     People ({peopleResults.length})
                   </span>
                   {peopleResults.map((emp) => {
-                    const fullName = emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || emp.email;
+                    const fullName = emp.name || emp.email;
                     return (
                       <div
                         key={emp.id}
@@ -243,17 +219,17 @@ export function ConnectSearchDialog({
                   <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-2">
                     Messages ({messageResults.length})
                   </span>
-                  {messageResults.map(({ message, targetId, senderName }) => (
+                  {messageResults.map((message) => (
                     <div
                       key={message.id}
-                      onClick={() => handleSelectMessage(targetId)}
+                      onClick={() => handleSelectMessage(message.conversationId)}
                       className="flex items-center justify-between p-2 rounded-xl hover:bg-accent/40 cursor-pointer transition-colors text-xs"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <MessageSquare className="w-4 h-4 text-primary shrink-0" />
                         <div className="min-w-0">
                           <p className="font-medium text-foreground truncate">
-                            <span className="text-primary font-semibold">{senderName}:</span> {message.content}
+                            <span className="text-primary font-semibold">{message.senderName}:</span> {message.content}
                           </p>
                           <span className="text-[10px] text-muted-foreground">{message.timestamp}</span>
                         </div>
@@ -280,7 +256,7 @@ export function ConnectSearchDialog({
                         <div className="min-w-0">
                           <p className="font-medium text-foreground truncate">{file.name}</p>
                           <span className="text-[10px] text-muted-foreground">
-                            {formatFileSize(file.size)} • Shared by {file.sharedBy.name}
+                            {formatFileSize(file.size)} • Shared by {file.sharedBy?.name || "Colleague"}
                           </span>
                         </div>
                       </div>

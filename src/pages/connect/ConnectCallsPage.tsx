@@ -1,37 +1,69 @@
 import { useState, useMemo, useEffect } from "react";
 import { ConnectLayout } from "@/components/connect/ConnectLayout";
-import { useConnectStore } from "@/stores/connectStore";
-import { useGetEmployeesQuery } from "@/services/api/employeeApi";
+import { useConnect, useConnectCall } from "@/features/connect/hooks";
+import {
+  useGetCallLogsQuery,
+  useGetColleaguesQuery,
+  useInitiateCallMutation,
+  useGetIceServersQuery,
+} from "@/services/api/connectApi";
+import { useAppDispatch } from "@/app/hooks";
+import { setIceServers } from "@/features/connect/callSlice";
 import { useAuth } from "@/hooks/useAuth";
 import { ConnectUser } from "@/types/connect";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Phone, Video, PhoneCall, Search, Users, PhoneIncoming, PhoneOutgoing, Clock } from "lucide-react";
+import {
+  Phone,
+  Video,
+  PhoneCall,
+  Search,
+  Users,
+  PhoneIncoming,
+  PhoneOutgoing,
+  PhoneMissed,
+  Clock,
+} from "lucide-react";
 import { ConnectEmptyState } from "@/components/connect/ConnectEmptyState";
 import { PresenceIndicator } from "@/components/connect/PresenceIndicator";
+import { toast } from "sonner";
 
 export default function ConnectCallsPage() {
+  const dispatch = useAppDispatch();
   const { user: currentUser } = useAuth();
-  const setActiveTab = useConnectStore((s) => s.setActiveTab);
-  const startCall = useConnectStore((s) => s.startCall);
+  const { setActiveTab } = useConnect();
+  const { startOutgoingCall } = useConnectCall();
+
   const [search, setSearch] = useState("");
 
   useEffect(() => {
     setActiveTab("calls");
   }, [setActiveTab]);
 
-  const { data: employeesResponse } = useGetEmployeesQuery();
+  // RTK Query hooks
+  const { data: callLogs = [], isLoading: isLogsLoading } = useGetCallLogsQuery();
+  const { data: colleaguesData } = useGetColleaguesQuery();
+  const { data: iceData } = useGetIceServersQuery();
 
-  const employeesList = useMemo(() => {
-    let list: any[] = [];
-    if (Array.isArray(employeesResponse)) {
-      list = employeesResponse;
-    } else if (employeesResponse && (employeesResponse as any).data && Array.isArray((employeesResponse as any).data)) {
-      list = (employeesResponse as any).data;
+  // Populate dynamic ICE servers
+  useEffect(() => {
+    if (iceData?.iceServers) {
+      dispatch(setIceServers(iceData.iceServers));
+    }
+  }, [iceData, dispatch]);
+
+  const [initiateCall] = useInitiateCallMutation();
+
+  const employeesList: ConnectUser[] = useMemo(() => {
+    let list: ConnectUser[] = [];
+    if (Array.isArray(colleaguesData)) {
+      list = colleaguesData;
+    } else if (colleaguesData && (colleaguesData as any).colleagues) {
+      list = (colleaguesData as any).colleagues;
     }
     return list.filter((emp) => emp.id !== currentUser?.id && emp.email !== currentUser?.email);
-  }, [employeesResponse, currentUser]);
+  }, [colleaguesData, currentUser]);
 
   const filteredEmployees = useMemo(() => {
     if (!search.trim()) return employeesList;
@@ -39,23 +71,29 @@ export default function ConnectCallsPage() {
     return employeesList.filter(
       (e) =>
         (e.name && e.name.toLowerCase().includes(q)) ||
-        (e.firstName && e.firstName.toLowerCase().includes(q)) ||
+        (e.email && e.email.toLowerCase().includes(q)) ||
         (e.department && e.department.toLowerCase().includes(q)) ||
         (e.role && e.role.toLowerCase().includes(q))
     );
   }, [employeesList, search]);
 
-  const handleStartCall = (emp: any, type: "audio" | "video") => {
-    const fullName = emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || emp.email;
-    const targetUser: ConnectUser = {
-      id: String(emp.id),
-      name: fullName,
-      email: emp.email || "",
-      role: emp.designation || emp.role,
-      department: emp.department,
-      avatar: emp.avatar || emp.photoUrl,
-    };
-    startCall(targetUser, type);
+  const handleStartCall = async (emp: ConnectUser, type: "audio" | "video") => {
+    try {
+      const callRes = await initiateCall({
+        calleeId: emp.id,
+        type,
+      }).unwrap();
+
+      startOutgoingCall(emp, type, callRes.callId);
+    } catch {
+      startOutgoingCall(emp, type);
+    }
+  };
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}m ${secs}s`;
   };
 
   return (
@@ -70,13 +108,76 @@ export default function ConnectCallsPage() {
             </div>
           </div>
 
-          <div className="flex-1 flex items-center justify-center">
-            <ConnectEmptyState
-              variant="calls"
-              title="No call history"
-              description="Your recent audio and video calls will appear here."
-            />
-          </div>
+          {isLogsLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-16 rounded-2xl bg-card/60 animate-pulse border border-border/40" />
+              ))}
+            </div>
+          ) : callLogs.length === 0 ? (
+            <div className="flex-1 flex items-center justify-center">
+              <ConnectEmptyState
+                variant="calls"
+                title="No call history"
+                description="Your recent audio and video calls will appear here."
+              />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {callLogs.map((log) => {
+                const isIncoming = log.direction === "incoming";
+                const isMissed = log.status === "missed";
+                const otherUser = isIncoming ? log.caller : log.callee;
+
+                return (
+                  <div
+                    key={log.id}
+                    className="flex items-center justify-between p-3 rounded-2xl bg-card border border-border/60 hover:border-primary/40 transition-all text-xs"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-xl bg-muted/40">
+                        {isMissed ? (
+                          <PhoneMissed className="w-4 h-4 text-rose-500" />
+                        ) : isIncoming ? (
+                          <PhoneIncoming className="w-4 h-4 text-emerald-500" />
+                        ) : (
+                          <PhoneOutgoing className="w-4 h-4 text-primary" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-bold text-foreground">{otherUser?.name || "Colleague"}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {new Date(log.startedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} •{" "}
+                          {log.duration ? formatDuration(log.duration) : isMissed ? "Missed" : "No answer"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => otherUser && handleStartCall(otherUser, "audio")}
+                        className="w-8 h-8 rounded-lg text-primary"
+                        title="Call Back (Audio)"
+                      >
+                        <Phone className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => otherUser && handleStartCall(otherUser, "video")}
+                        className="w-8 h-8 rounded-lg text-primary"
+                        title="Call Back (Video)"
+                      >
+                        <Video className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Right Side: Quick Dial Colleagues */}
@@ -106,7 +207,7 @@ export default function ConnectCallsPage() {
               <p className="text-center py-8 text-xs text-muted-foreground">No colleagues found</p>
             ) : (
               filteredEmployees.map((emp) => {
-                const fullName = emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || emp.email;
+                const fullName = emp.name || emp.email;
                 const initials = fullName.slice(0, 2).toUpperCase();
 
                 return (
@@ -122,7 +223,11 @@ export default function ConnectCallsPage() {
                             {initials}
                           </AvatarFallback>
                         </Avatar>
-                        <PresenceIndicator status="online" size="sm" className="absolute -bottom-0.5 -right-0.5" />
+                        <PresenceIndicator
+                          status={emp.presence || "online"}
+                          size="sm"
+                          className="absolute -bottom-0.5 -right-0.5"
+                        />
                       </div>
                       <div className="min-w-0">
                         <p className="font-semibold text-foreground truncate">{fullName}</p>

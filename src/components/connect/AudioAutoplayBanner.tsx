@@ -1,14 +1,21 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { useConnectSoundStore } from "@/stores/connectSoundStore";
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
+import {
+  selectIsAudioUnlocked,
+  selectSoundSettingsState,
+} from "@/features/connect/selectors";
+import { setAudioUnlocked } from "@/features/connect/soundSettingsSlice";
 import { connectAudioManager } from "@/services/connectAudioManager";
-import { Volume2, VolumeX, Sparkles } from "lucide-react";
+import { Volume2, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function AudioAutoplayBanner() {
-  const isAudioUnlocked = useConnectSoundStore((s) => s.isAudioUnlocked);
-  const isMasterEnabled = useConnectSoundStore((s) => s.isMasterEnabled);
-  const isMutedAll = useConnectSoundStore((s) => s.isMutedAll);
+  const dispatch = useAppDispatch();
+  const isAudioUnlocked = useAppSelector(selectIsAudioUnlocked);
+  const soundSettings = useAppSelector(selectSoundSettingsState);
+  const { isMasterEnabled, isMutedAll } = soundSettings;
+
   const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
@@ -30,6 +37,7 @@ export function AudioAutoplayBanner() {
     const handleGlobalClick = async () => {
       const unlocked = await connectAudioManager.unlockAudio();
       if (unlocked) {
+        dispatch(setAudioUnlocked(true));
         setShowPrompt(false);
         window.removeEventListener("click", handleGlobalClick);
         window.removeEventListener("keydown", handleGlobalClick);
@@ -43,10 +51,13 @@ export function AudioAutoplayBanner() {
       window.removeEventListener("click", handleGlobalClick);
       window.removeEventListener("keydown", handleGlobalClick);
     };
-  }, [isAudioUnlocked, isMasterEnabled, isMutedAll]);
+  }, [isAudioUnlocked, isMasterEnabled, isMutedAll, dispatch]);
 
   const handleEnableSound = async () => {
-    await connectAudioManager.unlockAudio();
+    const unlocked = await connectAudioManager.unlockAudio();
+    if (unlocked) {
+      dispatch(setAudioUnlocked(true));
+    }
     setShowPrompt(false);
   };
 
@@ -80,7 +91,7 @@ export function AudioAutoplayBanner() {
             size="sm"
             variant="ghost"
             onClick={() => setShowPrompt(false)}
-            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
           >
             Dismiss
           </Button>

@@ -1,7 +1,19 @@
 import { useMemo, useRef, useEffect, useState } from "react";
-import { useConnectStore } from "@/stores/connectStore";
+import { useConnect, useConnectCall } from "@/features/connect/hooks";
+import { useAppSelector } from "@/app/hooks";
+import { selectTargetTypingUsers } from "@/features/connect/selectors";
+import {
+  useGetConversationsQuery,
+  useGetConversationMessagesQuery,
+  useSendMessageMutation,
+  useMarkConversationReadMutation,
+  useToggleReactionMutation,
+  usePinMessageMutation,
+  useDeleteMessageMutation,
+  useEditMessageMutation,
+} from "@/services/api/connectApi";
 import { useAuth } from "@/hooks/useAuth";
-import { ConnectUser } from "@/types/connect";
+import { ConnectUser, ConnectMessage } from "@/types/connect";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +25,6 @@ import {
   Pin,
   Sparkles,
   Info,
-  ShieldCheck,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -43,42 +54,56 @@ export function ChatWindow({
   const { user: currentUser } = useAuth();
   const currentUserId = currentUser?.id ? String(currentUser.id) : "usr_current";
 
-  const conversations = useConnectStore((s) => s.conversations);
-  const activeConversationId = conversationId || useConnectStore((s) => s.activeConversationId);
-  const messagesMap = useConnectStore((s) => s.messages);
-  const sendMessage = useConnectStore((s) => s.sendMessage);
-  const toggleReaction = useConnectStore((s) => s.toggleReaction);
-  const togglePinMessage = useConnectStore((s) => s.togglePinMessage);
-  const deleteMessage = useConnectStore((s) => s.deleteMessage);
-  const setActiveThreadMessage = useConnectStore((s) => s.setActiveThreadMessage);
-  const startCall = useConnectStore((s) => s.startCall);
+  const { activeConversationId: storeConvId, setActiveThreadMessage } = useConnect();
+  const { startOutgoingCall } = useConnectCall();
+
+  const activeConversationId = conversationId || storeConvId;
 
   const [messageSearch, setMessageSearch] = useState("");
   const [showSearch, setShowSearch] = useState(false);
+
+  // RTK Query hooks
+  const { data: conversations = [] } = useGetConversationsQuery();
+  const {
+    data: messages = [],
+    isLoading: isMessagesLoading,
+  } = useGetConversationMessagesQuery(
+    {
+      conversationId: activeConversationId || "",
+      search: messageSearch.length >= 2 ? messageSearch : undefined,
+    },
+    { skip: !activeConversationId }
+  );
+
+  const [sendMessage] = useSendMessageMutation();
+  const [markConversationRead] = useMarkConversationReadMutation();
+  const [toggleReaction] = useToggleReactionMutation();
+  const [pinMessage] = usePinMessageMutation();
+  const [deleteMessage] = useDeleteMessageMutation();
+  const [editMessage] = useEditMessageMutation();
+
+  const typingUsers = useAppSelector((state) =>
+    selectTargetTypingUsers(state, activeConversationId || "")
+  );
 
   const activeConversation = useMemo(() => {
     return conversations.find((c) => c.id === activeConversationId);
   }, [conversations, activeConversationId]);
 
-  const rawMessages = useMemo(() => {
-    if (!activeConversationId) return [];
-    return messagesMap[activeConversationId] || [];
-  }, [messagesMap, activeConversationId]);
-
-  // Filter messages by search if open
-  const filteredMessages = useMemo(() => {
-    if (!messageSearch.trim()) return rawMessages;
-    const q = messageSearch.toLowerCase();
-    return rawMessages.filter((m) => m.content.toLowerCase().includes(q));
-  }, [rawMessages, messageSearch]);
+  // Mark conversation read automatically on load/view
+  useEffect(() => {
+    if (activeConversationId && activeConversation && activeConversation.unreadCount > 0) {
+      markConversationRead(activeConversationId);
+    }
+  }, [activeConversationId, activeConversation?.unreadCount, markConversationRead]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [rawMessages.length]);
+  }, [messages.length]);
 
-  if (!activeConversation) {
+  if (!activeConversationId) {
     return (
       <div className={`flex-1 flex items-center justify-center p-8 bg-card/30 ${className}`}>
         <ConnectEmptyState
@@ -98,33 +123,44 @@ export function ChatWindow({
     avatar: undefined,
   };
 
-  const handleSendMessage = (payload: {
+  const handleSendMessage = async (payload: {
     content: string;
     attachments?: any[];
     isVoiceMessage?: boolean;
     voiceDuration?: number;
   }) => {
-    sendMessage({
-      targetId: activeConversation.id,
-      sender: currentConnectUser,
-      content: payload.content,
-      attachments: payload.attachments,
-      isVoiceMessage: payload.isVoiceMessage,
-      voiceDuration: payload.voiceDuration,
-    });
+    try {
+      await sendMessage({
+        conversationId: activeConversationId,
+        content: payload.content,
+        attachments: payload.attachments,
+        isVoiceMessage: payload.isVoiceMessage,
+        voiceDuration: payload.voiceDuration,
+      }).unwrap();
+    } catch {
+      toast.error("Failed to send message.");
+    }
   };
 
   const handleStartAudio = () => {
-    startCall(activeConversation.participant, "audio");
+    if (!activeConversation) return;
+    startOutgoingCall(activeConversation.participant, "audio");
     onOpenAudioCall?.(activeConversation.participant);
   };
 
   const handleStartVideo = () => {
-    startCall(activeConversation.participant, "video");
+    if (!activeConversation) return;
+    startOutgoingCall(activeConversation.participant, "video");
     onOpenVideoCall?.(activeConversation.participant);
   };
 
-  const initials = activeConversation.participant.name
+  const participant = activeConversation?.participant || {
+    id: "unknown",
+    name: "Colleague",
+    email: "",
+  };
+
+  const initials = participant.name
     .split(" ")
     .map((n) => n[0])
     .join("")
@@ -139,13 +175,13 @@ export function ChatWindow({
         <div className="flex items-center gap-3 min-w-0">
           <div className="relative shrink-0">
             <Avatar className="w-10 h-10 border border-border/60">
-              <AvatarImage src={activeConversation.participant.avatar} alt={activeConversation.participant.name} />
+              <AvatarImage src={participant.avatar} alt={participant.name} />
               <AvatarFallback className="text-xs bg-primary/15 text-primary font-bold">
                 {initials}
               </AvatarFallback>
             </Avatar>
             <PresenceIndicator
-              status={activeConversation.participant.presence || "online"}
+              status={participant.presence || "online"}
               size="sm"
               className="absolute -bottom-0.5 -right-0.5 ring-2 ring-background"
             />
@@ -153,154 +189,132 @@ export function ChatWindow({
 
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-foreground truncate">
-                {activeConversation.participant.name}
-              </h2>
-              <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-muted text-muted-foreground font-medium hidden sm:inline-block">
-                {activeConversation.participant.department || "General"}
-              </span>
+              <h3 className="text-sm font-bold text-foreground truncate">{participant.name}</h3>
             </div>
             <p className="text-[11px] text-muted-foreground truncate">
-              {activeConversation.participant.role || "Team Member"} •{" "}
-              <span className="text-emerald-500 font-medium capitalize">
-                {activeConversation.participant.presence || "Online"}
-              </span>
+              {participant.role || "Team Member"} • {participant.department || "General"}
             </p>
           </div>
         </div>
 
         {/* Action Controls */}
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* Audio Call */}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleStartAudio}
-            className="h-8 px-2.5 rounded-lg text-xs gap-1.5 border-border/80 hover:bg-accent/40 text-foreground"
-            title="Start Audio Call"
-          >
-            <Phone className="w-3.5 h-3.5 text-primary" />
-            <span className="hidden sm:inline">Audio</span>
-          </Button>
+          {showSearch && (
+            <div className="relative w-48 mr-1">
+              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={messageSearch}
+                onChange={(e) => setMessageSearch(e.target.value)}
+                placeholder="Search messages..."
+                className="pl-7 h-8 text-xs rounded-xl bg-muted/40 border-border/60"
+                autoFocus
+              />
+            </div>
+          )}
 
-          {/* Video Call */}
-          <Button
-            type="button"
-            size="sm"
-            onClick={handleStartVideo}
-            className="gradient-bg text-primary-foreground h-8 px-2.5 rounded-lg text-xs gap-1.5 shadow-sm font-medium"
-            title="Start Video Call"
-          >
-            <Video className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Video Call</span>
-          </Button>
-
-          {/* Search in chat toggle */}
           <Button
             type="button"
             variant="ghost"
             size="icon"
             onClick={() => setShowSearch(!showSearch)}
-            className="w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground"
-            title="Search in conversation"
+            className="w-8 h-8 rounded-xl text-muted-foreground hover:text-foreground"
+            title="Search In Conversation"
           >
             <Search className="w-4 h-4" />
           </Button>
 
-          {/* More options menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground"
-              >
-                <MoreVertical className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44 p-1 text-xs">
-              <DropdownMenuItem
-                onClick={() => toast.info(`Email: ${activeConversation.participant.email}`)}
-                className="cursor-pointer gap-2 py-1.5"
-              >
-                <Info className="w-3.5 h-3.5 text-muted-foreground" /> Contact Info
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => toast.success("Notification preferences updated")}
-                className="cursor-pointer gap-2 py-1.5"
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-muted-foreground" /> Privacy & Security
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleStartAudio}
+            className="w-8 h-8 rounded-xl text-primary hover:bg-primary/15"
+            title="Audio Call"
+          >
+            <Phone className="w-4 h-4" />
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleStartVideo}
+            className="w-8 h-8 rounded-xl text-primary hover:bg-primary/15"
+            title="Video Call"
+          >
+            <Video className="w-4 h-4" />
+          </Button>
         </div>
       </div>
 
-      {/* Optional Search Sub-Bar */}
-      {showSearch && (
-        <div className="p-2 px-4 border-b border-border/50 bg-muted/20 flex items-center gap-2">
-          <Search className="w-3.5 h-3.5 text-muted-foreground" />
-          <Input
-            value={messageSearch}
-            onChange={(e) => setMessageSearch(e.target.value)}
-            placeholder="Search messages in this conversation..."
-            className="h-7 text-xs bg-background/80 rounded-lg border-border/60 flex-1"
-            autoFocus
-          />
-          {messageSearch && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setMessageSearch("")}
-              className="text-[11px] h-6 px-1.5 text-muted-foreground"
-            >
-              Clear
-            </Button>
-          )}
-        </div>
-      )}
-
       {/* Message Stream */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-thin">
-        {rawMessages.length === 0 ? (
-          <div className="h-full flex items-center justify-center">
-            <ConnectEmptyState
-              variant="chats"
-              title="No messages yet"
-              description={`Start a conversation with ${activeConversation.participant.name}.`}
-            />
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin">
+        {isMessagesLoading ? (
+          <div className="space-y-3 py-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className={`h-12 w-2/3 rounded-2xl bg-card/60 animate-pulse border border-border/40 ${
+                  i % 2 === 0 ? "ml-auto" : "mr-auto"
+                }`}
+              />
+            ))}
           </div>
-        ) : filteredMessages.length === 0 ? (
-          <p className="text-center py-12 text-xs text-muted-foreground">
-            No messages found matching "{messageSearch}"
-          </p>
+        ) : messages.length === 0 ? (
+          <ConnectEmptyState
+            variant="messages"
+            title="No messages yet"
+            description={`Say hello to ${participant.name} to kick off the conversation!`}
+          />
         ) : (
-          filteredMessages.map((msg) => (
-            <MessageBubble
-              key={msg.id}
-              message={msg}
-              isOutgoing={msg.senderId === currentUserId}
-              currentUserId={currentUserId}
-              onReplyInThread={(m) => setActiveThreadMessage(m)}
-              onToggleReaction={(msgId, emoji) =>
-                toggleReaction(activeConversation.id, msgId, emoji, currentUserId)
-              }
-              onTogglePin={(msgId) => togglePinMessage(activeConversation.id, msgId)}
-              onDelete={(msgId) => deleteMessage(activeConversation.id, msgId)}
-            />
-          ))
+          messages.map((message) => {
+            const isOutgoing = message.senderId === currentUserId;
+            return (
+              <MessageBubble
+                key={message.id}
+                message={message}
+                isOutgoing={isOutgoing}
+                currentUserId={currentUserId}
+                onReplyInThread={() => setActiveThreadMessage(message)}
+                onToggleReaction={(msgId, emoji) =>
+                  toggleReaction({ messageId: msgId, emoji, conversationId: activeConversationId })
+                }
+                onTogglePin={(msgId) =>
+                  pinMessage({
+                    messageId: msgId,
+                    isPinned: !message.isPinned,
+                    conversationId: activeConversationId,
+                  })
+                }
+                onDelete={(msgId) =>
+                  deleteMessage({ messageId: msgId, conversationId: activeConversationId })
+                }
+              />
+            );
+          })
         )}
+
+        {/* Real-time Typing Indicator */}
+        {typingUsers.length > 0 && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground italic px-2 py-1">
+            <span className="flex gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" />
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce delay-100" />
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce delay-200" />
+            </span>
+            <span>{typingUsers.join(", ")} is typing...</span>
+          </div>
+        )}
+
         <div ref={messagesEndRef} />
       </div>
 
       {/* Message Composer */}
       <ChatComposer
         onSendMessage={handleSendMessage}
-        placeholder={`Message ${activeConversation.participant.name}...`}
-        recipientName={activeConversation.participant.name}
-        recipientEmail={activeConversation.participant.email}
+        placeholder={`Message ${participant.name}...`}
+        recipientName={participant.name}
+        recipientEmail={participant.email}
       />
     </div>
   );

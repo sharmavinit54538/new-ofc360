@@ -1,5 +1,6 @@
 import { PresenceStatus } from "@/types/connect";
-import { useConnectStore } from "@/stores/connectStore";
+import { useConnectPresence } from "@/features/connect/hooks";
+import { useUpdateMyPresenceMutation } from "@/services/api/connectApi";
 import { PresenceIndicator } from "./PresenceIndicator";
 import {
   DropdownMenu,
@@ -11,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Check, ChevronDown } from "lucide-react";
+import { toast } from "sonner";
 
 const OPTIONS: { status: PresenceStatus; label: string; description: string }[] = [
   { status: "online", label: "Online", description: "Available for calls & chats" },
@@ -21,10 +23,20 @@ const OPTIONS: { status: PresenceStatus; label: string; description: string }[] 
 ];
 
 export function PresenceSelector({ compact = false }: { compact?: boolean }) {
-  const currentUserPresence = useConnectStore((s) => s.currentUserPresence);
-  const setCurrentUserPresence = useConnectStore((s) => s.setCurrentUserPresence);
+  const { currentUserPresence, setCurrentUserPresence } = useConnectPresence();
+  const [updateMyPresence] = useUpdateMyPresenceMutation();
 
   const currentOption = OPTIONS.find((o) => o.status === currentUserPresence) || OPTIONS[0];
+
+  const handleSelectStatus = async (status: PresenceStatus) => {
+    setCurrentUserPresence(status);
+    try {
+      await updateMyPresence({ status }).unwrap();
+      toast.success(`Presence updated to ${status}`);
+    } catch {
+      // Local state already updated
+    }
+  };
 
   return (
     <DropdownMenu>
@@ -51,7 +63,7 @@ export function PresenceSelector({ compact = false }: { compact?: boolean }) {
         {OPTIONS.map((item) => (
           <DropdownMenuItem
             key={item.status}
-            onClick={() => setCurrentUserPresence(item.status)}
+            onClick={() => handleSelectStatus(item.status)}
             className="flex items-center justify-between px-2 py-2 cursor-pointer rounded-md text-xs"
           >
             <div className="flex items-center gap-2.5">

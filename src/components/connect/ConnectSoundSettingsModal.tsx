@@ -3,12 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { useConnectSoundStore } from "@/stores/connectSoundStore";
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
+import { selectSoundSettingsState, selectCurrentUserPresence } from "@/features/connect/selectors";
+import * as soundActions from "@/features/connect/soundSettingsSlice";
+import { useUpdateSoundSettingsMutation } from "@/services/api/connectApi";
 import { connectAudioManager } from "@/services/connectAudioManager";
 import {
   Volume2,
   VolumeX,
-  Bell,
   Phone,
   PhoneCall,
   MessageSquare,
@@ -22,7 +24,6 @@ import {
   Sliders,
   ShieldAlert,
 } from "lucide-react";
-import { useConnectStore } from "@/stores/connectStore";
 
 interface ConnectSoundSettingsModalProps {
   open: boolean;
@@ -30,8 +31,17 @@ interface ConnectSoundSettingsModalProps {
 }
 
 export function ConnectSoundSettingsModal({ open, onOpenChange }: ConnectSoundSettingsModalProps) {
-  const store = useConnectSoundStore();
-  const currentUserPresence = useConnectStore((s) => s.currentUserPresence);
+  const dispatch = useAppDispatch();
+  const store = useAppSelector(selectSoundSettingsState);
+  const currentUserPresence = useAppSelector(selectCurrentUserPresence);
+
+  const [updateSoundSettingsApi] = useUpdateSoundSettingsMutation();
+
+  const handleUpdate = (partial: any) => {
+    try {
+      updateSoundSettingsApi(partial);
+    } catch {}
+  };
 
   const handleTestSound = (type: string) => {
     // Force unlock context if locked
@@ -98,8 +108,11 @@ export function ConnectSoundSettingsModal({ open, onOpenChange }: ConnectSoundSe
             <Button
               variant="ghost"
               size="sm"
-              onClick={store.resetToDefaults}
-              className="text-xs text-muted-foreground hover:text-foreground gap-1.5 h-8"
+              onClick={() => {
+                dispatch(soundActions.resetToDefaults());
+                handleUpdate({ masterVolume: 70, isMasterEnabled: true, isMutedAll: false });
+              }}
+              className="text-xs text-muted-foreground hover:text-foreground gap-1.5 h-8 cursor-pointer"
               title="Reset all sound preferences to default"
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -120,8 +133,11 @@ export function ConnectSoundSettingsModal({ open, onOpenChange }: ConnectSoundSe
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => store.setMutedAll(false)}
-                className="h-7 text-xs border-rose-500/40 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-semibold"
+                onClick={() => {
+                  dispatch(soundActions.setMutedAll(false));
+                  handleUpdate({ isMutedAll: false });
+                }}
+                className="h-7 text-xs border-rose-500/40 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-semibold cursor-pointer"
               >
                 Unmute All
               </Button>
@@ -154,7 +170,10 @@ export function ConnectSoundSettingsModal({ open, onOpenChange }: ConnectSoundSe
                 <Switch
                   id="master-sound-toggle"
                   checked={store.isMasterEnabled}
-                  onCheckedChange={store.setMasterEnabled}
+                  onCheckedChange={(val) => {
+                    dispatch(soundActions.setMasterEnabled(val));
+                    handleUpdate({ isMasterEnabled: val });
+                  }}
                   aria-label="Master Sound Toggle"
                 />
               </div>
@@ -170,7 +189,10 @@ export function ConnectSoundSettingsModal({ open, onOpenChange }: ConnectSoundSe
                 <Switch
                   id="mute-all-toggle"
                   checked={store.isMutedAll}
-                  onCheckedChange={store.setMutedAll}
+                  onCheckedChange={(val) => {
+                    dispatch(soundActions.setMutedAll(val));
+                    handleUpdate({ isMutedAll: val });
+                  }}
                   aria-label="Mute All Connect Sounds Toggle"
                 />
               </div>
@@ -195,7 +217,10 @@ export function ConnectSoundSettingsModal({ open, onOpenChange }: ConnectSoundSe
                   max={100}
                   step={1}
                   disabled={!store.isMasterEnabled || store.isMutedAll}
-                  onValueChange={([val]) => store.setMasterVolume(val)}
+                  onValueChange={([val]) => {
+                    dispatch(soundActions.setMasterVolume(val));
+                    handleUpdate({ masterVolume: val });
+                  }}
                   className="flex-1"
                   aria-label="Notification Volume Slider"
                 />
@@ -227,7 +252,7 @@ export function ConnectSoundSettingsModal({ open, onOpenChange }: ConnectSoundSe
                     size="icon"
                     variant="ghost"
                     onClick={() => handleTestSound("incoming")}
-                    className="w-7 h-7 rounded-lg text-muted-foreground hover:text-foreground"
+                    className="w-7 h-7 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
                     title="Test Ringtone"
                   >
                     <Play className="w-3.5 h-3.5" />
@@ -235,7 +260,10 @@ export function ConnectSoundSettingsModal({ open, onOpenChange }: ConnectSoundSe
                   <Switch
                     id="inc-call-toggle"
                     checked={store.isIncomingCallsEnabled}
-                    onCheckedChange={store.setIncomingCallsEnabled}
+                    onCheckedChange={(val) => {
+                      dispatch(soundActions.setIncomingCallsEnabled(val));
+                      handleUpdate({ isIncomingCallsEnabled: val });
+                    }}
                     aria-label="Incoming Calls Sound Toggle"
                   />
                 </div>
@@ -257,7 +285,7 @@ export function ConnectSoundSettingsModal({ open, onOpenChange }: ConnectSoundSe
                     size="icon"
                     variant="ghost"
                     onClick={() => handleTestSound("outgoing")}
-                    className="w-7 h-7 rounded-lg text-muted-foreground hover:text-foreground"
+                    className="w-7 h-7 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
                     title="Test Ringback Sound"
                   >
                     <Play className="w-3.5 h-3.5" />
@@ -265,7 +293,10 @@ export function ConnectSoundSettingsModal({ open, onOpenChange }: ConnectSoundSe
                   <Switch
                     id="out-call-toggle"
                     checked={store.isOutgoingCallsEnabled}
-                    onCheckedChange={store.setOutgoingCallsEnabled}
+                    onCheckedChange={(val) => {
+                      dispatch(soundActions.setOutgoingCallsEnabled(val));
+                      handleUpdate({ isOutgoingCallsEnabled: val });
+                    }}
                     aria-label="Outgoing Calls Sound Toggle"
                   />
                 </div>
@@ -297,7 +328,7 @@ export function ConnectSoundSettingsModal({ open, onOpenChange }: ConnectSoundSe
                     size="icon"
                     variant="ghost"
                     onClick={() => handleTestSound("message")}
-                    className="w-7 h-7 rounded-lg text-muted-foreground hover:text-foreground"
+                    className="w-7 h-7 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
                     title="Test Message Sound"
                   >
                     <Play className="w-3.5 h-3.5" />
@@ -305,7 +336,10 @@ export function ConnectSoundSettingsModal({ open, onOpenChange }: ConnectSoundSe
                   <Switch
                     id="dm-toggle"
                     checked={store.isMessagesEnabled}
-                    onCheckedChange={store.setMessagesEnabled}
+                    onCheckedChange={(val) => {
+                      dispatch(soundActions.setMessagesEnabled(val));
+                      handleUpdate({ isMessagesEnabled: val });
+                    }}
                     aria-label="Direct Messages Sound Toggle"
                   />
                 </div>
@@ -327,7 +361,7 @@ export function ConnectSoundSettingsModal({ open, onOpenChange }: ConnectSoundSe
                     size="icon"
                     variant="ghost"
                     onClick={() => handleTestSound("mention")}
-                    className="w-7 h-7 rounded-lg text-muted-foreground hover:text-foreground"
+                    className="w-7 h-7 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
                     title="Test Mention Sound"
                   >
                     <Play className="w-3.5 h-3.5" />
@@ -335,7 +369,10 @@ export function ConnectSoundSettingsModal({ open, onOpenChange }: ConnectSoundSe
                   <Switch
                     id="mention-toggle"
                     checked={store.isMentionsEnabled}
-                    onCheckedChange={store.setMentionsEnabled}
+                    onCheckedChange={(val) => {
+                      dispatch(soundActions.setMentionsEnabled(val));
+                      handleUpdate({ isMentionsEnabled: val });
+                    }}
                     aria-label="Mentions Sound Toggle"
                   />
                 </div>
@@ -355,7 +392,10 @@ export function ConnectSoundSettingsModal({ open, onOpenChange }: ConnectSoundSe
                 <Switch
                   id="group-toggle"
                   checked={store.isGroupMessagesEnabled}
-                  onCheckedChange={store.setGroupMessagesEnabled}
+                  onCheckedChange={(val) => {
+                    dispatch(soundActions.setGroupMessagesEnabled(val));
+                    handleUpdate({ isGroupMessagesEnabled: val });
+                  }}
                   aria-label="Group Messages Sound Toggle"
                 />
               </div>
@@ -374,7 +414,10 @@ export function ConnectSoundSettingsModal({ open, onOpenChange }: ConnectSoundSe
                 <Switch
                   id="channel-toggle"
                   checked={store.isChannelMessagesEnabled}
-                  onCheckedChange={store.setChannelMessagesEnabled}
+                  onCheckedChange={(val) => {
+                    dispatch(soundActions.setChannelMessagesEnabled(val));
+                    handleUpdate({ isChannelMessagesEnabled: val });
+                  }}
                   aria-label="Channel Messages Sound Toggle"
                 />
               </div>
@@ -405,7 +448,7 @@ export function ConnectSoundSettingsModal({ open, onOpenChange }: ConnectSoundSe
                     size="icon"
                     variant="ghost"
                     onClick={() => handleTestSound("meeting")}
-                    className="w-7 h-7 rounded-lg text-muted-foreground hover:text-foreground"
+                    className="w-7 h-7 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
                     title="Test Meeting Sound"
                   >
                     <Play className="w-3.5 h-3.5" />
@@ -413,7 +456,10 @@ export function ConnectSoundSettingsModal({ open, onOpenChange }: ConnectSoundSe
                   <Switch
                     id="meeting-toggle"
                     checked={store.isMeetingSoundsEnabled}
-                    onCheckedChange={store.setMeetingSoundsEnabled}
+                    onCheckedChange={(val) => {
+                      dispatch(soundActions.setMeetingSoundsEnabled(val));
+                      handleUpdate({ isMeetingSoundsEnabled: val });
+                    }}
                     aria-label="Meeting Sounds Toggle"
                   />
                 </div>
@@ -435,7 +481,7 @@ export function ConnectSoundSettingsModal({ open, onOpenChange }: ConnectSoundSe
                     size="icon"
                     variant="ghost"
                     onClick={() => handleTestSound("participant")}
-                    className="w-7 h-7 rounded-lg text-muted-foreground hover:text-foreground"
+                    className="w-7 h-7 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
                     title="Test Participant Sound"
                   >
                     <Play className="w-3.5 h-3.5" />
@@ -443,7 +489,10 @@ export function ConnectSoundSettingsModal({ open, onOpenChange }: ConnectSoundSe
                   <Switch
                     id="part-toggle"
                     checked={store.isParticipantJoinLeaveEnabled}
-                    onCheckedChange={store.setParticipantJoinLeaveEnabled}
+                    onCheckedChange={(val) => {
+                      dispatch(soundActions.setParticipantJoinLeaveEnabled(val));
+                      handleUpdate({ isParticipantJoinLeaveEnabled: val });
+                    }}
                     aria-label="Participant Join/Leave Sound Toggle"
                   />
                 </div>
@@ -464,7 +513,7 @@ export function ConnectSoundSettingsModal({ open, onOpenChange }: ConnectSoundSe
           <Button
             size="sm"
             onClick={() => onOpenChange(false)}
-            className="gradient-bg text-primary-foreground font-semibold px-5 rounded-xl h-9"
+            className="gradient-bg text-primary-foreground font-semibold px-5 rounded-xl h-9 cursor-pointer"
           >
             Done
           </Button>

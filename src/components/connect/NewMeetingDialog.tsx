@@ -6,9 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Video, Calendar, Users, Search, Check, Sparkles } from "lucide-react";
-import { useConnectStore } from "@/stores/connectStore";
-import { useGetEmployeesQuery } from "@/services/api/employeeApi";
+import { Video, Users, Search, Check } from "lucide-react";
+import { useGetColleaguesQuery, useCreateMeetingMutation } from "@/services/api/connectApi";
 import { useAuth } from "@/hooks/useAuth";
 import { ConnectUser } from "@/types/connect";
 import { toast } from "sonner";
@@ -33,19 +32,20 @@ export function NewMeetingDialog({ open, onOpenChange }: NewMeetingDialogProps) 
   const [memberSearch, setMemberSearch] = useState("");
 
   const { user: currentUser } = useAuth();
-  const { createMeeting } = useConnectStore();
 
-  const { data: employeesResponse } = useGetEmployeesQuery(undefined, { skip: !open });
+  // RTK Query hooks
+  const { data: colleaguesData } = useGetColleaguesQuery(undefined, { skip: !open });
+  const [createMeeting, { isLoading: isCreating }] = useCreateMeetingMutation();
 
-  const employeesList = useMemo(() => {
-    let list: any[] = [];
-    if (Array.isArray(employeesResponse)) {
-      list = employeesResponse;
-    } else if (employeesResponse && (employeesResponse as any).data && Array.isArray((employeesResponse as any).data)) {
-      list = (employeesResponse as any).data;
+  const employeesList: ConnectUser[] = useMemo(() => {
+    let list: ConnectUser[] = [];
+    if (Array.isArray(colleaguesData)) {
+      list = colleaguesData;
+    } else if (colleaguesData && (colleaguesData as any).colleagues) {
+      list = (colleaguesData as any).colleagues;
     }
     return list.filter((emp) => emp.id !== currentUser?.id && emp.email !== currentUser?.email);
-  }, [employeesResponse, currentUser]);
+  }, [colleaguesData, currentUser]);
 
   const filteredEmployees = useMemo(() => {
     if (!memberSearch.trim()) return employeesList;
@@ -53,7 +53,6 @@ export function NewMeetingDialog({ open, onOpenChange }: NewMeetingDialogProps) 
     return employeesList.filter(
       (e) =>
         (e.name && e.name.toLowerCase().includes(q)) ||
-        (e.firstName && e.firstName.toLowerCase().includes(q)) ||
         (e.email && e.email.toLowerCase().includes(q)) ||
         (e.department && e.department.toLowerCase().includes(q))
     );
@@ -65,50 +64,31 @@ export function NewMeetingDialog({ open, onOpenChange }: NewMeetingDialogProps) 
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() && !isInstant) {
       toast.error("Please enter a meeting title.");
       return;
     }
 
-    const hostUser: ConnectUser = {
-      id: currentUser?.id ? String(currentUser.id) : "usr_host",
-      name: currentUser?.name || currentUser?.email?.split("@")[0] || "Host",
-      email: currentUser?.email || "",
-      role: currentUser?.role,
-    };
+    try {
+      const newMeeting = await createMeeting({
+        title: title.trim() || `Instant Meeting with ${currentUser?.name || "Host"}`,
+        description: description.trim(),
+        scheduledAt: isInstant ? new Date().toISOString() : `${date}T${time}:00`,
+        durationMinutes,
+        participantIds: selectedMemberIds,
+        isPrivate: false,
+        allowScreenShare,
+        allowMicrophone,
+        allowCamera,
+      }).unwrap();
 
-    const invitedParticipants: ConnectUser[] = selectedMemberIds.map((id) => {
-      const emp = employeesList.find((e) => String(e.id) === id);
-      return {
-        id: String(emp?.id || id),
-        name: emp?.name || `${emp?.firstName || ""} ${emp?.lastName || ""}`.trim() || "Colleague",
-        email: emp?.email || "",
-        role: emp?.designation || emp?.role,
-        department: emp?.department,
-      };
-    });
-
-    const newMeeting = createMeeting({
-      title: title.trim() || `Instant Meeting with ${hostUser.name}`,
-      description: description.trim(),
-      hostId: hostUser.id,
-      hostName: hostUser.name,
-      startTime: isInstant ? new Date().toISOString() : `${date}T${time}:00`,
-      durationMinutes,
-      participants: [hostUser, ...invitedParticipants],
-      isPrivate: false,
-      allowScreenShare,
-      allowMicrophone,
-      allowCamera,
-    });
-
-    toast.success(isInstant ? "Starting instant meeting..." : "Meeting scheduled successfully.");
-    onOpenChange(false);
-
-    if (isInstant) {
+      toast.success(isInstant ? "Starting instant meeting..." : "Meeting scheduled successfully.");
+      onOpenChange(false);
       navigate(`/connect/meeting/${newMeeting.id}`);
+    } catch {
+      toast.error("Failed to create meeting.");
     }
   };
 
@@ -133,7 +113,7 @@ export function NewMeetingDialog({ open, onOpenChange }: NewMeetingDialogProps) 
                 type="button"
                 onClick={() => setIsInstant(false)}
                 className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-all ${
-                  !isInstant ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  !isInstant ? "bg-background text-foreground shadow-sm font-bold" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 Schedule for Later
@@ -142,7 +122,7 @@ export function NewMeetingDialog({ open, onOpenChange }: NewMeetingDialogProps) 
                 type="button"
                 onClick={() => setIsInstant(true)}
                 className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-all ${
-                  isInstant ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  isInstant ? "bg-primary text-primary-foreground shadow-sm font-bold" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 Start Instant Meeting
@@ -250,7 +230,7 @@ export function NewMeetingDialog({ open, onOpenChange }: NewMeetingDialogProps) 
                   <p className="text-center py-3 text-[11px] text-muted-foreground">No colleagues found</p>
                 ) : (
                   filteredEmployees.map((emp) => {
-                    const fullName = emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || emp.email;
+                    const fullName = emp.name || emp.email;
                     const isSelected = selectedMemberIds.includes(String(emp.id));
 
                     return (
@@ -281,8 +261,13 @@ export function NewMeetingDialog({ open, onOpenChange }: NewMeetingDialogProps) 
             >
               Cancel
             </Button>
-            <Button type="submit" size="sm" className="gradient-bg text-primary-foreground text-xs h-8 rounded-lg shadow-sm">
-              {isInstant ? "Launch Meeting Now" : "Schedule Meeting"}
+            <Button
+              type="submit"
+              size="sm"
+              disabled={isCreating}
+              className="gradient-bg text-primary-foreground text-xs h-8 rounded-lg shadow-sm"
+            >
+              {isCreating ? "Creating..." : isInstant ? "Launch Meeting Now" : "Schedule Meeting"}
             </Button>
           </DialogFooter>
         </form>

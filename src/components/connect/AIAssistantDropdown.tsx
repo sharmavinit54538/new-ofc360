@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import {
   Sparkles,
   Mail,
-  RefreshCw,
   Briefcase,
   Minimize2,
   Maximize2,
@@ -22,9 +20,8 @@ import {
   FileText,
   MessageSquareQuote,
   Flame,
-  ShieldAlert,
 } from "lucide-react";
-import { useConnectStore } from "@/stores/connectStore";
+import { useConnect } from "@/features/connect/hooks";
 import { toast } from "sonner";
 
 interface AIAssistantDropdownProps {
@@ -40,7 +37,7 @@ export function AIAssistantDropdown({
   recipientName,
   recipientEmail,
 }: AIAssistantDropdownProps) {
-  const { openMailArtifact } = useConnectStore();
+  const { openMailArtifact } = useConnect();
 
   const handleAction = (action: string, tone?: string) => {
     if (action === "write_email") {
@@ -109,7 +106,7 @@ export function AIAssistantDropdown({
           type="button"
           variant="ghost"
           size="sm"
-          className="h-8 px-2 text-primary hover:text-primary hover:bg-primary/10 gap-1.5 text-xs font-semibold rounded-lg"
+          className="h-8 px-2 text-primary hover:text-primary hover:bg-primary/10 gap-1.5 text-xs font-semibold rounded-lg cursor-pointer"
           title="AI Assistant"
         >
           <Sparkles className="w-3.5 h-3.5" />
@@ -157,10 +154,10 @@ export function AIAssistantDropdown({
               <Smile className="w-3 h-3 text-amber-500 mr-2" /> Friendly
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleAction("tone", "diplomatic")} className="cursor-pointer py-1.5">
-              <Briefcase className="w-3 h-3 text-emerald-500 mr-2" /> Diplomatic
+              <Briefcase className="w-3.5 h-3.5 text-emerald-500 mr-2" /> Diplomatic
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleAction("tone", "urgent")} className="cursor-pointer py-1.5">
-              <Flame className="w-3 h-3 text-rose-500 mr-2" /> Urgent
+              <Flame className="w-3.5 h-3.5 text-rose-500 mr-2" /> Urgent
             </DropdownMenuItem>
           </DropdownMenuSubContent>
         </DropdownMenuSub>

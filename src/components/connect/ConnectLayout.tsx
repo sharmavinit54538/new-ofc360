@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { ConnectHeader } from "./ConnectHeader";
 import { ThreadPanel } from "./ThreadPanel";
 import { MailArtifactPanel } from "./MailArtifactPanel";
@@ -11,25 +11,38 @@ import { NewMeetingDialog } from "./NewMeetingDialog";
 import { ConnectSearchDialog } from "./ConnectSearchDialog";
 import { AudioAutoplayBanner } from "./AudioAutoplayBanner";
 import { ConnectSoundSettingsModal } from "./ConnectSoundSettingsModal";
-import { useConnectStore } from "@/stores/connectStore";
-import { useConnectSoundStore } from "@/stores/connectSoundStore";
+import { useConnect } from "@/features/connect/hooks";
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
+import { selectIsSoundSettingsOpen } from "@/features/connect/selectors";
+import { setIsSettingsOpen } from "@/features/connect/soundSettingsSlice";
+import { connectWebSocketService } from "@/services/connectWebSocketService";
 
 interface ConnectLayoutProps {
   children: ReactNode;
 }
 
 export function ConnectLayout({ children }: ConnectLayoutProps) {
-  const isNewChatOpen = useConnectStore((s) => s.isNewChatOpen);
-  const setIsNewChatOpen = useConnectStore((s) => s.setIsNewChatOpen);
-  const isNewChannelOpen = useConnectStore((s) => s.isNewChannelOpen);
-  const setIsNewChannelOpen = useConnectStore((s) => s.setIsNewChannelOpen);
-  const isNewMeetingOpen = useConnectStore((s) => s.isNewMeetingOpen);
-  const setIsNewMeetingOpen = useConnectStore((s) => s.setIsNewMeetingOpen);
-  const isSearchOpen = useConnectStore((s) => s.isSearchOpen);
-  const setIsSearchOpen = useConnectStore((s) => s.setIsSearchOpen);
+  const dispatch = useAppDispatch();
+  const {
+    isNewChatOpen,
+    setIsNewChatOpen,
+    isNewChannelOpen,
+    setIsNewChannelOpen,
+    isNewMeetingOpen,
+    setIsNewMeetingOpen,
+    isSearchOpen,
+    setIsSearchOpen,
+  } = useConnect();
 
-  const isSettingsOpen = useConnectSoundStore((s) => s.isSettingsOpen);
-  const setIsSettingsOpen = useConnectSoundStore((s) => s.setIsSettingsOpen);
+  const isSettingsOpen = useAppSelector(selectIsSoundSettingsOpen);
+
+  // Initialize centralized WebSocket connection
+  useEffect(() => {
+    connectWebSocketService.connect();
+    return () => {
+      // Keep connection or gracefully handle unmount
+    };
+  }, []);
 
   return (
     <div className="h-[calc(100vh-5.5rem)] flex flex-col bg-background/95 backdrop-blur-md rounded-2xl border border-border/80 shadow-xl overflow-hidden">
@@ -65,7 +78,10 @@ export function ConnectLayout({ children }: ConnectLayoutProps) {
       <ConnectSearchDialog open={isSearchOpen} onOpenChange={setIsSearchOpen} />
 
       {/* Sound Settings & Preferences Modal */}
-      <ConnectSoundSettingsModal open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
+      <ConnectSoundSettingsModal
+        open={isSettingsOpen}
+        onOpenChange={(open) => dispatch(setIsSettingsOpen(open))}
+      />
     </div>
   );
 }

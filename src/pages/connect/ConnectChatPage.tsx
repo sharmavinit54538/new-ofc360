@@ -3,14 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { ConnectLayout } from "@/components/connect/ConnectLayout";
 import { ChatList } from "@/components/connect/ChatList";
 import { ChatWindow } from "@/components/connect/ChatWindow";
-import { useConnectStore } from "@/stores/connectStore";
+import { useConnect } from "@/features/connect/hooks";
 
 export default function ConnectChatPage() {
   const { conversationId } = useParams<{ conversationId?: string }>();
   const navigate = useNavigate();
-  const setActiveTab = useConnectStore((s) => s.setActiveTab);
-  const activeConversationId = useConnectStore((s) => s.activeConversationId);
-  const setActiveConversationId = useConnectStore((s) => s.setActiveConversationId);
+  const { activeTab, setActiveTab, activeConversationId, setActiveConversationId } = useConnect();
 
   useEffect(() => {
     setActiveTab("chat");
@@ -29,7 +27,7 @@ export default function ConnectChatPage() {
   return (
     <ConnectLayout>
       <div className="flex-1 flex w-full h-full overflow-hidden">
-        {/* Chat List (Full width when browsing, master sidebar when chatting) */}
+        {/* Chat List */}
         <ChatList
           onSelectConversation={handleSelectConversation}
           className={hasActiveConversation ? "w-full sm:w-80 md:w-96 shrink-0" : "w-full flex-1 border-r-0"}

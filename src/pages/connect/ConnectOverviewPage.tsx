@@ -1,11 +1,11 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ConnectLayout } from "@/components/connect/ConnectLayout";
-import { useConnectStore } from "@/stores/connectStore";
+import { useConnect } from "@/features/connect/hooks";
 
 export default function ConnectOverviewPage() {
   const navigate = useNavigate();
-  const setActiveTab = useConnectStore((s) => s.setActiveTab);
+  const { setActiveTab } = useConnect();
 
   useEffect(() => {
     setActiveTab("chat");

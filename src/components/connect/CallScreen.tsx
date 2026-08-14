@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { useConnectStore } from "@/stores/connectStore";
+import { useEffect } from "react";
+import { useConnectCall } from "@/features/connect/hooks";
+import { useEndCallMutation } from "@/services/api/connectApi";
 import { connectAudioManager } from "@/services/connectAudioManager";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -9,27 +10,35 @@ import {
   Volume2,
   VolumeX,
   PhoneOff,
-  UserPlus,
-  MoreHorizontal,
   Wifi,
-  Sparkles,
 } from "lucide-react";
-import { useLocalMedia } from "@/hooks/useLocalMedia";
+import { useWebRTC } from "@/hooks/useWebRTC";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function CallScreen() {
-  const activeCall = useConnectStore((s) => s.activeCall);
-  const endActiveCall = useConnectStore((s) => s.endActiveCall);
-  const updateCallControls = useConnectStore((s) => s.updateCallControls);
-  const incrementCallDuration = useConnectStore((s) => s.incrementCallDuration);
+  const {
+    activeCall,
+    status,
+    type,
+    remoteUser,
+    isMuted,
+    isSpeakerOn,
+    duration,
+    endCall,
+    toggleMute,
+    toggleSpeaker,
+    incrementDuration,
+  } = useConnectCall();
 
-  // Play outgoing ringtone / call status sounds
+  const [endCallMutation] = useEndCallMutation();
+
+  // Outgoing ringtone / connected sounds
   useEffect(() => {
-    if (!activeCall || activeCall.type !== "audio") return;
+    if (!activeCall || type !== "audio") return;
 
-    if (activeCall.status === "calling") {
+    if (status === "calling") {
       connectAudioManager.playOutgoingCall();
-    } else if (activeCall.status === "connected") {
+    } else if (status === "connected") {
       connectAudioManager.stopOutgoingCall();
       connectAudioManager.playCallConnected();
     }
@@ -37,26 +46,34 @@ export function CallScreen() {
     return () => {
       connectAudioManager.stopOutgoingCall();
     };
-  }, [activeCall?.status, activeCall?.type]);
+  }, [status, type, activeCall]);
 
-  // Use real local audio media
-  const { startMedia, stopMedia, isMuted, toggleMicrophone } = useLocalMedia({
-    audio: true,
-    video: false,
-    autoStart: true,
+  // WebRTC Audio media
+  const { startMedia, cleanup } = useWebRTC({
+    targetUserId: remoteUser?.id,
+    callId: activeCall?.id,
   });
 
-  // Call duration counter
   useEffect(() => {
-    if (activeCall && activeCall.status === "connected") {
+    if (activeCall && type === "audio") {
+      startMedia(true, false);
+    }
+    return () => {
+      cleanup();
+    };
+  }, [activeCall?.id, type]);
+
+  // Duration counter
+  useEffect(() => {
+    if (status === "connected") {
       const timer = setInterval(() => {
-        incrementCallDuration();
+        incrementDuration();
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [activeCall?.status, incrementCallDuration]);
+  }, [status, incrementDuration]);
 
-  if (!activeCall || activeCall.type !== "audio") return null;
+  if (!activeCall || type !== "audio" || !remoteUser) return null;
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -64,22 +81,18 @@ export function CallScreen() {
     return `${mins < 10 ? `0${mins}` : mins}:${secs < 10 ? `0${secs}` : secs}`;
   };
 
-  const handleEndCall = () => {
+  const handleEndCall = async () => {
     connectAudioManager.playCallEnded();
-    stopMedia();
-    endActiveCall();
+    if (activeCall?.id) {
+      try {
+        await endCallMutation(activeCall.id).unwrap();
+      } catch {}
+    }
+    cleanup();
+    endCall();
   };
 
-  const handleToggleMic = () => {
-    toggleMicrophone();
-    updateCallControls({ isMuted: !isMuted });
-  };
-
-  const handleToggleSpeaker = () => {
-    updateCallControls({ isSpeakerOn: !activeCall.isSpeakerOn });
-  };
-
-  const initials = activeCall.targetUser.name
+  const initials = remoteUser.name
     .split(" ")
     .map((n) => n[0])
     .join("")
@@ -99,21 +112,21 @@ export function CallScreen() {
           <div className="w-full flex items-center justify-between text-xs text-muted-foreground mb-6">
             <div className="flex items-center gap-1.5 font-medium">
               <Wifi className="w-3.5 h-3.5 text-emerald-500" />
-              <span>{activeCall.status === "connected" ? "Connected" : "Calling..."}</span>
+              <span>{status === "connected" ? "Connected" : "Calling..."}</span>
             </div>
             <span className="font-mono bg-muted/60 px-2 py-0.5 rounded-full font-bold">
-              {formatDuration(activeCall.duration)}
+              {formatDuration(duration)}
             </span>
           </div>
 
           {/* Animated Avatar Rings */}
           <div className="relative mb-6">
-            {activeCall.status === "connected" && (
+            {status === "connected" && (
               <span className="absolute inset-0 rounded-full bg-primary/20 animate-ping opacity-60" />
             )}
             <div className="relative w-24 h-24 rounded-full border-4 border-card shadow-xl overflow-hidden bg-primary/10 flex items-center justify-center">
               <Avatar className="w-full h-full">
-                <AvatarImage src={activeCall.targetUser.avatar} alt={activeCall.targetUser.name} />
+                <AvatarImage src={remoteUser.avatar} alt={remoteUser.name} />
                 <AvatarFallback className="text-xl bg-primary/20 text-primary font-bold">
                   {initials}
                 </AvatarFallback>
@@ -122,9 +135,9 @@ export function CallScreen() {
           </div>
 
           {/* Callee Info */}
-          <h3 className="text-lg font-bold text-foreground mb-1">{activeCall.targetUser.name}</h3>
+          <h3 className="text-lg font-bold text-foreground mb-1">{remoteUser.name}</h3>
           <p className="text-xs text-muted-foreground mb-8">
-            {activeCall.targetUser.role || "Team Member"} • {activeCall.targetUser.department || "General"}
+            {remoteUser.role || "Team Member"} • {remoteUser.department || "General"}
           </p>
 
           {/* Control Bar */}
@@ -134,7 +147,7 @@ export function CallScreen() {
               type="button"
               variant={isMuted ? "destructive" : "secondary"}
               size="icon"
-              onClick={handleToggleMic}
+              onClick={() => toggleMute()}
               className="w-12 h-12 rounded-full shadow-md transition-all hover:scale-105"
               title={isMuted ? "Unmute Microphone" : "Mute Microphone"}
             >
@@ -156,13 +169,13 @@ export function CallScreen() {
             {/* Speaker toggle */}
             <Button
               type="button"
-              variant={activeCall.isSpeakerOn ? "secondary" : "outline"}
+              variant={isSpeakerOn ? "secondary" : "outline"}
               size="icon"
-              onClick={handleToggleSpeaker}
+              onClick={() => toggleSpeaker()}
               className="w-12 h-12 rounded-full shadow-md transition-all hover:scale-105"
-              title={activeCall.isSpeakerOn ? "Mute Speaker" : "Unmute Speaker"}
+              title={isSpeakerOn ? "Mute Speaker" : "Unmute Speaker"}
             >
-              {activeCall.isSpeakerOn ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+              {isSpeakerOn ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
             </Button>
           </div>
         </div>

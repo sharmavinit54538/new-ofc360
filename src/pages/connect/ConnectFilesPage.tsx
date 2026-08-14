@@ -1,8 +1,13 @@
 import { useState, useMemo, useEffect } from "react";
 import { ConnectLayout } from "@/components/connect/ConnectLayout";
-import { useConnectStore } from "@/stores/connectStore";
+import { useConnect } from "@/features/connect/hooks";
+import {
+  useGetFilesQuery,
+  useUploadFileMutation,
+  useDeleteFileMutation,
+} from "@/services/api/connectApi";
 import { useAuth } from "@/hooks/useAuth";
-import { ConnectUser, ConnectSharedFile, MessageAttachment } from "@/types/connect";
+import { ConnectSharedFile, MessageAttachment } from "@/types/connect";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,11 +32,7 @@ export default function ConnectFilesPage() {
   const { user: currentUser } = useAuth();
   const currentUserId = currentUser?.id ? String(currentUser.id) : "usr_current";
 
-  const setActiveTab = useConnectStore((s) => s.setActiveTab);
-  const sharedFiles = useConnectStore((s) => s.sharedFiles);
-  const addSharedFile = useConnectStore((s) => s.addSharedFile);
-  const removeSharedFile = useConnectStore((s) => s.removeSharedFile);
-
+  const { setActiveTab } = useConnect();
   const [activeFileTab, setActiveFileTab] = useState<FileTab>("all");
   const [search, setSearch] = useState("");
 
@@ -39,51 +40,59 @@ export default function ConnectFilesPage() {
     setActiveTab("files");
   }, [setActiveTab]);
 
-  const currentConnectUser: ConnectUser = {
-    id: currentUserId,
-    name: currentUser?.name || currentUser?.email?.split("@")[0] || "User",
-    email: currentUser?.email || "",
-    role: currentUser?.role,
+  // RTK Query hooks
+  const { data: sharedFiles = [], isLoading } = useGetFilesQuery({
+    category:
+      activeFileTab === "images"
+        ? "images"
+        : activeFileTab === "videos"
+        ? "videos"
+        : activeFileTab === "documents"
+        ? "documents"
+        : undefined,
+    search: search.length >= 2 ? search : undefined,
+  });
+
+  const [uploadFile] = useUploadFileMutation();
+  const [deleteFile] = useDeleteFileMutation();
+
+  const handleUploadFiles = async (attachments: MessageAttachment[]) => {
+    for (const att of attachments) {
+      try {
+        if (att.rawFile) {
+          const formData = new FormData();
+          formData.append("file", att.rawFile);
+          formData.append("name", att.name);
+          await uploadFile(formData).unwrap();
+        }
+      } catch {
+        toast.error(`Failed to upload ${att.name}`);
+      }
+    }
+    toast.success(`Uploaded ${attachments.length} file(s)`);
   };
 
-  const handleUploadFiles = (attachments: MessageAttachment[]) => {
-    attachments.forEach((att) => {
-      let category: ConnectSharedFile["category"] = "documents";
-      if (att.type.startsWith("image/")) category = "images";
-      else if (att.type.startsWith("video/")) category = "videos";
-      else if (att.name.endsWith(".xls") || att.name.endsWith(".xlsx") || att.name.endsWith(".csv"))
-        category = "spreadsheets";
-
-      addSharedFile({
-        name: att.name,
-        size: att.size,
-        type: att.type,
-        category,
-        url: att.url,
-        sharedBy: currentConnectUser,
-      });
-    });
-    toast.success(`Uploaded ${attachments.length} file(s)`);
+  const handleDeleteFile = async (fileId: string) => {
+    try {
+      await deleteFile(fileId).unwrap();
+      toast.success("File deleted");
+    } catch {
+      toast.error("Failed to delete file");
+    }
   };
 
   const filteredFiles = useMemo(() => {
     let list = sharedFiles;
 
     if (activeFileTab === "shared_by_me") {
-      list = list.filter((f) => f.sharedBy.id === currentUserId);
+      list = list.filter((f) => f.sharedBy?.id === currentUserId);
     } else if (activeFileTab === "shared_with_me") {
-      list = list.filter((f) => f.sharedBy.id !== currentUserId);
-    } else if (activeFileTab === "images") {
-      list = list.filter((f) => f.category === "images");
-    } else if (activeFileTab === "videos") {
-      list = list.filter((f) => f.category === "videos");
-    } else if (activeFileTab === "documents") {
-      list = list.filter((f) => f.category === "documents" || f.category === "spreadsheets");
+      list = list.filter((f) => f.sharedBy?.id !== currentUserId);
     }
 
     if (!search.trim()) return list;
     const q = search.toLowerCase();
-    return list.filter((f) => f.name.toLowerCase().includes(q) || f.sharedBy.name.toLowerCase().includes(q));
+    return list.filter((f) => f.name.toLowerCase().includes(q) || f.sharedBy?.name.toLowerCase().includes(q));
   }, [sharedFiles, activeFileTab, search, currentUserId]);
 
   const TABS: { id: FileTab; label: string; icon: any }[] = [
@@ -116,7 +125,7 @@ export default function ConnectFilesPage() {
               {({ openPicker }) => (
                 <Button
                   onClick={openPicker}
-                  className="gradient-bg text-primary-foreground text-xs font-semibold h-8 rounded-xl gap-1.5 shadow-xs"
+                  className="gradient-bg text-primary-foreground text-xs font-semibold h-8 rounded-xl gap-1.5 shadow-xs cursor-pointer"
                 >
                   <UploadCloud className="w-4 h-4" />
                   <span>Upload Local File</span>
@@ -136,7 +145,7 @@ export default function ConnectFilesPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveFileTab(tab.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors shrink-0 ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors shrink-0 cursor-pointer ${
                     isActive
                       ? "bg-primary/15 text-primary border border-primary/30"
                       : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
@@ -162,7 +171,13 @@ export default function ConnectFilesPage() {
 
         {/* Files Grid */}
         <div className="flex-1">
-          {sharedFiles.length === 0 ? (
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="h-36 rounded-2xl bg-card/60 animate-pulse border border-border/40" />
+              ))}
+            </div>
+          ) : sharedFiles.length === 0 ? (
             <ConnectEmptyState
               variant="files"
               actionLabel="Upload First File"
@@ -187,7 +202,7 @@ export default function ConnectFilesPage() {
                     type: file.type,
                     url: file.url,
                   }}
-                  onRemove={() => removeSharedFile(file.id)}
+                  onRemove={() => handleDeleteFile(file.id)}
                   className="bg-card shadow-xs"
                 />
               ))}

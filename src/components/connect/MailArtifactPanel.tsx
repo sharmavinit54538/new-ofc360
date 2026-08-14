@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useConnectStore } from "@/stores/connectStore";
+import { useConnect } from "@/features/connect/hooks";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,7 +12,6 @@ import {
   Send,
   Save,
   Sparkles,
-  Paperclip,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
@@ -20,10 +19,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
 export function MailArtifactPanel() {
-  const isMailArtifactOpen = useConnectStore((s) => s.isMailArtifactOpen);
-  const mailArtifact = useConnectStore((s) => s.mailArtifact);
-  const closeMailArtifact = useConnectStore((s) => s.closeMailArtifact);
-  const updateMailArtifact = useConnectStore((s) => s.updateMailArtifact);
+  const {
+    isMailArtifactOpen,
+    mailArtifact,
+    closeMailArtifact,
+    updateMailArtifact,
+  } = useConnect();
 
   const [showCcBcc, setShowCcBcc] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -84,7 +85,7 @@ export function MailArtifactPanel() {
             variant="ghost"
             size="icon"
             onClick={closeMailArtifact}
-            className="w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground"
+            className="w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
           >
             <X className="w-4 h-4" />
           </Button>
@@ -99,7 +100,7 @@ export function MailArtifactPanel() {
               <button
                 type="button"
                 onClick={() => setShowCcBcc(!showCcBcc)}
-                className="text-[11px] text-primary hover:underline flex items-center gap-0.5 font-medium"
+                className="text-[11px] text-primary hover:underline flex items-center gap-0.5 font-medium cursor-pointer"
               >
                 {showCcBcc ? "Hide CC/BCC" : "Add CC/BCC"}
                 {showCcBcc ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -172,7 +173,7 @@ export function MailArtifactPanel() {
               variant="outline"
               size="sm"
               onClick={handleCopy}
-              className="text-xs h-8 gap-1.5 rounded-lg border-border/80"
+              className="text-xs h-8 gap-1.5 rounded-lg border-border/80 cursor-pointer"
               title="Copy to Clipboard"
             >
               {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
@@ -183,7 +184,7 @@ export function MailArtifactPanel() {
               variant="ghost"
               size="sm"
               onClick={handleSaveDraft}
-              className="text-xs h-8 gap-1.5 rounded-lg text-muted-foreground hover:text-foreground"
+              className="text-xs h-8 gap-1.5 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
               title="Save Draft"
             >
               <Save className="w-3.5 h-3.5" />
@@ -195,7 +196,7 @@ export function MailArtifactPanel() {
             type="button"
             size="sm"
             onClick={handleSend}
-            className="gradient-bg text-primary-foreground text-xs h-8 gap-1.5 rounded-lg shadow-sm font-semibold"
+            className="gradient-bg text-primary-foreground text-xs h-8 gap-1.5 rounded-lg shadow-sm font-semibold cursor-pointer"
           >
             <Send className="w-3.5 h-3.5" />
             <span>Send Email</span>

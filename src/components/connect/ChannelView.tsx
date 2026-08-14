@@ -1,14 +1,23 @@
 import { useMemo, useRef, useEffect, useState } from "react";
-import { useConnectStore } from "@/stores/connectStore";
+import { useConnect } from "@/features/connect/hooks";
+import {
+  useGetChannelQuery,
+  useGetChannelMessagesQuery,
+  useSendChannelMessageMutation,
+  useToggleReactionMutation,
+  usePinMessageMutation,
+  useDeleteMessageMutation,
+} from "@/services/api/connectApi";
 import { useAuth } from "@/hooks/useAuth";
 import { ConnectUser } from "@/types/connect";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Pin, Search, X } from "lucide-react";
+import { Pin, Search } from "lucide-react";
 import { ChannelHeader } from "./ChannelHeader";
 import { MessageBubble } from "./MessageBubble";
 import { ChatComposer } from "./ChatComposer";
 import { ConnectEmptyState } from "./ConnectEmptyState";
+import { toast } from "sonner";
 
 interface ChannelViewProps {
   channelId?: string | null;
@@ -19,44 +28,41 @@ export function ChannelView({ channelId, className = "" }: ChannelViewProps) {
   const { user: currentUser } = useAuth();
   const currentUserId = currentUser?.id ? String(currentUser.id) : "usr_current";
 
-  const channels = useConnectStore((s) => s.channels);
-  const activeChannelId = channelId || useConnectStore((s) => s.activeChannelId);
-  const messagesMap = useConnectStore((s) => s.messages);
-  const sendMessage = useConnectStore((s) => s.sendMessage);
-  const toggleReaction = useConnectStore((s) => s.toggleReaction);
-  const togglePinMessage = useConnectStore((s) => s.togglePinMessage);
-  const deleteMessage = useConnectStore((s) => s.deleteMessage);
-  const setActiveThreadMessage = useConnectStore((s) => s.setActiveThreadMessage);
+  const { activeChannelId: storeChannelId, setActiveThreadMessage } = useConnect();
+  const activeChannelId = channelId || storeChannelId;
 
   const [messageSearch, setMessageSearch] = useState("");
   const [showSearch, setShowSearch] = useState(false);
 
-  const activeChannel = useMemo(() => {
-    return channels.find((c) => c.id === activeChannelId);
-  }, [channels, activeChannelId]);
+  // RTK Query hooks
+  const { data: channel, isLoading: isChannelLoading } = useGetChannelQuery(activeChannelId || "", {
+    skip: !activeChannelId,
+  });
 
-  const rawMessages = useMemo(() => {
-    if (!activeChannelId) return [];
-    return messagesMap[activeChannelId] || [];
-  }, [messagesMap, activeChannelId]);
+  const { data: messages = [], isLoading: isMessagesLoading } = useGetChannelMessagesQuery(
+    {
+      channelId: activeChannelId || "",
+      search: messageSearch.length >= 2 ? messageSearch : undefined,
+    },
+    { skip: !activeChannelId }
+  );
+
+  const [sendChannelMessage] = useSendChannelMessageMutation();
+  const [toggleReaction] = useToggleReactionMutation();
+  const [pinMessage] = usePinMessageMutation();
+  const [deleteMessage] = useDeleteMessageMutation();
 
   const pinnedMessages = useMemo(() => {
-    return rawMessages.filter((m) => m.isPinned);
-  }, [rawMessages]);
-
-  const filteredMessages = useMemo(() => {
-    if (!messageSearch.trim()) return rawMessages;
-    const q = messageSearch.toLowerCase();
-    return rawMessages.filter((m) => m.content.toLowerCase().includes(q));
-  }, [rawMessages, messageSearch]);
+    return messages.filter((m) => m.isPinned);
+  }, [messages]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [rawMessages.length]);
+  }, [messages.length]);
 
-  if (!activeChannel) {
+  if (!activeChannelId) {
     return (
       <div className={`flex-1 flex items-center justify-center p-8 bg-card/30 ${className}`}>
         <ConnectEmptyState
@@ -68,33 +74,39 @@ export function ChannelView({ channelId, className = "" }: ChannelViewProps) {
     );
   }
 
-  const currentConnectUser: ConnectUser = {
-    id: currentUserId,
-    name: currentUser?.name || currentUser?.email?.split("@")[0] || "User",
-    email: currentUser?.email || "",
-    role: currentUser?.role,
-  };
-
-  const handleSendMessage = (payload: {
+  const handleSendMessage = async (payload: {
     content: string;
     attachments?: any[];
     isVoiceMessage?: boolean;
     voiceDuration?: number;
   }) => {
-    sendMessage({
-      targetId: activeChannel.id,
-      sender: currentConnectUser,
-      content: payload.content,
-      attachments: payload.attachments,
-      isVoiceMessage: payload.isVoiceMessage,
-      voiceDuration: payload.voiceDuration,
-    });
+    try {
+      await sendChannelMessage({
+        channelId: activeChannelId,
+        content: payload.content,
+        attachments: payload.attachments,
+        isVoiceMessage: payload.isVoiceMessage,
+        voiceDuration: payload.voiceDuration,
+      }).unwrap();
+    } catch {
+      toast.error("Failed to send channel message.");
+    }
+  };
+
+  const channelObj = channel || {
+    id: activeChannelId,
+    name: "channel",
+    description: "",
+    isPrivate: false,
+    createdBy: currentUserId,
+    createdAt: new Date().toISOString(),
+    members: [],
   };
 
   return (
     <div className={`flex-1 flex flex-col h-full bg-background/90 overflow-hidden select-none ${className}`}>
       {/* Channel Header */}
-      <ChannelHeader channel={activeChannel} onToggleSearch={() => setShowSearch(!showSearch)} />
+      <ChannelHeader channel={channelObj} onToggleSearch={() => setShowSearch(!showSearch)} />
 
       {/* Optional Search Bar */}
       {showSearch && (
@@ -103,7 +115,7 @@ export function ChannelView({ channelId, className = "" }: ChannelViewProps) {
           <Input
             value={messageSearch}
             onChange={(e) => setMessageSearch(e.target.value)}
-            placeholder={`Search messages in #${activeChannel.name}...`}
+            placeholder={`Search messages in #${channelObj.name}...`}
             className="h-7 text-xs bg-background/80 rounded-lg border-border/60 flex-1"
             autoFocus
           />
@@ -138,23 +150,25 @@ export function ChannelView({ channelId, className = "" }: ChannelViewProps) {
 
       {/* Channel Messages Timeline */}
       <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-thin">
-        {rawMessages.length === 0 ? (
+        {isMessagesLoading ? (
+          <div className="space-y-2 py-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-12 rounded-xl bg-card/60 animate-pulse border border-border/40" />
+            ))}
+          </div>
+        ) : messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center">
             <ConnectEmptyState
               variant="custom"
-              title={`Welcome to #${activeChannel.name}!`}
+              title={`Welcome to #${channelObj.name}!`}
               description={
-                activeChannel.description ||
+                channelObj.description ||
                 "This is the start of this channel. Send a message to get the discussion rolling."
               }
             />
           </div>
-        ) : filteredMessages.length === 0 ? (
-          <p className="text-center py-12 text-xs text-muted-foreground">
-            No messages match "{messageSearch}"
-          </p>
         ) : (
-          filteredMessages.map((msg) => (
+          messages.map((msg) => (
             <MessageBubble
               key={msg.id}
               message={msg}
@@ -162,10 +176,25 @@ export function ChannelView({ channelId, className = "" }: ChannelViewProps) {
               currentUserId={currentUserId}
               onReplyInThread={(m) => setActiveThreadMessage(m)}
               onToggleReaction={(msgId, emoji) =>
-                toggleReaction(activeChannel.id, msgId, emoji, currentUserId)
+                toggleReaction({
+                  messageId: msgId,
+                  emoji,
+                  conversationId: activeChannelId,
+                })
               }
-              onTogglePin={(msgId) => togglePinMessage(activeChannel.id, msgId)}
-              onDelete={(msgId) => deleteMessage(activeChannel.id, msgId)}
+              onTogglePin={(msgId) =>
+                pinMessage({
+                  messageId: msgId,
+                  isPinned: !msg.isPinned,
+                  conversationId: activeChannelId,
+                })
+              }
+              onDelete={(msgId) =>
+                deleteMessage({
+                  messageId: msgId,
+                  conversationId: activeChannelId,
+                })
+              }
             />
           ))
         )}
@@ -175,7 +204,7 @@ export function ChannelView({ channelId, className = "" }: ChannelViewProps) {
       {/* Composer */}
       <ChatComposer
         onSendMessage={handleSendMessage}
-        placeholder={`Message #${activeChannel.name}...`}
+        placeholder={`Message #${channelObj.name}...`}
       />
     </div>
   );

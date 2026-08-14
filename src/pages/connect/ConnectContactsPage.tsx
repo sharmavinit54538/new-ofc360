@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ConnectLayout } from "@/components/connect/ConnectLayout";
-import { useConnectStore } from "@/stores/connectStore";
-import { useGetEmployeesQuery } from "@/services/api/employeeApi";
+import { useConnect, useConnectCall } from "@/features/connect/hooks";
+import { useGetColleaguesQuery, useCreateConversationMutation } from "@/services/api/connectApi";
 import { useAuth } from "@/hooks/useAuth";
 import { ConnectUser } from "@/types/connect";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,19 +14,17 @@ import {
   MessageSquare,
   Phone,
   Video,
-  Building2,
   Mail,
-  UserCheck,
 } from "lucide-react";
 import { PresenceIndicator } from "@/components/connect/PresenceIndicator";
 import { ConnectEmptyState } from "@/components/connect/ConnectEmptyState";
+import { toast } from "sonner";
 
 export default function ConnectContactsPage() {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
-  const setActiveTab = useConnectStore((s) => s.setActiveTab);
-  const startDirectConversation = useConnectStore((s) => s.startDirectConversation);
-  const startCall = useConnectStore((s) => s.startCall);
+  const { setActiveTab, setActiveConversationId } = useConnect();
+  const { startOutgoingCall } = useConnectCall();
 
   const [search, setSearch] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("ALL");
@@ -35,17 +33,23 @@ export default function ConnectContactsPage() {
     setActiveTab("contacts");
   }, [setActiveTab]);
 
-  const { data: employeesResponse, isLoading } = useGetEmployeesQuery();
+  // RTK Query hooks
+  const { data: colleaguesData, isLoading } = useGetColleaguesQuery({
+    search: search.length >= 2 ? search : undefined,
+    department: departmentFilter !== "ALL" ? departmentFilter : undefined,
+  });
 
-  const employeesList = useMemo(() => {
-    let list: any[] = [];
-    if (Array.isArray(employeesResponse)) {
-      list = employeesResponse;
-    } else if (employeesResponse && (employeesResponse as any).data && Array.isArray((employeesResponse as any).data)) {
-      list = (employeesResponse as any).data;
+  const [createConversation] = useCreateConversationMutation();
+
+  const employeesList: ConnectUser[] = useMemo(() => {
+    let list: ConnectUser[] = [];
+    if (Array.isArray(colleaguesData)) {
+      list = colleaguesData;
+    } else if (colleaguesData && (colleaguesData as any).colleagues) {
+      list = (colleaguesData as any).colleagues;
     }
     return list.filter((emp) => emp.id !== currentUser?.id && emp.email !== currentUser?.email);
-  }, [employeesResponse, currentUser]);
+  }, [colleaguesData, currentUser]);
 
   const departments = useMemo(() => {
     const set = new Set<string>();
@@ -65,39 +69,29 @@ export default function ConnectContactsPage() {
     return list.filter(
       (e) =>
         (e.name && e.name.toLowerCase().includes(q)) ||
-        (e.firstName && e.firstName.toLowerCase().includes(q)) ||
-        (e.lastName && e.lastName.toLowerCase().includes(q)) ||
         (e.email && e.email.toLowerCase().includes(q)) ||
         (e.role && e.role.toLowerCase().includes(q)) ||
         (e.designation && e.designation.toLowerCase().includes(q))
     );
   }, [employeesList, departmentFilter, search]);
 
-  const handleStartMessage = (emp: any) => {
-    const fullName = emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || emp.email;
-    const targetUser: ConnectUser = {
-      id: String(emp.id),
-      name: fullName,
-      email: emp.email || "",
-      role: emp.designation || emp.role,
-      department: emp.department,
-      avatar: emp.avatar || emp.photoUrl,
-    };
-    const convId = startDirectConversation(targetUser);
-    navigate(`/connect/chat/${convId}`);
+  const handleStartMessage = async (emp: ConnectUser) => {
+    try {
+      const res = await createConversation({ participantId: emp.id }).unwrap();
+      const convId = res.id;
+      setActiveConversationId(convId);
+      navigate(`/connect/chat/${convId}`);
+    } catch {
+      // Fallback local navigation
+      const convId = `conv_${emp.id}`;
+      setActiveConversationId(convId);
+      navigate(`/connect/chat/${convId}`);
+    }
   };
 
-  const handleStartCall = (emp: any, type: "audio" | "video") => {
-    const fullName = emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || emp.email;
-    const targetUser: ConnectUser = {
-      id: String(emp.id),
-      name: fullName,
-      email: emp.email || "",
-      role: emp.designation || emp.role,
-      department: emp.department,
-      avatar: emp.avatar || emp.photoUrl,
-    };
-    startCall(targetUser, type);
+  const handleStartCall = (emp: ConnectUser, type: "audio" | "video") => {
+    startOutgoingCall(emp, type);
+    toast.info(`Calling ${emp.name}...`);
   };
 
   return (
@@ -150,7 +144,13 @@ export default function ConnectContactsPage() {
 
         {/* Contacts Grid */}
         <div className="flex-1">
-          {filteredEmployees.length === 0 ? (
+          {isLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="h-40 rounded-2xl bg-card/60 animate-pulse border border-border/40" />
+              ))}
+            </div>
+          ) : filteredEmployees.length === 0 ? (
             <ConnectEmptyState
               variant="contacts"
               title="No colleagues match your criteria"
@@ -159,7 +159,7 @@ export default function ConnectContactsPage() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {filteredEmployees.map((emp) => {
-                const fullName = emp.name || `${emp.firstName || ""} ${emp.lastName || ""}`.trim() || emp.email;
+                const fullName = emp.name || emp.email;
                 const initials = fullName.slice(0, 2).toUpperCase();
 
                 return (
@@ -178,7 +178,7 @@ export default function ConnectContactsPage() {
                             </AvatarFallback>
                           </Avatar>
                           <PresenceIndicator
-                            status="online"
+                            status={emp.presence || "online"}
                             size="md"
                             className="absolute -bottom-0.5 -right-0.5 ring-2 ring-card"
                           />
