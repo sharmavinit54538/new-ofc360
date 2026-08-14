@@ -24,7 +24,8 @@ export function generateDynamicQrToken(
   const secondsRemaining = 30 - Math.floor((now % 30000) / 1000);
 
   // Hash simulation based on timeSlot + employeeId
-  const seed = `${employeeId}:${employeeName}:${timeSlot}:OFC360_SALT_SECRET`;
+  const saltSecret = import.meta.env.VITE_QR_SALT_SECRET || "dev_secret_fallback";
+  const seed = `${employeeId}:${employeeName}:${timeSlot}:${saltSecret}`;
   let hashVal = 0;
   for (let i = 0; i < seed.length; i++) {
     hashVal = (hashVal << 5) - hashVal + seed.charCodeAt(i);
