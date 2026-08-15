@@ -14,10 +14,8 @@ export interface AuthUser {
 }
 
 export interface LoginRequest {
-  email?: string;
-  phone?: string;
-  password?: string;
-  otp?: string;
+  identifier: string;
+  password: string;
 }
 
 export interface AuthResponse {
