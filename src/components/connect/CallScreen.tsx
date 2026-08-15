@@ -85,7 +85,11 @@ export function CallScreen() {
     connectAudioManager.playCallEnded();
     if (activeCall?.id) {
       try {
-        await endCallMutation(activeCall.id).unwrap();
+        await endCallMutation({
+          callId: activeCall.id,
+          status: "ended",
+          duration,
+        }).unwrap();
       } catch {}
     }
     cleanup();

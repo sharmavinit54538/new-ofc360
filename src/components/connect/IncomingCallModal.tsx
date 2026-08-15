@@ -28,7 +28,10 @@ export function IncomingCallModal() {
     connectAudioManager.playCallConnected();
     if (incomingCall.id) {
       try {
-        await acceptCall(incomingCall.id).unwrap();
+        await acceptCall({
+          callId: incomingCall.id,
+          status: "connected",
+        }).unwrap();
       } catch {}
     }
     acceptIncomingCall();
@@ -38,7 +41,10 @@ export function IncomingCallModal() {
     connectAudioManager.playCallRejected();
     if (incomingCall.id) {
       try {
-        await rejectCall(incomingCall.id).unwrap();
+        await rejectCall({
+          callId: incomingCall.id,
+          status: "rejected",
+        }).unwrap();
       } catch {}
     }
     rejectIncomingCall();
