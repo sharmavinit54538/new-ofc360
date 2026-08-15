@@ -2,7 +2,7 @@ export interface ApiError {
   status: number | "FETCH_ERROR" | "PARSING_ERROR" | "TIMEOUT_ERROR" | "CUSTOM_ERROR";
   message: string;
   code?: string;
-  details?: Record<string, unknown>;
+  details?: Record<string, unknown> | Array<unknown>;
 }
 
 const DEFAULT_ERROR_MESSAGES: Record<number, string> = {
@@ -11,7 +11,8 @@ const DEFAULT_ERROR_MESSAGES: Record<number, string> = {
   403: "Forbidden: You do not have permission to perform this action.",
   404: "Not Found: The requested resource could not be found.",
   409: "Conflict: The request conflicts with current server state.",
-  422: "Unprocessable Entity: Validation failed for the provided input.",
+  410: "Gone: The verification link or code has expired.",
+  422: "Validation Error: Validation failed for the provided input.",
   429: "Too Many Requests: Rate limit exceeded. Please try again later.",
   500: "Internal Server Error: An unexpected server error occurred.",
   502: "Bad Gateway: Invalid response received from upstream server.",
@@ -19,14 +20,25 @@ const DEFAULT_ERROR_MESSAGES: Record<number, string> = {
   504: "Gateway Timeout: Upstream server failed to respond in time.",
 };
 
+function sanitizeMessage(msg: string): string {
+  if (!msg) return "";
+  // Strip raw HTML tags if server returned HTML error page
+  const clean = msg.replace(/<[^>]*>?/gm, "").trim();
+  // If message looks like a raw python/node traceback, return friendly server message
+  if (clean.includes("Traceback (most recent call last)") || clean.includes("at Object.") || clean.includes("Internal Server Error")) {
+    return DEFAULT_ERROR_MESSAGES[500];
+  }
+  return clean;
+}
+
 function extractErrorMessage(
   data: Record<string, unknown>,
   fallbackMessage: string
-): { message: string; details?: Record<string, unknown> } {
-  let details: Record<string, unknown> | undefined = undefined;
+): { message: string; details?: Record<string, unknown> | Array<unknown> } {
+  let details: Record<string, unknown> | Array<unknown> | undefined = undefined;
 
-  if (data.details && typeof data.details === "object" && !Array.isArray(data.details)) {
-    details = data.details as Record<string, unknown>;
+  if (data.details && typeof data.details === "object") {
+    details = data.details as Record<string, unknown> | Array<unknown>;
   }
 
   // 1. Array or object of validation errors in data.errors (e.g. Laravel / Express / Zod)
@@ -39,7 +51,7 @@ function extractErrorMessage(
         }
         return String(e);
       });
-      return { message: msgs.join(" | "), details: details || (data.errors as any) };
+      return { message: msgs.join(". "), details: details || (data.errors as any) };
     } else if (typeof data.errors === "object" && Object.keys(data.errors).length > 0) {
       const errObj = data.errors as Record<string, any>;
       const fieldMsgs = Object.entries(errObj).map(([field, val]) => {
@@ -50,7 +62,7 @@ function extractErrorMessage(
           : String(val);
         return `${field}: ${valText}`;
       });
-      return { message: fieldMsgs.join(" | "), details: details || errObj };
+      return { message: fieldMsgs.join(". "), details: details || errObj };
     }
   }
 
@@ -60,26 +72,36 @@ function extractErrorMessage(
       if (typeof item === "string") return item;
       const field = Array.isArray(item?.loc) ? item.loc[item.loc.length - 1] : item?.field || "";
       const msg = item?.msg || item?.message || "invalid value";
-      return field ? `${field}: ${msg}` : msg;
+      return field && field !== "body" ? `${field}: ${msg}` : msg;
     });
-    return { message: detailMsgs.join(" | "), details };
+    return { message: detailMsgs.join(". "), details: details || (data.detail as any) };
   } else if (typeof data.detail === "string" && data.detail.trim().length > 0) {
-    return { message: data.detail, details };
+    return { message: sanitizeMessage(data.detail), details };
   }
 
-  // 3. data.message as Array (NestJS class-validator format)
+  // 3. OAuth2 error_description
+  if (typeof data.error_description === "string" && data.error_description.trim().length > 0) {
+    return { message: sanitizeMessage(data.error_description), details };
+  }
+
+  // 4. data.message as Array (NestJS class-validator format)
   if (Array.isArray(data.message) && data.message.length > 0) {
-    return { message: data.message.join(" | "), details };
+    return { message: data.message.join(". "), details };
   }
 
-  // 4. data.message as string
+  // 5. data.message as string
   if (typeof data.message === "string" && data.message.trim().length > 0) {
-    return { message: data.message, details };
+    return { message: sanitizeMessage(data.message), details };
   }
 
-  // 5. data.error as string
+  // 6. data.non_field_errors (Django format)
+  if (Array.isArray(data.non_field_errors) && data.non_field_errors.length > 0) {
+    return { message: data.non_field_errors.join(". "), details };
+  }
+
+  // 7. data.error as string
   if (typeof data.error === "string" && data.error.trim().length > 0) {
-    return { message: data.error, details };
+    return { message: sanitizeMessage(data.error), details };
   }
 
   return { message: fallbackMessage, details };
@@ -102,7 +124,7 @@ export function normalizeError(error: unknown): ApiError {
       let statusCode: number | "FETCH_ERROR" | "PARSING_ERROR" | "TIMEOUT_ERROR" | "CUSTOM_ERROR" = "CUSTOM_ERROR";
       let message = "";
       let code: string | undefined = undefined;
-      let details: Record<string, unknown> | undefined = undefined;
+      let details: Record<string, unknown> | Array<unknown> | undefined = undefined;
 
       if (typeof rawStatus === "number") {
         statusCode = rawStatus;
@@ -137,7 +159,7 @@ export function normalizeError(error: unknown): ApiError {
     if ("message" in errObj && typeof errObj.message === "string") {
       return {
         status: "CUSTOM_ERROR",
-        message: errObj.message,
+        message: sanitizeMessage(errObj.message),
       };
     }
   }
@@ -145,7 +167,7 @@ export function normalizeError(error: unknown): ApiError {
   if (typeof error === "string") {
     return {
       status: "CUSTOM_ERROR",
-      message: error,
+      message: sanitizeMessage(error),
     };
   }
 
@@ -154,3 +176,4 @@ export function normalizeError(error: unknown): ApiError {
     message: "An unexpected error occurred.",
   };
 }
+

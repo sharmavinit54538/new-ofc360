@@ -1,5 +1,5 @@
 import { baseApi } from "./baseApi";
-import { AuthUser } from "@/features/auth/authTypes";
+import { AuthUser, normalizeRole } from "@/features/auth/authTypes";
 import { RawEnvelope } from "./envelope";
 
 export interface LoginRequest {
@@ -14,28 +14,43 @@ export interface LoginResponse {
   refreshToken?: string;
 }
 
-
-interface RawLoginData {
+export interface RawLoginData {
   access_token: string;
   refresh_token?: string;
   expires_in?: number;
   token_type?: string;
-  user: AuthUser;
+  user?: AuthUser;
+  token?: string;
+  refreshToken?: string;
 }
 
-const unwrapLoginResponse = (raw: RawEnvelope<RawLoginData>): LoginResponse => {
-  const data = raw?.data || (raw as unknown as RawLoginData);
+export const unwrapLoginResponse = (raw: RawEnvelope<RawLoginData> | RawLoginData): LoginResponse => {
+  const data = (raw as RawEnvelope<RawLoginData>)?.data || (raw as RawLoginData);
   const u = data?.user;
   const computedName =
     u?.name?.trim() ||
     u?.full_name?.trim() ||
     (u?.first_name ? `${u.first_name} ${u.last_name || ""}`.trim() : "") ||
-    (u?.email ? u.email.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "");
-  const normalizedUser = u ? { ...u, name: computedName || u.name || "User" } : u;
+    (u?.email ? u.email.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "User");
+
+  const normalizedRole = normalizeRole(u?.role);
+  const normalizedUser: AuthUser = u
+    ? {
+        ...u,
+        name: computedName,
+        role: normalizedRole,
+      }
+    : {
+        id: "usr_me",
+        name: computedName,
+        email: "",
+        role: "employee",
+      };
+
   return {
     user: normalizedUser,
-    token: data.access_token || (data as any).token || "",
-    refreshToken: data.refresh_token || (data as any).refreshToken,
+    token: data?.access_token || data?.token || "",
+    refreshToken: data?.refresh_token || data?.refreshToken,
   };
 };
 
@@ -55,10 +70,25 @@ export interface ForgotPasswordRequest {
   email: string;
 }
 
+export interface VerifyResetOtpRequest {
+  email: string;
+  otp: string;
+}
+
 export interface ResetPasswordRequest {
   email: string;
   otp: string;
   newPassword?: string;
+  new_password?: string;
+  confirmPassword?: string;
+  confirm_password?: string;
+}
+
+export interface ChangePasswordRequest {
+  oldPassword?: string;
+  old_password?: string;
+  newPassword?: string;
+  new_password?: string;
 }
 
 export const authApi = baseApi.injectEndpoints({
@@ -69,7 +99,7 @@ export const authApi = baseApi.injectEndpoints({
         method: "POST",
         body: credentials,
       }),
-      transformResponse: (raw: RawEnvelope<RawLoginData>) => unwrapLoginResponse(raw),
+      transformResponse: (raw: RawEnvelope<RawLoginData> | RawLoginData) => unwrapLoginResponse(raw),
       invalidatesTags: ["Auth", "User"],
     }),
 
@@ -79,14 +109,26 @@ export const authApi = baseApi.injectEndpoints({
         method: "POST",
         body: data,
       }),
-      transformResponse: (raw: RawEnvelope<RawLoginData>) => unwrapLoginResponse(raw),
+      transformResponse: (raw: RawEnvelope<RawLoginData> | RawLoginData) => unwrapLoginResponse(raw),
       invalidatesTags: ["Auth"],
     }),
 
     getCurrentUser: builder.query<AuthUser, void>({
       query: () => "/api/v1/auth/me",
-      transformResponse: (raw: RawEnvelope<AuthUser>) =>
-        raw?.data || (raw as unknown as AuthUser),
+      transformResponse: (raw: RawEnvelope<AuthUser> | AuthUser) => {
+        const u = (raw as RawEnvelope<AuthUser>)?.data || (raw as AuthUser);
+        if (!u) return u;
+        const computedName =
+          u.name?.trim() ||
+          u.full_name?.trim() ||
+          (u.first_name ? `${u.first_name} ${u.last_name || ""}`.trim() : "") ||
+          (u.email ? u.email.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "User");
+        return {
+          ...u,
+          name: computedName,
+          role: normalizeRole(u.role),
+        };
+      },
       providesTags: ["Auth", "User"],
     }),
 
@@ -94,12 +136,18 @@ export const authApi = baseApi.injectEndpoints({
       query: (body) => ({
         url: "/api/v1/auth/refresh",
         method: "POST",
-        body,
+        body: {
+          refreshToken: body.refreshToken,
+          refresh_token: body.refreshToken,
+        },
       }),
-      transformResponse: (raw: RawEnvelope<RawLoginData>) => ({
-        token: raw.data ? raw.data.access_token : (raw as any).token || "",
-        refreshToken: raw.data ? raw.data.refresh_token : (raw as any).refreshToken,
-      }),
+      transformResponse: (raw: RawEnvelope<RawLoginData> | RawLoginData) => {
+        const data = (raw as RawEnvelope<RawLoginData>)?.data || (raw as RawLoginData);
+        return {
+          token: data?.access_token || data?.token || "",
+          refreshToken: data?.refresh_token || data?.refreshToken,
+        };
+      },
     }),
 
     verifyEmail: builder.mutation<{ success: boolean; message: string }, { email: string; otp: string }>({
@@ -107,6 +155,10 @@ export const authApi = baseApi.injectEndpoints({
         url: "/api/v1/auth/verify-email",
         method: "POST",
         body,
+      }),
+      transformResponse: (raw: any) => ({
+        success: raw?.success ?? true,
+        message: raw?.message || "Email verified successfully",
       }),
     }),
 
@@ -116,6 +168,10 @@ export const authApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
+      transformResponse: (raw: any) => ({
+        success: raw?.success ?? true,
+        message: raw?.message || "OTP resent successfully",
+      }),
     }),
 
     forgotPassword: builder.mutation<{ success: boolean; message: string }, ForgotPasswordRequest>({
@@ -124,13 +180,21 @@ export const authApi = baseApi.injectEndpoints({
         method: "POST",
         body,
       }),
+      transformResponse: (raw: any) => ({
+        success: raw?.success ?? true,
+        message: raw?.message || "Password reset OTP sent",
+      }),
     }),
 
-    verifyResetOtp: builder.mutation<{ success: boolean; message: string }, { email: string; otp: string }>({
+    verifyResetOtp: builder.mutation<{ success: boolean; message: string }, VerifyResetOtpRequest>({
       query: (body) => ({
         url: "/api/v1/auth/verify-reset-otp",
         method: "POST",
         body,
+      }),
+      transformResponse: (raw: any) => ({
+        success: raw?.success ?? true,
+        message: raw?.message || "OTP verified successfully",
       }),
     }),
 
@@ -138,15 +202,33 @@ export const authApi = baseApi.injectEndpoints({
       query: (body) => ({
         url: "/api/v1/auth/reset-password",
         method: "POST",
-        body,
+        body: {
+          email: body.email,
+          otp: body.otp,
+          new_password: body.new_password || body.newPassword,
+          newPassword: body.newPassword || body.new_password,
+        },
+      }),
+      transformResponse: (raw: any) => ({
+        success: raw?.success ?? true,
+        message: raw?.message || "Password reset successfully",
       }),
     }),
 
-    changePassword: builder.mutation<{ success: boolean; message: string }, { oldPassword?: string; newPassword?: string }>({
+    changePassword: builder.mutation<{ success: boolean; message: string }, ChangePasswordRequest>({
       query: (body) => ({
         url: "/api/v1/auth/change-password",
         method: "POST",
-        body,
+        body: {
+          old_password: body.old_password || body.oldPassword,
+          oldPassword: body.oldPassword || body.old_password,
+          new_password: body.new_password || body.newPassword,
+          newPassword: body.newPassword || body.new_password,
+        },
+      }),
+      transformResponse: (raw: any) => ({
+        success: raw?.success ?? true,
+        message: raw?.message || "Password changed successfully",
       }),
     }),
 
@@ -155,7 +237,7 @@ export const authApi = baseApi.injectEndpoints({
         url: "/api/v1/auth/logout",
         method: "POST",
       }),
-      transformResponse: (raw: RawEnvelope<null> | void) => {
+      transformResponse: (raw: RawEnvelope<null> | any) => {
         if (raw && typeof raw === "object" && "success" in raw) {
           return { success: raw.success, message: raw.message || "Logged out" };
         }
@@ -180,3 +262,4 @@ export const {
   useResetPasswordMutation,
   useChangePasswordMutation,
 } = authApi;
+

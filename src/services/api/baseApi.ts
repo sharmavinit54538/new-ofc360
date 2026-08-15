@@ -11,26 +11,77 @@ import { logout, setCredentials } from "@/features/auth/authSlice";
 
 const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://api.ofc360.com";
 
-const baseQuery = fetchBaseQuery({
+const isValidToken = (token: unknown): token is string => {
+  return (
+    typeof token === "string" &&
+    token.trim().length > 10 &&
+    token !== "undefined" &&
+    token !== "null" &&
+    token !== "[object Object]"
+  );
+};
+
+const PUBLIC_AUTH_ENDPOINTS = [
+  "login",
+  "register",
+  "forgotPassword",
+  "verifyResetOtp",
+  "resetPassword",
+  "verifyEmail",
+  "resendOtp",
+  "createAuthLogin",
+  "createAuthRegister",
+  "createAuthForgotPassword",
+  "createAuthResetPassword",
+  "createAuthVerifyEmail",
+  "createAuthResendOtp",
+];
+
+const PUBLIC_AUTH_URL_PATTERNS = [
+  "/auth/login",
+  "/auth/register",
+  "/auth/forgot-password",
+  "/auth/verify-reset-otp",
+  "/auth/reset-password",
+  "/auth/verify-email",
+  "/auth/resend-otp",
+];
+
+export const baseQuery = fetchBaseQuery({
   baseUrl: rawBaseUrl,
-  timeout: 5000,
+  timeout: 15000,
+  fetchFn: async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url = typeof input === "string" ? input : (input as any)?.url || String(input);
+    const headers = init?.headers || (typeof input === "object" && "headers" in input ? (input as any).headers : undefined);
+    const method = init?.method || (typeof input === "object" && "method" in input ? (input as any).method : "GET");
+    const body = init?.body;
+
+    return fetch(url, {
+      method,
+      headers,
+      body,
+    });
+  },
   prepareHeaders: (headers, { getState, endpoint }) => {
     const state = getState() as RootState;
-    const token = state.auth.token || localStorage.getItem("ofc360_access_token");
-    const companyId = state.auth.companyId || state.company?.activeCompany?.id;
+    const token = state?.auth?.token || localStorage.getItem("ofc360_access_token");
+    const companyId = state?.auth?.companyId || state?.company?.activeCompany?.id || localStorage.getItem("ofc360_company_id");
 
-    const publicEndpoints = ["login", "register", "forgotPassword", "verifyResetOtp", "resetPassword", "verifyEmail", "resendOtp"];
-    const isPublicAuthEndpoint = publicEndpoints.includes(endpoint || "");
+    const isPublicEndpoint = endpoint ? PUBLIC_AUTH_ENDPOINTS.includes(endpoint) : false;
 
-    if (token && !isPublicAuthEndpoint) {
-      headers.set("Authorization", `Bearer ${token}`);
+    if (isValidToken(token) && !isPublicEndpoint) {
+      headers.set("Authorization", `Bearer ${token.trim()}`);
     }
-    if (companyId && !isPublicAuthEndpoint) {
-      headers.set("X-Company-ID", companyId);
+
+    if (companyId && typeof companyId === "string" && companyId.trim() && !isPublicEndpoint) {
+      headers.set("X-Company-ID", companyId.trim());
     }
+
     return headers;
   },
 });
+
+
 
 // Mutex locking mechanism for concurrent 401 refresh requests
 let refreshPromise: Promise<boolean> | null = null;
@@ -40,26 +91,32 @@ export const baseQueryWithReauth: BaseQueryFn<
   unknown,
   FetchBaseQueryError
 > = async (args, api, extraOptions) => {
-  // Execute initial request
+  const requestUrl = typeof args === "string" ? args : args.url || "";
+  const isPublicAuthUrl = PUBLIC_AUTH_URL_PATTERNS.some((pattern) => requestUrl.includes(pattern));
+  const isRetry = Boolean((extraOptions as any)?.isRetry || (typeof args === "object" && (args as any)?._isRetry));
+
+  // Execute request
   let result = await baseQuery(args, api, extraOptions);
 
-  if (result.error && result.error.status === 401) {
-    const state = api.getState() as RootState;
-    const refreshToken = state.auth.refreshToken || localStorage.getItem("ofc360_refresh_token");
-
-    // Do not attempt refresh on auth endpoints (login/refresh) to prevent infinite loops
-    const requestUrl = typeof args === "string" ? args : args.url;
-    if (requestUrl.includes("/auth/login") || requestUrl.includes("/auth/refresh")) {
-      return result;
-    }
-
-    if (!refreshToken) {
+  // If 401 Unauthorized occurs on an authenticated endpoint and this is not already a retry
+  if (result.error && result.error.status === 401 && !isPublicAuthUrl && !isRetry) {
+    // If the failed endpoint was the refresh endpoint itself, immediately logout and stop
+    if (requestUrl.includes("/auth/refresh")) {
       api.dispatch(logout());
       api.dispatch(baseApi.util.resetApiState());
       return result;
     }
 
-    // Handle concurrent refresh calls with a single mutex promise
+    const state = api.getState() as RootState;
+    const refreshToken = state?.auth?.refreshToken || localStorage.getItem("ofc360_refresh_token");
+
+    if (!isValidToken(refreshToken)) {
+      api.dispatch(logout());
+      api.dispatch(baseApi.util.resetApiState());
+      return result;
+    }
+
+    // Handle concurrent 401 calls with a single-flight mutex promise
     if (!refreshPromise) {
       refreshPromise = (async () => {
         try {
@@ -67,10 +124,13 @@ export const baseQueryWithReauth: BaseQueryFn<
             {
               url: "/api/v1/auth/refresh",
               method: "POST",
-              body: { refreshToken },
+              body: {
+                refreshToken: refreshToken.trim(),
+                refresh_token: refreshToken.trim(),
+              },
             },
             api,
-            extraOptions
+            { isRetry: true }
           );
 
           if (refreshResult.data) {
@@ -79,22 +139,23 @@ export const baseQueryWithReauth: BaseQueryFn<
             const newToken = resData.access_token || resData.token;
             const newRefreshToken = resData.refresh_token || resData.refreshToken;
 
-            const currentUser = (api.getState() as RootState).auth.user;
-            if (currentUser && newToken) {
+            if (isValidToken(newToken)) {
+              const currentUser = (api.getState() as RootState)?.auth?.user;
               api.dispatch(
                 setCredentials({
                   user: resData.user || currentUser,
-                  token: newToken,
-                  refreshToken: newRefreshToken || refreshToken,
+                  token: newToken.trim(),
+                  refreshToken: isValidToken(newRefreshToken) ? newRefreshToken.trim() : refreshToken.trim(),
                 })
               );
+              return true;
             }
-            return true;
-          } else {
-            api.dispatch(logout());
-            api.dispatch(baseApi.util.resetApiState());
-            return false;
           }
+
+          // If refresh returned without a valid token, cleanly log out
+          api.dispatch(logout());
+          api.dispatch(baseApi.util.resetApiState());
+          return false;
         } catch {
           api.dispatch(logout());
           api.dispatch(baseApi.util.resetApiState());
@@ -108,8 +169,9 @@ export const baseQueryWithReauth: BaseQueryFn<
     const refreshSuccess = await refreshPromise;
 
     if (refreshSuccess) {
-      // Retry the original request ONCE with new access token
-      result = await baseQuery(args, api, extraOptions);
+      // Retry the original request exactly ONCE with the new access token
+      const retryArgs = typeof args === "string" ? { url: args, _isRetry: true } : { ...args, _isRetry: true };
+      result = await baseQuery(retryArgs, api, { ...extraOptions, isRetry: true });
     }
   }
 
@@ -122,3 +184,4 @@ export const baseApi = createApi({
   tagTypes: API_TAGS,
   endpoints: () => ({}),
 });
+

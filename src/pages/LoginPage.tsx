@@ -146,7 +146,7 @@ export default function LoginPage() {
 
       try {
         const res = await loginApi({
-          email: workEmail,
+          email: workEmail.trim(),
           password,
         }).unwrap();
 
@@ -161,13 +161,27 @@ export default function LoginPage() {
         toast.success(
           `Welcome back to OFC360! Signed in as ${roleLabels[activeRole] || activeRole}.`
         );
-        checkOnboardingAndNavigate(activeRole, res.user.id);
-      } catch (err) {
+
+        const fromPath = (location.state as any)?.from?.pathname;
+        if (fromPath && fromPath !== "/login" && fromPath !== "/register") {
+          navigate(fromPath, { replace: true });
+        } else {
+          checkOnboardingAndNavigate(activeRole, res.user.id);
+        }
+      } catch (err: any) {
         const norm = normalizeError(err);
-        toast.error(norm.message);
+        if (norm.status === 403 && (norm.message.toLowerCase().includes("verify") || norm.message.toLowerCase().includes("unverified"))) {
+          toast.error(`${norm.message} Redirecting to email verification...`);
+          setTimeout(() => {
+            navigate(`/verify-email?email=${encodeURIComponent(workEmail.trim())}`);
+          }, 1200);
+        } else {
+          toast.error(norm.message);
+        }
       }
     }
   };
+
 
   const isLoading = isLoggingIn || isRegistering;
 
