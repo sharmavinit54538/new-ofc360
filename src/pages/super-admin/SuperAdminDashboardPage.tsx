@@ -41,12 +41,11 @@ import {
 import { useSuperAdminStore } from "@/stores/superAdminStore";
 
 const CHART_COLORS = [
-  "hsl(174, 72%, 40%)",
-  "hsl(262, 60%, 55%)",
-  "hsl(38, 92%, 50%)",
-  "hsl(210, 80%, 55%)",
-  "hsl(152, 60%, 42%)",
-  "hsl(340, 72%, 55%)",
+  "#6366F1", // Indigo (Brand Primary)
+  "#8B5CF6", // Violet (Brand Secondary)
+  "#06B6D4", // Cyan (AI Accent)
+  "#22C55E", // Emerald (Success)
+  "#F59E0B", // Amber (Warning)
 ];
 
 const customTooltipStyle = {

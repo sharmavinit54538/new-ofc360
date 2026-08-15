@@ -103,7 +103,7 @@ export function TopNav({ onMenuClick }: TopNavProps) {
   }, [dark]);
 
   return (
-    <header className="h-16 border-b border-border bg-card/60 backdrop-blur-lg flex items-center justify-between px-4 md:px-6 shrink-0 gap-3">
+    <header className="h-16 border-b border-border/60 bg-sidebar/90 backdrop-blur-md flex items-center justify-between px-4 md:px-6 shrink-0 gap-3">
       {/* Left Search / Mobile Menu / Back Button */}
       <div className="flex items-center gap-2.5 flex-1 min-w-0">
         {onMenuClick && (
@@ -118,7 +118,7 @@ export function TopNav({ onMenuClick }: TopNavProps) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search workforce, employees, candidates..."
-            className="pl-9 bg-secondary/50 border-0 focus-visible:ring-1 text-xs h-9 rounded-lg"
+            className="pl-9 bg-secondary/40 border border-border/50 focus-visible:border-primary text-xs h-9 rounded-lg"
           />
         </div>
       </div>

@@ -211,10 +211,10 @@ export default function UserGrowthPage() {
                   <XAxis dataKey="category" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} />
                   <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} />
                   <Tooltip contentStyle={customTooltipStyle} />
-                  <Bar dataKey="employee" name="Employees" fill="hsl(var(--primary))" />
-                  <Bar dataKey="manager" name="Managers" fill="hsl(262, 60%, 55%)" />
-                  <Bar dataKey="hr_admin" name="HR Admins" fill="hsl(38, 92%, 50%)" />
-                  <Bar dataKey="executive" name="Executives" fill="hsl(210, 80%, 55%)" />
+                  <Bar dataKey="employee" name="Employees" fill="#6366F1" />
+                  <Bar dataKey="manager" name="Managers" fill="#8B5CF6" />
+                  <Bar dataKey="hr_admin" name="HR Admins" fill="#06B6D4" />
+                  <Bar dataKey="executive" name="Executives" fill="#22C55E" />
                 </BarChart>
               </ResponsiveContainer>
             )}

@@ -101,18 +101,18 @@ export function FloatingAIAssistant() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.96 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
-            className="fixed bottom-20 left-4 sm:bottom-24 sm:left-6 w-[calc(100vw-2rem)] sm:w-[380px] md:w-[400px] h-[520px] max-h-[82vh] rounded-2xl bg-card border border-border/70 shadow-2xl z-40 flex flex-col overflow-hidden backdrop-blur-xl"
+            className="fixed bottom-20 left-4 sm:bottom-24 sm:left-6 w-[calc(100vw-2rem)] sm:w-[380px] md:w-[400px] h-[520px] max-h-[82vh] rounded-2xl bg-popover border border-border/70 shadow-2xl z-40 flex flex-col overflow-hidden backdrop-blur-xl"
           >
             {/* Header */}
-            <div className="p-4 border-b border-border/50 bg-gradient-to-r from-primary/15 via-card to-accent/10 flex items-center justify-between">
+            <div className="p-4 border-b border-border/50 bg-gradient-to-r from-primary/15 via-popover to-ai/10 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl gradient-bg flex items-center justify-center text-primary-foreground shadow-sm">
+                <div className="w-9 h-9 rounded-xl bg-gradient-brand flex items-center justify-center text-brand-foreground shadow-sm">
                   <Sparkles className="w-4 h-4" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <h3 className="font-bold text-sm text-foreground">OFC360 AI Assistant</h3>
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="w-2 h-2 rounded-full bg-ai animate-pulse shadow-glow-ai" />
                   </div>
                   <p className="text-[11px] text-muted-foreground">Workforce Intelligence & RAG Copilot</p>
                 </div>
@@ -122,7 +122,7 @@ export function FloatingAIAssistant() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setOpen(false)}
-                className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary"
+                className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/60"
                 aria-label="Close OFC360 AI Assistant"
               >
                 <X className="w-4 h-4" />
@@ -135,7 +135,7 @@ export function FloatingAIAssistant() {
                 <button
                   key={prompt}
                   onClick={() => handleSend(prompt)}
-                  className="whitespace-nowrap px-2.5 py-1 rounded-full text-[11px] bg-card hover:bg-primary/10 hover:text-primary border border-border/60 text-muted-foreground transition-colors shrink-0 font-medium"
+                  className="whitespace-nowrap px-2.5 py-1 rounded-full text-[11px] bg-secondary/60 hover:bg-primary/15 hover:text-primary border border-border/60 text-muted-foreground transition-colors shrink-0 font-medium cursor-pointer"
                 >
                   {prompt}
                 </button>
@@ -150,7 +150,7 @@ export function FloatingAIAssistant() {
                   className={`flex gap-2.5 ${m.role === "user" ? "justify-end" : "justify-start"}`}
                 >
                   {m.role === "assistant" && (
-                    <div className="w-7 h-7 rounded-lg gradient-bg flex items-center justify-center text-primary-foreground shrink-0 mt-0.5 shadow-xs">
+                    <div className="w-7 h-7 rounded-lg bg-gradient-brand flex items-center justify-center text-brand-foreground shrink-0 mt-0.5 shadow-xs">
                       <Bot className="w-3.5 h-3.5" />
                     </div>
                   )}
@@ -159,8 +159,8 @@ export function FloatingAIAssistant() {
                     <div
                       className={`text-xs leading-relaxed px-3.5 py-2.5 rounded-2xl shadow-xs ${
                         m.role === "user"
-                          ? "gradient-bg text-primary-foreground font-medium rounded-br-xs"
-                          : "bg-secondary/70 text-foreground border border-border/40 rounded-bl-xs"
+                          ? "bg-gradient-brand text-brand-foreground font-medium rounded-br-xs"
+                          : "bg-secondary/80 text-foreground border border-border/50 rounded-bl-xs"
                       }`}
                     >
                       {m.text}

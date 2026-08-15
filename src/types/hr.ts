@@ -260,11 +260,11 @@ export interface PayrollRow {
 }
 
 export const stageColor: Record<string, string> = {
-  Applied: "bg-muted text-muted-foreground",
-  Screening: "bg-blue-500/10 text-blue-500 border-blue-500/20",
-  Interview: "bg-primary/10 text-primary border-primary/20",
-  Offer: "bg-amber-500/10 text-amber-500 border-amber-500/20",
-  Hired: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+  Applied: "bg-info/10 text-info border-info/20",
+  Screening: "bg-primary/10 text-primary border-primary/20",
+  Interview: "bg-accent/10 text-accent border-accent/20",
+  Offer: "bg-warning/10 text-warning border-warning/20",
+  Hired: "bg-success/10 text-success border-success/20",
   Rejected: "bg-destructive/10 text-destructive border-destructive/20",
 };
 

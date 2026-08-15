@@ -71,6 +71,33 @@ export default {
           DEFAULT: "hsl(var(--info))",
           foreground: "hsl(var(--info-foreground))",
         },
+        brand: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
+          secondary: "hsl(var(--accent))",
+          ai: "hsl(var(--ai-accent))",
+        },
+        ai: {
+          DEFAULT: "hsl(var(--ai-accent))",
+          foreground: "hsl(var(--ai-accent-foreground))",
+        },
+        chart: {
+          1: "hsl(var(--chart-1))",
+          2: "hsl(var(--chart-2))",
+          3: "hsl(var(--chart-3))",
+          4: "hsl(var(--chart-4))",
+          5: "hsl(var(--chart-5))",
+        },
+      },
+      boxShadow: {
+        glow: "0 0 25px rgba(99, 102, 241, 0.22)",
+        "glow-lg": "0 8px 25px rgba(99, 102, 241, 0.25)",
+        "glow-ai": "0 0 25px rgba(6, 182, 212, 0.22)",
+      },
+      backgroundImage: {
+        "gradient-brand": "var(--gradient-brand)",
+        "gradient-ai": "var(--gradient-ai)",
+        "gradient-ai-subtle": "linear-gradient(135deg, rgba(99, 102, 241, 0.10) 0%, rgba(6, 182, 212, 0.06) 100%)",
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -69,8 +69,8 @@ export default function AIPredictivePage() {
               <XAxis dataKey="q" stroke="hsl(var(--muted-foreground))" fontSize={12} />
               <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
               <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
-              <Line type="monotone" dataKey="actual" stroke="hsl(174,72%,40%)" strokeWidth={2} />
-              <Line type="monotone" dataKey="predicted" stroke="hsl(262,60%,55%)" strokeDasharray="5 5" strokeWidth={2} />
+              <Line type="monotone" dataKey="actual" stroke="#6366F1" strokeWidth={2} />
+              <Line type="monotone" dataKey="predicted" stroke="#8B5CF6" strokeDasharray="5 5" strokeWidth={2} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -85,8 +85,8 @@ export default function AIPredictivePage() {
               <XAxis dataKey="role" stroke="hsl(var(--muted-foreground))" fontSize={12} />
               <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
               <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
-              <Bar dataKey="current" fill="hsl(174,72%,40%)" radius={[4,4,0,0]} />
-              <Bar dataKey="predicted" fill="hsl(262,60%,55%)" radius={[4,4,0,0]} />
+              <Bar dataKey="current" fill="#6366F1" radius={[4,4,0,0]} />
+              <Bar dataKey="predicted" fill="#8B5CF6" radius={[4,4,0,0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

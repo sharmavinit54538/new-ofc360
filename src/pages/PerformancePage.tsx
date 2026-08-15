@@ -52,7 +52,7 @@ export default function PerformancePage() {
             <RadarChart data={radarData}>
               <PolarGrid stroke="hsl(var(--border))" />
               <PolarAngleAxis dataKey="skill" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-              <Radar dataKey="score" stroke="hsl(174,72%,40%)" fill="hsl(174,72%,40%)" fillOpacity={0.2} strokeWidth={2} />
+              <Radar dataKey="score" stroke="#6366F1" fill="#6366F1" fillOpacity={0.25} strokeWidth={2} />
             </RadarChart>
           </ResponsiveContainer>
         </div>
@@ -66,7 +66,7 @@ export default function PerformancePage() {
               <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
               <YAxis domain={[7, 9]} stroke="hsl(var(--muted-foreground))" fontSize={12} />
               <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
-              <Line type="monotone" dataKey="score" stroke="hsl(262,60%,55%)" strokeWidth={2} dot={{ fill: "hsl(262,60%,55%)" }} />
+              <Line type="monotone" dataKey="score" stroke="#8B5CF6" strokeWidth={2} dot={{ fill: "#8B5CF6" }} />
             </LineChart>
           </ResponsiveContainer>
         </div>

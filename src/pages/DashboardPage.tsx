@@ -59,12 +59,11 @@ import ITAdminDashboardPage from "./dashboards/ITAdminDashboardPage";
 import SuperAdminDashboardPage from "./super-admin/SuperAdminDashboardPage";
 
 const COLORS = [
-  "hsl(174,72%,40%)",
-  "hsl(262,60%,55%)",
-  "hsl(38,92%,50%)",
-  "hsl(210,80%,55%)",
-  "hsl(152,60%,42%)",
-  "hsl(340,72%,55%)",
+  "#6366F1", // Indigo (Brand Primary)
+  "#8B5CF6", // Violet (Brand Secondary)
+  "#06B6D4", // Cyan (AI Accent)
+  "#22C55E", // Emerald (Success)
+  "#F59E0B", // Amber (Warning)
 ];
 const tooltip = {
   background: "hsl(var(--card))",
@@ -335,7 +334,7 @@ export default function DashboardPage() {
                 <Tooltip contentStyle={tooltip} />
                 <Bar
                   dataKey="count"
-                  fill="hsl(174,72%,40%)"
+                  fill="#6366F1"
                   radius={[6, 6, 0, 0]}
                   name="Candidates"
                 />
@@ -449,12 +448,12 @@ export default function DashboardPage() {
                   <linearGradient id="pg" x1="0" y1="0" x2="0" y2="1">
                     <stop
                       offset="0%"
-                      stopColor="hsl(262,60%,55%)"
+                      stopColor="#6366F1"
                       stopOpacity={0.4}
                     />
                     <stop
                       offset="100%"
-                      stopColor="hsl(262,60%,55%)"
+                      stopColor="#6366F1"
                       stopOpacity={0}
                     />
                   </linearGradient>
@@ -473,7 +472,7 @@ export default function DashboardPage() {
                 <Area
                   type="monotone"
                   dataKey="v"
-                  stroke="hsl(262,60%,55%)"
+                  stroke="#6366F1"
                   fill="url(#pg)"
                   strokeWidth={2}
                 />

@@ -6,84 +6,130 @@
 
 @layer base {
   :root {
-    --background: 220 20% 97%;
-    --foreground: 220 25% 10%;
+    /* Brand Tokens */
+    --brand-primary: #6366F1;
+    --brand-secondary: #8B5CF6;
+    --brand-ai: #0891B2;
+    --brand-ai-secondary: #06B6D4;
+    --gradient-brand: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+    --gradient-ai: linear-gradient(135deg, #6366F1 0%, #0891B2 100%);
+    --brand-glow: rgba(99, 102, 241, 0.16);
+    --shadow-glow: 0 8px 25px rgba(99, 102, 241, 0.16);
+
+    /* Light Theme (Companion Theme) */
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 220 25% 10%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 10%;
-    --primary: 174 72% 40%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 239 84% 67%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 15% 93%;
-    --secondary-foreground: 220 25% 10%;
-    --muted: 220 15% 93%;
-    --muted-foreground: 220 10% 46%;
-    --accent: 262 60% 55%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 215 25% 27%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 258 90% 66%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 72% 55%;
+    --ai-accent: 192 91% 36%;
+    --ai-accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 15% 90%;
-    --input: 220 15% 90%;
-    --ring: 174 72% 40%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 239 84% 67%;
     --radius: 0.75rem;
-    --sidebar-background: 220 20% 98%;
-    --sidebar-foreground: 220 15% 30%;
-    --sidebar-primary: 174 72% 40%;
+
+    /* Sidebar - Light */
+    --sidebar-background: 210 40% 98%;
+    --sidebar-foreground: 215 25% 27%;
+    --sidebar-primary: 239 84% 67%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 174 72% 95%;
-    --sidebar-accent-foreground: 174 72% 25%;
-    --sidebar-border: 220 15% 92%;
-    --sidebar-ring: 174 72% 40%;
-    --glass: 0 0% 100% / 0.7;
-    --glass-border: 0 0% 100% / 0.2;
+    --sidebar-accent: 239 84% 96%;
+    --sidebar-accent-foreground: 239 84% 45%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 239 84% 67%;
+
+    /* Glass & Status */
+    --glass: 0 0% 100% / 0.85;
+    --glass-border: 214 32% 91% / 0.8;
     --glass-shadow: 220 25% 10% / 0.05;
-    --gradient-primary: 174 72% 40%;
-    --gradient-accent: 262 60% 55%;
-    --success: 152 60% 42%;
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    --info: 210 80% 55%;
+    --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
+
+    /* Charts Palette */
+    --chart-1: 239 84% 67%;
+    --chart-2: 258 90% 66%;
+    --chart-3: 192 91% 36%;
+    --chart-4: 142 71% 45%;
+    --chart-5: 38 92% 50%;
   }
 
   .dark {
-    --background: 225 25% 8%;
-    --foreground: 210 20% 92%;
-    --card: 225 22% 12%;
-    --card-foreground: 210 20% 92%;
-    --popover: 225 22% 12%;
-    --popover-foreground: 210 20% 92%;
-    --primary: 174 72% 45%;
-    --primary-foreground: 225 25% 8%;
-    --secondary: 225 18% 18%;
-    --secondary-foreground: 210 20% 92%;
-    --muted: 225 18% 18%;
-    --muted-foreground: 220 10% 55%;
-    --accent: 262 60% 60%;
+    /* Brand Tokens */
+    --brand-primary: #6366F1;
+    --brand-secondary: #8B5CF6;
+    --brand-ai: #06B6D4;
+    --brand-ai-secondary: #22D3EE;
+    --gradient-brand: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+    --gradient-ai: linear-gradient(135deg, #6366F1 0%, #06B6D4 100%);
+    --brand-glow: rgba(99, 102, 241, 0.22);
+    --shadow-glow: 0 0 25px rgba(99, 102, 241, 0.22);
+
+    /* Dark Theme (Primary Identity - Deep Navy #080D1A) */
+    --background: 223 53% 7%;
+    --foreground: 210 40% 98%;
+    --secondary: 222 47% 10%;
+    --secondary-foreground: 213 27% 84%;
+    --card: 219 43% 12%;
+    --card-foreground: 210 40% 98%;
+    --popover: 219 40% 14%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
+    --accent: 258 90% 66%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 72% 50%;
+    --ai-accent: 189 94% 43%;
+    --ai-accent-foreground: 0 0% 100%;
+    --muted: 222 47% 10%;
+    --muted-foreground: 215 16% 65%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 225 18% 18%;
-    --input: 225 18% 18%;
-    --ring: 174 72% 45%;
-    --sidebar-background: 225 25% 10%;
-    --sidebar-foreground: 210 15% 70%;
-    --sidebar-primary: 174 72% 45%;
-    --sidebar-primary-foreground: 225 25% 8%;
-    --sidebar-accent: 174 72% 15%;
-    --sidebar-accent-foreground: 174 72% 70%;
-    --sidebar-border: 225 18% 16%;
-    --sidebar-ring: 174 72% 45%;
-    --glass: 225 25% 12% / 0.8;
-    --glass-border: 225 25% 20% / 0.3;
-    --glass-shadow: 0 0% 0% / 0.3;
-    --success: 152 60% 45%;
+    --border: 215 16% 65% / 0.14;
+    --input: 220 49% 10%;
+    --ring: 239 84% 67%;
+
+    /* Sidebar - Dark (#0B1220) */
+    --sidebar-background: 220 49% 8%;
+    --sidebar-foreground: 215 16% 65%;
+    --sidebar-primary: 239 84% 67%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 239 84% 67% / 0.12;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 215 16% 65% / 0.14;
+    --sidebar-ring: 239 84% 67%;
+
+    /* Glass & Status */
+    --glass: 219 43% 12% / 0.72;
+    --glass-border: 215 16% 65% / 0.12;
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    --info: 210 80% 55%;
+    --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
+
+    /* Charts Palette */
+    --chart-1: 239 84% 67%;
+    --chart-2: 258 90% 66%;
+    --chart-3: 189 94% 43%;
+    --chart-4: 142 71% 45%;
+    --chart-5: 38 92% 50%;
   }
 }
 
@@ -98,22 +144,57 @@
 }
 
 @layer components {
+  /* Brand Gradients & Effects */
+  .bg-gradient-brand {
+    background-image: var(--gradient-brand);
+  }
+  .bg-gradient-ai {
+    background-image: var(--gradient-ai);
+  }
+  .text-brand-foreground {
+    color: #ffffff;
+  }
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+  .shadow-glow-ai {
+    box-shadow: 0 0 25px rgba(6, 182, 212, 0.22);
+  }
+
+  /* Glassmorphism Surfaces */
   .glass-card {
-    @apply bg-card/70 backdrop-blur-xl border border-border/50 shadow-lg;
+    @apply bg-card/75 backdrop-blur-xl border border-border/60 shadow-lg;
   }
   .glass-card-hover {
-    @apply glass-card transition-all duration-300 hover:shadow-xl hover:border-primary/20 hover:-translate-y-0.5;
+    @apply glass-card transition-all duration-300 hover:shadow-xl hover:border-primary/30 hover:-translate-y-0.5;
   }
+
+  /* AI Intelligence Surfaces */
+  .ai-card {
+    background-image: linear-gradient(135deg, rgba(99, 102, 241, 0.10) 0%, rgba(6, 182, 212, 0.06) 100%);
+    border: 1px solid rgba(99, 102, 241, 0.20);
+    @apply rounded-xl backdrop-blur-md;
+  }
+  .ai-card-hover {
+    @apply ai-card transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)];
+  }
+
+  /* Typography & Utilities */
   .gradient-text {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-brand);
+  }
+  .gradient-text-ai {
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-ai);
   }
   .gradient-bg {
-    @apply bg-gradient-to-br from-primary to-accent;
+    background-image: var(--gradient-brand);
   }
   .gradient-border {
     @apply border border-transparent bg-clip-padding;
     background-image: linear-gradient(hsl(var(--card)), hsl(var(--card))), 
-                      linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+                      var(--gradient-brand);
     background-origin: border-box;
     background-clip: padding-box, border-box;
   }
@@ -121,7 +202,7 @@
     @apply glass-card rounded-xl p-5 space-y-2;
   }
   .page-header {
-    @apply text-2xl font-bold tracking-tight;
+    @apply text-2xl font-bold tracking-tight text-foreground;
   }
   .page-subheader {
     @apply text-muted-foreground text-sm;

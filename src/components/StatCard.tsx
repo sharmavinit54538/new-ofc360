@@ -22,7 +22,7 @@ export function StatCard({ title, value, change, changeType = "neutral", icon: I
           <p className="text-sm text-muted-foreground">{title}</p>
           <p className="text-2xl font-bold mt-1">{value}</p>
         </div>
-        <div className={`p-2.5 rounded-lg ${iconColor || "bg-primary/10"}`}>
+        <div className={`p-2.5 rounded-xl ${iconColor || "bg-primary/10 border border-primary/20"}`}>
           <Icon className={`w-5 h-5 ${iconColor ? "text-primary-foreground" : "text-primary"}`} />
         </div>
       </div>

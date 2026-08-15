@@ -95,7 +95,7 @@ export default function AICCTVPage() {
             <div className="grid grid-cols-12 gap-1">
               {Array.from({ length: 84 }).map((_, i) => {
                 const intensity = Math.random();
-                return <div key={i} className="aspect-square rounded-sm" style={{ background: `hsl(174 72% ${85 - intensity * 50}%)` }} />;
+                return <div key={i} className="aspect-square rounded-xs" style={{ background: `rgba(99, 102, 241, ${0.15 + intensity * 0.75})` }} />;
               })}
             </div>
           </div>
