@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import { useMemo } from "react";
 import { useConnect } from "@/features/connect/hooks";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import {
@@ -43,9 +44,11 @@ export function ConnectHeader() {
   const { data: meetings = [] } = useGetMeetingsQuery();
   const { data: sharedFiles = [] } = useGetFilesQuery();
 
-  const unreadMessagesCount = conversations.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
+  // ⚡ Bolt Performance Optimization: Memoize O(N) operations to prevent re-calculations during unrelated Redux state updates (like masterVolume changing)
+  const unreadMessagesCount = useMemo(() => conversations.reduce((acc, c) => acc + (c.unreadCount || 0), 0), [conversations]);
+  const activeChannelsCount = useMemo(() => channels.filter((c) => !c.isArchived).length, [channels]);
 
-  const tabs = [
+  const tabs = useMemo(() => [
     {
       id: "chat",
       label: "Chat",
@@ -58,7 +61,7 @@ export function ConnectHeader() {
       label: "Channels",
       icon: Hash,
       path: "/connect/channels",
-      count: channels.filter((c) => !c.isArchived).length,
+      count: activeChannelsCount,
     },
     { id: "calls", label: "Calls", icon: PhoneCall, path: "/connect/calls" },
     {
@@ -76,7 +79,7 @@ export function ConnectHeader() {
       count: sharedFiles.length > 0 ? sharedFiles.length : undefined,
     },
     { id: "contacts", label: "Contacts", icon: Users, path: "/connect/contacts" },
-  ];
+  ], [unreadMessagesCount, activeChannelsCount, meetings.length, sharedFiles.length]);
 
   return (
     <div className="h-16 px-4 md:px-6 border-b border-border/70 bg-card/60 backdrop-blur-md flex items-center justify-between gap-3 shrink-0 select-none">

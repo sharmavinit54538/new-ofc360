@@ -1,4 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
+import { useMemo } from "react";
 import { useConnectStore } from "@/stores/connectStore";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,9 +34,11 @@ export function ConnectSidebar({ className = "" }: ConnectSidebarProps) {
   const setIsNewChannelOpen = useConnectStore((s) => s.setIsNewChannelOpen);
   const setIsNewMeetingOpen = useConnectStore((s) => s.setIsNewMeetingOpen);
 
-  const unreadMessagesCount = conversations.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
+  // ⚡ Bolt Performance Optimization: Memoize O(N) operations to prevent re-calculations during unrelated state updates
+  const unreadMessagesCount = useMemo(() => conversations.reduce((acc, c) => acc + (c.unreadCount || 0), 0), [conversations]);
+  const activeChannelsCount = useMemo(() => channels.filter((c) => !c.isArchived).length, [channels]);
 
-  const NAV_ITEMS = [
+  const NAV_ITEMS = useMemo(() => [
     {
       id: "chat",
       label: "Chat",
@@ -48,7 +51,7 @@ export function ConnectSidebar({ className = "" }: ConnectSidebarProps) {
       label: "Channels",
       icon: Hash,
       path: "/connect/channels",
-      count: channels.filter((c) => !c.isArchived).length,
+      count: activeChannelsCount,
     },
     {
       id: "calls",
@@ -76,7 +79,7 @@ export function ConnectSidebar({ className = "" }: ConnectSidebarProps) {
       icon: Users,
       path: "/connect/contacts",
     },
-  ];
+  ], [unreadMessagesCount, activeChannelsCount, meetings.length, sharedFiles.length]);
 
   return (
     <div
