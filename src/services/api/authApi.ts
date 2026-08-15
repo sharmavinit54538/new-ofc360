@@ -59,7 +59,7 @@ export interface RegisterRequest {
   last_name?: string;
   name?: string;
   full_name?: string;
-  email: string;
+  identifier: string;
   phone?: string;
   password?: string;
   company_name?: string;
@@ -67,16 +67,16 @@ export interface RegisterRequest {
 }
 
 export interface ForgotPasswordRequest {
-  email: string;
+  identifier: string;
 }
 
 export interface VerifyResetOtpRequest {
-  email: string;
+  identifier: string;
   otp: string;
 }
 
 export interface ResetPasswordRequest {
-  email: string;
+  identifier: string;
   otp: string;
   newPassword?: string;
   new_password?: string;
@@ -150,7 +150,7 @@ export const authApi = baseApi.injectEndpoints({
       },
     }),
 
-    verifyEmail: builder.mutation<{ success: boolean; message: string }, { email: string; otp: string }>({
+    verifyEmail: builder.mutation<{ success: boolean; message: string }, { identifier: string; otp: string }>({
       query: (body) => ({
         url: "/api/v1/auth/verify-email",
         method: "POST",
@@ -162,7 +162,7 @@ export const authApi = baseApi.injectEndpoints({
       }),
     }),
 
-    resendOtp: builder.mutation<{ success: boolean; message: string }, { email: string }>({
+    resendOtp: builder.mutation<{ success: boolean; message: string }, { identifier: string }>({
       query: (body) => ({
         url: "/api/v1/auth/resend-otp",
         method: "POST",

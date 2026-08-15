@@ -70,7 +70,7 @@ export default function ForgotPasswordPage() {
     }
 
     try {
-      await forgotPassword({ email }).unwrap();
+      await forgotPassword({ identifier: email }).unwrap();
       toast.success(`6-digit reset code sent to ${email}`);
       setStep(2);
       setResendTimer(60);
@@ -123,7 +123,7 @@ export default function ForgotPasswordPage() {
     }
 
     try {
-      await verifyResetOtp({ email, otp: enteredOtp }).unwrap();
+      await verifyResetOtp({ identifier: email, otp: enteredOtp }).unwrap();
       toast.success("Reset code verified successfully!");
       setStep(3);
     } catch (err) {
@@ -135,7 +135,7 @@ export default function ForgotPasswordPage() {
   const handleResendCode = async () => {
     if (!canResend || isResendingOtp) return;
     try {
-      await resendOtp({ email }).unwrap();
+      await resendOtp({ identifier: email }).unwrap();
       setOtp(["", "", "", "", "", ""]);
       setResendTimer(60);
       setCanResend(false);
@@ -160,7 +160,7 @@ export default function ForgotPasswordPage() {
 
     try {
       await resetPassword({
-        email,
+        identifier: email,
         otp: otp.join(""),
         newPassword,
       }).unwrap();

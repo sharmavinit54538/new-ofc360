@@ -116,7 +116,7 @@ export default function LoginPage() {
           last_name,
           name: fullName.trim(),
           full_name: fullName.trim(),
-          email: workEmail.trim(),
+          identifier: workEmail.trim(),
           phone: cleanPhone,
           password,
           company_name: companyName.trim(),
