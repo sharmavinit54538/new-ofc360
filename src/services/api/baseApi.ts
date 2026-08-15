@@ -51,16 +51,10 @@ export const baseQuery = fetchBaseQuery({
   baseUrl: rawBaseUrl,
   timeout: 15000,
   fetchFn: async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url = typeof input === "string" ? input : (input as any)?.url || String(input);
-    const headers = init?.headers || (typeof input === "object" && "headers" in input ? (input as any).headers : undefined);
-    const method = init?.method || (typeof input === "object" && "method" in input ? (input as any).method : "GET");
-    const body = init?.body;
-
-    return fetch(url, {
-      method,
-      headers,
-      body,
-    });
+    if (input instanceof Request) {
+      return fetch(input);
+    }
+    return fetch(input, init);
   },
   prepareHeaders: (headers, { getState, endpoint }) => {
     const state = getState() as RootState;
