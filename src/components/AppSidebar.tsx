@@ -6,7 +6,7 @@ import {
   FileText, Monitor, UserMinus, BrainCircuit, Building2, ShieldCheck,
   Heart, BarChart3, PieChart, TrendingUp, Lightbulb, Target, PanelLeft,
   Boxes, Settings, Globe, Award, Key, Zap, FileCode2, Server, Cpu, Lock,
-  Activity, ShieldAlert, MessageSquare
+  Activity, ShieldAlert, MessageSquare, Sparkles
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { SystemRole } from "@/features/auth/authTypes";

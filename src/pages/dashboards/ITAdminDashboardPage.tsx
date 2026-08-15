@@ -231,7 +231,7 @@ export default function ITAdminDashboardPage() {
             <div className="space-y-2 text-xs">
               <Label className="text-xs font-semibold">Active System Integration Key</Label>
               <div className="flex items-center gap-2">
-                <Input readOnly value={apiKey} className="h-9 font-mono text-xs bg-muted/40" />
+                <Input readOnly value={apiKey} className="h-9 font-mono text-xs bg-muted/40 cursor-text select-all hover:bg-muted/70 transition-colors duration-250" />
               </div>
               <p className="text-[11px] text-muted-foreground">
                 Rate Limit: 10,000 req/min. Enforces TLS 1.3 encryption.

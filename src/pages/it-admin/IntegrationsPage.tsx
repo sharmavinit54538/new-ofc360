@@ -70,7 +70,12 @@ export default function IntegrationsPage() {
                   <h4 className="font-bold text-xs text-foreground">{item.name}</h4>
                   <Badge variant="outline" className="text-[10px]">{item.category}</Badge>
                 </div>
-                <p className="text-[11px] font-mono text-muted-foreground">API Secret Key: {item.maskedKey}</p>
+                <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 flex-wrap">
+                  <span>API Secret Key:</span>
+                  <span className="font-mono text-muted-foreground/90 hover:text-foreground transition-colors duration-250 select-all cursor-text px-1.5 py-0.5 rounded bg-muted/40 hover:bg-muted/70">
+                    {item.maskedKey}
+                  </span>
+                </p>
               </div>
 
               <div className="flex items-center gap-2">

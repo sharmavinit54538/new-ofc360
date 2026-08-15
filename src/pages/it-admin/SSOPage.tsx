@@ -83,12 +83,12 @@ export default function SSOPage() {
 
           <div className="space-y-1">
             <Label className="text-xs font-bold">Certificate Thumbprint (SHA-256)</Label>
-            <Input value="••••••••••••SHA256_CERT_THUMBPRINT" disabled className="text-xs bg-muted/60 h-9 font-mono text-muted-foreground select-none" />
+            <Input value="••••••••••••SHA256_CERT_THUMBPRINT" disabled className="text-xs bg-muted/60 h-9 font-mono text-muted-foreground select-none hover:bg-muted/80 hover:text-foreground/90 transition-colors duration-250" />
           </div>
 
           <div className="space-y-1">
             <Label className="text-xs font-bold">SAML Signing Key Secret</Label>
-            <Input type="password" value="••••••••••••ENCRYPTED_SECRET" disabled className="text-xs bg-muted/60 h-9 font-mono select-none" />
+            <Input type="password" value="••••••••••••ENCRYPTED_SECRET" disabled className="text-xs bg-muted/60 h-9 font-mono select-none hover:bg-muted/80 transition-colors duration-250" />
             <p className="text-[10px] text-muted-foreground mt-0.5">Secrets and private keys are masked and encrypted at rest.</p>
           </div>
 

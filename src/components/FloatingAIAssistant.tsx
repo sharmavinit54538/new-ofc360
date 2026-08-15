@@ -157,10 +157,10 @@ export function FloatingAIAssistant() {
 
                   <div className="space-y-1 max-w-[82%]">
                     <div
-                      className={`text-xs leading-relaxed px-3.5 py-2.5 rounded-2xl shadow-xs ${
+                      className={`text-xs leading-relaxed px-3.5 py-2.5 rounded-2xl shadow-xs transition-all duration-250 ease-in-out cursor-default select-text ${
                         m.role === "user"
-                          ? "bg-gradient-brand text-brand-foreground font-medium rounded-br-xs"
-                          : "bg-secondary/80 text-foreground border border-border/50 rounded-bl-xs"
+                          ? "bg-gradient-brand text-brand-foreground font-medium rounded-br-xs message-bubble-outgoing"
+                          : "bg-secondary/80 text-foreground border border-border/50 rounded-bl-xs message-bubble-incoming"
                       }`}
                     >
                       {m.text}

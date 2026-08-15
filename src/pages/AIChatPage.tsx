@@ -68,10 +68,10 @@ export default function AIChatPage() {
                   <Bot className="w-4 h-4 text-primary-foreground" />
                 </div>
               )}
-              <div className={`max-w-[70%] rounded-xl px-4 py-3 text-sm leading-relaxed ${
+              <div className={`max-w-[70%] rounded-xl px-4 py-3 text-sm leading-relaxed transition-all duration-250 ease-in-out cursor-default select-text ${
                 msg.role === "user"
-                  ? "bg-primary text-primary-foreground"
-                  : "glass-card"
+                  ? "bg-primary text-primary-foreground message-bubble-outgoing"
+                  : "glass-card message-bubble-incoming"
               }`}>
                 {msg.content.split("\n").map((line, i) => (
                   <p key={i} className={i > 0 ? "mt-2" : ""}>

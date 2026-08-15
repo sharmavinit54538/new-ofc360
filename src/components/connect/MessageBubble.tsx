@@ -120,10 +120,10 @@ export function MessageBubble({
 
         {/* Message Main Bubble */}
         <div
-          className={`relative px-3.5 py-2.5 rounded-2xl text-xs leading-relaxed shadow-sm transition-all ${
+          className={`relative px-3.5 py-2.5 rounded-2xl text-xs leading-relaxed shadow-xs transition-all duration-250 ease-in-out cursor-default ${
             isOutgoing
-              ? "bg-primary text-primary-foreground rounded-br-xs"
-              : "bg-card border border-border/70 text-foreground rounded-bl-xs"
+              ? "bg-primary text-primary-foreground rounded-br-xs message-bubble-outgoing"
+              : "bg-card border border-border/70 text-foreground rounded-bl-xs message-bubble-incoming"
           }`}
         >
           {/* Pinned Indicator for Outgoing */}
@@ -141,7 +141,7 @@ export function MessageBubble({
                 size="icon"
                 variant="ghost"
                 onClick={() => setIsPlayingVoice(!isPlayingVoice)}
-                className={`w-7 h-7 rounded-full ${
+                className={`w-7 h-7 rounded-full transition-transform duration-200 hover:scale-105 ${
                   isOutgoing
                     ? "bg-primary-foreground/20 hover:bg-primary-foreground/30 text-primary-foreground"
                     : "bg-primary/15 hover:bg-primary/25 text-primary"
@@ -168,7 +168,9 @@ export function MessageBubble({
               </span>
             </div>
           ) : (
-            <p className="whitespace-pre-wrap break-words">{message.content}</p>
+            <p className="whitespace-pre-wrap break-words transition-colors duration-200 select-text message-text-subtle">
+              {message.content}
+            </p>
           )}
 
           {/* Attachments */}

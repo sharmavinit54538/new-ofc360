@@ -288,7 +288,7 @@ export default function ForgotPasswordPage() {
                         value={digit}
                         onChange={(e) => handleOtpChange(idx, e.target.value)}
                         onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                        className="w-11 h-12 text-center text-lg font-mono font-bold rounded-xl bg-secondary/40 border border-border/60 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                        className="w-11 h-12 text-center text-lg font-mono font-bold rounded-xl bg-secondary/40 border border-border/60 hover:border-primary/40 hover:bg-secondary/60 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all duration-200 ease-in-out"
                         autoFocus={idx === 0}
                       />
                     ))}
