@@ -136,7 +136,7 @@ export default function LoginPage() {
       }
     } else {
       if (!workEmail.trim()) {
-        toast.error("Please enter your work email address.");
+        toast.error("Please enter your work email or phone number.");
         return;
       }
       if (!password) {
@@ -146,7 +146,7 @@ export default function LoginPage() {
 
       try {
         const res = await loginApi({
-          email: workEmail.trim(),
+          identifier: workEmail.trim(),
           password,
         }).unwrap();
 
@@ -407,12 +407,12 @@ export default function LoginPage() {
               <>
                 {/* Sign In Fields */}
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Work email</Label>
+                  <Label className="text-xs font-semibold">Work email or phone</Label>
                   <div className="relative">
                     <Mail className="w-4 h-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
                     <Input
-                      type="email"
-                      placeholder="you@company.com"
+                      type="text"
+                      placeholder="you@company.com or 9876543210"
                       value={workEmail}
                       onChange={(e) => setWorkEmail(e.target.value)}
                       className="pl-9 bg-secondary/30 text-xs h-10 border-border/60"

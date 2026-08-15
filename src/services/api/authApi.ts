@@ -3,7 +3,7 @@ import { AuthUser, normalizeRole } from "@/features/auth/authTypes";
 import { RawEnvelope } from "./envelope";
 
 export interface LoginRequest {
-  email: string;
+  identifier: string;
   password?: string;
   role?: string;
 }
