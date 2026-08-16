@@ -19,7 +19,7 @@ export function ChannelList({ onSelectChannel, className = "" }: ChannelListProp
   const { data: channels = [], isLoading } = useGetChannelsQuery();
 
   const filteredChannels = useMemo(() => {
-    const activeList = channels.filter((c) => !c.isArchived);
+    const activeList = channels.filter((c) => c?.name && !c.isArchived);
     if (!search.trim()) return activeList;
     const q = search.toLowerCase();
     return activeList.filter(

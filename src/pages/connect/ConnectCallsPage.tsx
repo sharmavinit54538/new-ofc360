@@ -62,7 +62,7 @@ export default function ConnectCallsPage() {
     } else if (colleaguesData && (colleaguesData as any).colleagues) {
       list = (colleaguesData as any).colleagues;
     }
-    return list.filter((emp) => emp.id !== currentUser?.id && emp.email !== currentUser?.email);
+    return list.filter((emp) => emp?.id && (emp.name || emp.email) && emp.id !== currentUser?.id && emp.email !== currentUser?.email);
   }, [colleaguesData, currentUser]);
 
   const filteredEmployees = useMemo(() => {

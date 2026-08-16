@@ -98,10 +98,12 @@ export const connectApi = baseApi.injectEndpoints({
         params: params || {},
       }),
       transformResponse: (response: any) => {
-        if (Array.isArray(response)) return response;
-        if (response?.data && Array.isArray(response.data)) return response.data;
-        if (response?.conversations && Array.isArray(response.conversations)) return response.conversations;
-        return [];
+        let list: any[] = [];
+        if (Array.isArray(response)) list = response;
+        else if (response?.data && Array.isArray(response.data)) list = response.data;
+        else if (response?.conversations && Array.isArray(response.conversations)) list = response.conversations;
+        // Guard: drop entries with missing participant or participant.name to prevent UI crashes
+        return list.filter((c: any) => c?.participant?.name);
       },
       providesTags: (result) =>
         result

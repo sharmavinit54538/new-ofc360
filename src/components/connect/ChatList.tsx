@@ -33,17 +33,22 @@ export function ChatList({ onSelectConversation, className = "" }: ChatListProps
   const [pinConversation] = usePinConversationMutation();
   const [muteConversation] = useMuteConversationMutation();
 
+  // Filter out any conversations with missing/undefined participant data to prevent runtime crashes
+  const safeConversations = useMemo(() => {
+    return conversations.filter((c) => c?.participant?.name);
+  }, [conversations]);
+
   const filteredConversations = useMemo(() => {
-    if (!search.trim()) return conversations;
+    if (!search.trim()) return safeConversations;
     const q = search.toLowerCase();
-    return conversations.filter(
+    return safeConversations.filter(
       (c) =>
         c.participant.name.toLowerCase().includes(q) ||
         (c.participant.role && c.participant.role.toLowerCase().includes(q)) ||
         (c.participant.department && c.participant.department.toLowerCase().includes(q)) ||
-        (c.lastMessage && c.lastMessage.content.toLowerCase().includes(q))
+        (c.lastMessage && c.lastMessage.content?.toLowerCase().includes(q))
     );
-  }, [conversations, search]);
+  }, [safeConversations, search]);
 
   const handleSelect = (id: string) => {
     setActiveConversationId(id);
@@ -77,7 +82,7 @@ export function ChatList({ onSelectConversation, className = "" }: ChatListProps
         <div className="flex items-center gap-2">
           <span className="text-sm font-bold text-foreground tracking-tight">Direct Messages</span>
           <span className="text-[11px] font-semibold text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded-md">
-            {conversations.length}
+            {safeConversations.length}
           </span>
         </div>
         <Button
@@ -111,7 +116,7 @@ export function ChatList({ onSelectConversation, className = "" }: ChatListProps
               <div key={i} className="h-14 rounded-xl bg-card/60 animate-pulse border border-border/40" />
             ))}
           </div>
-        ) : conversations.length === 0 ? (
+        ) : safeConversations.length === 0 ? (
           <ConnectEmptyState
             variant="chats"
             actionLabel="Start a Conversation"
