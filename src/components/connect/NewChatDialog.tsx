@@ -41,10 +41,27 @@ export function NewChatDialog({ open, onOpenChange, onSelectConversation }: NewC
     let list: ConnectUser[] = [];
     if (Array.isArray(colleaguesData)) {
       list = colleaguesData;
-    } else if (colleaguesData && (colleaguesData as any).colleagues) {
-      list = (colleaguesData as any).colleagues;
+    } else if (colleaguesData && typeof colleaguesData === "object") {
+      // Handle { colleagues: [...] } or { data: { colleagues: [...] } }
+      const src = colleaguesData as any;
+      if (Array.isArray(src.colleagues)) {
+        list = src.colleagues;
+      } else if (Array.isArray(src.data?.colleagues)) {
+        list = src.data.colleagues;
+      } else if (Array.isArray(src.data)) {
+        list = src.data;
+      } else if (Array.isArray(src.items)) {
+        list = src.items;
+      }
     }
-    return list.filter((emp) => emp.id !== currentUser?.id && emp.email !== currentUser?.email);
+    // Filter out the current user; account for _id and emailAddress field variations
+    const userId = currentUser?.id || (currentUser as any)?._id;
+    const userEmail = currentUser?.email || (currentUser as any)?.emailAddress;
+    return list.filter((emp) => {
+      const empId = emp.id || (emp as any)?._id;
+      const empEmail = emp.email || (emp as any)?.emailAddress;
+      return empId !== userId && empEmail !== userEmail;
+    });
   }, [colleaguesData, currentUser]);
 
   const filteredEmployees = useMemo(() => {

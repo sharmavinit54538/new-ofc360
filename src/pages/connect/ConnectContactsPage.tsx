@@ -45,10 +45,25 @@ export default function ConnectContactsPage() {
     let list: ConnectUser[] = [];
     if (Array.isArray(colleaguesData)) {
       list = colleaguesData;
-    } else if (colleaguesData && (colleaguesData as any).colleagues) {
-      list = (colleaguesData as any).colleagues;
+    } else if (colleaguesData && typeof colleaguesData === "object") {
+      const src = colleaguesData as any;
+      if (Array.isArray(src.colleagues)) {
+        list = src.colleagues;
+      } else if (Array.isArray(src.data?.colleagues)) {
+        list = src.data.colleagues;
+      } else if (Array.isArray(src.data)) {
+        list = src.data;
+      } else if (Array.isArray(src.items)) {
+        list = src.items;
+      }
     }
-    return list.filter((emp) => emp.id !== currentUser?.id && emp.email !== currentUser?.email);
+    const userId = currentUser?.id || (currentUser as any)?._id;
+    const userEmail = currentUser?.email || (currentUser as any)?.emailAddress;
+    return list.filter((emp) => {
+      const empId = emp.id || (emp as any)?._id;
+      const empEmail = emp.email || (emp as any)?.emailAddress;
+      return empId !== userId && empEmail !== userEmail;
+    });
   }, [colleaguesData, currentUser]);
 
   const departments = useMemo(() => {

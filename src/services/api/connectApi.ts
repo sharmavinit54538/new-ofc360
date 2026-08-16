@@ -51,18 +51,21 @@ export const connectApi = baseApi.injectEndpoints({
         params: params || {},
       }),
       transformResponse: (response: any) => {
+        // Always extract a flat ConnectUser[] array regardless of backend envelope shape
         if (Array.isArray(response)) return response;
+        // { data: [...] }
         if (response?.data && Array.isArray(response.data)) return response.data;
-        if (response?.colleagues && Array.isArray(response.colleagues)) return response;
+        // { data: { colleagues: [...] } }  (nested envelope)
+        if (response?.data?.colleagues && Array.isArray(response.data.colleagues)) return response.data.colleagues;
+        // { colleagues: [...] }
+        if (response?.colleagues && Array.isArray(response.colleagues)) return response.colleagues;
         return [];
       },
       providesTags: (result) =>
-        result
+        result && Array.isArray(result)
           ? [
               "Colleagues",
-              ...(Array.isArray(result)
-                ? result.map(({ id }) => ({ type: "Colleagues" as const, id }))
-                : result.colleagues.map(({ id }) => ({ type: "Colleagues" as const, id }))),
+              ...result.map(({ id }) => ({ type: "Colleagues" as const, id })),
             ]
           : ["Colleagues"],
     }),
