@@ -237,7 +237,7 @@ export interface GlobalSearchResponse {
 }
 
 export interface CreateConversationRequest {
-  participantId: string;
+  targetUserId: string;
 }
 
 export interface GetConversationMessagesParams {

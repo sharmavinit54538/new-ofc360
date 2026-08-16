@@ -54,7 +54,7 @@ export function ConnectSearchDialog({
 
   const handleSelectPerson = async (emp: ConnectUser) => {
     try {
-      const res = await createConversation({ participantId: emp.id }).unwrap();
+      const res = await createConversation({ targetUserId: emp.id }).unwrap();
       setActiveConversationId(res.id);
       setActiveTab("chat");
       onOpenChange(false);

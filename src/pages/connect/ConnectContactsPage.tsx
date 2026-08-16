@@ -92,7 +92,7 @@ export default function ConnectContactsPage() {
 
   const handleStartMessage = async (emp: ConnectUser) => {
     try {
-      const res = await createConversation({ participantId: emp.id }).unwrap();
+      const res = await createConversation({ targetUserId: emp.id }).unwrap();
       const convId = res.id;
       setActiveConversationId(convId);
       navigate(`/connect/chat/${convId}`);
