@@ -166,6 +166,7 @@ const App = () => (
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/verify-reset-otp" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ForgotPasswordPage />} />
+        <Route path="/auth/reset-password" element={<ForgotPasswordPage />} />
         <Route path="/careers" element={<PublicCareersPage />} />
         <Route path="/hr-admin/onboarding" element={<HRAdminOnboardingGuard><HRAdminOnboardingPage /></HRAdminOnboardingGuard>} />
         <Route element={<ProtectedRoute />}>

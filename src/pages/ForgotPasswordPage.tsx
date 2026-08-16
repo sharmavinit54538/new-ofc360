@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import {
   Sparkles,
   Shield,
@@ -16,7 +16,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   useForgotPasswordMutation,
-  useVerifyResetOtpMutation,
   useResendOtpMutation,
   useResetPasswordMutation,
 } from "@/services/api/authApi";
@@ -25,9 +24,12 @@ import { toast } from "sonner";
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const tokenFromUrl = searchParams.get("token") || "";
 
-  // Recovery Flow Steps: 1 = Email, 2 = 6-digit OTP, 3 = New Password, 4 = Success
+  // Recovery Flow Steps: 1 = Email, 2 = 6-digit OTP (legacy/fallback), 3 = New Password, 4 = Success
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [isEmailSent, setIsEmailSent] = useState(false);
 
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -39,17 +41,32 @@ export default function ForgotPasswordPage() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const otpInputsRef = useRef<(HTMLInputElement | null)[]>([]);
-
   const [forgotPassword, { isLoading: isSendingForgot }] = useForgotPasswordMutation();
-  const [verifyResetOtp, { isLoading: isVerifyingOtp }] = useVerifyResetOtpMutation();
   const [resendOtp, { isLoading: isResendingOtp }] = useResendOtpMutation();
   const [resetPassword, { isLoading: isResettingPassword }] = useResetPasswordMutation();
 
-  // 60-second OTP cooldown timer
+  // Retrieve email from localStorage or URL query param if present
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("ofc360_reset_email");
+    const emailParam = searchParams.get("email");
+    if (emailParam) {
+      setEmail(emailParam);
+    } else if (savedEmail && !email) {
+      setEmail(savedEmail);
+    }
+  }, [searchParams, email]);
+
+  // Handle auto-transition to Step 3 if token is present in the URL
+  useEffect(() => {
+    if (tokenFromUrl) {
+      setStep(3);
+    }
+  }, [tokenFromUrl]);
+
+  // 60-second cooldown timer
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
-    if (step === 2 && resendTimer > 0) {
+    if (isEmailSent && resendTimer > 0) {
       interval = setInterval(() => {
         setResendTimer((prev) => prev - 1);
       }, 1000);
@@ -59,9 +76,9 @@ export default function ForgotPasswordPage() {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [step, resendTimer]);
+  }, [isEmailSent, resendTimer]);
 
-  // Step 1: Send Forgot Password OTP
+  // Step 1: Send Forgot Password OTP/Link
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) {
@@ -71,61 +88,11 @@ export default function ForgotPasswordPage() {
 
     try {
       await forgotPassword({ identifier: email }).unwrap();
-      toast.success(`6-digit reset code sent to ${email}`);
-      setStep(2);
+      toast.success(`Password reset email sent to ${email}`);
+      localStorage.setItem("ofc360_reset_email", email);
+      setIsEmailSent(true);
       setResendTimer(60);
       setCanResend(false);
-    } catch (err) {
-      const norm = normalizeError(err);
-      toast.error(norm.message);
-    }
-  };
-
-  // OTP input handlers
-  const handleOtpChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return;
-
-    const newOtp = [...otp];
-    newOtp[index] = value.slice(-1);
-    setOtp(newOtp);
-
-    if (value && index < 5) {
-      otpInputsRef.current[index + 1]?.focus();
-    }
-  };
-
-  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      otpInputsRef.current[index - 1]?.focus();
-    }
-  };
-
-  const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const pastedData = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-    if (!pastedData) return;
-
-    const newOtp = [...otp];
-    for (let i = 0; i < pastedData.length; i++) {
-      newOtp[i] = pastedData[i];
-    }
-    setOtp(newOtp);
-    otpInputsRef.current[Math.min(pastedData.length, 5)]?.focus();
-  };
-
-  // Step 2: Verify Reset OTP
-  const handleVerifyOTP = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const enteredOtp = otp.join("");
-    if (enteredOtp.length < 6) {
-      toast.error("Please enter the complete 6-digit code.");
-      return;
-    }
-
-    try {
-      await verifyResetOtp({ identifier: email, otp: enteredOtp }).unwrap();
-      toast.success("Reset code verified successfully!");
-      setStep(3);
     } catch (err) {
       const norm = normalizeError(err);
       toast.error(norm.message);
@@ -136,15 +103,15 @@ export default function ForgotPasswordPage() {
     if (!canResend || isResendingOtp) return;
     try {
       await resendOtp({ identifier: email }).unwrap();
-      setOtp(["", "", "", "", "", ""]);
       setResendTimer(60);
       setCanResend(false);
-      toast.success(`New 6-digit reset code sent to ${email}`);
+      toast.success(`New password reset link sent to ${email}`);
     } catch (err) {
       const norm = normalizeError(err);
       toast.error(norm.message);
     }
   };
+
 
   // Step 3: Save New Password
   const handleResetPassword = async (e: React.FormEvent) => {
@@ -161,7 +128,7 @@ export default function ForgotPasswordPage() {
     try {
       await resetPassword({
         identifier: email,
-        otp: otp.join(""),
+        otp: tokenFromUrl || otp.join(""),
         newPassword,
       }).unwrap();
 
@@ -199,142 +166,119 @@ export default function ForgotPasswordPage() {
         {/* Glassmorphic Card */}
         <div className="glass-card rounded-2xl p-6 sm:p-8 space-y-5 border border-border/50 shadow-xl bg-card/90 backdrop-blur-xl">
           <AnimatePresence mode="wait">
-            {/* STEP 1: ENTER EMAIL */}
+            {/* STEP 1: ENTER EMAIL OR EMAIL SENT SUCCESS */}
             {step === 1 && (
               <motion.div
-                key="step1"
+                key={isEmailSent ? "emailsent" : "step1"}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 10 }}
                 className="space-y-4"
               >
-                <div className="space-y-1 text-left">
-                  <h2 className="text-xl font-bold tracking-tight text-foreground">Reset your password</h2>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    Enter the email tied to your workspace and we'll send a password reset link.
-                  </p>
-                </div>
+                {isEmailSent ? (
+                  <div className="text-center space-y-4 py-2">
+                    <div className="w-14 h-14 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center mx-auto shadow-sm">
+                      <CheckCircle2 className="w-8 h-8" />
+                    </div>
+                    <div className="space-y-1">
+                      <h2 className="text-lg font-bold text-foreground">Password reset email sent successfully!</h2>
+                      <p className="text-xs text-muted-foreground max-w-xs mx-auto leading-relaxed">
+                        We've sent a password reset link to your email address. Please check your inbox and click the link to update your password.
+                      </p>
+                    </div>
 
-                <form onSubmit={handleSendOTP} className="space-y-4 pt-1">
-                  <div className="space-y-1.5 text-left">
-                    <Label className="text-xs font-semibold text-foreground">Work email</Label>
-                    <Input
-                      type="email"
-                      placeholder="you@company.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="bg-secondary/30 text-xs h-10 border-border/60"
-                      required
-                      autoFocus
-                    />
+                    <div className="flex items-center justify-between text-xs pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsEmailSent(false);
+                          setCanResend(false);
+                          setResendTimer(60);
+                        }}
+                        className="text-muted-foreground hover:text-foreground text-[11px] transition-colors"
+                      >
+                        Change email
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleResendCode}
+                        disabled={!canResend || isResendingOtp}
+                        className={`text-[11px] font-semibold transition-colors ${
+                          canResend ? "text-primary hover:underline" : "text-muted-foreground/60 cursor-not-allowed"
+                        }`}
+                      >
+                        {isResendingOtp ? "Sending..." : canResend ? "Resend link" : `Resend in ${resendTimer}s`}
+                      </button>
+                    </div>
+
+                    <div className="pt-2 text-center border-t border-border/40">
+                      <Link
+                        to="/login"
+                        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors font-medium"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" />
+                        <span>Back to Sign In</span>
+                      </Link>
+                    </div>
                   </div>
+                ) : (
+                  <>
+                    <div className="space-y-1 text-left">
+                      <h2 className="text-xl font-bold tracking-tight text-foreground">Reset your password</h2>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Enter the email tied to your workspace and we'll send a password reset link.
+                      </p>
+                    </div>
 
-                  <Button
-                    type="submit"
-                    disabled={isSendingForgot}
-                    className="w-full gradient-bg text-primary-foreground font-bold text-xs h-10 shadow-md gap-2"
-                  >
-                    {isSendingForgot ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Sending reset code...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>Send Reset Code</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </>
-                    )}
-                  </Button>
-                </form>
+                    <form onSubmit={handleSendOTP} className="space-y-4 pt-1">
+                      <div className="space-y-1.5 text-left">
+                        <Label className="text-xs font-semibold text-foreground">Work email</Label>
+                        <Input
+                          type="email"
+                          placeholder="you@company.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="bg-secondary/30 text-xs h-10 border-border/60"
+                          required
+                          autoFocus
+                        />
+                      </div>
 
-                <div className="pt-2 text-center">
-                  <Link
-                    to="/login"
-                    className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors font-medium"
-                  >
-                    <ArrowLeft className="w-3.5 h-3.5" />
-                    <span>Back to Sign In</span>
-                  </Link>
-                </div>
+                      <Button
+                        type="submit"
+                        disabled={isSendingForgot}
+                        className="w-full gradient-bg text-primary-foreground font-bold text-xs h-10 shadow-md gap-2"
+                      >
+                        {isSendingForgot ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Sending reset link...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>Send Reset Link</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </>
+                        )}
+                      </Button>
+                    </form>
+
+                    <div className="pt-2 text-center">
+                      <Link
+                        to="/login"
+                        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors font-medium"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" />
+                        <span>Back to Sign In</span>
+                      </Link>
+                    </div>
+                  </>
+                )}
               </motion.div>
             )}
 
-            {/* STEP 2: 6-DIGIT OTP */}
-            {step === 2 && (
-              <motion.div
-                key="step2"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 10 }}
-                className="space-y-4"
-              >
-                <div className="text-center space-y-1">
-                  <h2 className="text-lg font-bold text-foreground">Enter 6-digit reset code</h2>
-                  <p className="text-xs text-muted-foreground">
-                    Code sent to <span className="font-semibold text-foreground">{email}</span>
-                  </p>
-                </div>
 
-                <form onSubmit={handleVerifyOTP} className="space-y-4 pt-2">
-                  <div className="flex items-center justify-center gap-2" onPaste={handleOtpPaste}>
-                    {otp.map((digit, idx) => (
-                      <input
-                        key={idx}
-                        ref={(el) => (otpInputsRef.current[idx] = el)}
-                        type="text"
-                        inputMode="numeric"
-                        maxLength={1}
-                        value={digit}
-                        onChange={(e) => handleOtpChange(idx, e.target.value)}
-                        onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                        className="w-11 h-12 text-center text-lg font-mono font-bold rounded-xl bg-secondary/40 border border-border/60 hover:border-primary/40 hover:bg-secondary/60 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all duration-200 ease-in-out"
-                        autoFocus={idx === 0}
-                      />
-                    ))}
-                  </div>
-
-                  <Button
-                    type="submit"
-                    disabled={isVerifyingOtp}
-                    className="w-full gradient-bg text-primary-foreground font-bold text-xs h-10 shadow-md gap-2"
-                  >
-                    {isVerifyingOtp ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Verifying code...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>Verify Code</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </>
-                    )}
-                  </Button>
-                </form>
-
-                <div className="flex items-center justify-between text-xs pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setStep(1)}
-                    className="text-muted-foreground hover:text-foreground text-[11px]"
-                  >
-                    Change email
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={handleResendCode}
-                    disabled={!canResend || isResendingOtp}
-                    className={`text-[11px] font-semibold ${
-                      canResend ? "text-primary hover:underline" : "text-muted-foreground/60 cursor-not-allowed"
-                    }`}
-                  >
-                    {isResendingOtp ? "Sending..." : canResend ? "Resend code" : `Resend in ${resendTimer}s`}
-                  </button>
-                </div>
-              </motion.div>
-            )}
 
             {/* STEP 3: SET NEW PASSWORD */}
             {step === 3 && (

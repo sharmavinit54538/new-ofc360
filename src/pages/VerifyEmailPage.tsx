@@ -81,7 +81,7 @@ export default function VerifyEmailPage() {
     }
 
     try {
-      await verifyEmail({ email, otp: enteredOtp }).unwrap();
+      await verifyEmail({ identifier: email, otp: enteredOtp }).unwrap();
       toast.success("Email verified successfully! You can now sign in.");
       setIsVerified(true);
     } catch (err) {
@@ -98,7 +98,7 @@ export default function VerifyEmailPage() {
     }
 
     try {
-      await resendOtp({ email }).unwrap();
+      await resendOtp({ identifier: email }).unwrap();
       toast.success(`Verification code resent to ${email}`);
       setOtp(["", "", "", "", "", ""]);
       setResendTimer(60);
