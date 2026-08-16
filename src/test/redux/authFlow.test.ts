@@ -20,6 +20,7 @@ describe("authApi unwrapLoginResponse & contract parsing", () => {
           companyId: "11111111-1111-1111-1111-111111111111",
         },
       },
+      errors: null,
     };
 
     const unwrapped = unwrapLoginResponse(envelope);

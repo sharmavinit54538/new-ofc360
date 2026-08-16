@@ -4,7 +4,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
-import authReducer from "@/features/auth/authSlice";
+import authReducer, { AuthState } from "@/features/auth/authSlice";
 import { AuthBootstrap } from "@/app/providers";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -60,10 +60,10 @@ describe("AuthBootstrap & ProtectedRoute Integration", () => {
           refreshToken: "valid_refresh",
           isAuthenticated: true,
           isInitializing: false,
-          role: "hr_admin" as const,
+          role: "hr_admin",
           companyId: "11111111-1111-1111-1111-111111111111",
-          sessionStatus: "authenticated" as const,
-        },
+          sessionStatus: "authenticated",
+        } as AuthState,
       },
     });
 

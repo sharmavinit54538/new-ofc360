@@ -11,6 +11,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { HRAdminOnboardingGuard } from "@/components/auth/HRAdminOnboardingGuard";
 import * as hrAdminApiHooks from "@/services/api/hrAdminOnboardingApi";
 import * as authHooks from "@/hooks/useAuth";
+import DashboardLayout from "@/layouts/DashboardLayout";
+
+vi.mock("@/services/api/connectApi", () => ({
+  useGetConnectNotificationsQuery: () => ({ data: [], isLoading: false }),
+  useMarkNotificationReadMutation: () => [vi.fn()],
+  useClearAllNotificationsMutation: () => [vi.fn()],
+}));
 
 // Mock helper to create a test store
 const createTestStore = (preloadedAuthState?: any) => {
@@ -324,8 +331,6 @@ describe("HR Admin Onboarding Flow & Route Guard Tests", () => {
   // ─── 3. DashboardLayout Backend-Driven Protection ─────────────────
   describe("3. DashboardLayout Backend Onboarding Verification", () => {
     it("renders DashboardLayout when backend reports onboarding completed", async () => {
-      const DashboardLayout = (await import("@/layouts/DashboardLayout")).default;
-
       vi.spyOn(authHooks, "useAuth").mockReturnValue({
         user: { id: "user-1", email: "hr@company.com", role: "hr_admin", name: "HR Admin" },
         isAuthenticated: true,
@@ -361,8 +366,6 @@ describe("HR Admin Onboarding Flow & Route Guard Tests", () => {
     });
 
     it("redirects to /hr-admin/onboarding when backend reports onboarding incomplete", async () => {
-      const DashboardLayout = (await import("@/layouts/DashboardLayout")).default;
-
       vi.spyOn(authHooks, "useAuth").mockReturnValue({
         user: { id: "user-1", email: "hr@company.com", role: "hr_admin", name: "HR Admin" },
         isAuthenticated: true,
@@ -398,8 +401,6 @@ describe("HR Admin Onboarding Flow & Route Guard Tests", () => {
     });
 
     it("does NOT redirect to onboarding when backend query returns an error", async () => {
-      const DashboardLayout = (await import("@/layouts/DashboardLayout")).default;
-
       vi.spyOn(authHooks, "useAuth").mockReturnValue({
         user: { id: "user-1", email: "hr@company.com", role: "hr_admin", name: "HR Admin" },
         isAuthenticated: true,

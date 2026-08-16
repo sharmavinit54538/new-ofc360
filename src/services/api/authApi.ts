@@ -39,6 +39,7 @@ export const unwrapLoginResponse = (raw: RawEnvelope<RawLoginData> | RawLoginDat
         ...u,
         name: computedName,
         role: normalizedRole,
+        companyId: u.companyId || (u as any).company_id,
       }
     : {
         id: "usr_me",
@@ -127,6 +128,7 @@ export const authApi = baseApi.injectEndpoints({
           ...u,
           name: computedName,
           role: normalizeRole(u.role),
+          companyId: u.companyId || (u as any).company_id,
         };
       },
       providesTags: ["Auth", "User"],

@@ -49,7 +49,7 @@ const normalizedInitialUser: AuthUser | null = initialUser
   : null;
 const initialToken = getStoredToken();
 const initialRefreshToken = getStoredRefreshToken();
-const initialCompanyId = normalizedInitialUser?.companyId || getStoredCompanyId() || null;
+const initialCompanyId = normalizedInitialUser?.companyId || (normalizedInitialUser as any)?.company_id || getStoredCompanyId() || null;
 
 const hasTokens = Boolean(initialToken || initialRefreshToken);
 
@@ -85,7 +85,7 @@ export const authSlice = createSlice({
         (user.email ? user.email.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "User");
 
       const normalizedRole = normalizeRole(user.role);
-      const activeCompanyId = companyId || user.companyId || state.companyId;
+      const activeCompanyId = companyId || user.companyId || (user as any).company_id || state.companyId;
 
       const normalizedUser: AuthUser = {
         ...user,
@@ -132,6 +132,8 @@ export const authSlice = createSlice({
         state.role = updatedRole;
         if (action.payload.companyId) {
           state.companyId = action.payload.companyId;
+        } else if ((action.payload as any).company_id) {
+          state.companyId = (action.payload as any).company_id;
         }
         try {
           localStorage.setItem(USER_KEY, JSON.stringify(state.user));
