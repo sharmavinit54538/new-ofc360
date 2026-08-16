@@ -1,3 +1,4 @@
+import React, { useMemo } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -21,7 +22,7 @@ export function AppSidebar({ open, onToggle }: { open: boolean; onToggle: () => 
   const PayrollIcon = getCurrencyIcon(payrollSettings?.currency);
 
   // Build role-aware navigation
-  const getNavSections = () => {
+  const navSections = useMemo(() => {
     switch (currentRole) {
       case "super_admin":
         return [
@@ -125,9 +126,7 @@ export function AppSidebar({ open, onToggle }: { open: boolean; onToggle: () => 
           },
         ];
     }
-  };
-
-  const navSections = getNavSections();
+  }, [currentRole, PayrollIcon]);
 
   return (
     <motion.aside
@@ -207,7 +206,7 @@ function SectionLabel({ open, children }: { open: boolean; children: React.React
   return null;
 }
 
-function SidebarLink({
+const SidebarLink = React.memo(({
   item,
   open,
   active,
@@ -215,7 +214,7 @@ function SidebarLink({
   item: { label: string; icon: any; path: string };
   open: boolean;
   active: boolean;
-}) {
+}) => {
   return (
     <NavLink
       to={item.path}
@@ -244,4 +243,4 @@ function SidebarLink({
       </AnimatePresence>
     </NavLink>
   );
-}
+});
