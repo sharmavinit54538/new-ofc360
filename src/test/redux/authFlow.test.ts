@@ -17,7 +17,7 @@ describe("authApi unwrapLoginResponse & contract parsing", () => {
           first_name: "Alex",
           last_name: "Smith",
           role: "hr_admin" as any,
-          companyId: "comp_1",
+          companyId: "11111111-1111-1111-1111-111111111111",
         },
       },
     };
@@ -28,7 +28,7 @@ describe("authApi unwrapLoginResponse & contract parsing", () => {
     expect(unwrapped.user.id).toBe("usr_1");
     expect(unwrapped.user.name).toBe("Alex Smith");
     expect(unwrapped.user.role).toBe("hr_admin");
-    expect(unwrapped.user.companyId).toBe("comp_1");
+    expect(unwrapped.user.companyId).toBe("11111111-1111-1111-1111-111111111111");
   });
 
   it("should compute full name from email if name is missing", () => {

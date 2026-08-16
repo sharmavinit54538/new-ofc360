@@ -13,24 +13,9 @@ export interface CompanyState {
   availableCompanies: CompanyInfo[];
 }
 
-const defaultCompany: CompanyInfo = {
-  id: "comp_01",
-  name: "EquinoxSphere Corp",
-  code: "EQS",
-  domain: "equinoxsphere.com",
-};
-
 const initialState: CompanyState = {
-  activeCompany: defaultCompany,
-  availableCompanies: [
-    defaultCompany,
-    {
-      id: "comp_02",
-      name: "NexaHR Solutions",
-      code: "NEX",
-      domain: "nexahr.com",
-    },
-  ],
+  activeCompany: null,
+  availableCompanies: [],
 };
 
 export const companySlice = createSlice({

@@ -60,6 +60,7 @@ describe("baseQueryWithReauth Token Refresh Interceptor", () => {
       setCredentials({
         user: { id: "usr_1", name: "Alex", email: "alex@ofc360.com", role: "hr_admin" },
         token: "expired_token_123",
+        companyId: "11111111-1111-1111-1111-111111111111",
       })
     );
 
@@ -86,6 +87,7 @@ describe("baseQueryWithReauth Token Refresh Interceptor", () => {
         user: { id: "usr_1", name: "Alex", email: "alex@ofc360.com", role: "hr_admin" },
         token: "expired_token_123",
         refreshToken: "valid_refresh_token_456",
+        companyId: "11111111-1111-1111-1111-111111111111",
       })
     );
 
@@ -137,6 +139,7 @@ describe("baseQueryWithReauth Token Refresh Interceptor", () => {
         user: { id: "usr_1", name: "Alex", email: "alex@ofc360.com", role: "hr_admin" },
         token: "expired_token_123",
         refreshToken: "expired_refresh_token_456",
+        companyId: "11111111-1111-1111-1111-111111111111",
       })
     );
 

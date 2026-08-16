@@ -21,6 +21,13 @@ const isValidToken = (token: unknown): token is string => {
   );
 };
 
+const isValidUUID = (id: unknown): id is string => {
+  return (
+    typeof id === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+  );
+};
+
 const PUBLIC_AUTH_ENDPOINTS = [
   "login",
   "register",
@@ -47,6 +54,31 @@ const PUBLIC_AUTH_URL_PATTERNS = [
   "/auth/resend-otp",
 ];
 
+const needsCompanyId = (url: string, endpoint?: string): boolean => {
+  const isPublic = (endpoint && PUBLIC_AUTH_ENDPOINTS.includes(endpoint)) ||
+    PUBLIC_AUTH_URL_PATTERNS.some((pattern) => url.includes(pattern));
+
+  if (isPublic) return false;
+  if (url.includes("/auth/me") || url.includes("/auth/refresh")) return false;
+
+  return true;
+};
+
+const waitFor = (fn: () => boolean, timeoutMs = 2000, intervalMs = 50): Promise<boolean> => {
+  return new Promise((resolve) => {
+    const startTime = Date.now();
+    const interval = setInterval(() => {
+      if (fn()) {
+        clearInterval(interval);
+        resolve(true);
+      } else if (Date.now() - startTime > timeoutMs) {
+        clearInterval(interval);
+        resolve(false);
+      }
+    }, intervalMs);
+  });
+};
+
 export const baseQuery = fetchBaseQuery({
   baseUrl: rawBaseUrl,
   timeout: 15000,
@@ -67,7 +99,7 @@ export const baseQuery = fetchBaseQuery({
       headers.set("Authorization", `Bearer ${token.trim()}`);
     }
 
-    if (companyId && typeof companyId === "string" && companyId.trim() && !isPublicEndpoint) {
+    if (companyId && isValidUUID(companyId) && !isPublicEndpoint) {
       headers.set("X-Company-ID", companyId.trim());
     }
 
@@ -88,6 +120,41 @@ export const baseQueryWithReauth: BaseQueryFn<
   const requestUrl = typeof args === "string" ? args : args.url || "";
   const isPublicAuthUrl = PUBLIC_AUTH_URL_PATTERNS.some((pattern) => requestUrl.includes(pattern));
   const isRetry = Boolean((extraOptions as any)?.isRetry || (typeof args === "object" && (args as any)?._isRetry));
+
+  const state = api.getState() as RootState;
+  const token = state?.auth?.token || localStorage.getItem("ofc360_access_token");
+
+  if (isValidToken(token) && needsCompanyId(requestUrl, api.endpoint)) {
+    let companyId = (api.getState() as RootState)?.auth?.companyId ||
+                    (api.getState() as RootState)?.company?.activeCompany?.id ||
+                    localStorage.getItem("ofc360_company_id");
+
+    if (!isValidUUID(companyId) && (api.getState() as RootState)?.auth?.isInitializing) {
+      // Wait for auth initialization to complete
+      await waitFor(() => {
+        const s = api.getState() as RootState;
+        return !s.auth.isInitializing;
+      }, 2000, 50);
+    }
+
+    // Re-check after potential wait
+    const finalState = api.getState() as RootState;
+    companyId = finalState?.auth?.companyId ||
+                finalState?.company?.activeCompany?.id ||
+                localStorage.getItem("ofc360_company_id");
+
+    if (!isValidUUID(companyId)) {
+      return {
+        error: {
+          status: 400,
+          statusText: "Bad Request",
+          data: {
+            message: "Request blocked: A valid Company ID (UUID) is required but was not found.",
+          },
+        } as FetchBaseQueryError,
+      };
+    }
+  }
 
   // Execute request
   let result = await baseQuery(args, api, extraOptions);

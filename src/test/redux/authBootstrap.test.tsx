@@ -61,7 +61,7 @@ describe("AuthBootstrap & ProtectedRoute Integration", () => {
           isAuthenticated: true,
           isInitializing: false,
           role: "hr_admin" as const,
-          companyId: "comp_1",
+          companyId: "11111111-1111-1111-1111-111111111111",
           sessionStatus: "authenticated" as const,
         },
       },
