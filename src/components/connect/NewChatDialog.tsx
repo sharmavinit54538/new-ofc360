@@ -22,9 +22,18 @@ export function NewChatDialog({ open, onOpenChange, onSelectConversation }: NewC
   const { setActiveConversationId, setActiveTab } = useConnect();
 
   // Load colleagues from connectApi
-  const { data: colleaguesData, isLoading } = useGetColleaguesQuery(undefined, {
+  // refetchOnMountOrArgChange ensures we always hit the network when the dialog opens,
+  // even if stale/empty data is cached from a prior call (e.g. ConnectCallsPage uses
+  // the same undefined cache key and may have cached an error response).
+  const { data: colleaguesData, isLoading, isError, error } = useGetColleaguesQuery(undefined, {
     skip: !open,
+    refetchOnMountOrArgChange: true,
   });
+
+  // Surface any query errors for debugging
+  if (isError) {
+    console.error("[NewChatDialog] useGetColleaguesQuery failed:", error);
+  }
 
   const [createConversation] = useCreateConversationMutation();
 
@@ -102,6 +111,12 @@ export function NewChatDialog({ open, onOpenChange, onSelectConversation }: NewC
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="h-12 rounded-xl bg-card/60 animate-pulse border border-border/40" />
               ))}
+            </div>
+          ) : isError ? (
+            <div className="text-center py-8 px-4 text-muted-foreground">
+              <Users className="w-8 h-8 mx-auto mb-2 opacity-40 text-destructive" />
+              <p className="text-xs font-medium text-destructive">Failed to load colleagues</p>
+              <p className="text-[11px] opacity-75 mt-0.5">Please check your connection and try again</p>
             </div>
           ) : filteredEmployees.length === 0 ? (
             <div className="text-center py-8 px-4 text-muted-foreground">
