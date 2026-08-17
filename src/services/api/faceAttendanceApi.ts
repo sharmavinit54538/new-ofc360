@@ -237,15 +237,24 @@ export const faceAttendanceApi = baseApi.injectEndpoints({
           };
         }
         const formData = new FormData();
-        if (body.image) {
-          if (typeof body.image === "string") {
-            formData.append("image", body.image);
-            formData.append("photo", body.image);
+        const img = body.image || body.photo || body.file;
+        if (img) {
+          if (typeof img === "string") {
+            formData.append("image", img);
+            formData.append("photo", img);
           } else {
-            formData.append("image", body.image, "face-checkin.jpg");
-            formData.append("photo", body.image, "face-checkin.jpg");
+            formData.append("image", img, "face-checkin.jpg");
+            formData.append("photo", img, "face-checkin.jpg");
+            formData.append("file", img, "face-checkin.jpg");
           }
         }
+        if (body.latitude !== undefined && body.latitude !== null) formData.append("latitude", String(body.latitude));
+        if (body.longitude !== undefined && body.longitude !== null) formData.append("longitude", String(body.longitude));
+        if (body.coordinates?.lat !== undefined) formData.append("latitude", String(body.coordinates.lat));
+        if (body.coordinates?.lng !== undefined) formData.append("longitude", String(body.coordinates.lng));
+        if (body.device_info) formData.append("device_info", String(body.device_info));
+        if (body.ip_address) formData.append("ip_address", String(body.ip_address));
+        if (body.method || body.verificationMethod) formData.append("verification_method", String(body.method || body.verificationMethod));
         if (body.location) formData.append("location", String(body.location));
         if (body.notes) formData.append("notes", String(body.notes));
 
@@ -259,10 +268,13 @@ export const faceAttendanceApi = baseApi.injectEndpoints({
         normalizeMeResponse(raw),
       invalidatesTags: [
         { type: "Attendance", id: "ME" },
+        { type: "Attendance", id: "TODAY" },
         { type: "Attendance", id: "HISTORY" },
         { type: "Attendance", id: "TEAM" },
         { type: "Attendance", id: "COMPANY" },
         { type: "Attendance", id: "ANALYTICS" },
+        "Attendance",
+        "AttendanceAnalytics",
       ],
     }),
 
@@ -277,15 +289,24 @@ export const faceAttendanceApi = baseApi.injectEndpoints({
           };
         }
         const formData = new FormData();
-        if (body.image) {
-          if (typeof body.image === "string") {
-            formData.append("image", body.image);
-            formData.append("photo", body.image);
+        const img = body.image || body.photo || body.file;
+        if (img) {
+          if (typeof img === "string") {
+            formData.append("image", img);
+            formData.append("photo", img);
           } else {
-            formData.append("image", body.image, "face-checkout.jpg");
-            formData.append("photo", body.image, "face-checkout.jpg");
+            formData.append("image", img, "face-checkout.jpg");
+            formData.append("photo", img, "face-checkout.jpg");
+            formData.append("file", img, "face-checkout.jpg");
           }
         }
+        if (body.latitude !== undefined && body.latitude !== null) formData.append("latitude", String(body.latitude));
+        if (body.longitude !== undefined && body.longitude !== null) formData.append("longitude", String(body.longitude));
+        if (body.coordinates?.lat !== undefined) formData.append("latitude", String(body.coordinates.lat));
+        if (body.coordinates?.lng !== undefined) formData.append("longitude", String(body.coordinates.lng));
+        if (body.device_info) formData.append("device_info", String(body.device_info));
+        if (body.ip_address) formData.append("ip_address", String(body.ip_address));
+        if (body.method || body.verificationMethod) formData.append("verification_method", String(body.method || body.verificationMethod));
         if (body.location) formData.append("location", String(body.location));
         if (body.notes) formData.append("notes", String(body.notes));
 
@@ -299,10 +320,13 @@ export const faceAttendanceApi = baseApi.injectEndpoints({
         normalizeMeResponse(raw),
       invalidatesTags: [
         { type: "Attendance", id: "ME" },
+        { type: "Attendance", id: "TODAY" },
         { type: "Attendance", id: "HISTORY" },
         { type: "Attendance", id: "TEAM" },
         { type: "Attendance", id: "COMPANY" },
         { type: "Attendance", id: "ANALYTICS" },
+        "Attendance",
+        "AttendanceAnalytics",
       ],
     }),
 
