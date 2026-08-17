@@ -29,7 +29,7 @@ export interface ReportCreate {
   description?: string;
   type: ReportType | string; // default "employee"
   format?: ReportFormat; // default "pdf"
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
   schedule?: ReportSchedule; // default "none"
 }
 
@@ -40,7 +40,7 @@ export interface ReportResponse {
   type: string;
   status: 'pending' | 'processing' | 'completed' | 'failed' | 'scheduled' | string;
   format: ReportFormat;
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
   schedule?: ReportSchedule;
   file_path?: string;
   file_size_kb?: number;
