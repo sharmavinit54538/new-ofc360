@@ -293,7 +293,7 @@ export interface ComplianceReportData {
   overallStatus: string;
   executiveSummary: string;
   riskAuditRegister: ComplianceRisk[];
-  detailedFindings: any[];
+  detailedFindings: Record<string, unknown>[];
 }
 
 export interface EmployeeComplianceDetail {

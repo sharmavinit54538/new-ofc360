@@ -1,5 +1,5 @@
 import { baseApi } from "@/services/api/baseApi";
-import { unwrapEnvelope, RawEnvelope } from "@/services/api/envelope";
+import { RawEnvelope } from "@/services/api/envelope";
 import {
   APIResponse,
   ComplianceDashboardKpis,
@@ -17,6 +17,7 @@ import {
   RiskAnalysisPayload,
   SecurityAuditLog,
 } from "./types";
+import { extractData, extractArray } from "./unwrapHelper";
 
 export const complianceReportsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -26,14 +27,11 @@ export const complianceReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<ComplianceDashboardKpis> | APIResponse<ComplianceDashboardKpis> | ComplianceDashboardKpis) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<ComplianceDashboardKpis>);
-        const data = (unwrapped && typeof unwrapped === "object" && "data" in unwrapped && (unwrapped as any).data !== undefined)
-          ? (unwrapped as any).data
-          : unwrapped;
+        const data = extractData<ComplianceDashboardKpis>(raw);
         return {
           success: true,
           message: "Compliance dashboard retrieved",
-          data: (data && typeof data === "object") ? data as ComplianceDashboardKpis : null,
+          data,
           errors: null,
         };
       },
@@ -46,16 +44,11 @@ export const complianceReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<ComplianceCheck[]> | APIResponse<ComplianceCheck[]> | ComplianceCheck[]) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<ComplianceCheck[]>);
-        const data = Array.isArray(unwrapped)
-          ? unwrapped
-          : (unwrapped && typeof unwrapped === "object" && Array.isArray((unwrapped as any).data))
-          ? (unwrapped as any).data
-          : [];
+        const data = extractArray<ComplianceCheck>(raw);
         return {
           success: true,
           message: "Compliance checks retrieved",
-          data: Array.isArray(data) ? data : [],
+          data,
           errors: null,
         };
       },
@@ -68,16 +61,11 @@ export const complianceReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<LaborLawStatus[]> | APIResponse<LaborLawStatus[]> | LaborLawStatus[]) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<LaborLawStatus[]>);
-        const data = Array.isArray(unwrapped)
-          ? unwrapped
-          : (unwrapped && typeof unwrapped === "object" && Array.isArray((unwrapped as any).data))
-          ? (unwrapped as any).data
-          : [];
+        const data = extractArray<LaborLawStatus>(raw);
         return {
           success: true,
           message: "Labor law statuses retrieved",
-          data: Array.isArray(data) ? data : [],
+          data,
           errors: null,
         };
       },
@@ -90,16 +78,11 @@ export const complianceReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<MissingDocument[]> | APIResponse<MissingDocument[]> | MissingDocument[]) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<MissingDocument[]>);
-        const data = Array.isArray(unwrapped)
-          ? unwrapped
-          : (unwrapped && typeof unwrapped === "object" && Array.isArray((unwrapped as any).data))
-          ? (unwrapped as any).data
-          : [];
+        const data = extractArray<MissingDocument>(raw);
         return {
           success: true,
           message: "Missing documents retrieved",
-          data: Array.isArray(data) ? data : [],
+          data,
           errors: null,
         };
       },
@@ -112,16 +95,11 @@ export const complianceReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<ComplianceRisk[]> | APIResponse<ComplianceRisk[]> | ComplianceRisk[]) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<ComplianceRisk[]>);
-        const data = Array.isArray(unwrapped)
-          ? unwrapped
-          : (unwrapped && typeof unwrapped === "object" && Array.isArray((unwrapped as any).data))
-          ? (unwrapped as any).data
-          : [];
+        const data = extractArray<ComplianceRisk>(raw);
         return {
           success: true,
           message: "Compliance risks retrieved",
-          data: Array.isArray(data) ? data : [],
+          data,
           errors: null,
         };
       },
@@ -134,14 +112,11 @@ export const complianceReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<AuditReadiness> | APIResponse<AuditReadiness> | AuditReadiness) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<AuditReadiness>);
-        const data = (unwrapped && typeof unwrapped === "object" && "data" in unwrapped && (unwrapped as any).data !== undefined)
-          ? (unwrapped as any).data
-          : unwrapped;
+        const data = extractData<AuditReadiness>(raw);
         return {
           success: true,
           message: "Audit readiness retrieved",
-          data: (data && typeof data === "object") ? data as AuditReadiness : null,
+          data,
           errors: null,
         };
       },
@@ -154,14 +129,11 @@ export const complianceReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<ComplianceAnalytics> | APIResponse<ComplianceAnalytics> | ComplianceAnalytics) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<ComplianceAnalytics>);
-        const data = (unwrapped && typeof unwrapped === "object" && "data" in unwrapped && (unwrapped as any).data !== undefined)
-          ? (unwrapped as any).data
-          : unwrapped;
+        const data = extractData<ComplianceAnalytics>(raw);
         return {
           success: true,
           message: "Compliance analytics retrieved",
-          data: (data && typeof data === "object") ? data as ComplianceAnalytics : null,
+          data,
           errors: null,
         };
       },
@@ -174,16 +146,11 @@ export const complianceReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<ComplianceAlert[]> | APIResponse<ComplianceAlert[]> | ComplianceAlert[]) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<ComplianceAlert[]>);
-        const data = Array.isArray(unwrapped)
-          ? unwrapped
-          : (unwrapped && typeof unwrapped === "object" && Array.isArray((unwrapped as any).data))
-          ? (unwrapped as any).data
-          : [];
+        const data = extractArray<ComplianceAlert>(raw);
         return {
           success: true,
           message: "Compliance alerts retrieved",
-          data: Array.isArray(data) ? data : [],
+          data,
           errors: null,
         };
       },
@@ -196,14 +163,11 @@ export const complianceReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<ComplianceReportData> | APIResponse<ComplianceReportData> | ComplianceReportData) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<ComplianceReportData>);
-        const data = (unwrapped && typeof unwrapped === "object" && "data" in unwrapped && (unwrapped as any).data !== undefined)
-          ? (unwrapped as any).data
-          : unwrapped;
+        const data = extractData<ComplianceReportData>(raw);
         return {
           success: true,
           message: "Compliance report data retrieved",
-          data: (data && typeof data === "object") ? data as ComplianceReportData : null,
+          data,
           errors: null,
         };
       },
@@ -219,14 +183,11 @@ export const complianceReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<EmployeeComplianceDetail> | APIResponse<EmployeeComplianceDetail> | EmployeeComplianceDetail) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<EmployeeComplianceDetail>);
-        const data = (unwrapped && typeof unwrapped === "object" && "data" in unwrapped && (unwrapped as any).data !== undefined)
-          ? (unwrapped as any).data
-          : unwrapped;
+        const data = extractData<EmployeeComplianceDetail>(raw);
         return {
           success: true,
           message: "Employee compliance detail retrieved",
-          data: (data && typeof data === "object") ? data as EmployeeComplianceDetail : null,
+          data,
           errors: null,
         };
       },
@@ -268,16 +229,11 @@ export const complianceReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<SecurityAuditLog[]> | APIResponse<SecurityAuditLog[]> | SecurityAuditLog[]) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<SecurityAuditLog[]>);
-        const data = Array.isArray(unwrapped)
-          ? unwrapped
-          : (unwrapped && typeof unwrapped === "object" && Array.isArray((unwrapped as any).data))
-          ? (unwrapped as any).data
-          : [];
+        const data = extractArray<SecurityAuditLog>(raw);
         return {
           success: true,
           message: "Security audit log retrieved",
-          data: Array.isArray(data) ? data : [],
+          data,
           errors: null,
         };
       },

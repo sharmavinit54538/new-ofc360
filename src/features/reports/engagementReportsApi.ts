@@ -1,5 +1,5 @@
 import { baseApi } from "@/services/api/baseApi";
-import { unwrapEnvelope, RawEnvelope } from "@/services/api/envelope";
+import { RawEnvelope } from "@/services/api/envelope";
 import {
   APIResponse,
   EngagementSummary,
@@ -8,6 +8,7 @@ import {
   EngagementBreakdownItem,
   EngagementSurveyItem,
 } from "./types";
+import { extractData, extractArray } from "./unwrapHelper";
 
 export const engagementReportsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -17,14 +18,11 @@ export const engagementReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<EngagementSummary> | APIResponse<EngagementSummary> | EngagementSummary) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<EngagementSummary>);
-        const data = (unwrapped && typeof unwrapped === "object" && "data" in unwrapped && (unwrapped as any).data !== undefined)
-          ? (unwrapped as any).data
-          : unwrapped;
+        const data = extractData<EngagementSummary>(raw);
         return {
           success: true,
           message: "Engagement summary retrieved",
-          data: (data && typeof data === "object") ? data as EngagementSummary : null,
+          data,
           errors: null,
         };
       },
@@ -37,16 +35,11 @@ export const engagementReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<EngagementTrendItem[]> | APIResponse<EngagementTrendItem[]> | EngagementTrendItem[]) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<EngagementTrendItem[]>);
-        const data = Array.isArray(unwrapped)
-          ? unwrapped
-          : (unwrapped && typeof unwrapped === "object" && Array.isArray((unwrapped as any).data))
-          ? (unwrapped as any).data
-          : [];
+        const data = extractArray<EngagementTrendItem>(raw);
         return {
           success: true,
           message: "Engagement trend retrieved",
-          data: Array.isArray(data) ? data : [],
+          data,
           errors: null,
         };
       },
@@ -59,16 +52,11 @@ export const engagementReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<EnpsTrendItem[]> | APIResponse<EnpsTrendItem[]> | EnpsTrendItem[]) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<EnpsTrendItem[]>);
-        const data = Array.isArray(unwrapped)
-          ? unwrapped
-          : (unwrapped && typeof unwrapped === "object" && Array.isArray((unwrapped as any).data))
-          ? (unwrapped as any).data
-          : [];
+        const data = extractArray<EnpsTrendItem>(raw);
         return {
           success: true,
           message: "eNPS trend retrieved",
-          data: Array.isArray(data) ? data : [],
+          data,
           errors: null,
         };
       },
@@ -81,16 +69,11 @@ export const engagementReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<EngagementBreakdownItem[]> | APIResponse<EngagementBreakdownItem[]> | EngagementBreakdownItem[]) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<EngagementBreakdownItem[]>);
-        const data = Array.isArray(unwrapped)
-          ? unwrapped
-          : (unwrapped && typeof unwrapped === "object" && Array.isArray((unwrapped as any).data))
-          ? (unwrapped as any).data
-          : [];
+        const data = extractArray<EngagementBreakdownItem>(raw);
         return {
           success: true,
           message: "Engagement breakdown retrieved",
-          data: Array.isArray(data) ? data : [],
+          data,
           errors: null,
         };
       },
@@ -103,16 +86,11 @@ export const engagementReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<EngagementSurveyItem[]> | APIResponse<EngagementSurveyItem[]> | EngagementSurveyItem[]) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<EngagementSurveyItem[]>);
-        const data = Array.isArray(unwrapped)
-          ? unwrapped
-          : (unwrapped && typeof unwrapped === "object" && Array.isArray((unwrapped as any).data))
-          ? (unwrapped as any).data
-          : [];
+        const data = extractArray<EngagementSurveyItem>(raw);
         return {
           success: true,
           message: "Engagement surveys retrieved",
-          data: Array.isArray(data) ? data : [],
+          data,
           errors: null,
         };
       },

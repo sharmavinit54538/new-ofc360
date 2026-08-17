@@ -1,5 +1,5 @@
 import { baseApi } from "@/services/api/baseApi";
-import { unwrapEnvelope, RawEnvelope } from "@/services/api/envelope";
+import { RawEnvelope } from "@/services/api/envelope";
 import {
   APIResponse,
   ReportCreate,
@@ -10,6 +10,7 @@ import {
   DepartmentAnalytics,
   TenureAnalytics,
 } from "./types";
+import { extractData, extractArray } from "./unwrapHelper";
 
 export const reportsCoreApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -26,16 +27,11 @@ export const reportsCoreApi = baseApi.injectEndpoints({
         },
       }),
       transformResponse: (raw: RawEnvelope<ReportResponse[]> | APIResponse<ReportResponse[]> | ReportResponse[]) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<ReportResponse[]>);
-        const data = Array.isArray(unwrapped)
-          ? unwrapped
-          : (unwrapped && typeof unwrapped === "object" && Array.isArray((unwrapped as any).data))
-          ? (unwrapped as any).data
-          : [];
+        const data = extractArray<ReportResponse>(raw);
         return {
           success: true,
           message: "Reports retrieved",
-          data: Array.isArray(data) ? data : [],
+          data,
           errors: null,
         };
       },
@@ -54,14 +50,11 @@ export const reportsCoreApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<ReportStats> | APIResponse<ReportStats> | ReportStats) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<ReportStats>);
-        const data = (unwrapped && typeof unwrapped === "object" && "data" in unwrapped && (unwrapped as any).data !== undefined)
-          ? (unwrapped as any).data
-          : unwrapped;
+        const data = extractData<ReportStats>(raw);
         return {
           success: true,
           message: "Report stats retrieved",
-          data: (data && typeof data === "object") ? data as ReportStats : null,
+          data,
           errors: null,
         };
       },
@@ -110,16 +103,11 @@ export const reportsCoreApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<HeadcountAnalytics[]> | APIResponse<HeadcountAnalytics[]> | HeadcountAnalytics[]) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<HeadcountAnalytics[]>);
-        const data = Array.isArray(unwrapped)
-          ? unwrapped
-          : (unwrapped && typeof unwrapped === "object" && Array.isArray((unwrapped as any).data))
-          ? (unwrapped as any).data
-          : [];
+        const data = extractArray<HeadcountAnalytics>(raw);
         return {
           success: true,
           message: "Headcount analytics retrieved",
-          data: Array.isArray(data) ? data : [],
+          data,
           errors: null,
         };
       },
@@ -132,16 +120,11 @@ export const reportsCoreApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<DepartmentAnalytics[]> | APIResponse<DepartmentAnalytics[]> | DepartmentAnalytics[]) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<DepartmentAnalytics[]>);
-        const data = Array.isArray(unwrapped)
-          ? unwrapped
-          : (unwrapped && typeof unwrapped === "object" && Array.isArray((unwrapped as any).data))
-          ? (unwrapped as any).data
-          : [];
+        const data = extractArray<DepartmentAnalytics>(raw);
         return {
           success: true,
           message: "Department analytics retrieved",
-          data: Array.isArray(data) ? data : [],
+          data,
           errors: null,
         };
       },
@@ -154,16 +137,11 @@ export const reportsCoreApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<TenureAnalytics[]> | APIResponse<TenureAnalytics[]> | TenureAnalytics[]) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<TenureAnalytics[]>);
-        const data = Array.isArray(unwrapped)
-          ? unwrapped
-          : (unwrapped && typeof unwrapped === "object" && Array.isArray((unwrapped as any).data))
-          ? (unwrapped as any).data
-          : [];
+        const data = extractArray<TenureAnalytics>(raw);
         return {
           success: true,
           message: "Tenure analytics retrieved",
-          data: Array.isArray(data) ? data : [],
+          data,
           errors: null,
         };
       },

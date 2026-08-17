@@ -1,5 +1,5 @@
 import { baseApi } from "@/services/api/baseApi";
-import { unwrapEnvelope, RawEnvelope } from "@/services/api/envelope";
+import { RawEnvelope } from "@/services/api/envelope";
 import {
   APIResponse,
   CultureDiTelemetry,
@@ -7,6 +7,7 @@ import {
   CultureBreakdownItem,
   CultureFeedbackItem,
 } from "./types";
+import { extractData, extractArray } from "./unwrapHelper";
 
 export const cultureReportsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -16,14 +17,11 @@ export const cultureReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<CultureDiTelemetry> | APIResponse<CultureDiTelemetry> | CultureDiTelemetry) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<CultureDiTelemetry>);
-        const data = (unwrapped && typeof unwrapped === "object" && "data" in unwrapped && (unwrapped as any).data !== undefined)
-          ? (unwrapped as any).data
-          : unwrapped;
+        const data = extractData<CultureDiTelemetry>(raw);
         return {
           success: true,
           message: "Culture & D&I Telemetry retrieved",
-          data: (data && typeof data === "object") ? data as CultureDiTelemetry : null,
+          data,
           errors: null,
         };
       },
@@ -36,16 +34,11 @@ export const cultureReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<CultureTrendItem[]> | APIResponse<CultureTrendItem[]> | CultureTrendItem[]) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<CultureTrendItem[]>);
-        const data = Array.isArray(unwrapped)
-          ? unwrapped
-          : (unwrapped && typeof unwrapped === "object" && Array.isArray((unwrapped as any).data))
-          ? (unwrapped as any).data
-          : [];
+        const data = extractArray<CultureTrendItem>(raw);
         return {
           success: true,
           message: "Culture trend retrieved",
-          data: Array.isArray(data) ? data : [],
+          data,
           errors: null,
         };
       },
@@ -58,16 +51,11 @@ export const cultureReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<CultureBreakdownItem[]> | APIResponse<CultureBreakdownItem[]> | CultureBreakdownItem[]) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<CultureBreakdownItem[]>);
-        const data = Array.isArray(unwrapped)
-          ? unwrapped
-          : (unwrapped && typeof unwrapped === "object" && Array.isArray((unwrapped as any).data))
-          ? (unwrapped as any).data
-          : [];
+        const data = extractArray<CultureBreakdownItem>(raw);
         return {
           success: true,
           message: "Culture breakdown retrieved",
-          data: Array.isArray(data) ? data : [],
+          data,
           errors: null,
         };
       },
@@ -80,16 +68,11 @@ export const cultureReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<CultureFeedbackItem[]> | APIResponse<CultureFeedbackItem[]> | CultureFeedbackItem[]) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<CultureFeedbackItem[]>);
-        const data = Array.isArray(unwrapped)
-          ? unwrapped
-          : (unwrapped && typeof unwrapped === "object" && Array.isArray((unwrapped as any).data))
-          ? (unwrapped as any).data
-          : [];
+        const data = extractArray<CultureFeedbackItem>(raw);
         return {
           success: true,
           message: "Culture feedback retrieved",
-          data: Array.isArray(data) ? data : [],
+          data,
           errors: null,
         };
       },

@@ -1,5 +1,5 @@
 import { baseApi } from "@/services/api/baseApi";
-import { unwrapEnvelope, RawEnvelope } from "@/services/api/envelope";
+import { RawEnvelope } from "@/services/api/envelope";
 import {
   APIResponse,
   PerformanceDashboardKpis,
@@ -16,6 +16,7 @@ import {
   GeneratePromotionPayload,
   SkillGapAnalysisPayload,
 } from "./types";
+import { extractData, extractArray } from "./unwrapHelper";
 
 export const performanceReportsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -25,14 +26,11 @@ export const performanceReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<PerformanceDashboardKpis> | APIResponse<PerformanceDashboardKpis> | PerformanceDashboardKpis) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<PerformanceDashboardKpis>);
-        const data = (unwrapped && typeof unwrapped === "object" && "data" in unwrapped && (unwrapped as any).data !== undefined)
-          ? (unwrapped as any).data
-          : unwrapped;
+        const data = extractData<PerformanceDashboardKpis>(raw);
         return {
           success: true,
           message: "Performance dashboard data retrieved",
-          data: (data && typeof data === "object") ? data as PerformanceDashboardKpis : null,
+          data,
           errors: null,
         };
       },
@@ -45,16 +43,11 @@ export const performanceReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<PerformanceTrend[]> | APIResponse<PerformanceTrend[]> | PerformanceTrend[]) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<PerformanceTrend[]>);
-        const data = Array.isArray(unwrapped)
-          ? unwrapped
-          : (unwrapped && typeof unwrapped === "object" && Array.isArray((unwrapped as any).data))
-          ? (unwrapped as any).data
-          : [];
+        const data = extractArray<PerformanceTrend>(raw);
         return {
           success: true,
           message: "Performance trends retrieved",
-          data: Array.isArray(data) ? data : [],
+          data,
           errors: null,
         };
       },
@@ -67,16 +60,11 @@ export const performanceReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<KpiAttainment[]> | APIResponse<KpiAttainment[]> | KpiAttainment[]) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<KpiAttainment[]>);
-        const data = Array.isArray(unwrapped)
-          ? unwrapped
-          : (unwrapped && typeof unwrapped === "object" && Array.isArray((unwrapped as any).data))
-          ? (unwrapped as any).data
-          : [];
+        const data = extractArray<KpiAttainment>(raw);
         return {
           success: true,
           message: "KPI attainment data retrieved",
-          data: Array.isArray(data) ? data : [],
+          data,
           errors: null,
         };
       },
@@ -89,16 +77,11 @@ export const performanceReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<TopPerformer[]> | APIResponse<TopPerformer[]> | TopPerformer[]) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<TopPerformer[]>);
-        const data = Array.isArray(unwrapped)
-          ? unwrapped
-          : (unwrapped && typeof unwrapped === "object" && Array.isArray((unwrapped as any).data))
-          ? (unwrapped as any).data
-          : [];
+        const data = extractArray<TopPerformer>(raw);
         return {
           success: true,
           message: "Top performers retrieved",
-          data: Array.isArray(data) ? data : [],
+          data,
           errors: null,
         };
       },
@@ -114,14 +97,11 @@ export const performanceReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<EmployeePerformanceScore> | APIResponse<EmployeePerformanceScore> | EmployeePerformanceScore) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<EmployeePerformanceScore>);
-        const data = (unwrapped && typeof unwrapped === "object" && "data" in unwrapped && (unwrapped as any).data !== undefined)
-          ? (unwrapped as any).data
-          : unwrapped;
+        const data = extractData<EmployeePerformanceScore>(raw);
         return {
           success: true,
           message: "Employee performance score retrieved",
-          data: (data && typeof data === "object") ? data as EmployeePerformanceScore : null,
+          data,
           errors: null,
         };
       },
@@ -136,16 +116,11 @@ export const performanceReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<SkillGap[]> | APIResponse<SkillGap[]> | SkillGap[]) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<SkillGap[]>);
-        const data = Array.isArray(unwrapped)
-          ? unwrapped
-          : (unwrapped && typeof unwrapped === "object" && Array.isArray((unwrapped as any).data))
-          ? (unwrapped as any).data
-          : [];
+        const data = extractArray<SkillGap>(raw);
         return {
           success: true,
           message: "Skill gaps retrieved",
-          data: Array.isArray(data) ? data : [],
+          data,
           errors: null,
         };
       },
@@ -161,16 +136,11 @@ export const performanceReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<PromotionRecommendation[]> | APIResponse<PromotionRecommendation[]> | PromotionRecommendation[]) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<PromotionRecommendation[]>);
-        const data = Array.isArray(unwrapped)
-          ? unwrapped
-          : (unwrapped && typeof unwrapped === "object" && Array.isArray((unwrapped as any).data))
-          ? (unwrapped as any).data
-          : [];
+        const data = extractArray<PromotionRecommendation>(raw);
         return {
           success: true,
           message: "Promotion recommendations retrieved",
-          data: Array.isArray(data) ? data : [],
+          data,
           errors: null,
         };
       },
@@ -186,16 +156,11 @@ export const performanceReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<CoachingSuggestion[]> | APIResponse<CoachingSuggestion[]> | CoachingSuggestion[]) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<CoachingSuggestion[]>);
-        const data = Array.isArray(unwrapped)
-          ? unwrapped
-          : (unwrapped && typeof unwrapped === "object" && Array.isArray((unwrapped as any).data))
-          ? (unwrapped as any).data
-          : [];
+        const data = extractArray<CoachingSuggestion>(raw);
         return {
           success: true,
           message: "Coaching suggestions retrieved",
-          data: Array.isArray(data) ? data : [],
+          data,
           errors: null,
         };
       },
@@ -211,14 +176,11 @@ export const performanceReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<PerformanceAnalytics> | APIResponse<PerformanceAnalytics> | PerformanceAnalytics) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<PerformanceAnalytics>);
-        const data = (unwrapped && typeof unwrapped === "object" && "data" in unwrapped && (unwrapped as any).data !== undefined)
-          ? (unwrapped as any).data
-          : unwrapped;
+        const data = extractData<PerformanceAnalytics>(raw);
         return {
           success: true,
           message: "Performance analytics retrieved",
-          data: (data && typeof data === "object") ? data as PerformanceAnalytics : null,
+          data,
           errors: null,
         };
       },

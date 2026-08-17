@@ -1,5 +1,5 @@
 import { baseApi } from "@/services/api/baseApi";
-import { unwrapEnvelope, RawEnvelope } from "@/services/api/envelope";
+import { RawEnvelope } from "@/services/api/envelope";
 import {
   APIResponse,
   WorkforceDashboardMetrics,
@@ -7,6 +7,7 @@ import {
   AttritionPrediction,
   WorkforceForecast,
 } from "./types";
+import { extractData } from "./unwrapHelper";
 
 export const workforceReportsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -16,14 +17,11 @@ export const workforceReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<WorkforceDashboardMetrics> | APIResponse<WorkforceDashboardMetrics> | WorkforceDashboardMetrics) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<WorkforceDashboardMetrics>);
-        const data = (unwrapped && typeof unwrapped === "object" && "data" in unwrapped && (unwrapped as any).data !== undefined)
-          ? (unwrapped as any).data
-          : unwrapped;
+        const data = extractData<WorkforceDashboardMetrics>(raw);
         return {
           success: true,
           message: "Workforce dashboard metrics retrieved",
-          data: (data && typeof data === "object") ? data as WorkforceDashboardMetrics : null,
+          data,
           errors: null,
         };
       },
@@ -36,14 +34,11 @@ export const workforceReportsApi = baseApi.injectEndpoints({
         method: "GET",
       }),
       transformResponse: (raw: RawEnvelope<LeaveAnalytics> | APIResponse<LeaveAnalytics> | LeaveAnalytics) => {
-        const unwrapped = unwrapEnvelope(raw as RawEnvelope<LeaveAnalytics>);
-        const data = (unwrapped && typeof unwrapped === "object" && "data" in unwrapped && (unwrapped as any).data !== undefined)
-          ? (unwrapped as any).data
-          : unwrapped;
+        const data = extractData<LeaveAnalytics>(raw);
         return {
           success: true,
           message: "Leave analytics retrieved",
-          data: (data && typeof data === "object") ? data as LeaveAnalytics : null,
+          data,
           errors: null,
         };
       },
