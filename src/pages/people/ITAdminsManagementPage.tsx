@@ -184,7 +184,7 @@ export default function ITAdminsManagementPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filtered.length === 0 ? (
+            {filteredAdmins.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-12 text-muted-foreground text-xs">
                   <div className="flex flex-col items-center justify-center space-y-2">
@@ -201,7 +201,7 @@ export default function ITAdminsManagementPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((adm) => {
+              filteredAdmins.map((adm) => {
                 const displayName =
                   adm.name ||
                   (adm.firstName ? `${adm.firstName} ${adm.lastName || ""}`.trim() : "") ||
