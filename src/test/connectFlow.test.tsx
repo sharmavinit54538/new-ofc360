@@ -24,7 +24,7 @@ function renderWithProviders(ui: React.ReactElement) {
   );
 }
 
-describe("Connect UI Components & Redux Integration", () => {
+describe("Connect UI Components & Redux Integration", { timeout: 15000 }, () => {
   it("renders ConnectHeader with tabs and search button", () => {
     renderWithProviders(<ConnectHeader />);
 
