@@ -65,3 +65,11 @@ export const {
   useGetExportsPayrollQuery,
   useGetExportsPerformanceQuery,
 } = reportsApi;
+
+// Re-export specific feature API hooks for full compatibility
+export * from '@/features/reports/engagementReportsApi';
+export * from '@/features/reports/cultureReportsApi';
+export * from '@/features/reports/performanceReportsApi';
+export * from '@/features/reports/complianceReportsApi';
+export * from '@/features/reports/workforceReportsApi';
+export * from '@/features/reports/reportsCoreApi';
