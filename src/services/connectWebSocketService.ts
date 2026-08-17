@@ -21,7 +21,7 @@ import {
 } from "@/features/connect/meetingSlice";
 import { setUserPresence } from "@/features/connect/presenceSlice";
 import { connectAudioManager } from "@/services/connectAudioManager";
-import { ConnectMessage, WebSocketEvent, WebSocketEventType } from "@/types/connect";
+import { ConnectMessage, ConnectNotification, WebSocketEvent, WebSocketEventType } from "@/types/connect";
 
 class ConnectWebSocketService {
   private ws: WebSocket | null = null;
@@ -236,13 +236,67 @@ class ConnectWebSocketService {
           })
         );
 
-        // Sound Chime
+        // Sound Chime & Real-time Notification
         if (message.senderId !== currentUserId) {
           const isMention = message.content?.includes("@") || false;
           connectAudioManager.playMessage({
             eventId: message.id,
             isMention,
           });
+
+          // Insert notification with sender, location/channel, and message content preview
+          const isChannel = Boolean((message as any).channelId || targetId?.startsWith("chn_"));
+          const channelName = (message as any).channelName || (message as any).channel_name;
+          const senderName = message.senderName || "Colleague";
+          const title = isChannel
+            ? (channelName ? `${senderName} in #${channelName}` : `New message in channel from ${senderName}`)
+            : `New message from ${senderName}`;
+
+          const description =
+            message.content ||
+            (message.attachments?.length
+              ? "Sent an attachment"
+              : message.isVoiceMessage
+              ? "Sent a voice message"
+              : "New message");
+
+          const channelId = isChannel ? ((message as any).channelId || targetId) : undefined;
+          const conversationId = !isChannel ? (message.conversationId || targetId) : undefined;
+
+          store.dispatch(
+            connectApi.util.updateQueryData("getNotifications", undefined, (draft) => {
+              const existingIdx = draft.findIndex(
+                (n) => n.id === `notif_${message.id}` || n.id === message.id
+              );
+              const notifItem: ConnectNotification = {
+                id: `notif_${message.id}`,
+                type: isMention ? "mention" : isChannel ? "channel" : "message",
+                title,
+                description,
+                timestamp: message.timestamp || new Date().toISOString(),
+                read: false,
+                link: isChannel
+                  ? `/connect/channels/${channelId}`
+                  : `/connect/chat/${conversationId}`,
+                sender: {
+                  id: message.senderId,
+                  name: senderName,
+                  email: "",
+                  avatar: message.senderAvatar,
+                },
+                channelId,
+                channelName,
+                conversationId,
+                content: description,
+              };
+
+              if (existingIdx > -1) {
+                draft[existingIdx] = notifItem;
+              } else {
+                draft.unshift(notifItem);
+              }
+            })
+          );
         }
         break;
       }

@@ -178,6 +178,12 @@ export interface ConnectNotification {
   read: boolean;
   link?: string;
   sender?: ConnectUser;
+  channelId?: string;
+  channelName?: string;
+  conversationId?: string;
+  content?: string;
+  targetName?: string;
+  targetType?: "channel" | "dm" | "meeting";
 }
 
 export interface MailArtifactDraft {

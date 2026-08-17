@@ -617,8 +617,6 @@ export const connectApi = baseApi.injectEndpoints({
     }),
 
     // ==========================================
-    // 9. Notifications
-    // ==========================================
     getNotifications: builder.query<ConnectNotification[], { unreadOnly?: boolean; limit?: number } | void>({
       query: (params) => ({
         url: "/api/v1/connect/notifications",
@@ -626,10 +624,76 @@ export const connectApi = baseApi.injectEndpoints({
         params: params || {},
       }),
       transformResponse: (response: any) => {
-        if (Array.isArray(response)) return response;
-        if (response?.data && Array.isArray(response.data)) return response.data;
-        if (response?.notifications && Array.isArray(response.notifications)) return response.notifications;
-        return [];
+        let rawList: any[] = [];
+        if (Array.isArray(response)) rawList = response;
+        else if (response?.data && Array.isArray(response.data)) rawList = response.data;
+        else if (response?.notifications && Array.isArray(response.notifications)) rawList = response.notifications;
+
+        return rawList.map((item: any): ConnectNotification => {
+          const rawType = item.type || (item.channelId || item.channel_name || item.channel_id ? "channel" : "message");
+          const channelName =
+            item.channelName ||
+            item.channel_name ||
+            item.channel?.name ||
+            item.targetName ||
+            item.target_name ||
+            "";
+          const channelId = item.channelId || item.channel_id || item.channel?.id;
+          const conversationId = item.conversationId || item.conversation_id;
+
+          const senderName =
+            item.sender?.name ||
+            item.sender_name ||
+            item.senderName ||
+            item.userName ||
+            item.user_name ||
+            item.user?.name ||
+            "";
+
+          const rawContent =
+            item.description ||
+            item.content ||
+            item.message ||
+            item.body ||
+            item.text ||
+            item.preview ||
+            item.snippet ||
+            item.data?.content ||
+            item.data?.message ||
+            "";
+
+          let title = item.title;
+          if (!title) {
+            if (channelName) {
+              title = senderName ? `${senderName} in #${channelName}` : `New message in #${channelName}`;
+            } else if (senderName) {
+              title = `New message from ${senderName}`;
+            } else {
+              title = "New message";
+            }
+          }
+
+          return {
+            id: String(item.id || item._id || `notif_${Math.random().toString(36).slice(2)}`),
+            type: rawType,
+            title,
+            description: rawContent,
+            timestamp: item.timestamp || item.created_at || item.createdAt || new Date().toISOString(),
+            read: Boolean(item.read || item.is_read || item.isRead),
+            link:
+              item.link ||
+              (channelId
+                ? `/connect/channels/${channelId}`
+                : conversationId
+                ? `/connect/chat/${conversationId}`
+                : "/connect/chat"),
+            sender: item.sender || (senderName ? { id: item.sender_id || item.senderId || "usr_sender", name: senderName, email: "" } : undefined),
+            channelId,
+            channelName,
+            conversationId,
+            content: rawContent,
+          };
+        });
       },
       providesTags: ["Notifications"],
     }),
