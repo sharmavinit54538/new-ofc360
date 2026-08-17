@@ -4,6 +4,7 @@ import { useAppSelector } from "@/app/hooks";
 import { selectTargetTypingUsers } from "@/features/connect/selectors";
 import {
   useGetConversationsQuery,
+  useGetColleaguesQuery,
   useGetConversationMessagesQuery,
   useSendMessageMutation,
   useMarkConversationReadMutation,
@@ -38,6 +39,106 @@ import { ChatComposer } from "./ChatComposer";
 import { ConnectEmptyState } from "./ConnectEmptyState";
 import { toast } from "sonner";
 
+/**
+ * Extracts a person's display name from various possible object structures:
+ * - name, full_name, fullName, display_name, displayName
+ * - first_name + last_name or firstName + lastName
+ * - nested: participant, user, recipient, colleague, targetUser, otherUser, other_user
+ * - email prefix, username
+ */
+function extractNameFromEntity(entity: any): string {
+  if (!entity) return "";
+  if (typeof entity === "string") {
+    const trimmed = entity.trim();
+    if (trimmed && trimmed.toLowerCase() !== "colleague" && trimmed.toLowerCase() !== "user") {
+      return trimmed;
+    }
+    return "";
+  }
+
+  // 1. Direct name properties
+  const directProps = [
+    entity.name,
+    entity.full_name,
+    entity.fullName,
+    entity.display_name,
+    entity.displayName,
+  ];
+  for (const prop of directProps) {
+    if (
+      typeof prop === "string" &&
+      prop.trim() &&
+      prop.trim().toLowerCase() !== "colleague" &&
+      prop.trim().toLowerCase() !== "user"
+    ) {
+      return prop.trim();
+    }
+  }
+
+  // 2. Separate first & last names
+  const firstName = (
+    typeof entity.first_name === "string"
+      ? entity.first_name
+      : typeof entity.firstName === "string"
+      ? entity.firstName
+      : ""
+  ).trim();
+  const lastName = (
+    typeof entity.last_name === "string"
+      ? entity.last_name
+      : typeof entity.lastName === "string"
+      ? entity.lastName
+      : ""
+  ).trim();
+
+  if (firstName || lastName) {
+    const combined = `${firstName} ${lastName}`.trim();
+    if (
+      combined &&
+      combined.toLowerCase() !== "colleague" &&
+      combined.toLowerCase() !== "user"
+    ) {
+      return combined;
+    }
+  }
+
+  // 3. Nested objects
+  const nested =
+    entity.participant ||
+    entity.user ||
+    entity.recipient ||
+    entity.colleague ||
+    entity.targetUser ||
+    entity.target_user ||
+    entity.otherUser ||
+    entity.other_user;
+
+  if (nested && typeof nested === "object") {
+    const nestedName = extractNameFromEntity(nested);
+    if (nestedName) return nestedName;
+  }
+
+  // 4. Email fallback
+  const email =
+    entity.email ||
+    entity.emailAddress ||
+    entity.user?.email ||
+    entity.participant?.email;
+  if (typeof email === "string" && email.includes("@")) {
+    const prefix = email.split("@")[0].trim();
+    if (prefix) return prefix;
+  }
+
+  // 5. Username fallback
+  const username =
+    entity.username || entity.user?.username || entity.participant?.username;
+  if (typeof username === "string" && username.trim()) {
+    return username.trim();
+  }
+
+  return "";
+}
+
 interface ChatWindowProps {
   conversationId?: string | null;
   onOpenVideoCall?: (user: ConnectUser) => void;
@@ -64,6 +165,7 @@ export function ChatWindow({
 
   // RTK Query hooks
   const { data: conversations = [] } = useGetConversationsQuery();
+  const { data: colleaguesData } = useGetColleaguesQuery();
   const {
     data: messages = [],
     isLoading: isMessagesLoading,
@@ -86,9 +188,250 @@ export function ChatWindow({
     selectTargetTypingUsers(state, activeConversationId || "")
   );
 
+  const colleaguesList: ConnectUser[] = useMemo(() => {
+    if (Array.isArray(colleaguesData)) {
+      return colleaguesData;
+    } else if (colleaguesData && typeof colleaguesData === "object") {
+      const src = colleaguesData as any;
+      if (Array.isArray(src.colleagues)) return src.colleagues;
+      if (Array.isArray(src.data?.colleagues)) return src.data.colleagues;
+      if (Array.isArray(src.data)) return src.data;
+      if (Array.isArray(src.items)) return src.items;
+    }
+    return [];
+  }, [colleaguesData]);
+
+  // Find active conversation from conversations query
   const activeConversation = useMemo(() => {
-    return conversations.find((c) => c.id === activeConversationId);
+    if (!activeConversationId) return undefined;
+    const targetId = String(activeConversationId);
+    const cleanTargetId = targetId.replace(/^conv_/, "");
+
+    return conversations.find((c: any) => {
+      if (!c) return false;
+      const cId = String(c.id || c._id || c.conversationId || "");
+      const cleanCId = cId.replace(/^conv_/, "");
+      if (
+        cId === targetId ||
+        cleanCId === cleanTargetId ||
+        cId === cleanTargetId ||
+        cleanCId === targetId
+      ) {
+        return true;
+      }
+
+      // Check participant/user/recipient ID inside conversation
+      const pId = String(
+        c.participant?.id ||
+        c.participant?._id ||
+        c.user?.id ||
+        c.user?._id ||
+        c.recipient?.id ||
+        c.recipient?._id ||
+        c.targetUser?.id ||
+        c.targetUser?._id ||
+        ""
+      );
+      if (pId && (pId === targetId || pId === cleanTargetId)) {
+        return true;
+      }
+
+      // Check participants array
+      if (Array.isArray(c.participants)) {
+        return c.participants.some((p: any) => {
+          const partId = String(p.id || p._id || "");
+          return partId && (partId === targetId || partId === cleanTargetId);
+        });
+      }
+
+      return false;
+    });
   }, [conversations, activeConversationId]);
+
+  // Resolve recipient entity across conversations, colleagues list, and message history
+  const recipientEntity = useMemo(() => {
+    if (!activeConversationId) return null;
+    const targetId = String(activeConversationId);
+    const cleanTargetId = targetId.replace(/^conv_/, "");
+
+    // 1. From activeConversation
+    if (activeConversation) {
+      const convAny = activeConversation as any;
+      if (convAny.participant && typeof convAny.participant === "object") {
+        return convAny.participant;
+      }
+      if (convAny.user && typeof convAny.user === "object") {
+        return convAny.user;
+      }
+      if (convAny.recipient && typeof convAny.recipient === "object") {
+        return convAny.recipient;
+      }
+      if (convAny.colleague && typeof convAny.colleague === "object") {
+        return convAny.colleague;
+      }
+      if (convAny.targetUser && typeof convAny.targetUser === "object") {
+        return convAny.targetUser;
+      }
+      if (convAny.otherUser && typeof convAny.otherUser === "object") {
+        return convAny.otherUser;
+      }
+      if (Array.isArray(convAny.participants)) {
+        const other = convAny.participants.find(
+          (p: any) => String(p.id || p._id) !== String(currentUserId)
+        );
+        if (other) return other;
+      }
+      if (convAny.name || convAny.full_name || convAny.firstName || convAny.first_name) {
+        return convAny;
+      }
+    }
+
+    // 2. From colleagues list
+    if (colleaguesList.length > 0) {
+      const matchedColleague = colleaguesList.find((emp: any) => {
+        const empId = String(emp.id || emp._id || "");
+        const cleanEmpId = empId.replace(/^conv_/, "");
+        return (
+          empId === targetId ||
+          cleanEmpId === cleanTargetId ||
+          empId === cleanTargetId ||
+          (emp.email && emp.email.toLowerCase() === targetId.toLowerCase())
+        );
+      });
+      if (matchedColleague) return matchedColleague;
+    }
+
+    // 3. From message history
+    if (messages.length > 0) {
+      const otherMsg = messages.find(
+        (m) => String(m.senderId) !== String(currentUserId) && m.senderName
+      );
+      if (otherMsg) {
+        return {
+          id: otherMsg.senderId,
+          name: otherMsg.senderName,
+          avatar: otherMsg.senderAvatar,
+        };
+      }
+    }
+
+    return null;
+  }, [activeConversation, activeConversationId, colleaguesList, messages, currentUserId]);
+
+  // Recipient Display Name
+  const recipientName = useMemo(() => {
+    const extracted = extractNameFromEntity(recipientEntity);
+    if (extracted) return extracted;
+
+    if (activeConversation) {
+      const fromConv = extractNameFromEntity(activeConversation);
+      if (fromConv) return fromConv;
+    }
+
+    // Fallback: use user identifier without hardcoding "Colleague"
+    if (activeConversationId) {
+      return String(activeConversationId).replace(/^conv_/, "");
+    }
+
+    return "";
+  }, [recipientEntity, activeConversation, activeConversationId]);
+
+  // Recipient Role / Subtitle
+  const recipientRole = useMemo(() => {
+    const rawRole =
+      (recipientEntity as any)?.role ||
+      (recipientEntity as any)?.designation ||
+      (recipientEntity as any)?.job_title ||
+      (recipientEntity as any)?.title ||
+      (activeConversation as any)?.role;
+    return rawRole || "Team Member";
+  }, [recipientEntity, activeConversation]);
+
+  // Recipient Department
+  const recipientDepartment = useMemo(() => {
+    const rawDept =
+      (recipientEntity as any)?.department ||
+      (recipientEntity as any)?.dept ||
+      (activeConversation as any)?.department;
+    return rawDept || "General";
+  }, [recipientEntity, activeConversation]);
+
+  // Recipient Avatar
+  const recipientAvatar = useMemo(() => {
+    return (
+      (recipientEntity as any)?.avatar ||
+      (recipientEntity as any)?.photoUrl ||
+      (recipientEntity as any)?.photo_url ||
+      (recipientEntity as any)?.avatar_url ||
+      (recipientEntity as any)?.avatarUrl ||
+      (recipientEntity as any)?.profile_picture ||
+      undefined
+    );
+  }, [recipientEntity]);
+
+  // Recipient Presence
+  const recipientPresence = useMemo(() => {
+    return (
+      (recipientEntity as any)?.presence ||
+      (recipientEntity as any)?.status ||
+      "online"
+    );
+  }, [recipientEntity]);
+
+  // Recipient Email
+  const recipientEmail = useMemo(() => {
+    return (
+      (recipientEntity as any)?.email ||
+      (recipientEntity as any)?.emailAddress ||
+      ""
+    );
+  }, [recipientEntity]);
+
+  // Recipient ID
+  const recipientId = useMemo(() => {
+    return (
+      (recipientEntity as any)?.id ||
+      (recipientEntity as any)?._id ||
+      (activeConversation as any)?.id ||
+      activeConversationId ||
+      "unknown"
+    );
+  }, [recipientEntity, activeConversation, activeConversationId]);
+
+  // Initials matching recipient name
+  const initials = useMemo(() => {
+    if (!recipientName) return "";
+    return (
+      recipientName
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((n) => n[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase() || recipientName.charAt(0).toUpperCase()
+    );
+  }, [recipientName]);
+
+  // Dynamic participant representation
+  const participant: ConnectUser = useMemo(() => {
+    return {
+      id: recipientId,
+      name: recipientName,
+      email: recipientEmail,
+      role: recipientRole,
+      department: recipientDepartment,
+      avatar: recipientAvatar,
+      presence: recipientPresence,
+    };
+  }, [
+    recipientId,
+    recipientName,
+    recipientEmail,
+    recipientRole,
+    recipientDepartment,
+    recipientAvatar,
+    recipientPresence,
+  ]);
 
   // Mark conversation read automatically on load/view
   useEffect(() => {
@@ -100,7 +443,7 @@ export function ChatWindow({
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView?.({ behavior: "smooth" });
   }, [messages.length]);
 
   if (!activeConversationId) {
@@ -143,29 +486,16 @@ export function ChatWindow({
   };
 
   const handleStartAudio = () => {
-    if (!activeConversation) return;
-    startOutgoingCall(activeConversation.participant, "audio");
-    onOpenAudioCall?.(activeConversation.participant);
+    if (!participant) return;
+    startOutgoingCall(participant, "audio");
+    onOpenAudioCall?.(participant);
   };
 
   const handleStartVideo = () => {
-    if (!activeConversation) return;
-    startOutgoingCall(activeConversation.participant, "video");
-    onOpenVideoCall?.(activeConversation.participant);
+    if (!participant) return;
+    startOutgoingCall(participant, "video");
+    onOpenVideoCall?.(participant);
   };
-
-  const participant = activeConversation?.participant || {
-    id: "unknown",
-    name: "Colleague",
-    email: "",
-  };
-
-  const initials = participant.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 
   return (
     <div className={`flex-1 flex flex-col h-full bg-background/90 overflow-hidden select-none ${className}`}>
