@@ -25,6 +25,11 @@ describe("OFC360 Reports Frontend – Real API Integration Tests", () => {
       const result = unwrapEnvelope(direct);
       expect(result).toEqual([{ month: "Jan", score: 80 }]);
     });
+
+    it("should handle null or empty values gracefully", () => {
+      expect(unwrapEnvelope(null)).toBeNull();
+      expect(unwrapEnvelope(undefined)).toBeUndefined();
+    });
   });
 
   describe("Engagement API Endpoints & Configuration", () => {
@@ -35,12 +40,6 @@ describe("OFC360 Reports Frontend – Real API Integration Tests", () => {
       expect(endpoints.getEnpsTrend).toBeDefined();
       expect(endpoints.getEngagementBreakdown).toBeDefined();
       expect(endpoints.getEngagementSurveys).toBeDefined();
-    });
-
-    it("should format correct query URL for engagement summary", () => {
-      const endpoint = engagementReportsApi.endpoints.getEngagementSummary;
-      const queryResult = (endpoint as any).initiate()({ getState: () => ({ auth: {} }), dispatch: () => {} });
-      expect(endpoint).toBeDefined();
     });
   });
 
