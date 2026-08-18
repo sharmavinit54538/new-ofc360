@@ -39,6 +39,176 @@ import {
   MailDispatchResponse,
 } from "@/types/connect";
 
+function extractListFromEnvelope(response: any, keyNames: string[] = []): any[] {
+  if (!response) return [];
+  if (Array.isArray(response)) return response;
+  if (response.data && Array.isArray(response.data)) return response.data;
+
+  for (const key of keyNames) {
+    if (Array.isArray(response[key])) return response[key];
+    if (response.data && Array.isArray(response.data[key])) return response.data[key];
+  }
+
+  if (response.items && Array.isArray(response.items)) return response.items;
+  if (response.data?.items && Array.isArray(response.data.items)) return response.data.items;
+  if (response.results && Array.isArray(response.results)) return response.results;
+  if (response.data?.results && Array.isArray(response.data.results)) return response.data.results;
+  if (response.colleagues && Array.isArray(response.colleagues)) return response.colleagues;
+  if (response.data?.colleagues && Array.isArray(response.data.colleagues)) return response.data.colleagues;
+  if (response.conversations && Array.isArray(response.conversations)) return response.conversations;
+  if (response.data?.conversations && Array.isArray(response.data.conversations)) return response.data.conversations;
+  if (response.messages && Array.isArray(response.messages)) return response.messages;
+  if (response.data?.messages && Array.isArray(response.data.messages)) return response.data.messages;
+
+  return [];
+}
+
+export function normalizeConnectUser(raw: any): ConnectUser {
+  if (!raw) {
+    return { id: "usr_unknown", name: "User", email: "" };
+  }
+  const id = String(raw.id || raw._id || raw.userId || raw.user_id || `usr_${Math.random().toString(36).slice(2)}`);
+
+  let name = "";
+  if (raw.name && typeof raw.name === "string" && raw.name.trim() && raw.name.toLowerCase() !== "colleague" && raw.name.toLowerCase() !== "user") {
+    name = raw.name.trim();
+  } else if (raw.full_name && typeof raw.full_name === "string" && raw.full_name.trim()) {
+    name = raw.full_name.trim();
+  } else if (raw.fullName && typeof raw.fullName === "string" && raw.fullName.trim()) {
+    name = raw.fullName.trim();
+  } else if ((raw.displayName || raw.display_name) && typeof (raw.displayName || raw.display_name) === "string") {
+    name = (raw.displayName || raw.display_name).trim();
+  } else if (raw.first_name || raw.firstName) {
+    name = `${raw.first_name || raw.firstName || ""} ${raw.last_name || raw.lastName || ""}`.trim();
+  } else if (raw.email && typeof raw.email === "string" && raw.email.includes("@")) {
+    name = raw.email.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
+  } else if (raw.username && typeof raw.username === "string" && raw.username.trim()) {
+    name = raw.username.trim();
+  } else {
+    name = raw.name || "Colleague";
+  }
+
+  const email = raw.email || raw.emailAddress || raw.email_address || "";
+  const role = raw.role || raw.designation || raw.job_title || raw.title || "Team Member";
+  const department = raw.department || raw.dept || raw.departmentName || "General";
+  const avatar = raw.avatar || raw.avatar_url || raw.avatarUrl || raw.photoUrl || raw.photo_url || raw.profile_picture || undefined;
+  const presence = raw.presence || raw.status || "online";
+
+  return {
+    id,
+    name,
+    email,
+    role,
+    department,
+    avatar,
+    presence,
+  };
+}
+
+export function normalizeConnectMessage(raw: any, defaultConversationId?: string): ConnectMessage {
+  if (!raw) {
+    return {
+      id: `msg_${Date.now()}`,
+      conversationId: defaultConversationId || "",
+      senderId: "usr_unknown",
+      senderName: "",
+      content: "",
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  const id = String(raw.id || raw._id || raw.messageId || raw.message_id || `msg_${Date.now()}_${Math.random().toString(36).slice(2)}`);
+  const conversationId = String(raw.conversationId || raw.conversation_id || defaultConversationId || "");
+  const senderId = String(raw.senderId || raw.sender_id || raw.userId || raw.user_id || raw.sender?.id || raw.sender?._id || "usr_unknown");
+
+  let senderName = raw.senderName || raw.sender_name || raw.sender?.name || raw.user?.name;
+  if (!senderName && raw.sender && typeof raw.sender === "object") {
+    senderName = normalizeConnectUser(raw.sender).name;
+  }
+  if (!senderName) {
+    senderName = "";
+  }
+
+  const senderAvatar = raw.senderAvatar || raw.sender_avatar || raw.sender?.avatar || raw.sender?.avatar_url || raw.user?.avatar;
+  const content = String(raw.content || raw.message || raw.text || raw.body || "");
+  const timestamp = raw.timestamp || raw.created_at || raw.createdAt || new Date().toISOString();
+
+  const attachments = Array.isArray(raw.attachments) ? raw.attachments : Array.isArray(raw.files) ? raw.files : [];
+  const reactions = Array.isArray(raw.reactions) ? raw.reactions : [];
+  const isPinned = Boolean(raw.isPinned ?? raw.is_pinned ?? raw.pinned ?? false);
+  const isVoiceMessage = Boolean(raw.isVoiceMessage ?? raw.is_voice_message ?? false);
+  const voiceDuration = raw.voiceDuration ?? raw.voice_duration;
+  const status = raw.status || "delivered";
+
+  return {
+    id,
+    conversationId,
+    senderId,
+    senderName,
+    senderAvatar,
+    content,
+    timestamp,
+    attachments,
+    reactions,
+    isPinned,
+    isVoiceMessage,
+    voiceDuration,
+    status,
+  };
+}
+
+export function normalizeConnectConversation(raw: any): ConnectConversation {
+  const id = String(raw.id || raw._id || raw.conversationId || raw.conversation_id || `conv_${Date.now()}_${Math.random().toString(36).slice(2)}`);
+
+  // Extract participant object from any property structure
+  const rawParticipant =
+    raw.participant ||
+    raw.user ||
+    raw.recipient ||
+    raw.colleague ||
+    raw.target_user ||
+    raw.targetUser ||
+    raw.other_user ||
+    raw.otherUser ||
+    (Array.isArray(raw.participants) ? raw.participants.find((p: any) => p && typeof p === "object") : null) ||
+    raw;
+
+  const participant = normalizeConnectUser(rawParticipant);
+
+  let lastMessage: ConnectMessage | undefined;
+  if (raw.lastMessage && typeof raw.lastMessage === "object") {
+    lastMessage = normalizeConnectMessage(raw.lastMessage, id);
+  } else if (raw.last_message && typeof raw.last_message === "object") {
+    lastMessage = normalizeConnectMessage(raw.last_message, id);
+  } else if (raw.latest_message && typeof raw.latest_message === "object") {
+    lastMessage = normalizeConnectMessage(raw.latest_message, id);
+  } else if (typeof raw.lastMessage === "string" || typeof raw.last_message === "string") {
+    lastMessage = {
+      id: `msg_last_${id}`,
+      conversationId: id,
+      senderId: participant.id,
+      senderName: participant.name,
+      content: String(raw.lastMessage || raw.last_message),
+      timestamp: raw.updatedAt || raw.updated_at || new Date().toISOString(),
+    };
+  }
+
+  const unreadCount = Number(raw.unreadCount ?? raw.unread_count ?? raw.unread ?? 0);
+  const isPinned = Boolean(raw.isPinned ?? raw.is_pinned ?? raw.pinned ?? false);
+  const isMuted = Boolean(raw.isMuted ?? raw.is_muted ?? raw.muted ?? false);
+  const updatedAt = raw.updatedAt || raw.updated_at || lastMessage?.timestamp || new Date().toISOString();
+
+  return {
+    id,
+    participant,
+    lastMessage,
+    unreadCount,
+    isPinned,
+    isMuted,
+    updatedAt,
+  };
+}
+
 export const connectApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     // ==========================================
@@ -51,15 +221,11 @@ export const connectApi = baseApi.injectEndpoints({
         params: params || {},
       }),
       transformResponse: (response: any) => {
-        // Always extract a flat ConnectUser[] array regardless of backend envelope shape
-        if (Array.isArray(response)) return response;
-        // { data: [...] }
-        if (response?.data && Array.isArray(response.data)) return response.data;
-        // { data: { colleagues: [...] } }  (nested envelope)
-        if (response?.data?.colleagues && Array.isArray(response.data.colleagues)) return response.data.colleagues;
-        // { colleagues: [...] }
-        if (response?.colleagues && Array.isArray(response.colleagues)) return response.colleagues;
-        return [];
+        console.log("[CHAT_API] GET /api/v1/connect/colleagues response:", response);
+        const list = extractListFromEnvelope(response, ["colleagues"]);
+        const normalized = list.map(normalizeConnectUser);
+        console.log(`[CHAT_API] Normalized ${normalized.length} colleagues.`);
+        return normalized;
       },
       providesTags: (result) =>
         result && Array.isArray(result)
@@ -79,7 +245,7 @@ export const connectApi = baseApi.injectEndpoints({
       transformResponse: (response: any) => {
         const raw = response?.data || response;
         return {
-          people: raw?.people || [],
+          people: Array.isArray(raw?.people) ? raw.people.map(normalizeConnectUser) : [],
           channels: raw?.channels || [],
           messages: raw?.messages || [],
           files: raw?.files || [],
@@ -98,12 +264,21 @@ export const connectApi = baseApi.injectEndpoints({
         params: params || {},
       }),
       transformResponse: (response: any) => {
-        let list: any[] = [];
-        if (Array.isArray(response)) list = response;
-        else if (response?.data && Array.isArray(response.data)) list = response.data;
-        else if (response?.conversations && Array.isArray(response.conversations)) list = response.conversations;
-        // Guard: drop entries with missing participant or participant.name to prevent UI crashes
-        return list.filter((c: any) => c?.participant?.name);
+        console.log("[CHAT_API] GET /api/v1/connect/conversations response:", response);
+        const list = extractListFromEnvelope(response, ["conversations"]);
+        const normalized = list.map(normalizeConnectConversation);
+
+        // Sort: Pinned first, then by updatedAt descending
+        normalized.sort((a, b) => {
+          if (a.isPinned && !b.isPinned) return -1;
+          if (!a.isPinned && b.isPinned) return 1;
+          const timeA = new Date(a.updatedAt || a.lastMessage?.timestamp || 0).getTime();
+          const timeB = new Date(b.updatedAt || b.lastMessage?.timestamp || 0).getTime();
+          return timeB - timeA;
+        });
+
+        console.log(`[CHAT_CONVERSATIONS] Fetched and normalized ${normalized.length} direct conversations:`, normalized);
+        return normalized;
       },
       providesTags: (result) =>
         result
@@ -115,12 +290,28 @@ export const connectApi = baseApi.injectEndpoints({
     }),
 
     createConversation: builder.mutation<ConnectConversation, CreateConversationRequest>({
-      query: (body) => ({
-        url: "/api/v1/connect/conversations",
-        method: "POST",
-        body,
-      }),
-      transformResponse: (response: any) => response?.data || response,
+      query: (body) => {
+        console.log("[CHAT_API] POST /api/v1/connect/conversations request:", body);
+        return {
+          url: "/api/v1/connect/conversations",
+          method: "POST",
+          body: {
+            targetUserId: body.targetUserId,
+            target_user_id: body.targetUserId,
+            participantId: body.targetUserId,
+            participant_id: body.targetUserId,
+            recipientId: body.targetUserId,
+            recipient_id: body.targetUserId,
+            userId: body.targetUserId,
+            user_id: body.targetUserId,
+          },
+        };
+      },
+      transformResponse: (response: any) => {
+        console.log("[CHAT_API] POST /api/v1/connect/conversations response:", response);
+        const raw = response?.data || response?.conversation || response;
+        return normalizeConnectConversation(raw);
+      },
       invalidatesTags: ["Conversations"],
     }),
 
@@ -130,11 +321,20 @@ export const connectApi = baseApi.injectEndpoints({
         method: "GET",
         params,
       }),
-      transformResponse: (response: any) => {
-        if (Array.isArray(response)) return response;
-        if (response?.data && Array.isArray(response.data)) return response.data;
-        if (response?.messages && Array.isArray(response.messages)) return response.messages;
-        return [];
+      transformResponse: (response: any, _meta, arg) => {
+        console.log(`[CHAT_API] GET /api/v1/connect/conversations/${arg.conversationId}/messages response:`, response);
+        const list = extractListFromEnvelope(response, ["messages", "conversation_messages"]);
+        const normalized = list.map((m) => normalizeConnectMessage(m, arg.conversationId));
+
+        // Sort messages chronologically (oldest -> newest) for correct chat view
+        normalized.sort((a, b) => {
+          const timeA = new Date(a.timestamp).getTime() || 0;
+          const timeB = new Date(b.timestamp).getTime() || 0;
+          return timeA - timeB;
+        });
+
+        console.log(`[CHAT_MESSAGES] Normalized ${normalized.length} messages for conversation ${arg.conversationId}`);
+        return normalized;
       },
       providesTags: (_result, _error, { conversationId }) => [
         { type: "Messages", id: conversationId },
@@ -142,12 +342,28 @@ export const connectApi = baseApi.injectEndpoints({
     }),
 
     sendMessage: builder.mutation<ConnectMessage, SendMessageRequest>({
-      query: ({ conversationId, ...body }) => ({
-        url: `/api/v1/connect/conversations/${conversationId}/messages`,
-        method: "POST",
-        body,
-      }),
-      transformResponse: (response: any) => response?.data || response,
+      query: ({ conversationId, ...body }) => {
+        console.log(`[CHAT_SEND] Sending message to conversation ${conversationId}:`, body.content);
+        return {
+          url: `/api/v1/connect/conversations/${conversationId}/messages`,
+          method: "POST",
+          body: {
+            content: body.content,
+            message: body.content, // alias for backend compatibility
+            attachments: body.attachments,
+            isVoiceMessage: body.isVoiceMessage,
+            is_voice_message: body.isVoiceMessage,
+            voiceDuration: body.voiceDuration,
+            voice_duration: body.voiceDuration,
+            replyToMessageId: body.replyToMessageId,
+            reply_to_message_id: body.replyToMessageId,
+          },
+        };
+      },
+      transformResponse: (response: any, _meta, arg) => {
+        const raw = response?.data || response?.message || response;
+        return normalizeConnectMessage(raw, arg.conversationId);
+      },
       invalidatesTags: (_result, _error, { conversationId }) => [
         { type: "Messages", id: conversationId },
         "Conversations",

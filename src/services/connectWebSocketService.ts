@@ -1,6 +1,6 @@
 import { store } from "@/app/store";
 import { baseApi } from "@/services/api/baseApi";
-import { connectApi } from "@/services/api/connectApi";
+import { connectApi, normalizeConnectMessage } from "@/services/api/connectApi";
 import {
   setConnected,
   setReconnecting,
@@ -192,8 +192,12 @@ class ConnectWebSocketService {
     switch (eventType) {
       // 1. Messages
       case "message:new": {
-        const message: ConnectMessage = data.message || data;
-        const targetId = message.conversationId;
+        const rawMsg = data.message || data;
+        const targetId = String(rawMsg.conversationId || rawMsg.conversation_id || rawMsg.channelId || rawMsg.channel_name || "");
+        const message: ConnectMessage = normalizeConnectMessage(rawMsg, targetId);
+
+        console.log(`[CHAT_WEBSOCKET] Received message:new event in room ${targetId}:`, message);
+        console.log(`[CHAT_INCOMING_MESSAGE] New message from ${message.senderName || message.senderId}: "${message.content}"`);
 
         // Targeted cache updates without full app refetching
         if (targetId) {
@@ -204,6 +208,7 @@ class ConnectWebSocketService {
               (draft) => {
                 if (!draft.some((m) => m.id === message.id)) {
                   draft.push(message);
+                  draft.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
                 }
               }
             )
@@ -216,22 +221,31 @@ class ConnectWebSocketService {
               (draft) => {
                 if (!draft.some((m) => m.id === message.id)) {
                   draft.push(message);
+                  draft.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
                 }
               }
             )
           );
         }
 
-        // Update Conversations list preview
+        // Update Conversations list preview and sorting
         store.dispatch(
           connectApi.util.updateQueryData("getConversations", undefined, (draft) => {
-            const conv = draft.find((c) => c.id === targetId);
+            const conv = draft.find((c) => c.id === targetId || String(c.participant?.id) === String(message.senderId));
             if (conv) {
               conv.lastMessage = message;
               conv.updatedAt = message.timestamp || new Date().toISOString();
               if (message.senderId !== currentUserId) {
                 conv.unreadCount = (conv.unreadCount || 0) + 1;
               }
+              // Re-sort: Pinned first, then newest message
+              draft.sort((a, b) => {
+                if (a.isPinned && !b.isPinned) return -1;
+                if (!a.isPinned && b.isPinned) return 1;
+                return new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime();
+              });
+            } else {
+              store.dispatch(connectApi.util.invalidateTags(["Conversations"]));
             }
           })
         );
@@ -239,6 +253,7 @@ class ConnectWebSocketService {
         // Sound Chime & Real-time Notification
         if (message.senderId !== currentUserId) {
           const isMention = message.content?.includes("@") || false;
+          console.log(`[CHAT_NOTIFICATION] Triggering message sound for event: ${message.id} (sender: ${message.senderName || message.senderId})`);
           console.log(`[NOTIFICATION_EVENT] Received message:new event (ID: ${message.id}, sender: ${message.senderName || message.senderId})`);
           connectAudioManager.playMessage({
             eventId: message.id,

@@ -37,6 +37,7 @@ import { PresenceIndicator } from "./PresenceIndicator";
 import { MessageBubble } from "./MessageBubble";
 import { ChatComposer } from "./ChatComposer";
 import { ConnectEmptyState } from "./ConnectEmptyState";
+import { ConnectErrorState } from "./ConnectErrorState";
 import { toast } from "sonner";
 
 /**
@@ -169,6 +170,9 @@ export function ChatWindow({
   const {
     data: messages = [],
     isLoading: isMessagesLoading,
+    isError: isMessagesError,
+    error: messagesError,
+    refetch: refetchMessages,
   } = useGetConversationMessagesQuery(
     {
       conversationId: activeConversationId || "",
@@ -176,6 +180,15 @@ export function ChatWindow({
     },
     { skip: !activeConversationId }
   );
+
+  useEffect(() => {
+    if (activeConversationId) {
+      console.log(`[CHAT_INIT] ChatWindow active conversation: ${activeConversationId}`);
+    }
+    if (isMessagesError) {
+      console.error(`[CHAT_MESSAGES] Error fetching messages for ${activeConversationId}:`, messagesError);
+    }
+  }, [activeConversationId, isMessagesError, messagesError]);
 
   const [sendMessage] = useSendMessageMutation();
   const [markConversationRead] = useMarkConversationReadMutation();
@@ -589,6 +602,15 @@ export function ChatWindow({
                 }`}
               />
             ))}
+          </div>
+        ) : isMessagesError ? (
+          <div className="p-6">
+            <ConnectErrorState
+              variant="connection_failed"
+              title="Failed to Load Messages"
+              description="Could not load messages for this conversation. Please check your connection and try again."
+              onRetry={() => refetchMessages()}
+            />
           </div>
         ) : messages.length === 0 ? (
           <ConnectEmptyState
