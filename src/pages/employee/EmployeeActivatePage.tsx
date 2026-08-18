@@ -19,74 +19,49 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { SEOHead } from "@/components/seo/SEOHead";
-import { useActivateEmployeeMutation } from "@/services/api/employeeApi";
-import { useActivateAccountMutation } from "@/services/api/onboardingApi";
+import {
+  useValidateEmployeeInvitationQuery,
+  useActivateEmployeeMutation,
+} from "@/services/api/employeeApi";
 import { useAppDispatch } from "@/app/hooks";
 import { setCredentials } from "@/features/auth/authSlice";
 import { normalizeError } from "@/services/api/normalizeError";
 import { toast } from "sonner";
-
-/**
- * Safely decodes a JWT payload without external dependencies
- */
-function parseJwtPayload(token: string): Record<string, any> | null {
-  try {
-    const parts = token.split(".");
-    if (parts.length < 2) return null;
-    const base64Url = parts[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split("")
-        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
-    );
-    return JSON.parse(jsonPayload);
-  } catch {
-    return null;
-  }
-}
 
 export default function EmployeeActivatePage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  // Extract query parameters
+  // Read only the invitation token from URL
   const token =
     searchParams.get("token") ||
     searchParams.get("activation_token") ||
     searchParams.get("invite_token") ||
     "";
 
-  // Check optional employee_id parameter
-  const queryEmployeeId =
-    searchParams.get("employee_id") ||
-    searchParams.get("id") ||
-    searchParams.get("emp_id") ||
-    searchParams.get("user_id") ||
+  // Validate invitation token with backend to resolve employee_id
+  const {
+    data: validationData,
+    isLoading: isValidatingToken,
+    isError: isValidationError,
+  } = useValidateEmployeeInvitationQuery(token, {
+    skip: !token,
+  });
+
+  // Extract resolved employee information from backend response
+  const resolvedEmployeeId =
+    validationData?.employee_id ||
+    validationData?.employeeId ||
+    validationData?.id ||
+    validationData?.user_id ||
+    validationData?.userId ||
     "";
 
-  const emailParam = searchParams.get("email") || "";
-
-  // Attempt to resolve employee ID or email from query or JWT payload if available
-  const [employeeId, setEmployeeId] = useState<string>(queryEmployeeId);
-  const [resolvedEmail, setResolvedEmail] = useState<string>(emailParam);
-
-  useEffect(() => {
-    if (queryEmployeeId) {
-      setEmployeeId(queryEmployeeId);
-    } else if (token) {
-      const payload = parseJwtPayload(token);
-      if (payload) {
-        const idFromToken =
-          payload.employee_id || payload.sub || payload.id || payload.user_id;
-        if (idFromToken && idFromToken !== "me") setEmployeeId(String(idFromToken));
-        const emailFromToken = payload.email || payload.identifier;
-        if (emailFromToken && !resolvedEmail) setResolvedEmail(String(emailFromToken));
-      }
-    }
-  }, [token, queryEmployeeId, resolvedEmail]);
+  const resolvedEmail =
+    validationData?.email ||
+    searchParams.get("email") ||
+    "";
 
   // Form State
   const [password, setPassword] = useState("");
@@ -96,9 +71,7 @@ export default function EmployeeActivatePage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const [activateEmployee, { isLoading: isActivatingEmployee }] = useActivateEmployeeMutation();
-  const [activateAccount, { isLoading: isActivatingAccount }] = useActivateAccountMutation();
-  const isLoading = isActivatingEmployee || isActivatingAccount;
+  const [activateEmployee, { isLoading: isActivating }] = useActivateEmployeeMutation();
 
   // Live password validation
   const hasMinLength = password.length >= 8;
@@ -107,15 +80,22 @@ export default function EmployeeActivatePage() {
     /[a-zA-Z]/.test(password) && /[0-9]/.test(password);
   const isFormValid = hasMinLength && passwordsMatch;
 
+  // Validation failure conditions
+  const isTokenInvalid =
+    !token ||
+    isValidationError ||
+    (validationData && validationData.valid === false) ||
+    (!isValidatingToken && validationData && !resolvedEmployeeId);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
-    if (!token) {
+    if (!token || !resolvedEmployeeId) {
       setErrorMessage(
-        "Your invitation link is invalid or has expired. Please contact your HR administrator for a new invitation."
+        "Your invitation link is invalid or has expired. Please contact HR for a new invitation."
       );
-      toast.error("Missing activation token.");
+      toast.error("Invalid invitation link. Missing token or employee ID.");
       return;
     }
 
@@ -132,44 +112,33 @@ export default function EmployeeActivatePage() {
     }
 
     try {
-      let res: any;
-      const cleanEmpId = (employeeId || "").trim();
+      const cleanEmpId = resolvedEmployeeId.trim();
 
-      if (cleanEmpId && cleanEmpId !== "me") {
-        // Explicit employee UUID endpoint: POST /api/v1/employees/{id}/activate
-        res = await activateEmployee({
-          id: cleanEmpId,
-          employee_id: cleanEmpId,
-          token: token.trim(),
-          new_password: password,
-          confirm_password: confirmPassword,
-        }).unwrap();
-      } else {
-        // Token-based activation endpoint under onboarding: POST /api/v1/onboarding/activate
-        res = await activateAccount({
-          token: token.trim(),
-          password: password,
-          new_password: password,
-          confirm_password: confirmPassword,
-        }).unwrap();
-      }
+      // POST /api/v1/employees/{employee_id}/activate
+      const res = await activateEmployee({
+        id: cleanEmpId,
+        employee_id: cleanEmpId,
+        token: token.trim(),
+        new_password: password,
+        confirm_password: confirmPassword,
+      }).unwrap();
 
       setIsSuccess(true);
       toast.success("Password set successfully! Your account is activated.");
 
-      // Check if the backend activation returned authenticated session tokens
+      // Check if backend activation returned authentication session tokens
       const sessionToken =
-        res?.token ||
-        res?.access_token ||
-        res?.data?.token ||
-        res?.data?.access_token;
-      const userObj = res?.user || res?.data?.user;
+        (res as any)?.token ||
+        (res as any)?.access_token ||
+        (res as any)?.data?.token ||
+        (res as any)?.data?.access_token;
+      const userObj = (res as any)?.user || (res as any)?.data?.user;
 
       if (sessionToken && userObj) {
         dispatch(
           setCredentials({
             token: sessionToken,
-            refreshToken: res?.refreshToken || res?.data?.refreshToken,
+            refreshToken: (res as any)?.refreshToken || (res as any)?.data?.refreshToken,
             user: userObj,
           })
         );
@@ -184,17 +153,14 @@ export default function EmployeeActivatePage() {
       const rawMsg = (norm.message || "").toLowerCase();
 
       if (
-        errStatus === 400 ||
-        errStatus === 401 ||
-        errStatus === 403 ||
-        errStatus === 404 ||
-        rawMsg.includes("expired") ||
-        rawMsg.includes("invalid token") ||
-        rawMsg.includes("already used") ||
-        rawMsg.includes("not found")
+        errStatus === 400 &&
+        (rawMsg.includes("expired") ||
+          rawMsg.includes("invalid token") ||
+          rawMsg.includes("already used") ||
+          rawMsg.includes("not found"))
       ) {
         setErrorMessage(
-          "Your invitation link is invalid or has expired. Please contact your HR administrator for a new invitation."
+          "Your invitation link is invalid or has expired. Please contact HR for a new invitation."
         );
       } else {
         setErrorMessage(norm.message || "Failed to set password. Please try again.");
@@ -267,7 +233,7 @@ export default function EmployeeActivatePage() {
                         Password Set Successfully!
                       </h2>
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        Your employee account has been activated. Proceed to log in with your new password to complete your onboarding.
+                        Password set successfully. Please sign in to continue your onboarding.
                       </p>
                     </div>
 
@@ -279,12 +245,32 @@ export default function EmployeeActivatePage() {
                       <ArrowRight className="w-4 h-4" />
                     </Button>
                   </motion.div>
-                ) : !token ? (
-                  /* Missing Token Warning */
+                ) : isValidatingToken ? (
+                  /* Token Validation Loading State */
                   <motion.div
-                    key="missing-token"
+                    key="validating-token"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-center space-y-5 py-8"
+                  >
+                    <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto" />
+                    <div className="space-y-1.5">
+                      <h2 className="text-base font-semibold text-foreground">
+                        Validating your invitation...
+                      </h2>
+                      <p className="text-xs text-muted-foreground">
+                        Please wait while we verify your invitation details.
+                      </p>
+                    </div>
+                  </motion.div>
+                ) : isTokenInvalid ? (
+                  /* Invalid / Expired Token Warning */
+                  <motion.div
+                    key="invalid-token"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
                     className="text-center space-y-5 py-4"
                   >
                     <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-500 mx-auto shadow-inner">
@@ -296,7 +282,7 @@ export default function EmployeeActivatePage() {
                         Invalid Invitation Link
                       </h2>
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        Your invitation link is invalid or has expired. Please contact your HR administrator for a new invitation.
+                        Your invitation link is invalid or has expired. Please contact HR for a new invitation.
                       </p>
                     </div>
 
@@ -326,7 +312,7 @@ export default function EmployeeActivatePage() {
                         <span>Welcome to OFC360</span>
                       </div>
                       <h2 className="text-xl font-bold tracking-tight text-foreground">
-                        Set your password
+                        Set Your Password
                       </h2>
                       <p className="text-xs text-muted-foreground">
                         Create a secure password to activate your employee workspace account.
@@ -363,7 +349,7 @@ export default function EmployeeActivatePage() {
                             placeholder="Enter new password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            disabled={isLoading}
+                            disabled={isActivating}
                             required
                             autoComplete="new-password"
                             className="pl-9 pr-10 bg-muted/40 border-border/60 text-xs focus:ring-primary/20 h-10"
@@ -371,7 +357,7 @@ export default function EmployeeActivatePage() {
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 cursor-pointer"
                             tabIndex={-1}
                             aria-label={showPassword ? "Hide password" : "Show password"}
                           >
@@ -400,7 +386,7 @@ export default function EmployeeActivatePage() {
                             placeholder="Confirm your password"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
-                            disabled={isLoading}
+                            disabled={isActivating}
                             required
                             autoComplete="new-password"
                             className="pl-9 pr-10 bg-muted/40 border-border/60 text-xs focus:ring-primary/20 h-10"
@@ -408,7 +394,7 @@ export default function EmployeeActivatePage() {
                           <button
                             type="button"
                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 cursor-pointer"
                             tabIndex={-1}
                             aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
                           >
@@ -489,10 +475,10 @@ export default function EmployeeActivatePage() {
                       {/* Submit Button */}
                       <Button
                         type="submit"
-                        disabled={isLoading || !isFormValid}
+                        disabled={isActivating || !isFormValid}
                         className="w-full font-semibold gap-2 py-5 shadow-lg shadow-primary/20 cursor-pointer disabled:opacity-50 transition-all"
                       >
-                        {isLoading ? (
+                        {isActivating ? (
                           <>
                             <Loader2 className="w-4 h-4 animate-spin" />
                             <span>Setting Password...</span>

@@ -47,9 +47,8 @@ export interface ActivateEmployeePayload {
   id?: string;
   employee_id?: string;
   token: string;
-  new_password?: string;
-  confirm_password?: string;
-  password?: string;
+  new_password: string;
+  confirm_password: string;
 }
 
 export interface ActivateEmployeeResponse {
@@ -672,7 +671,7 @@ export const employeeApi = baseApi.injectEndpoints({
       ActivateEmployeeResponse,
       ActivateEmployeePayload
     >({
-      query: ({ id, employee_id, token, new_password, confirm_password, password }) => {
+      query: ({ id, employee_id, token, new_password, confirm_password }) => {
         const empId = id || employee_id;
         if (!empId || empId === "me") {
           throw new Error("Employee UUID is required for password activation.");
@@ -682,8 +681,8 @@ export const employeeApi = baseApi.injectEndpoints({
           method: "POST",
           body: {
             token,
-            new_password: new_password || password,
-            confirm_password: confirm_password || new_password || password,
+            new_password,
+            confirm_password,
           },
         };
       },
@@ -731,6 +730,21 @@ export const employeeApi = baseApi.injectEndpoints({
         (raw as RawEnvelope<OnboardingStatus>)?.data || (raw as OnboardingStatus),
       providesTags: (_r, _e, id) => [{ type: "Employee", id: `ONBOARDING-${id}` }],
     }),
+
+    validateEmployeeInvitation: builder.query<{
+      valid?: boolean;
+      employee_id?: string;
+      employeeId?: string;
+      id?: string;
+      email?: string;
+      name?: string;
+      full_name?: string;
+      company_name?: string;
+      [key: string]: any;
+    }, string>({
+      query: (token) => `/api/v1/onboarding/validate?token=${encodeURIComponent(token)}`,
+      transformResponse: (raw: any) => raw?.data || raw,
+    }),
   }),
 });
 
@@ -755,4 +769,6 @@ export const {
   useRejectOnboardingMutation,
   useResetEmployeePasswordMutation,
   useGetOnboardingStatusQuery,
+  useValidateEmployeeInvitationQuery,
+  useLazyValidateEmployeeInvitationQuery,
 } = employeeApi;
