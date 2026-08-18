@@ -41,7 +41,7 @@ describe("Employee Invitation & Password Activation Flow", () => {
     vi.restoreAllMocks();
   });
 
-  describe("1. EmployeeActivatePage UI & Token Validation", () => {
+  describe("1. EmployeeActivatePage UI & Token Validation States", () => {
     it("validates token with backend and renders Set Your Password form when token is valid", () => {
       vi.spyOn(employeeApiHooks, "useValidateEmployeeInvitationQuery").mockReturnValue({
         data: {
@@ -51,6 +51,7 @@ describe("Employee Invitation & Password Activation Flow", () => {
         },
         isLoading: false,
         isError: false,
+        refetch: vi.fn(),
       } as any);
 
       renderWithProviders(
@@ -76,6 +77,7 @@ describe("Employee Invitation & Password Activation Flow", () => {
         data: undefined,
         isLoading: true,
         isError: false,
+        refetch: vi.fn(),
       } as any);
 
       renderWithProviders(
@@ -86,7 +88,7 @@ describe("Employee Invitation & Password Activation Flow", () => {
         </MemoryRouter>
       );
 
-      expect(screen.getByText("Validating your invitation...")).toBeDefined();
+      expect(screen.getByText("Verifying your invitation...")).toBeDefined();
       expect(screen.queryByText("Set Your Password")).toBeNull();
     });
 
@@ -95,6 +97,7 @@ describe("Employee Invitation & Password Activation Flow", () => {
         data: undefined,
         isLoading: false,
         isError: false,
+        refetch: vi.fn(),
       } as any);
 
       renderWithProviders(
@@ -111,11 +114,13 @@ describe("Employee Invitation & Password Activation Flow", () => {
       ).toBeDefined();
     });
 
-    it("displays error banner when token validation fails on backend", () => {
+    it("displays error banner when token validation explicitly fails on backend (400/404)", () => {
       vi.spyOn(employeeApiHooks, "useValidateEmployeeInvitationQuery").mockReturnValue({
-        data: { valid: false },
+        data: undefined,
         isLoading: false,
         isError: true,
+        error: { status: 400, data: { detail: "Token expired" } },
+        refetch: vi.fn(),
       } as any);
 
       renderWithProviders(
@@ -132,6 +137,34 @@ describe("Employee Invitation & Password Activation Flow", () => {
       ).toBeDefined();
     });
 
+    it("displays network error view with retry button when server returns 500 error", () => {
+      const mockRefetch = vi.fn();
+      vi.spyOn(employeeApiHooks, "useValidateEmployeeInvitationQuery").mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isError: true,
+        error: { status: 500, data: { detail: "Internal Server Error" } },
+        refetch: mockRefetch,
+      } as any);
+
+      renderWithProviders(
+        <MemoryRouter initialEntries={["/employee/activate?token=valid_token"]}>
+          <Routes>
+            <Route path="/employee/activate" element={<EmployeeActivatePage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      expect(screen.getByRole("heading", { name: "Verification Failed" })).toBeDefined();
+      expect(
+        screen.getByText("Unable to verify your invitation right now. Please try again.")
+      ).toBeDefined();
+
+      const retryBtn = screen.getByRole("button", { name: /Try Again/i });
+      fireEvent.click(retryBtn);
+      expect(mockRefetch).toHaveBeenCalled();
+    });
+
     it("requires at least 8 characters and matching password to enable submit button", () => {
       vi.spyOn(employeeApiHooks, "useValidateEmployeeInvitationQuery").mockReturnValue({
         data: {
@@ -141,6 +174,7 @@ describe("Employee Invitation & Password Activation Flow", () => {
         },
         isLoading: false,
         isError: false,
+        refetch: vi.fn(),
       } as any);
 
       renderWithProviders(
@@ -182,6 +216,7 @@ describe("Employee Invitation & Password Activation Flow", () => {
         },
         isLoading: false,
         isError: false,
+        refetch: vi.fn(),
       } as any);
 
       renderWithProviders(
@@ -211,6 +246,7 @@ describe("Employee Invitation & Password Activation Flow", () => {
         },
         isLoading: false,
         isError: false,
+        refetch: vi.fn(),
       } as any);
 
       const mockUnwrap = vi.fn().mockResolvedValue({
@@ -265,6 +301,7 @@ describe("Employee Invitation & Password Activation Flow", () => {
         },
         isLoading: false,
         isError: false,
+        refetch: vi.fn(),
       } as any);
 
       const mockUnwrap = vi.fn().mockRejectedValue({

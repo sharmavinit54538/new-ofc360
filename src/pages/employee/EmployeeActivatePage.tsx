@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   KeyRound,
   UserCheck,
+  RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,40 +29,117 @@ import { setCredentials } from "@/features/auth/authSlice";
 import { normalizeError } from "@/services/api/normalizeError";
 import { toast } from "sonner";
 
+/**
+ * Safely extracts claims from a JWT token if present
+ */
+function parseJwtPayload(token: string): Record<string, any> | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length < 2) return null;
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split("")
+        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+        .join("")
+    );
+    return JSON.parse(jsonPayload);
+  } catch {
+    return null;
+  }
+}
+
 export default function EmployeeActivatePage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  // Read only the invitation token from URL
+  // Read only the invitation token from the URL
   const token =
     searchParams.get("token") ||
     searchParams.get("activation_token") ||
     searchParams.get("invite_token") ||
     "";
 
-  // Validate invitation token with backend to resolve employee_id
+  // Validate token with the backend
   const {
     data: validationData,
     isLoading: isValidatingToken,
     isError: isValidationError,
+    error: validationError,
+    refetch: refetchValidation,
   } = useValidateEmployeeInvitationQuery(token, {
     skip: !token,
   });
 
-  // Extract resolved employee information from backend response
+  // Extract JWT claims as supplementary resolution
+  const jwtPayload = token ? parseJwtPayload(token) : null;
+  const jwtEmployeeId =
+    jwtPayload?.employee_id ||
+    jwtPayload?.sub ||
+    jwtPayload?.id ||
+    jwtPayload?.user_id ||
+    "";
+  const jwtEmail =
+    jwtPayload?.email ||
+    jwtPayload?.identifier ||
+    "";
+
+  // Normalize backend validation response
+  const rawValidationData = (validationData as any)?.data || validationData;
+  const backendEmployeeId =
+    rawValidationData?.employee_id ||
+    rawValidationData?.employeeId ||
+    rawValidationData?.employee?.id ||
+    rawValidationData?.employee?._id ||
+    rawValidationData?.employee?.employee_id ||
+    rawValidationData?.employee_data?.id ||
+    rawValidationData?.user?.id ||
+    rawValidationData?.user_id ||
+    rawValidationData?.userId ||
+    rawValidationData?.id ||
+    "";
+
+  // Resolve employee ID from backend response, fallback to JWT payload or URL parameter
   const resolvedEmployeeId =
-    validationData?.employee_id ||
-    validationData?.employeeId ||
-    validationData?.id ||
-    validationData?.user_id ||
-    validationData?.userId ||
+    backendEmployeeId ||
+    jwtEmployeeId ||
+    searchParams.get("employee_id") ||
+    searchParams.get("id") ||
     "";
 
   const resolvedEmail =
-    validationData?.email ||
+    rawValidationData?.email ||
+    rawValidationData?.employee?.email ||
+    rawValidationData?.user?.email ||
+    jwtEmail ||
     searchParams.get("email") ||
     "";
+
+  // Error Classification
+  const normValError = isValidationError ? normalizeError(validationError) : null;
+  const isNetworkOrServerError =
+    Boolean(normValError) &&
+    (normValError?.status === 500 ||
+      normValError?.status === 502 ||
+      normValError?.status === 503 ||
+      normValError?.status === 504 ||
+      normValError?.status === "FETCH_ERROR" ||
+      normValError?.status === "PARSING_ERROR" ||
+      (normValError?.message || "").toLowerCase().includes("failed to fetch") ||
+      (normValError?.message || "").toLowerCase().includes("network"));
+
+  const isExplicitInvalidToken =
+    !token ||
+    (validationData && rawValidationData?.valid === false) ||
+    (Boolean(normValError) &&
+      !isNetworkOrServerError &&
+      (normValError?.status === 400 ||
+        normValError?.status === 401 ||
+        normValError?.status === 403 ||
+        normValError?.status === 404 ||
+        normValError?.status === 422));
 
   // Form State
   const [password, setPassword] = useState("");
@@ -80,13 +158,6 @@ export default function EmployeeActivatePage() {
     /[a-zA-Z]/.test(password) && /[0-9]/.test(password);
   const isFormValid = hasMinLength && passwordsMatch;
 
-  // Validation failure conditions
-  const isTokenInvalid =
-    !token ||
-    isValidationError ||
-    (validationData && validationData.valid === false) ||
-    (!isValidatingToken && validationData && !resolvedEmployeeId);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -95,7 +166,7 @@ export default function EmployeeActivatePage() {
       setErrorMessage(
         "Your invitation link is invalid or has expired. Please contact HR for a new invitation."
       );
-      toast.error("Invalid invitation link. Missing token or employee ID.");
+      toast.error("Missing activation token or employee ID.");
       return;
     }
 
@@ -114,7 +185,7 @@ export default function EmployeeActivatePage() {
     try {
       const cleanEmpId = resolvedEmployeeId.trim();
 
-      // POST /api/v1/employees/{employee_id}/activate
+      // Dispatch POST /api/v1/employees/{employee_id}/activate
       const res = await activateEmployee({
         id: cleanEmpId,
         employee_id: cleanEmpId,
@@ -257,14 +328,53 @@ export default function EmployeeActivatePage() {
                     <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto" />
                     <div className="space-y-1.5">
                       <h2 className="text-base font-semibold text-foreground">
-                        Validating your invitation...
+                        Verifying your invitation...
                       </h2>
                       <p className="text-xs text-muted-foreground">
                         Please wait while we verify your invitation details.
                       </p>
                     </div>
                   </motion.div>
-                ) : isTokenInvalid ? (
+                ) : isNetworkOrServerError ? (
+                  /* Server / Network Failure State */
+                  <motion.div
+                    key="network-error"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-center space-y-5 py-4"
+                  >
+                    <div className="w-14 h-14 rounded-2xl bg-destructive/15 border border-destructive/30 flex items-center justify-center text-destructive mx-auto shadow-inner">
+                      <AlertCircle className="w-8 h-8" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <h2 className="text-lg font-bold text-foreground">
+                        Verification Failed
+                      </h2>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        Unable to verify your invitation right now. Please try again.
+                      </p>
+                    </div>
+
+                    <div className="pt-2 space-y-2">
+                      <Button
+                        onClick={() => refetchValidation()}
+                        className="w-full text-xs font-semibold gap-2 cursor-pointer"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        <span>Try Again</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => navigate("/login")}
+                        className="w-full text-xs font-semibold cursor-pointer"
+                      >
+                        Return to Sign In
+                      </Button>
+                    </div>
+                  </motion.div>
+                ) : isExplicitInvalidToken ? (
                   /* Invalid / Expired Token Warning */
                   <motion.div
                     key="invalid-token"
