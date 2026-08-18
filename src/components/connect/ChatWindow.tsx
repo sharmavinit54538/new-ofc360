@@ -12,6 +12,7 @@ import {
   usePinMessageMutation,
   useDeleteMessageMutation,
   useEditMessageMutation,
+  isCurrentUser,
 } from "@/services/api/connectApi";
 import { useAuth } from "@/hooks/useAuth";
 import { ConnectUser, ConnectMessage } from "@/types/connect";
@@ -267,42 +268,48 @@ export function ChatWindow({
     const targetId = String(activeConversationId);
     const cleanTargetId = targetId.replace(/^conv_/, "");
 
-    // 1. From activeConversation
+    // 1. From activeConversation (ensure we pick the non-current user)
     if (activeConversation) {
       const convAny = activeConversation as any;
-      if (convAny.participant && typeof convAny.participant === "object") {
-        return convAny.participant;
-      }
-      if (convAny.user && typeof convAny.user === "object") {
-        return convAny.user;
-      }
-      if (convAny.recipient && typeof convAny.recipient === "object") {
-        return convAny.recipient;
-      }
-      if (convAny.colleague && typeof convAny.colleague === "object") {
-        return convAny.colleague;
-      }
-      if (convAny.targetUser && typeof convAny.targetUser === "object") {
-        return convAny.targetUser;
-      }
-      if (convAny.otherUser && typeof convAny.otherUser === "object") {
-        return convAny.otherUser;
-      }
-      if (Array.isArray(convAny.participants)) {
+
+      if (Array.isArray(convAny.participants) && convAny.participants.length > 0) {
         const other = convAny.participants.find(
-          (p: any) => String(p.id || p._id) !== String(currentUserId)
+          (p: any) => p && typeof p === "object" && !isCurrentUser(p, currentUser)
         );
         if (other) return other;
       }
-      if (convAny.name || convAny.full_name || convAny.firstName || convAny.first_name) {
-        return convAny;
+
+      if (
+        convAny.participant &&
+        typeof convAny.participant === "object" &&
+        !isCurrentUser(convAny.participant, currentUser)
+      ) {
+        return convAny.participant;
+      }
+
+      const candidates = [
+        convAny.other_user,
+        convAny.otherUser,
+        convAny.recipient,
+        convAny.target_user,
+        convAny.targetUser,
+        convAny.colleague,
+        convAny.user,
+        convAny.sender,
+        convAny.receiver,
+      ];
+      for (const c of candidates) {
+        if (c && typeof c === "object" && !isCurrentUser(c, currentUser)) {
+          return c;
+        }
       }
     }
 
-    // 2. From colleagues list
+    // 2. From colleagues list (find colleague matching targetId who is NOT current user)
     if (colleaguesList.length > 0) {
       const matchedColleague = colleaguesList.find((emp: any) => {
-        const empId = String(emp.id || emp._id || "");
+        if (isCurrentUser(emp, currentUser)) return false;
+        const empId = String(emp.id || emp._id || emp.userId || emp.user_id || "");
         const cleanEmpId = empId.replace(/^conv_/, "");
         return (
           empId === targetId ||
@@ -314,10 +321,14 @@ export function ChatWindow({
       if (matchedColleague) return matchedColleague;
     }
 
-    // 3. From message history
+    // 3. From message history: find any message where sender is NOT the current user
     if (messages.length > 0) {
       const otherMsg = messages.find(
-        (m) => String(m.senderId) !== String(currentUserId) && m.senderName
+        (m) =>
+          !isCurrentUser(
+            m.senderId || (m as any).sender_id || (m as any).user_id,
+            currentUser
+          ) && m.senderName
       );
       if (otherMsg) {
         return {
@@ -328,8 +339,16 @@ export function ChatWindow({
       }
     }
 
-    return null;
-  }, [activeConversation, activeConversationId, colleaguesList, messages, currentUserId]);
+    // 4. Fallback if activeConversation.participant is available
+    if (
+      activeConversation?.participant &&
+      !isCurrentUser(activeConversation.participant, currentUser)
+    ) {
+      return activeConversation.participant;
+    }
+
+    return activeConversation?.participant || null;
+  }, [activeConversation, activeConversationId, colleaguesList, messages, currentUser]);
 
   // Recipient Display Name
   const recipientName = useMemo(() => {
@@ -619,13 +638,28 @@ export function ChatWindow({
             description={`Say hello to ${participant.name} to kick off the conversation!`}
           />
         ) : (
-          messages.map((message) => {
-            const isOutgoing = message.senderId === currentUserId;
+          messages.map((message, idx) => {
+            const isOutgoing = isCurrentUser(
+              message.senderId || (message as any).sender_id || (message as any).user_id || (message as any).sender,
+              currentUser
+            );
+
+            const prevMsg = idx > 0 ? messages[idx - 1] : null;
+            const isConsecutive = prevMsg
+              ? isCurrentUser(
+                  prevMsg.senderId || (prevMsg as any).sender_id || (prevMsg as any).user_id,
+                  currentUser
+                ) === isOutgoing &&
+                String(prevMsg.senderId || (prevMsg as any).sender_id || "") ===
+                  String(message.senderId || (message as any).sender_id || "")
+              : false;
+
             return (
               <MessageBubble
                 key={message.id}
                 message={message}
                 isOutgoing={isOutgoing}
+                isConsecutive={isConsecutive}
                 currentUserId={currentUserId}
                 onReplyInThread={() => setActiveThreadMessage(message)}
                 onToggleReaction={(msgId, emoji) =>

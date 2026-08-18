@@ -1,3 +1,4 @@
+import { store } from "@/app/store";
 import { baseApi } from "./baseApi";
 import {
   ConnectUser,
@@ -157,21 +158,106 @@ export function normalizeConnectMessage(raw: any, defaultConversationId?: string
   };
 }
 
-export function normalizeConnectConversation(raw: any): ConnectConversation {
-  const id = String(raw.id || raw._id || raw.conversationId || raw.conversation_id || `conv_${Date.now()}_${Math.random().toString(36).slice(2)}`);
+export function isCurrentUser(target: any, currentUser?: any): boolean {
+  if (!target) return false;
+  const user = currentUser || store.getState().auth.user;
+  if (!user) return false;
 
-  // Extract participant object from any property structure
-  const rawParticipant =
-    raw.participant ||
-    raw.user ||
-    raw.recipient ||
-    raw.colleague ||
-    raw.target_user ||
-    raw.targetUser ||
-    raw.other_user ||
-    raw.otherUser ||
-    (Array.isArray(raw.participants) ? raw.participants.find((p: any) => p && typeof p === "object") : null) ||
-    raw;
+  const currentIds = new Set<string>();
+  if (user.id) currentIds.add(String(user.id).trim());
+  if (user._id) currentIds.add(String(user._id).trim());
+  if (user.userId) currentIds.add(String(user.userId).trim());
+  if (user.user_id) currentIds.add(String(user.user_id).trim());
+  if (user.employee_id) currentIds.add(String(user.employee_id).trim());
+  if (user.employeeId) currentIds.add(String(user.employeeId).trim());
+
+  const currentEmail = (user.email || user.emailAddress || "").toLowerCase().trim();
+
+  if (typeof target === "string" || typeof target === "number") {
+    const str = String(target).trim();
+    if (currentIds.has(str)) return true;
+    if (currentEmail && str.toLowerCase() === currentEmail) return true;
+    return false;
+  }
+
+  if (typeof target === "object") {
+    const tId = String(
+      target.id ||
+      target._id ||
+      target.userId ||
+      target.user_id ||
+      target.employee_id ||
+      target.employeeId ||
+      ""
+    ).trim();
+    if (tId && currentIds.has(tId)) return true;
+    const tEmail = (target.email || target.emailAddress || "").toLowerCase().trim();
+    if (currentEmail && tEmail && tEmail === currentEmail) return true;
+  }
+
+  return false;
+}
+
+export function normalizeConnectConversation(raw: any, currentUser?: any): ConnectConversation {
+  const id = String(
+    raw.id ||
+    raw._id ||
+    raw.conversationId ||
+    raw.conversation_id ||
+    `conv_${Date.now()}_${Math.random().toString(36).slice(2)}`
+  );
+
+  const authUser = currentUser || store.getState().auth.user;
+
+  // 1. Check participants array: find the participant who is NOT the current user
+  let rawParticipant: any = null;
+
+  if (Array.isArray(raw.participants) && raw.participants.length > 0) {
+    const other = raw.participants.find((p: any) => p && typeof p === "object" && !isCurrentUser(p, authUser));
+    if (other) {
+      rawParticipant = other;
+    }
+  }
+
+  // 2. Check candidate properties that are NOT the current user
+  if (!rawParticipant) {
+    const candidates = [
+      raw.other_user,
+      raw.otherUser,
+      raw.recipient,
+      raw.target_user,
+      raw.targetUser,
+      raw.colleague,
+      raw.participant,
+      raw.user,
+      raw.sender,
+      raw.receiver,
+    ];
+    for (const c of candidates) {
+      if (c && typeof c === "object" && !isCurrentUser(c, authUser)) {
+        rawParticipant = c;
+        break;
+      }
+    }
+  }
+
+  // 3. Check sender / receiver pairs
+  if (!rawParticipant) {
+    if (raw.sender && isCurrentUser(raw.sender, authUser) && raw.receiver) {
+      rawParticipant = raw.receiver;
+    } else if (raw.receiver && isCurrentUser(raw.receiver, authUser) && raw.sender) {
+      rawParticipant = raw.sender;
+    }
+  }
+
+  // 4. Fallback: if raw itself contains non-current user details or if nothing else matches
+  if (!rawParticipant) {
+    if (raw.participant && typeof raw.participant === "object" && !isCurrentUser(raw.participant, authUser)) {
+      rawParticipant = raw.participant;
+    } else {
+      rawParticipant = raw.participant || raw.user || raw;
+    }
+  }
 
   const participant = normalizeConnectUser(rawParticipant);
 
@@ -266,7 +352,25 @@ export const connectApi = baseApi.injectEndpoints({
       transformResponse: (response: any) => {
         console.log("[CHAT_API] GET /api/v1/connect/conversations response:", response);
         const list = extractListFromEnvelope(response, ["conversations"]);
-        const normalized = list.map(normalizeConnectConversation);
+        const currentUser = store.getState().auth.user;
+
+        // Deduplicate conversations by unique conversation ID
+        const convMap = new Map<string, ConnectConversation>();
+        for (const item of list) {
+          const conv = normalizeConnectConversation(item, currentUser);
+          if (!convMap.has(conv.id)) {
+            convMap.set(conv.id, conv);
+          } else {
+            const existing = convMap.get(conv.id)!;
+            const timeExisting = new Date(existing.updatedAt || 0).getTime();
+            const timeNew = new Date(conv.updatedAt || 0).getTime();
+            if (timeNew > timeExisting) {
+              convMap.set(conv.id, conv);
+            }
+          }
+        }
+
+        const normalized = Array.from(convMap.values());
 
         // Sort: Pinned first, then by updatedAt descending
         normalized.sort((a, b) => {

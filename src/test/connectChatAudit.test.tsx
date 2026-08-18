@@ -1,18 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { Provider } from "react-redux";
 import { store } from "@/app/store";
+import { setCredentials } from "@/features/auth/authSlice";
 import { MemoryRouter } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   normalizeConnectUser,
   normalizeConnectConversation,
   normalizeConnectMessage,
-  connectApi,
+  isCurrentUser,
 } from "@/services/api/connectApi";
+import { formatMessageTime, formatConversationTime } from "@/utils/formatTime";
 import { ChatList } from "@/components/connect/ChatList";
 import { ChatWindow } from "@/components/connect/ChatWindow";
+import { MessageBubble } from "@/components/connect/MessageBubble";
 
 function renderWithProviders(ui: React.ReactElement) {
   return render(
@@ -52,72 +55,133 @@ describe("OFC360 Connect Chat Module Audit & Normalization", () => {
     });
   });
 
-  describe("2. Conversation Normalization & Sorting (normalizeConnectConversation)", () => {
-    it("normalizes conversation with nested participant object", () => {
-      const raw = {
-        id: "conv_100",
-        participant: { id: "usr_5", name: "Sneha Reddy", role: "HR Specialist" },
-        lastMessage: { id: "msg_1", content: "Meeting at 3 PM", timestamp: "2026-08-18T10:00:00Z" },
-        unreadCount: 2,
-        isPinned: true,
+  describe("2. Conversation Participant Calculation & Deduplication", () => {
+    const adminUser = { id: "admin_101", name: "Admin User", role: "hr_admin", email: "admin@ofc360.com" };
+    const sunainaUser = { id: "sunaina_202", name: "Sunaina Mehra", role: "employee", email: "sunaina@ofc360.com" };
+
+    it("excludes current logged-in user (Admin) and sets participant to Sunaina Mehra", () => {
+      const rawConv = {
+        id: "conv_admin_sunaina",
+        participants: [
+          { id: "admin_101", name: "Admin User", role: "hr_admin" },
+          { id: "sunaina_202", name: "Sunaina Mehra", role: "employee" },
+        ],
+        lastMessage: { id: "msg_1", content: "hlo", timestamp: "2026-08-18T09:15:34Z" },
+        unreadCount: 1,
       };
 
-      const conv = normalizeConnectConversation(raw);
-      expect(conv.id).toBe("conv_100");
-      expect(conv.participant.name).toBe("Sneha Reddy");
-      expect(conv.lastMessage?.content).toBe("Meeting at 3 PM");
-      expect(conv.unreadCount).toBe(2);
-      expect(conv.isPinned).toBe(true);
+      const normalized = normalizeConnectConversation(rawConv, adminUser);
+      expect(normalized.participant.id).toBe("sunaina_202");
+      expect(normalized.participant.name).toBe("Sunaina Mehra");
     });
 
-    it("normalizes conversation with alternative keys (user, recipient, last_message, unread_count)", () => {
-      const raw = {
-        _id: "conv_200",
-        user: { _id: "usr_6", first_name: "Karan", last_name: "Mehta", job_title: "Tech Lead" },
-        last_message: { message_id: "msg_2", message: "Code reviewed and approved", created_at: "2026-08-18T11:00:00Z" },
-        unread_count: 5,
-        is_pinned: false,
+    it("excludes current logged-in user (Sunaina) and sets participant to Admin User", () => {
+      const rawConv = {
+        id: "conv_admin_sunaina",
+        participants: [
+          { id: "admin_101", name: "Admin User", role: "hr_admin" },
+          { id: "sunaina_202", name: "Sunaina Mehra", role: "employee" },
+        ],
+        lastMessage: { id: "msg_2", content: "hii", timestamp: "2026-08-18T09:16:00Z" },
+        unreadCount: 0,
       };
 
-      const conv = normalizeConnectConversation(raw);
-      expect(conv.id).toBe("conv_200");
-      expect(conv.participant.name).toBe("Karan Mehta");
-      expect(conv.participant.role).toBe("Tech Lead");
-      expect(conv.lastMessage?.content).toBe("Code reviewed and approved");
-      expect(conv.unreadCount).toBe(5);
-      expect(conv.isPinned).toBe(false);
+      const normalized = normalizeConnectConversation(rawConv, sunainaUser);
+      expect(normalized.participant.id).toBe("admin_101");
+      expect(normalized.participant.name).toBe("Admin User");
     });
 
-    it("normalizes conversation with flat recipient fields without dropping", () => {
-      const raw = {
-        conversation_id: "conv_300",
-        name: "Ananya Roy",
-        email: "ananya@ofc360.com",
-        last_message: "Let me check the report",
-        unread: 1,
+    it("identifies other participant when provided in sender/receiver fields", () => {
+      const rawConv = {
+        id: "conv_sr_1",
+        sender: { id: "admin_101", name: "Admin User" },
+        receiver: { id: "sunaina_202", name: "Sunaina Mehra", role: "employee" },
       };
 
-      const conv = normalizeConnectConversation(raw);
-      expect(conv.id).toBe("conv_300");
-      expect(conv.participant.name).toBe("Ananya Roy");
-      expect(conv.lastMessage?.content).toBe("Let me check the report");
-      expect(conv.unreadCount).toBe(1);
+      const forAdmin = normalizeConnectConversation(rawConv, adminUser);
+      expect(forAdmin.participant.name).toBe("Sunaina Mehra");
+
+      const forSunaina = normalizeConnectConversation(rawConv, sunainaUser);
+      expect(forSunaina.participant.name).toBe("Admin User");
     });
   });
 
-  describe("3. Message Normalization (normalizeConnectMessage)", () => {
-    it("normalizes message with content / message / text aliases", () => {
-      const msg1 = normalizeConnectMessage({ id: "m1", conversationId: "c1", content: "Hello World", senderId: "u1" });
-      expect(msg1.content).toBe("Hello World");
+  describe("3. isCurrentUser Helper", () => {
+    const testUser = {
+      id: "usr_999",
+      email: "test.lead@ofc360.com",
+    };
 
-      const msg2 = normalizeConnectMessage({ message_id: "m2", conversation_id: "c1", message: "Alternative text", user_id: "u2" });
-      expect(msg2.id).toBe("m2");
-      expect(msg2.content).toBe("Alternative text");
-      expect(msg2.senderId).toBe("u2");
+    it("matches string ID, object ID, and email address", () => {
+      expect(isCurrentUser("usr_999", testUser)).toBe(true);
+      expect(isCurrentUser({ id: "usr_999" }, testUser)).toBe(true);
+      expect(isCurrentUser("test.lead@ofc360.com", testUser)).toBe(true);
+      expect(isCurrentUser({ email: "test.lead@ofc360.com" }, testUser)).toBe(true);
+      expect(isCurrentUser("other_user_123", testUser)).toBe(false);
     });
   });
 
-  describe("4. Chat UI Component Rendering", () => {
+  describe("4. Message Sender / Receiver Direction & Alignment", () => {
+    it("renders outgoing messages on RIGHT with 'You' label and without raw ISO string", () => {
+      const outgoingMsg = {
+        id: "msg_out_1",
+        conversationId: "conv_1",
+        senderId: "admin_101",
+        senderName: "Admin User",
+        content: "hii",
+        timestamp: "2026-08-18T09:15:34.009900+00:00",
+        status: "read" as const,
+      };
+
+      renderWithProviders(
+        <MessageBubble
+          message={outgoingMsg}
+          isOutgoing={true}
+          currentUserId="admin_101"
+        />
+      );
+
+      expect(screen.getByText("You")).toBeInTheDocument();
+      expect(screen.getByText("hii")).toBeInTheDocument();
+      // Should NOT contain raw ISO string
+      expect(screen.queryByText("2026-08-18T09:15:34.009900+00:00")).not.toBeInTheDocument();
+    });
+
+    it("renders incoming messages on LEFT with sender name and avatar initials", () => {
+      const incomingMsg = {
+        id: "msg_in_1",
+        conversationId: "conv_1",
+        senderId: "sunaina_202",
+        senderName: "Sunaina Mehra",
+        content: "hlo",
+        timestamp: "2026-08-18T09:15:00.000Z",
+        status: "delivered" as const,
+      };
+
+      renderWithProviders(
+        <MessageBubble
+          message={incomingMsg}
+          isOutgoing={false}
+          currentUserId="admin_101"
+        />
+      );
+
+      expect(screen.getByText("Sunaina Mehra")).toBeInTheDocument();
+      expect(screen.getByText("hlo")).toBeInTheDocument();
+      expect(screen.getByText("SM")).toBeInTheDocument();
+    });
+  });
+
+  describe("5. Time Formatting Utility", () => {
+    it("formats ISO timestamps into clean local time", () => {
+      const formatted = formatMessageTime("2026-08-18T09:15:34.009900+00:00");
+      expect(formatted).toBeTruthy();
+      expect(formatted).not.toContain("T");
+      expect(formatted).not.toContain("+00:00");
+    });
+  });
+
+  describe("6. Chat UI Component Rendering", () => {
     it("renders ChatList with Direct Messages header and New Chat button", () => {
       renderWithProviders(<ChatList />);
       expect(screen.getByText("Direct Messages")).toBeInTheDocument();

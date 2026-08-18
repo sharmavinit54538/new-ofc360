@@ -18,6 +18,7 @@ import { Search, Plus, Pin, BellOff, Bell, MoreVertical } from "lucide-react";
 import { PresenceIndicator } from "./PresenceIndicator";
 import { ConnectEmptyState } from "./ConnectEmptyState";
 import { ConnectErrorState } from "./ConnectErrorState";
+import { formatConversationTime } from "@/utils/formatTime";
 import { toast } from "sonner";
 
 interface ChatListProps {
@@ -184,11 +185,11 @@ export function ChatList({ onSelectConversation, className = "" }: ChatListProps
                 <div className="flex-1 min-w-0 pr-1">
                   <div className="flex items-center justify-between mb-0.5">
                     <p className={`text-xs truncate ${isActive ? "font-bold text-foreground" : "font-semibold text-foreground"}`}>
-                      {conv.participant.name}
+                      {conv.participant?.name || "Colleague"}
                     </p>
-                    {conv.lastMessage && (
+                    {(conv.lastMessage?.timestamp || conv.updatedAt) && (
                       <span className="text-[10px] text-muted-foreground shrink-0 ml-1">
-                        {conv.lastMessage.timestamp}
+                        {formatConversationTime(conv.lastMessage?.timestamp || conv.updatedAt)}
                       </span>
                     )}
                   </div>
