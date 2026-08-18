@@ -20,7 +20,6 @@ export type SystemModule =
   | "onboarding"
   | "exit"
   | "analytics"
-  | "intelligence_hub"
   | "rbac"
   | "system_settings"
   | "audit_logs"
@@ -146,7 +145,6 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
       "onboarding",
       "exit",
       "analytics",
-      "intelligence_hub",
       "talent_intelligence",
       "resource_intelligence",
       "employee_experience",
@@ -174,7 +172,6 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
       onboarding: ["view", "create", "edit"],
       exit: ["view", "create", "edit"],
       analytics: ["view", "export"],
-      intelligence_hub: ["view"],
       talent_intelligence: ["view", "manage"],
       resource_intelligence: ["view", "manage"],
       employee_experience: ["view", "manage"],
@@ -195,7 +192,6 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
       "departments",
       "payroll",
       "analytics",
-      "intelligence_hub",
       "talent_intelligence",
       "resource_intelligence",
       "employee_experience",
@@ -211,7 +207,6 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
       departments: ["view"],
       payroll: ["view", "export"],
       analytics: ["view", "export"],
-      intelligence_hub: ["view"],
       talent_intelligence: ["view"],
       resource_intelligence: ["view"],
       employee_experience: ["view"],
@@ -277,7 +272,6 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
       "onboarding",
       "exit",
       "analytics",
-      "intelligence_hub",
       "talent_intelligence",
       "resource_intelligence",
       "employee_experience",
@@ -315,7 +309,6 @@ export const ROLE_CONFIGS: Record<SystemRole, RoleConfig> = {
       onboarding: ["view", "create", "edit"],
       exit: ["view", "create", "edit"],
       analytics: ["view", "export"],
-      intelligence_hub: ["view"],
       talent_intelligence: ["view", "manage"],
       resource_intelligence: ["view", "manage"],
       employee_experience: ["view", "manage"],

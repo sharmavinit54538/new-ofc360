@@ -114,7 +114,7 @@ export function FloatingAIAssistant() {
                     <h3 className="font-bold text-sm text-foreground">OFC360 AI Assistant</h3>
                     <span className="w-2 h-2 rounded-full bg-ai animate-pulse shadow-glow-ai" />
                   </div>
-                  <p className="text-[11px] text-muted-foreground">Workforce Intelligence & RAG Copilot</p>
+                  <p className="text-[11px] text-muted-foreground">HR & Operations Assistant Copilot</p>
                 </div>
               </div>
 

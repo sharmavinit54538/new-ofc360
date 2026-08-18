@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Users, UserSearch, Clock, DollarSign,
   ChevronLeft, Briefcase, UserPlus, GraduationCap,
-  FileText, Monitor, UserMinus, BrainCircuit, Building2, ShieldCheck,
+  FileText, Monitor, UserMinus, Building2, ShieldCheck,
   Heart, BarChart3, PieChart, TrendingUp, Lightbulb, Target, PanelLeft,
   Boxes, Settings, Globe, Award, Key, Zap, FileCode2, Server, Cpu, Lock,
   Activity, ShieldAlert, MessageSquare, Sparkles
@@ -116,7 +116,6 @@ export function AppSidebar({ open, onToggle }: { open: boolean; onToggle: () => 
               { label: "Attend", icon: Clock, path: "/attendance" },
               { label: "Payroll", icon: PayrollIcon, path: "/payroll" },
               { label: "Reports", icon: BarChart3, path: "/reports" },
-              { label: "AI", icon: BrainCircuit, path: "/intelligence" },
               { label: "Talent", icon: Target, path: "/talent-intelligence" },
               { label: "Resources", icon: Boxes, path: "/resource-intelligence" },
               { label: "Experience", icon: Globe, path: "/employee-experience" },
@@ -189,7 +188,6 @@ export function AppSidebar({ open, onToggle }: { open: boolean; onToggle: () => 
                   (item.path === "/connect" && location.pathname.startsWith("/connect")) ||
                   (item.path !== "/super-admin" && item.path.startsWith("/super-admin") && location.pathname.startsWith(item.path)) ||
                   (item.path === "/people" && (location.pathname.startsWith("/people") || location.pathname.startsWith("/employees") || location.pathname.startsWith("/departments"))) ||
-                  (item.path === "/intelligence" && location.pathname.startsWith("/intelligence")) ||
                   (item.path === "/talent-intelligence" && location.pathname.startsWith("/talent-intelligence")) ||
                   (item.path === "/resource-intelligence" && location.pathname.startsWith("/resource-intelligence")) ||
                   (item.path === "/employee-experience" && location.pathname.startsWith("/employee-experience"))

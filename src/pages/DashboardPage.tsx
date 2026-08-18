@@ -504,7 +504,7 @@ export default function DashboardPage() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Sparkles className="w-4 h-4 text-primary" />
-              <h3 className="font-semibold text-base">Workforce Intelligence Signals</h3>
+              <h3 className="font-semibold text-base">Workforce Signals & Insights</h3>
             </div>
             <ul className="space-y-3 text-sm">
               {dynamicInsights.map((i, idx) => {
@@ -535,9 +535,9 @@ export default function DashboardPage() {
           </div>
 
           <div className="pt-4 border-t border-border/40 mt-4">
-            <Link to="/intelligence">
+            <Link to="/reports">
               <Button size="sm" variant="ghost" className="w-full text-xs text-primary justify-between h-8 px-2 hover:bg-primary/10">
-                <span>View Full Intelligence Hub</span>
+                <span>View Full Reports & Analytics</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Button>
             </Link>
