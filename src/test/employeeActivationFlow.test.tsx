@@ -12,6 +12,7 @@ import EmployeeActivatePage from "@/pages/employee/EmployeeActivatePage";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import LoginPage from "@/pages/LoginPage";
 import * as employeeApiHooks from "@/services/api/employeeApi";
+import * as onboardingApiHooks from "@/services/api/onboardingApi";
 
 // Helper to create test store
 const createTestStore = (preloadedAuthState?: any) => {
@@ -42,9 +43,9 @@ describe("Employee Invitation & Password Activation Flow", () => {
   });
 
   describe("1. EmployeeActivatePage UI & Validations", () => {
-    it("renders page branding, welcome badge, and password fields when valid token is present", () => {
+    it("renders page branding, welcome badge, and password fields when valid token is present (WITHOUT employee_id)", () => {
       renderWithProviders(
-        <MemoryRouter initialEntries={["/employee/activate?token=test_token_123&employee_id=emp_001&email=test@ofc360.com"]}>
+        <MemoryRouter initialEntries={["/employee/activate?token=test_token_123"]}>
           <Routes>
             <Route path="/employee/activate" element={<EmployeeActivatePage />} />
           </Routes>
@@ -52,15 +53,17 @@ describe("Employee Invitation & Password Activation Flow", () => {
       );
 
       expect(screen.getByText("Welcome to OFC360")).toBeDefined();
-      expect(screen.getByText("Set Your Password")).toBeDefined();
+      expect(screen.getByText("Set your password")).toBeDefined();
       expect(screen.getByPlaceholderText("Enter new password")).toBeDefined();
       expect(screen.getByPlaceholderText("Confirm your password")).toBeDefined();
-      expect(screen.getByText(/At least 8 characters/i)).toBeDefined();
+      expect(screen.getByText(/Minimum 8 characters/i)).toBeDefined();
       expect(screen.getByText(/Passwords match/i)).toBeDefined();
-      expect(screen.getByRole("button", { name: /Set Password & Activate/i })).toBeDefined();
+      expect(screen.getByRole("button", { name: /Set Password/i })).toBeDefined();
+      // Must NOT show Invalid Invitation Link
+      expect(screen.queryByRole("heading", { name: "Invalid Invitation Link" })).toBeNull();
     });
 
-    it("displays error banner when no token or employee_id is present in the URL", () => {
+    it("displays error banner when no token is present in the URL", () => {
       renderWithProviders(
         <MemoryRouter initialEntries={["/employee/activate"]}>
           <Routes>
@@ -70,12 +73,12 @@ describe("Employee Invitation & Password Activation Flow", () => {
       );
 
       expect(screen.getByRole("heading", { name: "Invalid Invitation Link" })).toBeDefined();
-      expect(screen.getByText("Invalid invitation link. Please request a new invitation from HR.")).toBeDefined();
+      expect(screen.getByText(/Your invitation link is invalid or has expired/i)).toBeDefined();
     });
 
     it("requires at least 8 characters and matching password to enable submit button", () => {
       renderWithProviders(
-        <MemoryRouter initialEntries={["/employee/activate?token=valid_token&employee_id=emp_001"]}>
+        <MemoryRouter initialEntries={["/employee/activate?token=valid_token"]}>
           <Routes>
             <Route path="/employee/activate" element={<EmployeeActivatePage />} />
           </Routes>
@@ -84,7 +87,7 @@ describe("Employee Invitation & Password Activation Flow", () => {
 
       const newPassInput = screen.getByPlaceholderText("Enter new password");
       const confirmPassInput = screen.getByPlaceholderText("Confirm your password");
-      const submitBtn = screen.getByRole("button", { name: /Set Password & Activate/i }) as HTMLButtonElement;
+      const submitBtn = screen.getByRole("button", { name: /Set Password/i }) as HTMLButtonElement;
 
       // Initially disabled
       expect(submitBtn.disabled).toBe(true);
@@ -106,7 +109,7 @@ describe("Employee Invitation & Password Activation Flow", () => {
 
     it("toggles password visibility when show/hide buttons are clicked", () => {
       renderWithProviders(
-        <MemoryRouter initialEntries={["/employee/activate?token=valid_token&employee_id=emp_001"]}>
+        <MemoryRouter initialEntries={["/employee/activate?token=valid_token"]}>
           <Routes>
             <Route path="/employee/activate" element={<EmployeeActivatePage />} />
           </Routes>
@@ -123,7 +126,50 @@ describe("Employee Invitation & Password Activation Flow", () => {
   });
 
   describe("2. Password Activation API & State Transitions", () => {
-    it("submits password to activateEmployee mutation and shows success UI", async () => {
+    it("submits password to token-based activateAccount mutation when no employee_id in URL", async () => {
+      const mockUnwrap = vi.fn().mockResolvedValue({
+        success: true,
+        message: "Account activated successfully",
+      });
+      const mockActivateAccount = vi.fn().mockReturnValue({
+        unwrap: mockUnwrap,
+      });
+
+      vi.spyOn(onboardingApiHooks, "useActivateAccountMutation").mockReturnValue([
+        mockActivateAccount as any,
+        { isLoading: false } as any,
+      ]);
+
+      renderWithProviders(
+        <MemoryRouter initialEntries={["/employee/activate?token=token_only_abc"]}>
+          <Routes>
+            <Route path="/employee/activate" element={<EmployeeActivatePage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      const newPassInput = screen.getByPlaceholderText("Enter new password");
+      const confirmPassInput = screen.getByPlaceholderText("Confirm your password");
+      const submitBtn = screen.getByRole("button", { name: /Set Password/i });
+
+      fireEvent.change(newPassInput, { target: { value: "SecurePass2026!" } });
+      fireEvent.change(confirmPassInput, { target: { value: "SecurePass2026!" } });
+      fireEvent.click(submitBtn);
+
+      await waitFor(() => {
+        expect(mockActivateAccount).toHaveBeenCalledWith({
+          token: "token_only_abc",
+          password: "SecurePass2026!",
+          new_password: "SecurePass2026!",
+          confirm_password: "SecurePass2026!",
+        });
+      });
+
+      expect(await screen.findByText("Password Set Successfully!")).toBeDefined();
+      expect(screen.getByText("Proceed to Sign In")).toBeDefined();
+    });
+
+    it("submits password to activateEmployee mutation when employee_id is present", async () => {
       const mockUnwrap = vi.fn().mockResolvedValue({
         success: true,
         message: "Account activated successfully",
@@ -138,7 +184,7 @@ describe("Employee Invitation & Password Activation Flow", () => {
       ]);
 
       renderWithProviders(
-        <MemoryRouter initialEntries={["/employee/activate?token=secret_token_abc&employee_id=emp_123&email=user@test.com"]}>
+        <MemoryRouter initialEntries={["/employee/activate?token=secret_token_abc&employee_id=550e8400-e29b-41d4-a716-446655440000"]}>
           <Routes>
             <Route path="/employee/activate" element={<EmployeeActivatePage />} />
           </Routes>
@@ -147,7 +193,7 @@ describe("Employee Invitation & Password Activation Flow", () => {
 
       const newPassInput = screen.getByPlaceholderText("Enter new password");
       const confirmPassInput = screen.getByPlaceholderText("Confirm your password");
-      const submitBtn = screen.getByRole("button", { name: /Set Password & Activate/i });
+      const submitBtn = screen.getByRole("button", { name: /Set Password/i });
 
       fireEvent.change(newPassInput, { target: { value: "SecurePass2026!" } });
       fireEvent.change(confirmPassInput, { target: { value: "SecurePass2026!" } });
@@ -155,8 +201,8 @@ describe("Employee Invitation & Password Activation Flow", () => {
 
       await waitFor(() => {
         expect(mockActivateMutation).toHaveBeenCalledWith({
-          id: "emp_123",
-          employee_id: "emp_123",
+          id: "550e8400-e29b-41d4-a716-446655440000",
+          employee_id: "550e8400-e29b-41d4-a716-446655440000",
           token: "secret_token_abc",
           new_password: "SecurePass2026!",
           confirm_password: "SecurePass2026!",
@@ -174,17 +220,17 @@ describe("Employee Invitation & Password Activation Flow", () => {
           detail: "Invitation token has expired or is invalid",
         },
       });
-      const mockActivateMutation = vi.fn().mockReturnValue({
+      const mockActivateAccount = vi.fn().mockReturnValue({
         unwrap: mockUnwrap,
       });
 
-      vi.spyOn(employeeApiHooks, "useActivateEmployeeMutation").mockReturnValue([
-        mockActivateMutation as any,
+      vi.spyOn(onboardingApiHooks, "useActivateAccountMutation").mockReturnValue([
+        mockActivateAccount as any,
         { isLoading: false } as any,
       ]);
 
       renderWithProviders(
-        <MemoryRouter initialEntries={["/employee/activate?token=expired_token&employee_id=emp_123"]}>
+        <MemoryRouter initialEntries={["/employee/activate?token=expired_token"]}>
           <Routes>
             <Route path="/employee/activate" element={<EmployeeActivatePage />} />
           </Routes>
@@ -193,7 +239,7 @@ describe("Employee Invitation & Password Activation Flow", () => {
 
       const newPassInput = screen.getByPlaceholderText("Enter new password");
       const confirmPassInput = screen.getByPlaceholderText("Confirm your password");
-      const submitBtn = screen.getByRole("button", { name: /Set Password & Activate/i });
+      const submitBtn = screen.getByRole("button", { name: /Set Password/i });
 
       fireEvent.change(newPassInput, { target: { value: "SecurePass2026!" } });
       fireEvent.change(confirmPassInput, { target: { value: "SecurePass2026!" } });
@@ -218,7 +264,7 @@ describe("Employee Invitation & Password Activation Flow", () => {
       });
 
       renderWithProviders(
-        <MemoryRouter initialEntries={["/onboarding?token=legacy_token_999&employee_id=emp_555"]}>
+        <MemoryRouter initialEntries={["/onboarding?token=legacy_token_999"]}>
           <Routes>
             <Route element={<ProtectedRoute />}>
               <Route path="/onboarding" element={<div>Onboarding Dashboard</div>} />

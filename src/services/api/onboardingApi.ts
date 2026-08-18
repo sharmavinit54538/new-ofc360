@@ -43,6 +43,8 @@ export interface InviteEmployeesRequest {
 export interface ActivateAccountRequest {
   token: string;
   password?: string;
+  new_password?: string;
+  confirm_password?: string;
   full_name?: string;
 }
 
@@ -147,7 +149,13 @@ export const onboardingApi = baseApi.injectEndpoints({
       query: (body) => ({
         url: "/api/v1/onboarding/activate",
         method: "POST",
-        body,
+        body: {
+          token: body.token,
+          password: body.password || body.new_password,
+          new_password: body.new_password || body.password,
+          confirm_password: body.confirm_password || body.new_password || body.password,
+          ...(body.full_name ? { full_name: body.full_name } : {}),
+        },
       }),
       invalidatesTags: ["Onboarding"],
     }),

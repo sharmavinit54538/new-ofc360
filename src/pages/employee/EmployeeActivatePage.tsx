@@ -11,9 +11,7 @@ import {
   ArrowRight,
   Loader2,
   ShieldCheck,
-  Building2,
   KeyRound,
-  Mail,
   UserCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { useActivateEmployeeMutation } from "@/services/api/employeeApi";
+import { useActivateAccountMutation } from "@/services/api/onboardingApi";
 import { useAppDispatch } from "@/app/hooks";
 import { setCredentials } from "@/features/auth/authSlice";
 import { normalizeError } from "@/services/api/normalizeError";
@@ -60,7 +59,7 @@ export default function EmployeeActivatePage() {
     searchParams.get("invite_token") ||
     "";
 
-  // Check possible employee_id sources (query params or decoded token)
+  // Check optional employee_id parameter
   const queryEmployeeId =
     searchParams.get("employee_id") ||
     searchParams.get("id") ||
@@ -70,7 +69,7 @@ export default function EmployeeActivatePage() {
 
   const emailParam = searchParams.get("email") || "";
 
-  // Attempt to resolve employee ID from query or JWT payload
+  // Attempt to resolve employee ID or email from query or JWT payload if available
   const [employeeId, setEmployeeId] = useState<string>(queryEmployeeId);
   const [resolvedEmail, setResolvedEmail] = useState<string>(emailParam);
 
@@ -82,7 +81,7 @@ export default function EmployeeActivatePage() {
       if (payload) {
         const idFromToken =
           payload.employee_id || payload.sub || payload.id || payload.user_id;
-        if (idFromToken) setEmployeeId(String(idFromToken));
+        if (idFromToken && idFromToken !== "me") setEmployeeId(String(idFromToken));
         const emailFromToken = payload.email || payload.identifier;
         if (emailFromToken && !resolvedEmail) setResolvedEmail(String(emailFromToken));
       }
@@ -97,7 +96,9 @@ export default function EmployeeActivatePage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const [activateEmployee, { isLoading }] = useActivateEmployeeMutation();
+  const [activateEmployee, { isLoading: isActivatingEmployee }] = useActivateEmployeeMutation();
+  const [activateAccount, { isLoading: isActivatingAccount }] = useActivateAccountMutation();
+  const isLoading = isActivatingEmployee || isActivatingAccount;
 
   // Live password validation
   const hasMinLength = password.length >= 8;
@@ -110,11 +111,11 @@ export default function EmployeeActivatePage() {
     e.preventDefault();
     setErrorMessage(null);
 
-    if (!token || !employeeId) {
+    if (!token) {
       setErrorMessage(
-        "Invalid invitation link. Please request a new invitation from HR."
+        "Your invitation link is invalid or has expired. Please contact your HR administrator for a new invitation."
       );
-      toast.error("Invalid invitation link. Missing token or employee ID.");
+      toast.error("Missing activation token.");
       return;
     }
 
@@ -131,27 +132,44 @@ export default function EmployeeActivatePage() {
     }
 
     try {
-      const cleanEmpId = employeeId.trim();
-      const res = await activateEmployee({
-        id: cleanEmpId,
-        employee_id: cleanEmpId,
-        token: token.trim(),
-        new_password: password,
-        confirm_password: confirmPassword,
-      }).unwrap();
+      let res: any;
+      const cleanEmpId = (employeeId || "").trim();
+
+      if (cleanEmpId && cleanEmpId !== "me") {
+        // Explicit employee UUID endpoint: POST /api/v1/employees/{id}/activate
+        res = await activateEmployee({
+          id: cleanEmpId,
+          employee_id: cleanEmpId,
+          token: token.trim(),
+          new_password: password,
+          confirm_password: confirmPassword,
+        }).unwrap();
+      } else {
+        // Token-based activation endpoint under onboarding: POST /api/v1/onboarding/activate
+        res = await activateAccount({
+          token: token.trim(),
+          password: password,
+          new_password: password,
+          confirm_password: confirmPassword,
+        }).unwrap();
+      }
 
       setIsSuccess(true);
       toast.success("Password set successfully! Your account is activated.");
 
       // Check if the backend activation returned authenticated session tokens
-      const sessionToken = (res as any)?.token || (res as any)?.access_token || (res as any)?.data?.token || (res as any)?.data?.access_token;
-      const userObj = (res as any)?.user || (res as any)?.data?.user;
+      const sessionToken =
+        res?.token ||
+        res?.access_token ||
+        res?.data?.token ||
+        res?.data?.access_token;
+      const userObj = res?.user || res?.data?.user;
 
       if (sessionToken && userObj) {
         dispatch(
           setCredentials({
             token: sessionToken,
-            refreshToken: (res as any)?.refreshToken || (res as any)?.data?.refreshToken,
+            refreshToken: res?.refreshToken || res?.data?.refreshToken,
             user: userObj,
           })
         );
@@ -261,10 +279,10 @@ export default function EmployeeActivatePage() {
                       <ArrowRight className="w-4 h-4" />
                     </Button>
                   </motion.div>
-                ) : (!token || !employeeId) ? (
-                  /* Missing Token or Employee ID Warning */
+                ) : !token ? (
+                  /* Missing Token Warning */
                   <motion.div
-                    key="missing-token-or-id"
+                    key="missing-token"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="text-center space-y-5 py-4"
@@ -278,7 +296,7 @@ export default function EmployeeActivatePage() {
                         Invalid Invitation Link
                       </h2>
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        Invalid invitation link. Please request a new invitation from HR.
+                        Your invitation link is invalid or has expired. Please contact your HR administrator for a new invitation.
                       </p>
                     </div>
 
@@ -308,7 +326,7 @@ export default function EmployeeActivatePage() {
                         <span>Welcome to OFC360</span>
                       </div>
                       <h2 className="text-xl font-bold tracking-tight text-foreground">
-                        Set Your Password
+                        Set your password
                       </h2>
                       <p className="text-xs text-muted-foreground">
                         Create a secure password to activate your employee workspace account.
@@ -424,7 +442,7 @@ export default function EmployeeActivatePage() {
                                   : "text-muted-foreground"
                               }
                             >
-                              At least 8 characters
+                              Minimum 8 characters
                             </span>
                           </div>
 
@@ -443,7 +461,7 @@ export default function EmployeeActivatePage() {
                                   : "text-muted-foreground"
                               }
                             >
-                              Passwords match
+                              Passwords must match
                             </span>
                           </div>
 
@@ -477,12 +495,12 @@ export default function EmployeeActivatePage() {
                         {isLoading ? (
                           <>
                             <Loader2 className="w-4 h-4 animate-spin" />
-                            <span>Activating Account...</span>
+                            <span>Setting Password...</span>
                           </>
                         ) : (
                           <>
                             <ShieldCheck className="w-4 h-4" />
-                            <span>Set Password & Activate</span>
+                            <span>Set Password</span>
                           </>
                         )}
                       </Button>
