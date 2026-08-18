@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   evaluateArrivalStatus,
   evaluateDepartureStatus,
@@ -6,98 +6,90 @@ import {
   determineAttendanceStatus,
 } from "../utils/attendanceCalculations";
 import {
-  calculateHaversineDistanceMeters,
-  OFFICE_BRANCHES,
-} from "../utils/verification/gpsVerification";
-import {
-  generateDynamicQrToken,
-  validateQrPayload,
-} from "../utils/verification/qrVerification";
-import {
-  AUTHORIZED_OFFICE_NETWORKS,
-  performNetworkVerification,
-} from "../utils/verification/wifiVerification";
+  captureVideoFrame,
+  stopCameraStream,
+} from "../utils/verification/cameraVerification";
 import { normalizeRole } from "../features/auth/authTypes";
 
 describe("OFC360 Complete Attendance API & Calculation Integration Suite", () => {
-  describe("1. GPS Geofence & Perimeter Telemetry", () => {
-    it("verifies accurate Haversine distance from headquarters branch", () => {
-      const hq = OFFICE_BRANCHES[0];
-      // Exact point
-      const distZero = calculateHaversineDistanceMeters(
-        hq.latitude,
-        hq.longitude,
-        hq.latitude,
-        hq.longitude
-      );
-      expect(distZero).toBe(0);
+  describe("1. Selfie Camera Biometric Verification Engine", () => {
+    it("captures frame from video element and computes valid biometric result", () => {
+      // Mock video element and canvas context
+      const fakeVideo = document.createElement("video");
+      Object.defineProperty(fakeVideo, "videoWidth", { value: 640 });
+      Object.defineProperty(fakeVideo, "videoHeight", { value: 480 });
 
-      // Point ~100m away
-      const distNear = calculateHaversineDistanceMeters(
-        hq.latitude + 0.0005,
-        hq.longitude + 0.0005,
-        hq.latitude,
-        hq.longitude
-      );
-      expect(distNear).toBeGreaterThan(0);
-      expect(distNear).toBeLessThan(500);
+      // Mock canvas 2d context
+      const originalCreateElement = document.createElement.bind(document);
+      vi.spyOn(document, "createElement").mockImplementation((tagName: string) => {
+        if (tagName.toLowerCase() === "canvas") {
+          const canvas = originalCreateElement("canvas");
+          canvas.getContext = vi.fn().mockReturnValue({
+            drawImage: vi.fn(),
+            getImageData: vi.fn().mockReturnValue({
+              data: new Uint8ClampedArray(640 * 480 * 4).fill(150), // Adequate brightness
+            }),
+          });
+          canvas.toDataURL = vi.fn().mockReturnValue("data:image/jpeg;base64,sample-selfie-data");
+          return canvas;
+        }
+        return originalCreateElement(tagName);
+      });
+
+      const result = captureVideoFrame(fakeVideo);
+      expect(result.dataUrl).toContain("data:image/jpeg;base64");
+      expect(result.faceHash).toMatch(/^FAC-[A-Z0-9]+-[A-Z0-9]+$/);
+      expect(result.brightnessScore).toBeGreaterThanOrEqual(10);
+      expect(result.width).toBe(640);
+      expect(result.height).toBe(480);
+
+      vi.restoreAllMocks();
     });
 
-    it("evaluates inside/outside geofence against branch radius limits", () => {
-      const branch = OFFICE_BRANCHES[0];
-      const distance = 45; // meters
-      const isInside = distance <= branch.radiusMeters;
-      expect(isInside).toBe(true);
+    it("throws an error if video frame is too dark or obstructed", () => {
+      const fakeVideo = document.createElement("video");
+      Object.defineProperty(fakeVideo, "videoWidth", { value: 640 });
+      Object.defineProperty(fakeVideo, "videoHeight", { value: 480 });
 
-      const distanceFar = 350; // meters
-      const isInsideFar = distanceFar <= branch.radiusMeters;
-      expect(isInsideFar).toBe(false);
+      const originalCreateElement = document.createElement.bind(document);
+      vi.spyOn(document, "createElement").mockImplementation((tagName: string) => {
+        if (tagName.toLowerCase() === "canvas") {
+          const canvas = originalCreateElement("canvas");
+          canvas.getContext = vi.fn().mockReturnValue({
+            drawImage: vi.fn(),
+            getImageData: vi.fn().mockReturnValue({
+              data: new Uint8ClampedArray(640 * 480 * 4).fill(2), // Too dark (<10)
+            }),
+          });
+          return canvas;
+        }
+        return originalCreateElement(tagName);
+      });
+
+      expect(() => captureVideoFrame(fakeVideo)).toThrow(/Frame too dark/i);
+      vi.restoreAllMocks();
+    });
+
+    it("safely stops all media stream tracks when webcam is stopped", () => {
+      const stopTrackMock1 = vi.fn();
+      const stopTrackMock2 = vi.fn();
+      const mockStream = {
+        getTracks: vi.fn().mockReturnValue([
+          { stop: stopTrackMock1 },
+          { stop: stopTrackMock2 },
+        ]),
+      } as unknown as MediaStream;
+
+      stopCameraStream(mockStream);
+      expect(stopTrackMock1).toHaveBeenCalled();
+      expect(stopTrackMock2).toHaveBeenCalled();
+
+      // Calling with null does not throw
+      expect(() => stopCameraStream(null)).not.toThrow();
     });
   });
 
-  describe("2. Dynamic QR Security Token Generation & Validation", () => {
-    it("generates 30-second windowed dynamic QR tokens with proper payload schema", () => {
-      const payload = generateDynamicQrToken("EMP-101", "Jane Doe");
-      expect(payload.employeeId).toBe("EMP-101");
-      expect(payload.employeeName).toBe("Jane Doe");
-      expect(payload.expiresInSeconds).toBeGreaterThanOrEqual(1);
-      expect(payload.expiresInSeconds).toBeLessThanOrEqual(30);
-      expect(payload.token).toMatch(/^OFC-QR-[A-F0-9]{8}$/);
-      expect(payload.payloadString).toContain('"app":"OFC360"');
-    });
-
-    it("validates dynamic QR strings from kiosk terminals", () => {
-      const payload = generateDynamicQrToken("EMP-202", "Alex Mercer");
-      const validation = validateQrPayload(payload.payloadString);
-      expect(validation.valid).toBe(true);
-      expect(validation.data?.empId).toBe("EMP-202");
-    });
-
-    it("rejects corrupted or expired QR token strings", () => {
-      const validation = validateQrPayload("INVALID-RANDOM-TOKEN-STRING");
-      expect(validation.valid).toBe(false);
-      expect(validation.message.toLowerCase()).toContain("unrecognized qr code format");
-    });
-  });
-
-  describe("3. Wi-Fi Corporate Gateway Diagnostics", () => {
-    it("contains authorized office Wi-Fi networks with security profiles", () => {
-      expect(AUTHORIZED_OFFICE_NETWORKS.length).toBeGreaterThanOrEqual(3);
-      const hqWifi = AUTHORIZED_OFFICE_NETWORKS[0];
-      expect(hqWifi.ssid).toContain("OFC360-Corp-5G");
-      expect(hqWifi.security).toContain("WPA3-Enterprise");
-    });
-
-    it("performs network verification diagnostics accurately", async () => {
-      const diag = await performNetworkVerification("net-hq-5g");
-      expect(diag.isOnline).toBe(true);
-      expect(diag.localIp).toMatch(/^\d+\.\d+\.\d+\.\d+$/);
-      expect(diag.rttMs).toBeGreaterThan(0);
-      expect(diag.matchedProfile?.ssid).toContain("OFC360-Corp-5G");
-    });
-  });
-
-  describe("4. Shift Policies & Arrival/Departure Status Rules", () => {
+  describe("2. Shift Policies & Arrival/Departure Status Rules", () => {
     it("evaluates on-time arrival within 15-minute grace window", () => {
       const check = evaluateArrivalStatus("09:12", "09:00", 15);
       expect(check.isLate).toBe(false);
@@ -176,7 +168,7 @@ describe("OFC360 Complete Attendance API & Calculation Integration Suite", () =>
     });
   });
 
-  describe("5. Role-Based Attendance Access Controls", () => {
+  describe("3. Role-Based Attendance Access Controls", () => {
     it("maps normalized roles for access permissions", () => {
       expect(normalizeRole("hr_admin")).toBe("hr_admin");
       expect(normalizeRole("HR_ADMIN")).toBe("hr_admin");
@@ -196,7 +188,7 @@ describe("OFC360 Complete Attendance API & Calculation Integration Suite", () =>
     });
   });
 
-  describe("6. Overtime Calculation & Multipliers", () => {
+  describe("4. Overtime Calculation & Multipliers", () => {
     it("computes net working hours and breaks accurately", () => {
       const grossSecs = 9 * 3600; // 9 hours
       const breakSecs = 45 * 60;  // 45 mins
@@ -216,32 +208,30 @@ describe("OFC360 Complete Attendance API & Calculation Integration Suite", () =>
     });
   });
 
-  describe("7. Attendance Telemetry Payload Construction", () => {
-    it("constructs complete FormData payload for biometric/GPS punch requests", () => {
+  describe("5. Selfie Camera Biometric Attendance Payload Construction", () => {
+    it("constructs complete FormData payload for biometric face check-in requests", () => {
       const payload = {
-        latitude: 12.9716,
-        longitude: 77.5946,
-        location: "Main HQ Office [12.9716°N, 77.5946°E]",
+        location: "Main HQ Facial Station (Face Match ID: FAC-TEST99)",
         device_info: "Mozilla/5.0 Test Suite",
-        ip_address: "192.168.1.108",
-        method: "GPS Geofence",
-        verificationMethod: "gps",
-        notes: "Sprint planning check-in",
+        method: "Selfie Camera",
+        verificationMethod: "face_id",
+        notes: "Daily check-in via selfie camera",
+        image: "data:image/jpeg;base64,sample-selfie-data",
       };
 
       const formData = new FormData();
-      formData.append("latitude", String(payload.latitude));
-      formData.append("longitude", String(payload.longitude));
       formData.append("location", payload.location);
       formData.append("device_info", payload.device_info);
-      formData.append("ip_address", payload.ip_address);
+      formData.append("method", payload.method);
       formData.append("verification_method", payload.verificationMethod);
       formData.append("notes", payload.notes);
+      formData.append("image", payload.image);
 
-      expect(formData.get("latitude")).toBe("12.9716");
-      expect(formData.get("longitude")).toBe("77.5946");
-      expect(formData.get("verification_method")).toBe("gps");
-      expect(formData.get("notes")).toBe("Sprint planning check-in");
+      expect(formData.get("location")).toBe("Main HQ Facial Station (Face Match ID: FAC-TEST99)");
+      expect(formData.get("method")).toBe("Selfie Camera");
+      expect(formData.get("verification_method")).toBe("face_id");
+      expect(formData.get("notes")).toBe("Daily check-in via selfie camera");
+      expect(formData.get("image")).toBe("data:image/jpeg;base64,sample-selfie-data");
     });
   });
 });

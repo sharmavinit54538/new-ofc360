@@ -11,10 +11,7 @@ import {
   BarChart3,
   Calendar,
   Coffee,
-  MapPin,
   Camera,
-  Wifi,
-  QrCode,
   CalendarOff,
   Download,
   Trash2,
@@ -25,9 +22,6 @@ import {
   ShieldCheck,
   AlertCircle,
   Check,
-  Scan,
-  Radio,
-  Signal,
   RefreshCw,
   Search,
   Loader2,
@@ -110,28 +104,11 @@ import {
 } from "@/features/attendance/attendanceApi";
 import { useLazyGetExportsAttendanceQuery } from "@/store/api/reportsApi";
 import {
-  OFFICE_BRANCHES,
-  calculateHaversineDistanceMeters,
-  getCurrentGpsPosition,
-  type GpsLocationResult,
-} from "@/utils/verification/gpsVerification";
-import {
   startCameraStream,
   stopCameraStream,
   captureVideoFrame,
   type CameraCaptureResult,
 } from "@/utils/verification/cameraVerification";
-import {
-  AUTHORIZED_OFFICE_NETWORKS,
-  performNetworkVerification,
-  type NetworkDiagnosticsResult,
-} from "@/utils/verification/wifiVerification";
-import {
-  generateDynamicQrToken,
-  drawQrToCanvas,
-  validateQrPayload,
-  type DynamicQrPayload,
-} from "@/utils/verification/qrVerification";
 import {
   evaluateArrivalStatus,
   evaluateDepartureStatus,
@@ -272,7 +249,7 @@ export default function AttendancePage() {
   const [isOnBreak, setIsOnBreak] = useState(false);
   const [workSeconds, setWorkSeconds] = useState(0);
   const [breakSeconds, setBreakSeconds] = useState(0);
-  const [punchMethod, setPunchMethod] = useState<PunchRecord["method"]>("GPS Geofence");
+  const punchMethod: PunchRecord["method"] = "Selfie Camera";
   const [taskNotes, setTaskNotes] = useState("");
 
   // Sync clock status with backend response
@@ -286,65 +263,13 @@ export default function AttendancePage() {
     }
   }, [myFaceStatus]);
 
-  // Verification 1: GPS Geofence States
-  const [selectedBranchId, setSelectedBranchId] = useState(OFFICE_BRANCHES[0].id);
-  const [gpsResult, setGpsResult] = useState<GpsLocationResult | null>(null);
-  const [gpsLoading, setGpsLoading] = useState(false);
-  const [gpsError, setGpsError] = useState<string | null>(null);
-  const [gpsDistanceMeters, setGpsDistanceMeters] = useState<number | null>(null);
-  const [isInsideGeofence, setIsInsideGeofence] = useState<boolean | null>(null);
-
-  // Verification 2: Camera & Selfie States
+  // Verification: Camera & Selfie States
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [cameraLoading, setCameraLoading] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [capturedSelfie, setCapturedSelfie] = useState<CameraCaptureResult | null>(null);
-
-  // Verification 3: Wi-Fi Network Diagnostics States
-  const [selectedWifiProfileId, setSelectedWifiProfileId] = useState(AUTHORIZED_OFFICE_NETWORKS[0].id);
-  const [wifiResult, setWifiResult] = useState<NetworkDiagnosticsResult | null>(null);
-  const [wifiLoading, setWifiLoading] = useState(false);
-  const [wifiError, setWifiError] = useState<string | null>(null);
-
-  // Verification 4: Dynamic QR Token & Scanner States
-  const qrCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [qrPayload, setQrPayload] = useState<DynamicQrPayload | null>(null);
-  const [qrSecondsLeft, setQrSecondsLeft] = useState(30);
-  const [qrMode, setQrMode] = useState<"display" | "scan">("display");
-  const [kioskCodeInput, setKioskCodeInput] = useState("");
-  const [kioskVerification, setKioskVerification] = useState<{ valid: boolean; message: string; data?: any } | null>(null);
-
-  // GPS Execution Function
-  const fetchGpsLocation = useCallback(async (branchId = selectedBranchId) => {
-    setGpsLoading(true);
-    setGpsError(null);
-    try {
-      const pos = await getCurrentGpsPosition();
-      setGpsResult(pos);
-      const branch = OFFICE_BRANCHES.find((b) => b.id === branchId) || OFFICE_BRANCHES[0];
-      const dist = calculateHaversineDistanceMeters(
-        pos.latitude,
-        pos.longitude,
-        branch.latitude,
-        branch.longitude
-      );
-      setGpsDistanceMeters(dist);
-      const inside = dist <= branch.radiusMeters;
-      setIsInsideGeofence(inside);
-      if (inside) {
-        toast.success(`GPS Verified within ${branch.name} (${dist}m away)`);
-      } else {
-        toast.warning(`Current location is ${dist}m away from ${branch.name} (${branch.radiusMeters}m limit).`);
-      }
-    } catch (err: any) {
-      setGpsError(err.message || "Failed to retrieve GPS location.");
-      toast.error(err.message || "Location access failed.");
-    } finally {
-      setGpsLoading(false);
-    }
-  }, [selectedBranchId]);
 
   // Camera Execution Functions
   const startLiveCamera = useCallback(async () => {
@@ -386,10 +311,6 @@ export default function AttendancePage() {
     }
   };
 
-  // Regularization Filters
-  const [regFilterStatus, setRegFilterStatus] = useState<string>("ALL");
-  const [regSearchQuery, setRegSearchQuery] = useState("");
-
   const handleRetakeSelfie = () => {
     setCapturedSelfie(null);
     setTimeout(() => {
@@ -397,78 +318,26 @@ export default function AttendancePage() {
     }, 100);
   };
 
-  // Wi-Fi Network Diagnostic Execution
-  const runWifiDiagnostics = useCallback(async (profileId = selectedWifiProfileId) => {
-    setWifiLoading(true);
-    setWifiError(null);
-    try {
-      const diag = await performNetworkVerification(profileId);
-      setWifiResult(diag);
-      if (diag.isOnline) {
-        toast.success(`Network verified on ${diag.matchedProfile?.ssid || "Corporate Gateway"}`);
-      } else {
-        toast.error("Device is offline. Please check connection.");
-      }
-    } catch (err: any) {
-      setWifiError(err.message || "Network test failed.");
-      toast.error("Network verification error.");
-    } finally {
-      setWifiLoading(false);
-    }
-  }, [selectedWifiProfileId]);
+  // Regularization Filters
+  const [regFilterStatus, setRegFilterStatus] = useState<string>("ALL");
+  const [regSearchQuery, setRegSearchQuery] = useState("");
 
-  // Dynamic QR Generation & Refresh Lifecycle
+  // Tab & Camera Switching Effects
   useEffect(() => {
-    if (punchMethod !== "Dynamic QR" || activeTab !== "checkin") return;
-
-    const updateQr = () => {
-      const payload = generateDynamicQrToken(user?.id || "EMP-CURRENT", user?.name || "Alex Mercer");
-      setQrPayload(payload);
-      setQrSecondsLeft(payload.expiresInSeconds);
-      if (qrCanvasRef.current) {
-        drawQrToCanvas(qrCanvasRef.current, payload.payloadString, 180, "#0d9488", "#ffffff");
+    if (activeTab === "checkin") {
+      if (!capturedSelfie && !isCameraActive) {
+        startLiveCamera();
       }
-    };
-
-    updateQr();
-    const interval = setInterval(() => {
-      setQrSecondsLeft((prev) => {
-        if (prev <= 1) {
-          updateQr();
-          return 30;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [punchMethod, activeTab, user]);
-
-  // Tab & Method Switching Effects
-  useEffect(() => {
-    if (activeTab !== "checkin") {
-      stopLiveCamera();
-      return;
-    }
-
-    if (punchMethod === "GPS Geofence" && !gpsResult && !gpsLoading) {
-      fetchGpsLocation();
-    } else if (punchMethod === "Selfie Camera" && !capturedSelfie && !isCameraActive) {
-      startLiveCamera();
-    } else if (punchMethod === "Office Wi-Fi" && !wifiResult && !wifiLoading) {
-      runWifiDiagnostics();
-    }
-
-    if (punchMethod !== "Selfie Camera") {
+    } else {
       stopLiveCamera();
     }
-  }, [punchMethod, activeTab]);
+  }, [activeTab, capturedSelfie, isCameraActive, startLiveCamera, stopLiveCamera]);
 
   useEffect(() => {
     return () => {
       stopLiveCamera();
     };
-  }, []);
+  }, [stopLiveCamera]);
 
   // Dialog States
   const [isShiftModalOpen, setIsShiftModalOpen] = useState(false);
@@ -538,28 +407,12 @@ export default function AttendancePage() {
   // REAL PUNCH ACTION HANDLERS WITH API MUTATIONS
   // ==========================================
   const handleCheckIn = async () => {
-    let locationStr = "Main HQ Office";
-    let statusNote: PunchRecord["status"] = "On Time";
-
-    if (punchMethod === "GPS Geofence") {
-      const branch = OFFICE_BRANCHES.find((b) => b.id === selectedBranchId) || OFFICE_BRANCHES[0];
-      const coords = gpsResult ? `[${gpsResult.latitude.toFixed(4)}°N, ${gpsResult.longitude.toFixed(4)}°E]` : "[GPS Telemetry]";
-      const dist = gpsDistanceMeters !== null ? `${gpsDistanceMeters}m from perimeter` : "Within Perimeter";
-      locationStr = `${branch.name} ${coords} • ${dist} (GPS Verified)`;
-    } else if (punchMethod === "Selfie Camera") {
-      if (!capturedSelfie) {
-        toast.error("Please capture your live verification selfie before clocking in.");
-        return;
-      }
-      locationStr = `Main HQ Facial Station (Face Match ID: ${capturedSelfie.faceHash})`;
-    } else if (punchMethod === "Office Wi-Fi") {
-      const ssid = wifiResult?.matchedProfile?.ssid || "OFC360-Corp-5G";
-      const ip = wifiResult?.localIp || "192.168.1.108";
-      locationStr = `${ssid} [IP: ${ip}] • Corporate Gateway Verified`;
-    } else if (punchMethod === "Dynamic QR") {
-      const tokenStr = qrPayload?.token || kioskVerification?.data?.token || "OFC-QR-AUTHENTICATED";
-      locationStr = `Interactive Kiosk Terminal (Dynamic QR: ${tokenStr})`;
+    if (!capturedSelfie) {
+      toast.error("Please capture your live verification selfie before clocking in.");
+      return;
     }
+    const locationStr = `Main HQ Facial Station (Face Match ID: ${capturedSelfie.faceHash})`;
+    let statusNote: PunchRecord["status"] = "On Time";
 
     // Calculate arrival timing
     const activeShift = shifts[0] || {
@@ -584,16 +437,13 @@ export default function AttendancePage() {
     try {
       // Execute authenticated backend check-in mutation
       await faceCheckIn({
-        latitude: gpsResult?.latitude,
-        longitude: gpsResult?.longitude,
         location: locationStr,
         device_info: navigator.userAgent,
-        ip_address: wifiResult?.localIp || "192.168.1.108",
         method: punchMethod,
-        verificationMethod: punchMethod === "Selfie Camera" ? "face_id" : punchMethod === "GPS Geofence" ? "gps" : punchMethod === "Office Wi-Fi" ? "wifi" : "manual",
+        verificationMethod: "face_id",
         notes: taskNotes || undefined,
-        image: capturedSelfie?.dataUrl,
-        file: capturedSelfie?.blob,
+        image: capturedSelfie.dataUrl,
+        file: capturedSelfie.blob,
       }).unwrap();
 
       // Record in local optimistic store
@@ -619,7 +469,7 @@ export default function AttendancePage() {
       else if (isManagerOrAbove) refetchTeam();
       else refetchPersonal();
 
-      toast.success(`Clocked In successfully at ${timeStr} via ${punchMethod}${arrivalCheck.isLate ? ` (${arrivalCheck.lateMinutes}m Late)` : ""}`);
+      toast.success(`Clocked In successfully at ${timeStr} via Selfie Camera${arrivalCheck.isLate ? ` (${arrivalCheck.lateMinutes}m Late)` : ""}`);
     } catch (err: any) {
       const errMsg = err?.data?.message || err?.message || "Failed to submit check-in to server.";
       toast.error(errMsg);
@@ -679,11 +529,8 @@ export default function AttendancePage() {
     try {
       // Execute authenticated backend check-out mutation
       await faceCheckOut({
-        latitude: gpsResult?.latitude,
-        longitude: gpsResult?.longitude,
-        location: "Main HQ Office",
+        location: "Main HQ Facial Station",
         device_info: navigator.userAgent,
-        ip_address: wifiResult?.localIp || "192.168.1.108",
         method: punchMethod,
         notes: taskNotes || "Daily scheduled tasks completed.",
         image: capturedSelfie?.dataUrl,
@@ -698,7 +545,7 @@ export default function AttendancePage() {
         date: new Date().toISOString().split("T")[0],
         type: "Check-Out",
         method: punchMethod,
-        location: "Main HQ Office",
+        location: "Main HQ Facial Station",
         workHours: formatSecs(grossSecs),
         breakHours: formatSecs(breakSecs),
         breakDurationMins: Math.round(breakSecs / 60),
@@ -761,8 +608,8 @@ export default function AttendancePage() {
       p.timestamp || p.checkIn || "09:00 AM",
       p.checkOut || "—",
       p.type || (p.checkOut ? "Check-Out" : "Check-In"),
-      p.method || p.verificationMethod || "GPS Geofence",
-      `"${(p.location || "Main HQ Office").replace(/"/g, '""')}"`,
+      p.method || p.verificationMethod || "Selfie Camera",
+      `"${(p.location || "Main HQ Facial Station").replace(/"/g, '""')}"`,
       p.workHours || p.workingHours || "08:00:00",
       p.status || "Present",
     ]);
@@ -1031,7 +878,7 @@ export default function AttendancePage() {
         timestamp: item.checkIn || "09:15 AM",
         date: item.date,
         type: (item.checkOut ? "Check-Out" : "Check-In") as PunchRecord["type"],
-        method: "GPS Geofence" as PunchRecord["method"],
+        method: "Selfie Camera" as PunchRecord["method"],
         location: item.location || "Main HQ Office",
         status: (item.status || "Present") as PunchRecord["status"],
         workHours: item.workingHours ? String(item.workingHours) : undefined,
@@ -1321,459 +1168,119 @@ export default function AttendancePage() {
                   </div>
                 </div>
 
-                {/* Verification Mode Selector */}
-                <div className="space-y-2">
-                  <Label className="text-xs font-semibold">Verification Method</Label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {[
-                      { id: "GPS Geofence", icon: MapPin },
-                      { id: "Selfie Camera", icon: Camera },
-                      { id: "Office Wi-Fi", icon: Wifi },
-                      { id: "Dynamic QR", icon: QrCode },
-                    ].map((m) => {
-                      const Icon = m.icon;
-                      const isSel = punchMethod === m.id;
-                      return (
-                        <button
-                          key={m.id}
-                          type="button"
-                          onClick={() => setPunchMethod(m.id as any)}
-                          className={`flex items-center justify-center gap-1.5 p-2.5 rounded-xl border text-xs font-semibold transition-all ${
-                            isSel
-                              ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                              : "bg-secondary/40 text-muted-foreground border-border/50 hover:text-foreground"
-                          }`}
-                        >
-                          <Icon className="w-3.5 h-3.5" />
-                          <span>{m.id}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Dynamic Method-Specific Configuration & Verification Area */}
+                {/* Biometric Facial Verification / Selfie Camera Area */}
                 <div className="p-4 rounded-2xl bg-secondary/30 border border-border/40 space-y-3">
-                  {/* 1. GPS Geofence */}
-                  {punchMethod === "GPS Geofence" && (
-                    <div className="space-y-3">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                            <MapPin className="w-3.5 h-3.5" />
-                          </div>
-                          <div>
-                            <span className="text-xs font-bold text-foreground">GPS Perimeter Telemetry</span>
-                            <span className="text-[11px] text-muted-foreground block">Satellite radius & office geofence verification</span>
-                          </div>
+                  <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                          <Camera className="w-3.5 h-3.5" />
                         </div>
+                        <div>
+                          <span className="text-xs font-bold text-foreground">Biometric Facial Verification</span>
+                          <span className="text-[11px] text-muted-foreground block">Real-time webcam photo capture & liveness check</span>
+                        </div>
+                      </div>
+                      {capturedSelfie ? (
                         <Button
                           type="button"
                           size="sm"
                           variant="outline"
-                          onClick={() => fetchGpsLocation(selectedBranchId)}
-                          disabled={gpsLoading}
+                          onClick={handleRetakeSelfie}
                           className="h-8 text-xs font-semibold gap-1.5 border-border/60 bg-background"
                         >
-                          <RotateCw className={`w-3.5 h-3.5 ${gpsLoading ? "animate-spin" : ""}`} />
-                          <span>{gpsLoading ? "Acquiring GPS..." : "Refresh Location"}</span>
+                          <RotateCw className="w-3.5 h-3.5" />
+                          <span>Retake Selfie</span>
                         </Button>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                        <div className="space-y-1">
-                          <Label className="text-[11px] font-semibold text-muted-foreground">Designated Office Branch</Label>
-                          <Select
-                            value={selectedBranchId}
-                            onValueChange={(val) => {
-                              setSelectedBranchId(val);
-                              fetchGpsLocation(val);
-                            }}
-                          >
-                            <SelectTrigger className="text-xs h-8 bg-background border-border/60">
-                              <SelectValue placeholder="Select Branch Location" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {OFFICE_BRANCHES.map((b) => (
-                                <SelectItem key={b.id} value={b.id} className="text-xs">
-                                  {b.name} ({b.radiusMeters}m radius)
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-1">
-                          <Label className="text-[11px] font-semibold text-muted-foreground">Geofence Status</Label>
-                          <div className="h-8 flex items-center px-3 rounded-lg bg-background border border-border/60 text-xs">
-                            {gpsLoading ? (
-                              <span className="text-muted-foreground text-[11px] flex items-center gap-1.5">
-                                <RotateCw className="w-3 h-3 animate-spin text-primary" /> Calculating satellite distance...
-                              </span>
-                            ) : gpsError ? (
-                              <span className="text-destructive font-medium text-[11px] flex items-center gap-1">
-                                <AlertCircle className="w-3 h-3" /> {gpsError}
-                              </span>
-                            ) : isInsideGeofence ? (
-                              <Badge className="bg-emerald-500/15 text-emerald-500 border-emerald-500/30 text-[10px] font-bold gap-1">
-                                <Check className="w-3 h-3" /> Within Perimeter ({gpsDistanceMeters}m / {OFFICE_BRANCHES.find(b => b.id === selectedBranchId)?.radiusMeters}m)
-                              </Badge>
-                            ) : gpsDistanceMeters !== null ? (
-                              <Badge className="bg-amber-500/15 text-amber-500 border-amber-500/30 text-[10px] font-bold gap-1">
-                                <MapPin className="w-3 h-3" /> Remote Location ({gpsDistanceMeters}m from Office)
-                              </Badge>
-                            ) : (
-                              <span className="text-muted-foreground text-[11px]">Click "Refresh Location" to acquire GPS</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {gpsResult && (
-                        <div className="grid grid-cols-3 gap-2 p-2.5 rounded-xl bg-background/70 border border-border/40 text-[11px]">
-                          <div>
-                            <span className="text-muted-foreground block text-[10px]">Latitude / Longitude</span>
-                            <span className="font-mono font-bold text-foreground">
-                              {gpsResult.latitude.toFixed(4)}°, {gpsResult.longitude.toFixed(4)}°
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground block text-[10px]">GPS Accuracy</span>
-                            <span className="font-mono font-semibold text-emerald-500">±{gpsResult.accuracy} meters</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground block text-[10px]">Calculated Distance</span>
-                            <span className="font-mono font-bold text-foreground">{gpsDistanceMeters ?? 0}m away</span>
-                          </div>
-                        </div>
+                      ) : isCameraActive ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={handleCaptureSelfie}
+                          className="h-8 gradient-bg text-primary-foreground font-bold text-xs gap-1.5"
+                        >
+                          <Camera className="w-3.5 h-3.5" />
+                          <span>Capture Photo</span>
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={startLiveCamera}
+                          disabled={cameraLoading}
+                          className="h-8 text-xs font-semibold gap-1.5 border-border/60 bg-background"
+                        >
+                          <RotateCw className={`w-3.5 h-3.5 ${cameraLoading ? "animate-spin" : ""}`} />
+                          <span>Start Webcam</span>
+                        </Button>
                       )}
                     </div>
-                  )}
 
-                  {/* 2. Selfie Camera */}
-                  {punchMethod === "Selfie Camera" && (
-                    <div className="space-y-3">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                            <Camera className="w-3.5 h-3.5" />
+                    {capturedSelfie ? (
+                      <div className="flex flex-col sm:flex-row items-center gap-4 p-3 rounded-xl bg-background/80 border border-border/40">
+                        <img
+                          src={capturedSelfie.dataUrl}
+                          alt="Captured verification selfie"
+                          className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl object-cover border-2 border-primary/40 shadow-sm"
+                        />
+                        <div className="space-y-1.5 text-center sm:text-left flex-1">
+                          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                            <Badge className="bg-emerald-500/15 text-emerald-500 border-emerald-500/30 text-[10px] font-bold gap-1">
+                              <CheckCircle className="w-3 h-3" /> Face Verified
+                            </Badge>
+                            <span className="text-[10px] font-mono text-muted-foreground">{capturedSelfie.faceHash}</span>
                           </div>
-                          <div>
-                            <span className="text-xs font-bold text-foreground">Biometric Facial Verification</span>
-                            <span className="text-[11px] text-muted-foreground block">Real-time webcam photo capture & liveness check</span>
-                          </div>
+                          <p className="text-xs text-foreground font-semibold">Selfie Captured at {capturedSelfie.timestamp}</p>
+                          <p className="text-[11px] text-muted-foreground">
+                            Facial clarity score: <span className="font-mono text-emerald-500 font-bold">{capturedSelfie.brightnessScore}/255</span> • Ready for Punch Station.
+                          </p>
                         </div>
-                        {capturedSelfie ? (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={handleRetakeSelfie}
-                            className="h-8 text-xs font-semibold gap-1.5 border-border/60 bg-background"
-                          >
-                            <RotateCw className="w-3.5 h-3.5" />
-                            <span>Retake Selfie</span>
-                          </Button>
-                        ) : isCameraActive ? (
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={handleCaptureSelfie}
-                            className="h-8 gradient-bg text-primary-foreground font-bold text-xs gap-1.5"
-                          >
-                            <Camera className="w-3.5 h-3.5" />
-                            <span>Capture Photo</span>
-                          </Button>
-                        ) : (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={startLiveCamera}
-                            disabled={cameraLoading}
-                            className="h-8 text-xs font-semibold gap-1.5 border-border/60 bg-background"
-                          >
-                            <RotateCw className={`w-3.5 h-3.5 ${cameraLoading ? "animate-spin" : ""}`} />
-                            <span>Start Webcam</span>
-                          </Button>
+                      </div>
+                    ) : (
+                      <div className="relative rounded-2xl overflow-hidden bg-slate-950 border border-primary/30 aspect-video max-w-sm mx-auto flex items-center justify-center">
+                        <video
+                          ref={videoRef}
+                          playsInline
+                          muted
+                          autoPlay
+                          className="w-full h-full object-cover mirror"
+                          style={{ transform: "scaleX(-1)" }}
+                        />
+
+                        <div className="absolute inset-4 border border-primary/30 rounded-xl pointer-events-none">
+                          <div className="absolute -top-1 -left-1 w-3.5 h-3.5 border-t-2 border-l-2 border-primary" />
+                          <div className="absolute -top-1 -right-1 w-3.5 h-3.5 border-t-2 border-r-2 border-primary" />
+                          <div className="absolute -bottom-1 -left-1 w-3.5 h-3.5 border-b-2 border-l-2 border-primary" />
+                          <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 border-b-2 border-r-2 border-primary" />
+                        </div>
+
+                        <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-black/60 px-2 py-0.5 rounded-md backdrop-blur-xs">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          <span className="text-[10px] font-mono text-white/90">LIVE FACIAL TELEMETRY</span>
+                        </div>
+
+                        {!isCameraActive && (
+                          <div className="absolute inset-0 bg-background/90 flex flex-col items-center justify-center p-4 text-center space-y-2">
+                            <Camera className="w-8 h-8 text-muted-foreground/40" />
+                            <p className="text-xs font-semibold text-foreground">Webcam Stream Inactive</p>
+                            <p className="text-[11px] text-muted-foreground max-w-xs">
+                              {cameraError || "Click 'Start Webcam' to initialize facial authentication."}
+                            </p>
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={startLiveCamera}
+                              disabled={cameraLoading}
+                              className="gradient-bg text-primary-foreground font-bold text-xs h-8"
+                            >
+                              Start Webcam
+                            </Button>
+                          </div>
                         )}
                       </div>
-
-                      {capturedSelfie ? (
-                        <div className="flex flex-col sm:flex-row items-center gap-4 p-3 rounded-xl bg-background/80 border border-border/40">
-                          <img
-                            src={capturedSelfie.dataUrl}
-                            alt="Captured verification selfie"
-                            className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl object-cover border-2 border-primary/40 shadow-sm"
-                          />
-                          <div className="space-y-1.5 text-center sm:text-left flex-1">
-                            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                              <Badge className="bg-emerald-500/15 text-emerald-500 border-emerald-500/30 text-[10px] font-bold gap-1">
-                                <CheckCircle className="w-3 h-3" /> Face Verified
-                              </Badge>
-                              <span className="text-[10px] font-mono text-muted-foreground">{capturedSelfie.faceHash}</span>
-                            </div>
-                            <p className="text-xs text-foreground font-semibold">Selfie Captured at {capturedSelfie.timestamp}</p>
-                            <p className="text-[11px] text-muted-foreground">
-                              Facial clarity score: <span className="font-mono text-emerald-500 font-bold">{capturedSelfie.brightnessScore}/255</span> • Ready for Punch Station.
-                            </p>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="relative rounded-2xl overflow-hidden bg-slate-950 border border-primary/30 aspect-video max-w-sm mx-auto flex items-center justify-center">
-                          <video
-                            ref={videoRef}
-                            playsInline
-                            muted
-                            autoPlay
-                            className="w-full h-full object-cover mirror"
-                            style={{ transform: "scaleX(-1)" }}
-                          />
-
-                          <div className="absolute inset-4 border border-primary/30 rounded-xl pointer-events-none">
-                            <div className="absolute -top-1 -left-1 w-3.5 h-3.5 border-t-2 border-l-2 border-primary" />
-                            <div className="absolute -top-1 -right-1 w-3.5 h-3.5 border-t-2 border-r-2 border-primary" />
-                            <div className="absolute -bottom-1 -left-1 w-3.5 h-3.5 border-b-2 border-l-2 border-primary" />
-                            <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 border-b-2 border-r-2 border-primary" />
-                          </div>
-
-                          <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-black/60 px-2 py-0.5 rounded-md backdrop-blur-xs">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            <span className="text-[10px] font-mono text-white/90">LIVE FACIAL TELEMETRY</span>
-                          </div>
-
-                          {!isCameraActive && (
-                            <div className="absolute inset-0 bg-background/90 flex flex-col items-center justify-center p-4 text-center space-y-2">
-                              <Camera className="w-8 h-8 text-muted-foreground/40" />
-                              <p className="text-xs font-semibold text-foreground">Webcam Stream Inactive</p>
-                              <p className="text-[11px] text-muted-foreground max-w-xs">
-                                {cameraError || "Click 'Start Webcam' to initialize facial authentication."}
-                              </p>
-                              <Button
-                                type="button"
-                                size="sm"
-                                onClick={startLiveCamera}
-                                disabled={cameraLoading}
-                                className="gradient-bg text-primary-foreground font-bold text-xs h-8"
-                              >
-                                Start Webcam
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* 3. Office Wi-Fi */}
-                  {punchMethod === "Office Wi-Fi" && (
-                    <div className="space-y-3">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                            <Wifi className="w-3.5 h-3.5" />
-                          </div>
-                          <div>
-                            <span className="text-xs font-bold text-foreground">Office Network Verification</span>
-                            <span className="text-[11px] text-muted-foreground block">Corporate gateway, IP subnet & BSSID authentication</span>
-                          </div>
-                        </div>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={() => runWifiDiagnostics(selectedWifiProfileId)}
-                          disabled={wifiLoading}
-                          className="h-8 text-xs font-semibold gap-1.5 border-border/60 bg-background"
-                        >
-                          <RotateCw className={`w-3.5 h-3.5 ${wifiLoading ? "animate-spin" : ""}`} />
-                          <span>{wifiLoading ? "Testing Connection..." : "Test Network"}</span>
-                        </Button>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                        <div className="space-y-1">
-                          <Label className="text-[11px] font-semibold text-muted-foreground">Authorized Office Wi-Fi SSID</Label>
-                          <Select
-                            value={selectedWifiProfileId}
-                            onValueChange={(val) => {
-                              setSelectedWifiProfileId(val);
-                              runWifiDiagnostics(val);
-                            }}
-                          >
-                            <SelectTrigger className="text-xs h-8 bg-background border-border/60">
-                              <SelectValue placeholder="Select Office Network" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {AUTHORIZED_OFFICE_NETWORKS.map((w) => (
-                                <SelectItem key={w.id} value={w.id} className="text-xs">
-                                  {w.ssid} ({w.security})
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-1">
-                          <Label className="text-[11px] font-semibold text-muted-foreground">Network Authorization Status</Label>
-                          <div className="h-8 flex items-center px-3 rounded-lg bg-background border border-border/60 text-xs">
-                            {wifiLoading ? (
-                              <span className="text-muted-foreground text-[11px] flex items-center gap-1.5">
-                                <RotateCw className="w-3 h-3 animate-spin text-primary" /> Pinging corporate gateway...
-                              </span>
-                            ) : wifiResult?.isOnline ? (
-                              <Badge className="bg-emerald-500/15 text-emerald-500 border-emerald-500/30 text-[10px] font-bold gap-1">
-                                <CheckCircle className="w-3 h-3" /> Corporate Gateway Verified
-                              </Badge>
-                            ) : (
-                              <Badge className="bg-destructive/15 text-destructive border-destructive/30 text-[10px] font-bold gap-1">
-                                <AlertCircle className="w-3 h-3" /> Offline / Unreachable
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {wifiResult && (
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-2.5 rounded-xl bg-background/70 border border-border/40 text-[11px]">
-                          <div>
-                            <span className="text-muted-foreground block text-[10px]">Detected Local IP</span>
-                            <span className="font-mono font-bold text-foreground">{wifiResult.localIp}</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground block text-[10px]">Gateway Subnet</span>
-                            <span className="font-mono text-muted-foreground">{wifiResult.matchedProfile?.gatewaySubnet.split(" ")[0]}</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground block text-[10px]">Network Latency</span>
-                            <span className="font-mono font-semibold text-emerald-500">{wifiResult.rttMs} ms</span>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground block text-[10px]">Security Protocol</span>
-                            <span className="font-medium text-foreground">{wifiResult.matchedProfile?.security}</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* 4. Dynamic QR */}
-                  {punchMethod === "Dynamic QR" && (
-                    <div className="space-y-3">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                            <QrCode className="w-3.5 h-3.5" />
-                          </div>
-                          <div>
-                            <span className="text-xs font-bold text-foreground">Dynamic QR Code Authentication</span>
-                            <span className="text-[11px] text-muted-foreground block">Time-windowed rolling security token</span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1 bg-background p-1 rounded-lg border border-border/60">
-                          <button
-                            type="button"
-                            onClick={() => setQrMode("display")}
-                            className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
-                              qrMode === "display"
-                                ? "bg-primary text-primary-foreground shadow-xs"
-                                : "text-muted-foreground hover:text-foreground"
-                            }`}
-                          >
-                            My Punch QR
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setQrMode("scan")}
-                            className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
-                              qrMode === "scan"
-                                ? "bg-primary text-primary-foreground shadow-xs"
-                                : "text-muted-foreground hover:text-foreground"
-                            }`}
-                          >
-                            Scan Kiosk QR
-                          </button>
-                        </div>
-                      </div>
-
-                      {qrMode === "display" ? (
-                        <div className="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-xl bg-background/80 border border-border/40">
-                          <div className="p-2.5 bg-white rounded-xl shadow-sm border border-border/40 shrink-0">
-                            <canvas ref={qrCanvasRef} width={180} height={180} className="w-36 h-36 rounded-md" />
-                          </div>
-
-                          <div className="space-y-2 flex-1 text-center sm:text-left">
-                            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-                              <Badge className="bg-primary/15 text-primary border-primary/30 text-[10px] font-bold gap-1">
-                                <RotateCw className="w-3 h-3 animate-spin" /> Rotates in {qrSecondsLeft}s
-                              </Badge>
-                              <span className="text-[10px] font-mono text-muted-foreground">{qrPayload?.token}</span>
-                            </div>
-
-                            <div className="space-y-1">
-                              <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                                <span>Token Freshness</span>
-                                <span className="font-mono font-bold text-primary">{Math.round((qrSecondsLeft / 30) * 100)}%</span>
-                              </div>
-                              <Progress value={(qrSecondsLeft / 30) * 100} className="h-1.5" />
-                            </div>
-
-                            <p className="text-[11px] text-muted-foreground">
-                              Display this dynamic QR at any office entrance kiosk or scanner terminal to verify your attendance.
-                            </p>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="p-3 rounded-xl bg-background/80 border border-border/40 space-y-3">
-                          <div className="space-y-1">
-                            <Label className="text-[11px] font-semibold text-muted-foreground">Office Kiosk Token String / Scanner</Label>
-                            <div className="flex gap-2">
-                              <Input
-                                placeholder="Scan or enter kiosk terminal token (e.g. OFC-QR-8A2F9C4B)..."
-                                value={kioskCodeInput}
-                                onChange={(e) => {
-                                  setKioskCodeInput(e.target.value);
-                                  if (e.target.value.trim().length > 6) {
-                                    const validation = validateQrPayload(e.target.value.trim());
-                                    setKioskVerification(validation);
-                                  } else {
-                                    setKioskVerification(null);
-                                  }
-                                }}
-                                className="text-xs h-8 bg-background border-border/60 font-mono"
-                              />
-                              <Button
-                                type="button"
-                                size="sm"
-                                onClick={() => {
-                                  const demoToken = `OFC-QR-${Math.random().toString(16).substring(2, 10).toUpperCase()}`;
-                                  setKioskCodeInput(demoToken);
-                                  setKioskVerification(validateQrPayload(demoToken));
-                                  toast.success("Scanned Office Kiosk Terminal token!");
-                                }}
-                                className="h-8 text-xs font-bold gradient-bg text-primary-foreground shrink-0"
-                              >
-                                Scan Terminal
-                              </Button>
-                            </div>
-                          </div>
-
-                          {kioskVerification && (
-                            <div className="flex items-center justify-between p-2 rounded-lg bg-secondary/40 text-xs border border-border/40">
-                              <div className="flex items-center gap-1.5">
-                                <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-                                <span className="font-semibold text-foreground">{kioskVerification.message}</span>
-                              </div>
-                              <Badge className="bg-emerald-500/15 text-emerald-500 border-emerald-500/30 text-[10px] font-bold">
-                                Ready to Punch
-                              </Badge>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
 
                 {/* Daily Work Log Notes */}
