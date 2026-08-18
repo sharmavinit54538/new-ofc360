@@ -392,11 +392,30 @@ export default function EmployeeActivatePage() {
                         Invalid Invitation Link
                       </h2>
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        Your invitation link is invalid or has expired. Please contact HR for a new invitation.
+                        {normValError?.message ||
+                          rawValidationData?.message ||
+                          "Your invitation link is invalid or has expired. Please contact HR for a new invitation."}
                       </p>
+                      {normValError?.status && (
+                        <p className="text-[11px] text-muted-foreground/70 font-mono">
+                          HTTP {normValError.status}
+                          {typeof normValError.data === "object" && normValError.data?.message
+                            ? ` — ${normValError.data.message}`
+                            : ""}
+                        </p>
+                      )}
                     </div>
 
-                    <div className="pt-2">
+                    <div className="pt-2 space-y-2">
+                      {token && (
+                        <Button
+                          onClick={() => refetchValidation()}
+                          className="w-full text-xs font-semibold gap-2 cursor-pointer"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          <span>Try Again</span>
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         onClick={() => navigate("/login")}

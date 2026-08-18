@@ -42,6 +42,12 @@ const PUBLIC_AUTH_ENDPOINTS = [
   "createAuthResetPassword",
   "createAuthVerifyEmail",
   "createAuthResendOtp",
+  "validateEmployeeInvitation",
+  "validateInvitation",
+  "activateEmployee",
+  "activateAccount",
+  "validateManagerInvitation",
+  "activateManager",
 ];
 
 const PUBLIC_AUTH_URL_PATTERNS = [
@@ -52,13 +58,23 @@ const PUBLIC_AUTH_URL_PATTERNS = [
   "/auth/reset-password",
   "/auth/verify-email",
   "/auth/resend-otp",
+  "/onboarding/validate",
+  "/onboarding/validate-token",
+  "/onboarding/activate",
+  "/managers/onboarding/validate",
 ];
 
-const needsCompanyId = (url: string, endpoint?: string): boolean => {
-  const isPublic = (endpoint && PUBLIC_AUTH_ENDPOINTS.includes(endpoint)) ||
-    PUBLIC_AUTH_URL_PATTERNS.some((pattern) => url.includes(pattern));
+export const isPublicRequest = (url?: string, endpoint?: string): boolean => {
+  if (endpoint && PUBLIC_AUTH_ENDPOINTS.includes(endpoint)) return true;
+  if (url) {
+    if (PUBLIC_AUTH_URL_PATTERNS.some((pattern) => url.includes(pattern))) return true;
+    if (url.includes("/activate") || url.includes("/validate")) return true;
+  }
+  return false;
+};
 
-  if (isPublic) return false;
+const needsCompanyId = (url: string, endpoint?: string): boolean => {
+  if (isPublicRequest(url, endpoint)) return false;
   if (url.includes("/auth/me") || url.includes("/auth/refresh")) return false;
 
   return true;
@@ -93,13 +109,13 @@ export const baseQuery = fetchBaseQuery({
     const token = state?.auth?.token || localStorage.getItem("ofc360_access_token");
     const companyId = state?.auth?.companyId || state?.company?.activeCompany?.id || localStorage.getItem("ofc360_company_id");
 
-    const isPublicEndpoint = endpoint ? PUBLIC_AUTH_ENDPOINTS.includes(endpoint) : false;
+    const isPublic = isPublicRequest(undefined, endpoint);
 
-    if (isValidToken(token) && !isPublicEndpoint) {
+    if (isValidToken(token) && !isPublic) {
       headers.set("Authorization", `Bearer ${token.trim()}`);
     }
 
-    if (companyId && isValidUUID(companyId) && !isPublicEndpoint) {
+    if (companyId && isValidUUID(companyId) && !isPublic) {
       headers.set("X-Company-ID", companyId.trim());
     }
 
@@ -118,7 +134,7 @@ export const baseQueryWithReauth: BaseQueryFn<
   FetchBaseQueryError
 > = async (args, api, extraOptions) => {
   const requestUrl = typeof args === "string" ? args : args.url || "";
-  const isPublicAuthUrl = PUBLIC_AUTH_URL_PATTERNS.some((pattern) => requestUrl.includes(pattern));
+  const isPublicAuthUrl = isPublicRequest(requestUrl, api.endpoint);
   const isRetry = Boolean((extraOptions as any)?.isRetry || (typeof args === "object" && (args as any)?._isRetry));
 
   const state = api.getState() as RootState;

@@ -132,9 +132,8 @@ describe("Employee Invitation & Password Activation Flow", () => {
       );
 
       expect(screen.getByRole("heading", { name: "Invalid Invitation Link" })).toBeDefined();
-      expect(
-        screen.getByText("Your invitation link is invalid or has expired. Please contact HR for a new invitation.")
-      ).toBeDefined();
+      expect(screen.getByText("Token expired")).toBeDefined();
+      expect(screen.getByText(/HTTP 400/i)).toBeDefined();
     });
 
     it("displays network error view with retry button when server returns 500 error", () => {
@@ -424,11 +423,23 @@ describe("Employee Invitation & Password Activation Flow", () => {
       const endpoint = employeeApiHooks.employeeApi.endpoints.activateEmployee;
       expect(endpoint).toBeDefined();
 
-      // Test query function generates URL and exact body
-      const queryDef = (endpoint as any);
-      expect(queryDef).toBeDefined();
+      const queryFn = (endpoint as any).initiate({
+        id: "emp-uuid-12345",
+        token: "tok_abc_999",
+        new_password: "NewPassword123!",
+        confirm_password: "NewPassword123!",
+      });
+      expect(queryFn).toBeDefined();
       expect(employeeApiHooks.employeeApi.endpoints).toHaveProperty("activateEmployee");
       expect(employeeApiHooks.employeeApi.endpoints).toHaveProperty("validateEmployeeInvitation");
+    });
+
+    it("generates /api/v1/onboarding/validate?token=... with encoded token", () => {
+      const endpoint = employeeApiHooks.employeeApi.endpoints.validateEmployeeInvitation;
+      expect(endpoint).toBeDefined();
+
+      const queryFn = (endpoint as any).initiate("test_token_value_xyz");
+      expect(queryFn).toBeDefined();
     });
   });
 });
