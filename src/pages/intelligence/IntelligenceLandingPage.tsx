@@ -231,53 +231,6 @@ export default function IntelligenceLandingPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      {/* HERO BANNER & QUICK ACTION BAR */}
-      <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-primary/10 via-card to-background border border-primary/20 p-6 md:p-8 shadow-xs">
-        <div className="absolute top-0 right-0 -mt-12 -mr-12 w-64 h-64 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/3 -mb-12 w-48 h-48 rounded-full bg-secondary/30 blur-2xl pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-2xl">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="outline" className="gap-1.5 px-3 py-1 font-bold border-primary/40 bg-primary/10 text-primary">
-                <Sparkles className="w-3.5 h-3.5" /> OFC360 Intelligence Suite
-              </Badge>
-              <Badge variant="secondary" className="text-[11px] font-medium bg-secondary/80">
-                {allModels.length} AI Models Active
-              </Badge>
-              <Badge variant="secondary" className="text-[11px] font-medium bg-secondary/80">
-                11 Domains
-              </Badge>
-            </div>
-
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
-              Autonomous AI Agents & Workforce Intelligence
-            </h1>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Explore 71+ domain-specific AI models for recruitment screening, automated payroll audits, shift forecasting, biometric vision check-ins, and conversational enterprise RAG policies.
-            </p>
-          </div>
-
-          {/* Quick Action Navigation Buttons */}
-          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-            <Link to="/ai-chat">
-              <Button size="sm" className="gap-2 shadow-xs bg-primary text-primary-foreground font-semibold h-9 rounded-xl">
-                <Bot className="w-4 h-4" /> AI Copilot Chat
-              </Button>
-            </Link>
-            <Link to="/ai/face-attendance">
-              <Button size="sm" variant="outline" className="gap-2 border-teal-500/30 text-teal-600 dark:text-teal-400 hover:bg-teal-500/10 h-9 rounded-xl">
-                <ScanFace className="w-4 h-4" /> Face Attendance
-              </Button>
-            </Link>
-            <Link to="/ai/ats">
-              <Button size="sm" variant="outline" className="gap-2 border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 h-9 rounded-xl">
-                <FileSearch className="w-4 h-4" /> ATS Screening
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
 
       {/* FILTER & SEARCH BAR */}
       <div className="space-y-3">
