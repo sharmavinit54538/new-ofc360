@@ -17,6 +17,8 @@ vi.mock("@/services/api/connectApi", () => ({
   useGetConnectNotificationsQuery: () => ({ data: [], isLoading: false }),
   useMarkNotificationReadMutation: () => [vi.fn()],
   useClearAllNotificationsMutation: () => [vi.fn()],
+  useAcceptCallMutation: () => [vi.fn()],
+  useRejectCallMutation: () => [vi.fn()],
 }));
 
 // Mock helper to create a test store

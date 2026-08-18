@@ -239,6 +239,7 @@ class ConnectWebSocketService {
         // Sound Chime & Real-time Notification
         if (message.senderId !== currentUserId) {
           const isMention = message.content?.includes("@") || false;
+          console.log(`[NOTIFICATION_EVENT] Received message:new event (ID: ${message.id}, sender: ${message.senderName || message.senderId})`);
           connectAudioManager.playMessage({
             eventId: message.id,
             isMention,
@@ -259,6 +260,17 @@ class ConnectWebSocketService {
               : message.isVoiceMessage
               ? "Sent a voice message"
               : "New message");
+
+          // Background Tab Native Browser Notification (if permission granted and tab in background)
+          if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted" && document.hidden) {
+            try {
+              new Notification(title, {
+                body: description,
+                icon: "/logo.png",
+                tag: `msg_${message.id}`,
+              });
+            } catch {}
+          }
 
           const channelId = isChannel ? ((message as any).channelId || targetId) : undefined;
           const conversationId = !isChannel ? (message.conversationId || targetId) : undefined;
@@ -416,6 +428,7 @@ class ConnectWebSocketService {
 
       // 4. Calls
       case "call:incoming": {
+        console.log(`[NOTIFICATION_EVENT] Received call:incoming event (targetUserId: ${data.targetUserId}, calleeId: ${data.calleeId}, caller: ${data.caller?.name || "Unknown"})`);
         if (data.targetUserId === currentUserId || data.calleeId === currentUserId) {
           store.dispatch(
             receiveIncomingCall({
@@ -425,23 +438,36 @@ class ConnectWebSocketService {
             })
           );
           connectAudioManager.playIncomingCall();
+
+          if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted" && document.hidden) {
+            try {
+              new Notification(`Incoming ${data.type === "video" ? "Video" : "Voice"} Call`, {
+                body: `${data.caller?.name || "A colleague"} is calling you on OFC360 Connect`,
+                icon: "/logo.png",
+                tag: `call_${data.callId || "incoming"}`,
+              });
+            } catch {}
+          }
         }
         break;
       }
 
       case "call:accepted": {
+        console.log(`[NOTIFICATION_EVENT] Received call:accepted event (callId: ${data.callId})`);
         store.dispatch(setCallConnected({ callId: data.callId }));
         connectAudioManager.playCallConnected();
         break;
       }
 
       case "call:rejected": {
+        console.log(`[NOTIFICATION_EVENT] Received call:rejected event`);
         store.dispatch(rejectIncomingCall());
         connectAudioManager.playCallRejected();
         break;
       }
 
       case "call:ended": {
+        console.log(`[NOTIFICATION_EVENT] Received call:ended event`);
         store.dispatch(endCall());
         connectAudioManager.playCallEnded();
         break;

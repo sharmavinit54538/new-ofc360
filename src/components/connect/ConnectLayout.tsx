@@ -68,7 +68,6 @@ export function ConnectLayout({ children }: ConnectLayoutProps) {
 
       {/* Real-time Call Modals */}
       <CallScreen />
-      <IncomingCallModal />
       <VideoCallModal />
 
       {/* Global Creation & Search Modals */}
