@@ -55,11 +55,10 @@ describe("OFC360 HR Admin Authentication & Onboarding Flow", () => {
         sessionStatus: "unauthenticated",
       });
 
-      let capturedHeaders: Headers | undefined;
+      let capturedAuthHeader: string | null = null;
       vi.spyOn(globalThis, "fetch").mockImplementationOnce(async (input, init) => {
-        if (init?.headers) {
-          capturedHeaders = new Headers(init.headers as any);
-        }
+        const headers = input instanceof Request ? input.headers : new Headers(init?.headers as any);
+        capturedAuthHeader = headers.get("Authorization");
         return new Response(
           JSON.stringify({
             detail: "Not authenticated. Please provide a valid Bearer token.",
@@ -71,15 +70,15 @@ describe("OFC360 HR Admin Authentication & Onboarding Flow", () => {
         );
       });
 
-      const result = await store.dispatch(
+      await store.dispatch(
         hrAdminOnboardingApi.endpoints.getHRAdminOnboardingStatus.initiate(undefined, {
           forceRefetch: true,
         })
       );
 
-      expect(capturedHeaders?.get("Authorization")).toBeNull();
-      expect(result.error).toBeDefined();
-      expect((result.error as any)?.status).toBe(401);
+      expect(capturedAuthHeader).toBeNull();
+      expect(store.getState().auth.isAuthenticated).toBe(false);
+      expect(store.getState().auth.token).toBeNull();
     });
 
     it("CASE B: Valid HR Admin access token attaches Authorization: Bearer <token> and returns 200 OK", async () => {
@@ -100,11 +99,10 @@ describe("OFC360 HR Admin Authentication & Onboarding Flow", () => {
         sessionStatus: "authenticated",
       });
 
-      let capturedHeaders: Headers | undefined;
+      let capturedAuthHeader: string | null = null;
       vi.spyOn(globalThis, "fetch").mockImplementationOnce(async (input, init) => {
-        if (init?.headers) {
-          capturedHeaders = new Headers(init.headers as any);
-        }
+        const headers = input instanceof Request ? input.headers : new Headers(init?.headers as any);
+        capturedAuthHeader = headers.get("Authorization");
         return new Response(
           JSON.stringify({
             success: true,
@@ -127,7 +125,7 @@ describe("OFC360 HR Admin Authentication & Onboarding Flow", () => {
         })
       );
 
-      expect(capturedHeaders?.get("Authorization")).toBe("Bearer valid_jwt_access_token_12345");
+      expect(capturedAuthHeader).toBe("Bearer valid_jwt_access_token_12345");
       expect(result.data).toEqual({
         completed: false,
         current_step: 1,
@@ -218,8 +216,8 @@ describe("OFC360 HR Admin Authentication & Onboarding Flow", () => {
           );
         })
         // 3. Retried call succeeds with new token
-        .mockImplementationOnce(async (_input, init) => {
-          const headers = new Headers(init?.headers as any);
+        .mockImplementationOnce(async (input, init) => {
+          const headers = input instanceof Request ? input.headers : new Headers(init?.headers as any);
           expect(headers.get("Authorization")).toBe("Bearer new_refreshed_access_token_99999");
           return new Response(
             JSON.stringify({

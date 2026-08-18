@@ -74,4 +74,29 @@ describe("authApi unwrapLoginResponse & contract parsing", () => {
     const unwrappedCxo = unwrapLoginResponse(rawCxo);
     expect(unwrappedCxo.user.role).toBe("executive");
   });
+
+  it("should preserve requires_email_verification, verification_id, and masked_email for OTP login response", () => {
+    const rawOtpResponse = {
+      success: true,
+      message: "Email verification required. An OTP has been sent to your email.",
+      requires_email_verification: true,
+      verification_id: "vid_abc_12345",
+      data: {
+        requires_email_verification: true,
+        verification_id: "vid_abc_12345",
+        masked_email: "j***@example.com",
+        email: "john.doe@example.com",
+        access_token: null,
+        refresh_token: null,
+      },
+    };
+
+    const unwrapped = unwrapLoginResponse(rawOtpResponse);
+    expect(unwrapped.requires_email_verification).toBe(true);
+    expect(unwrapped.verification_id).toBe("vid_abc_12345");
+    expect(unwrapped.masked_email).toBe("j***@example.com");
+    expect(unwrapped.email).toBe("john.doe@example.com");
+    expect(unwrapped.token).toBe("");
+  });
 });
+
