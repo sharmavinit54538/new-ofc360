@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useConnect } from "@/features/connect/hooks";
+import { useAppSelector } from "@/app/hooks";
+import { selectUserPresenceMap } from "@/features/connect/selectors";
 import {
   useGetConversationsQuery,
   usePinConversationMutation,
@@ -48,6 +50,9 @@ export function ChatList({ onSelectConversation, className = "" }: ChatListProps
     }
   }, [conversations.length, isError, error]);
 
+  const userPresenceMap = useAppSelector(selectUserPresenceMap);
+
+  // Filter conversations
   const filteredConversations = useMemo(() => {
     if (!search.trim()) return conversations;
     const q = search.toLowerCase();
@@ -174,11 +179,25 @@ export function ChatList({ onSelectConversation, className = "" }: ChatListProps
                       {initials}
                     </AvatarFallback>
                   </Avatar>
-                  <PresenceIndicator
-                    status={conv.participant?.presence || "online"}
-                    size="sm"
-                    className="absolute -bottom-0.5 -right-0.5 ring-2 ring-background"
-                  />
+                  {(() => {
+                    const pId = conv.participant?.id;
+                    const pUserId = conv.participant?.userId;
+                    const pEmail = conv.participant?.email?.toLowerCase();
+                    const dynamicPresence =
+                      (pId && userPresenceMap[pId]) ||
+                      (pUserId && userPresenceMap[pUserId]) ||
+                      (pEmail && userPresenceMap[pEmail]) ||
+                      conv.participant?.presence ||
+                      "offline";
+
+                    return (
+                      <PresenceIndicator
+                        status={dynamicPresence}
+                        size="sm"
+                        className="absolute -bottom-0.5 -right-0.5 ring-2 ring-background"
+                      />
+                    );
+                  })()}
                 </div>
 
                 {/* Details */}

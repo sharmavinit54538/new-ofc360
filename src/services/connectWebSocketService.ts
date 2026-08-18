@@ -19,9 +19,9 @@ import {
   addParticipant,
   removeParticipant,
 } from "@/features/connect/meetingSlice";
-import { setUserPresence } from "@/features/connect/presenceSlice";
+import { setUserPresence, setBatchUserPresences } from "@/features/connect/presenceSlice";
 import { connectAudioManager } from "@/services/connectAudioManager";
-import { ConnectMessage, ConnectNotification, WebSocketEvent, WebSocketEventType } from "@/types/connect";
+import { ConnectMessage, ConnectNotification, WebSocketEvent, WebSocketEventType, PresenceStatus } from "@/types/connect";
 
 class ConnectWebSocketService {
   private ws: WebSocket | null = null;
@@ -40,14 +40,12 @@ class ConnectWebSocketService {
       return;
     }
 
-    this.isExplicitlyClosed = false;
-    const state = store.getState();
-    const token = state.auth.token || localStorage.getItem("ofc360_access_token");
-
+    const token = localStorage.getItem("accessToken") || localStorage.getItem("auth_token") || localStorage.getItem("token") || "";
     if (!token) {
       return;
     }
 
+    this.isExplicitlyClosed = false;
     const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://api.ofc360.com";
     let wsUrl: string;
 
@@ -67,8 +65,21 @@ class ConnectWebSocketService {
 
       this.ws.onopen = () => {
         this.reconnectAttempts = 0;
+        console.log("[PRESENCE_CONNECT] WebSocket connection established successfully.");
         store.dispatch(setConnected(true));
         this.startHeartbeat();
+
+        // Broadcast client online presence to server and connected peers
+        const currentUser = store.getState().auth.user;
+        const currentUserId = currentUser?.id || currentUser?._id || "";
+        if (currentUserId) {
+          this.send("presence:change", {
+            userId: currentUserId,
+            status: "online",
+            lastSeen: new Date().toISOString(),
+          });
+          console.log(`[PRESENCE_ONLINE] Sent client online presence for user: ${currentUserId}`);
+        }
       };
 
       this.ws.onmessage = (event) => {
@@ -89,6 +100,7 @@ class ConnectWebSocketService {
       };
 
       this.ws.onclose = (event) => {
+        console.log("[PRESENCE_DISCONNECT] WebSocket connection closed.", event.reason || "");
         store.dispatch(setConnected(false));
         this.stopHeartbeat();
 
@@ -137,13 +149,34 @@ class ConnectWebSocketService {
 
   public disconnect() {
     this.isExplicitlyClosed = true;
+    console.log("[PRESENCE_DISCONNECT] Explicitly closing WebSocket connection...");
     this.stopHeartbeat();
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
     if (this.ws) {
-      this.ws.close();
+      if (this.ws.readyState === WebSocket.OPEN) {
+        const currentUser = store.getState().auth.user;
+        const currentUserId = currentUser?.id || currentUser?._id || "";
+        try {
+          this.ws.send(
+            JSON.stringify({
+              event: "presence:change",
+              data: {
+                userId: currentUserId,
+                status: "offline",
+                lastSeen: new Date().toISOString(),
+              },
+              timestamp: new Date().toISOString(),
+            })
+          );
+          console.log(`[PRESENCE_OFFLINE] Sent client offline presence before closing.`);
+        } catch {}
+      }
+      try {
+        this.ws.close(1000, "Client disconnect");
+      } catch {}
       this.ws = null;
     }
     store.dispatch(setConnected(false));
@@ -435,9 +468,136 @@ class ConnectWebSocketService {
         break;
       }
 
-      // 3. Presence
-      case "presence:change": {
-        store.dispatch(setUserPresence({ userId: data.userId, status: data.status }));
+      // 3. Presence & Status
+      case "presence:change":
+      case "presence:update":
+      case "presence_update":
+      case "user:presence":
+      case "status:change":
+      case "user:online":
+      case "USER_ONLINE":
+      case "user:offline":
+      case "USER_OFFLINE":
+      case "batch:presence":
+      case "presence:batch": {
+        const isBatch =
+          eventType === "batch:presence" ||
+          eventType === "presence:batch" ||
+          Array.isArray(data) ||
+          (data && typeof data.presences === "object");
+
+        if (isBatch) {
+          const presencesMap: Record<string, PresenceStatus> = {};
+          if (Array.isArray(data)) {
+            data.forEach((item: any) => {
+              const uId = String(item.userId || item.user_id || item.id || "");
+              const status: PresenceStatus = item.status || (item.isOnline ? "online" : "offline");
+              if (uId) presencesMap[uId] = status;
+            });
+          } else if (data && typeof data.presences === "object") {
+            Object.entries(data.presences).forEach(([uId, val]: [string, any]) => {
+              const status: PresenceStatus =
+                typeof val === "string" ? (val as PresenceStatus) : val?.status || "offline";
+              presencesMap[uId] = status;
+            });
+          }
+          console.log(`[PRESENCE_RECEIVED] Received batch presence update for ${Object.keys(presencesMap).length} users`);
+          store.dispatch(setBatchUserPresences(presencesMap));
+
+          // Also update RTK Query caches for getConversations and getColleagues
+          store.dispatch(
+            connectApi.util.updateQueryData("getConversations", undefined, (draft) => {
+              draft.forEach((conv) => {
+                const pId = conv.participant?.id;
+                if (pId && presencesMap[pId]) {
+                  conv.participant.presence = presencesMap[pId];
+                }
+              });
+            })
+          );
+          store.dispatch(
+            connectApi.util.updateQueryData("getColleagues", undefined, (draft) => {
+              if (Array.isArray(draft)) {
+                draft.forEach((colleague) => {
+                  if (colleague.id && presencesMap[colleague.id]) {
+                    colleague.presence = presencesMap[colleague.id];
+                  }
+                });
+              }
+            })
+          );
+          break;
+        }
+
+        // Single User Presence Update
+        const targetUserId = String(
+          data.userId || data.user_id || data.id || data.employee_id || data.employeeId || ""
+        ).trim();
+
+        let targetStatus: PresenceStatus = "offline";
+        if (eventType === "user:online" || eventType === "USER_ONLINE") {
+          targetStatus = "online";
+        } else if (eventType === "user:offline" || eventType === "USER_OFFLINE") {
+          targetStatus = "offline";
+        } else if (
+          data.status &&
+          ["online", "away", "busy", "dnd", "offline"].includes(String(data.status).toLowerCase())
+        ) {
+          targetStatus = String(data.status).toLowerCase() as PresenceStatus;
+        } else if (
+          data.presence &&
+          ["online", "away", "busy", "dnd", "offline"].includes(String(data.presence).toLowerCase())
+        ) {
+          targetStatus = String(data.presence).toLowerCase() as PresenceStatus;
+        } else if (data.isOnline === true || data.is_online === true || data.online === true) {
+          targetStatus = "online";
+        }
+
+        if (targetUserId) {
+          console.log(`[PRESENCE_RECEIVED] Real-time presence update: user ${targetUserId} -> ${targetStatus}`);
+          store.dispatch(
+            setUserPresence({
+              userId: targetUserId,
+              user_id: data.user_id,
+              employee_id: data.employee_id,
+              email: data.email,
+              status: targetStatus,
+            })
+          );
+
+          // Real-time cache updates in RTK Query
+          store.dispatch(
+            connectApi.util.updateQueryData("getConversations", undefined, (draft) => {
+              draft.forEach((conv) => {
+                const p = conv.participant;
+                if (
+                  p &&
+                  (String(p.id) === targetUserId ||
+                    String(p.userId) === targetUserId ||
+                    (p.email && data.email && p.email.toLowerCase() === data.email.toLowerCase()))
+                ) {
+                  p.presence = targetStatus;
+                }
+              });
+            })
+          );
+
+          store.dispatch(
+            connectApi.util.updateQueryData("getColleagues", undefined, (draft) => {
+              if (Array.isArray(draft)) {
+                draft.forEach((colleague) => {
+                  if (
+                    String(colleague.id) === targetUserId ||
+                    String(colleague.userId) === targetUserId ||
+                    (colleague.email && data.email && colleague.email.toLowerCase() === data.email.toLowerCase())
+                  ) {
+                    colleague.presence = targetStatus;
+                  }
+                });
+              }
+            })
+          );
+        }
         break;
       }
 

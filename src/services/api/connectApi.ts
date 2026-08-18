@@ -93,7 +93,21 @@ export function normalizeConnectUser(raw: any): ConnectUser {
   const role = raw.role || raw.designation || raw.job_title || raw.title || "Team Member";
   const department = raw.department || raw.dept || raw.departmentName || "General";
   const avatar = raw.avatar || raw.avatar_url || raw.avatarUrl || raw.photoUrl || raw.photo_url || raw.profile_picture || undefined;
-  const presence = raw.presence || raw.status || "online";
+
+  // Extract presence: only valid PresenceStatus values are accepted.
+  // Never default to "online" or treat employee employment status "active" as presence.
+  let presence: PresenceStatus = "offline";
+  const rawPresence = raw.presence || raw.presence_status || raw.presenceStatus || raw.online_status;
+  if (typeof rawPresence === "string") {
+    const pLower = rawPresence.toLowerCase().trim();
+    if (["online", "away", "busy", "dnd", "offline"].includes(pLower)) {
+      presence = pLower as PresenceStatus;
+    }
+  } else if (raw.is_online === true || raw.isOnline === true || raw.online === true) {
+    presence = "online";
+  } else if (raw.is_online === false || raw.isOnline === false || raw.online === false) {
+    presence = "offline";
+  }
 
   return {
     id,

@@ -7,8 +7,10 @@ import {
   selectSessionStatus,
 } from "@/features/auth/authSelectors";
 import { logout as logoutAction, setRole as setRoleAction, setCredentials } from "@/features/auth/authSlice";
+import { resetPresenceState } from "@/features/connect/presenceSlice";
 import { baseApi } from "@/services/api/baseApi";
 import { useLogoutSessionMutation } from "@/services/api/authApi";
+import { connectWebSocketService } from "@/services/connectWebSocketService";
 import { useCallback } from "react";
 import { SystemRole } from "@/features/auth/authTypes";
 
@@ -22,6 +24,10 @@ export function useAuth() {
   const sessionStatus = useAppSelector(selectSessionStatus);
 
   const logout = useCallback(async () => {
+    console.log("[LOGOUT] User initiated logout. Disconnecting WebSocket and broadcasting offline presence...");
+    connectWebSocketService.disconnect();
+    dispatch(resetPresenceState());
+
     try {
       await Promise.race([
         logoutSessionApi().unwrap(),

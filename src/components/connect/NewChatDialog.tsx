@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, MessageSquare, Users, UserCheck } from "lucide-react";
 import { useConnect } from "@/features/connect/hooks";
+import { useAppSelector } from "@/app/hooks";
+import { selectUserPresenceMap } from "@/features/connect/selectors";
 import { useGetColleaguesQuery, useCreateConversationMutation } from "@/services/api/connectApi";
 import { useAuth } from "@/hooks/useAuth";
 import { ConnectUser } from "@/types/connect";
@@ -20,6 +22,7 @@ export function NewChatDialog({ open, onOpenChange, onSelectConversation }: NewC
   const [search, setSearch] = useState("");
   const { user: currentUser } = useAuth();
   const { setActiveConversationId, setActiveTab } = useConnect();
+  const userPresenceMap = useAppSelector(selectUserPresenceMap);
 
   // Load colleagues from connectApi
   // refetchOnMountOrArgChange ensures we always hit the network when the dialog opens,
@@ -165,11 +168,25 @@ export function NewChatDialog({ open, onOpenChange, onSelectConversation }: NewC
                           {initials || "U"}
                         </AvatarFallback>
                       </Avatar>
-                      <PresenceIndicator
-                        status={emp.presence || "online"}
-                        size="sm"
-                        className="absolute -bottom-0.5 -right-0.5 ring-2 ring-background"
-                      />
+                      {(() => {
+                        const eId = emp.id;
+                        const eUserId = emp.userId;
+                        const eEmail = emp.email?.toLowerCase();
+                        const dynamicPresence =
+                          (eId && userPresenceMap[eId]) ||
+                          (eUserId && userPresenceMap[eUserId]) ||
+                          (eEmail && userPresenceMap[eEmail]) ||
+                          emp.presence ||
+                          "offline";
+
+                        return (
+                          <PresenceIndicator
+                            status={dynamicPresence}
+                            size="sm"
+                            className="absolute -bottom-0.5 -right-0.5 ring-2 ring-background"
+                          />
+                        );
+                      })()}
                     </div>
                     <div className="min-w-0">
                       <p className="text-xs font-semibold text-foreground truncate group-hover:text-primary transition-colors">

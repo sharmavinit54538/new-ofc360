@@ -61,10 +61,19 @@ export default function DashboardLayout() {
       } catch {}
     }
 
+    const handleBeforeUnload = () => {
+      connectWebSocketService.disconnect();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("pagehide", handleBeforeUnload);
+
     return () => {
       window.removeEventListener("pointerdown", handleGlobalInteraction);
       window.removeEventListener("keydown", handleGlobalInteraction);
       window.removeEventListener("touchstart", handleGlobalInteraction);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("pagehide", handleBeforeUnload);
     };
   }, []);
 

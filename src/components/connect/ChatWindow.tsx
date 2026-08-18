@@ -1,7 +1,7 @@
 import { useMemo, useRef, useEffect, useState } from "react";
 import { useConnect, useConnectCall } from "@/features/connect/hooks";
 import { useAppSelector } from "@/app/hooks";
-import { selectTargetTypingUsers } from "@/features/connect/selectors";
+import { selectTargetTypingUsers, selectUserPresenceMap } from "@/features/connect/selectors";
 import {
   useGetConversationsQuery,
   useGetColleaguesQuery,
@@ -15,7 +15,7 @@ import {
   isCurrentUser,
 } from "@/services/api/connectApi";
 import { useAuth } from "@/hooks/useAuth";
-import { ConnectUser, ConnectMessage } from "@/types/connect";
+import { ConnectUser, ConnectMessage, PresenceStatus } from "@/types/connect";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -201,6 +201,7 @@ export function ChatWindow({
   const typingUsers = useAppSelector((state) =>
     selectTargetTypingUsers(state, activeConversationId || "")
   );
+  const userPresenceMap = useAppSelector(selectUserPresenceMap);
 
   const colleaguesList: ConnectUser[] = useMemo(() => {
     if (Array.isArray(colleaguesData)) {
@@ -401,14 +402,28 @@ export function ChatWindow({
     );
   }, [recipientEntity]);
 
-  // Recipient Presence
-  const recipientPresence = useMemo(() => {
-    return (
-      (recipientEntity as any)?.presence ||
-      (recipientEntity as any)?.status ||
-      "online"
-    );
-  }, [recipientEntity]);
+  // Dynamic Real-time Recipient Presence
+  const recipientPresence: PresenceStatus = useMemo(() => {
+    const rId = (recipientEntity as any)?.id ? String((recipientEntity as any).id) : "";
+    const rUserId = (recipientEntity as any)?.userId ? String((recipientEntity as any).userId) : "";
+    const rEmail = (recipientEntity as any)?.email ? String((recipientEntity as any).email).toLowerCase() : "";
+    const convId = activeConversationId ? String(activeConversationId).replace(/^conv_/, "") : "";
+
+    if (rId && userPresenceMap[rId]) return userPresenceMap[rId];
+    if (rUserId && userPresenceMap[rUserId]) return userPresenceMap[rUserId];
+    if (rEmail && userPresenceMap[rEmail]) return userPresenceMap[rEmail];
+    if (convId && userPresenceMap[convId]) return userPresenceMap[convId];
+
+    const staticPresence = (recipientEntity as any)?.presence;
+    if (
+      staticPresence &&
+      ["online", "away", "busy", "dnd", "offline"].includes(String(staticPresence).toLowerCase())
+    ) {
+      return String(staticPresence).toLowerCase() as PresenceStatus;
+    }
+
+    return "offline";
+  }, [recipientEntity, activeConversationId, userPresenceMap]);
 
   // Recipient Email
   const recipientEmail = useMemo(() => {
@@ -543,7 +558,7 @@ export function ChatWindow({
               </AvatarFallback>
             </Avatar>
             <PresenceIndicator
-              status={participant.presence || "online"}
+              status={participant.presence}
               size="sm"
               className="absolute -bottom-0.5 -right-0.5 ring-2 ring-background"
             />
@@ -553,9 +568,31 @@ export function ChatWindow({
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-bold text-foreground truncate">{participant.name}</h3>
             </div>
-            <p className="text-[11px] text-muted-foreground truncate">
-              {participant.role || "Team Member"} • {participant.department || "General"}
-            </p>
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground truncate">
+              <span>{participant.role || "Team Member"} • {participant.department || "General"}</span>
+              <span>•</span>
+              <span
+                className={`inline-flex items-center gap-1 font-medium ${
+                  participant.presence === "online"
+                    ? "text-emerald-500"
+                    : participant.presence === "away"
+                    ? "text-amber-500"
+                    : participant.presence === "busy" || participant.presence === "dnd"
+                    ? "text-rose-500"
+                    : "text-muted-foreground"
+                }`}
+              >
+                {participant.presence === "online"
+                  ? "● Online"
+                  : participant.presence === "away"
+                  ? "● Away"
+                  : participant.presence === "busy"
+                  ? "● Busy"
+                  : participant.presence === "dnd"
+                  ? "● Do Not Disturb"
+                  : "○ Offline"}
+              </span>
+            </div>
           </div>
         </div>
 
