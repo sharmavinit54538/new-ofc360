@@ -14,6 +14,7 @@ import {
   KeyRound,
   UserCheck,
   RotateCcw,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,40 +30,20 @@ import { setCredentials } from "@/features/auth/authSlice";
 import { normalizeError } from "@/services/api/normalizeError";
 import { toast } from "sonner";
 
-/**
- * Safely extracts claims from a JWT token if present
- */
-function parseJwtPayload(token: string): Record<string, any> | null {
-  try {
-    const parts = token.split(".");
-    if (parts.length < 2) return null;
-    const base64Url = parts[1];
-    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split("")
-        .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
-    );
-    return JSON.parse(jsonPayload);
-  } catch {
-    return null;
-  }
-}
-
 export default function EmployeeActivatePage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  // Read only the invitation token from the URL
-  const token =
+  // 1. Read the invitation token directly from the URL query parameter
+  const rawToken =
     searchParams.get("token") ||
     searchParams.get("activation_token") ||
     searchParams.get("invite_token") ||
     "";
+  const token = rawToken.trim();
 
-  // Validate token with the backend
+  // 2. Validate token with the backend canonical endpoint GET /api/v1/onboarding/validate?token=...
   const {
     data: validationData,
     isLoading: isValidatingToken,
@@ -73,24 +54,12 @@ export default function EmployeeActivatePage() {
     skip: !token,
   });
 
-  // Extract JWT claims as supplementary resolution
-  const jwtPayload = token ? parseJwtPayload(token) : null;
-  const jwtEmployeeId =
-    jwtPayload?.employee_id ||
-    jwtPayload?.sub ||
-    jwtPayload?.id ||
-    jwtPayload?.user_id ||
-    "";
-  const jwtEmail =
-    jwtPayload?.email ||
-    jwtPayload?.identifier ||
-    "";
-
-  // Normalize backend validation response
+  // 3. Resolve employee details strictly from the backend validation response
   const rawValidationData = (validationData as any)?.data || validationData;
-  const backendEmployeeId =
+  const resolvedEmployeeId =
     rawValidationData?.employee_id ||
     rawValidationData?.employeeId ||
+    rawValidationData?.id ||
     rawValidationData?.employee?.id ||
     rawValidationData?.employee?._id ||
     rawValidationData?.employee?.employee_id ||
@@ -98,60 +67,104 @@ export default function EmployeeActivatePage() {
     rawValidationData?.user?.id ||
     rawValidationData?.user_id ||
     rawValidationData?.userId ||
-    rawValidationData?.id ||
-    "";
-
-  // Resolve employee ID from backend response, fallback to JWT payload or URL parameter
-  const resolvedEmployeeId =
-    backendEmployeeId ||
-    jwtEmployeeId ||
-    searchParams.get("employee_id") ||
-    searchParams.get("id") ||
     "";
 
   const resolvedEmail =
     rawValidationData?.email ||
     rawValidationData?.employee?.email ||
     rawValidationData?.user?.email ||
-    jwtEmail ||
-    searchParams.get("email") ||
     "";
 
-  // Error Classification
+  const resolvedName =
+    rawValidationData?.full_name ||
+    rawValidationData?.name ||
+    rawValidationData?.employee?.full_name ||
+    rawValidationData?.employee?.name ||
+    "";
+
+  const resolvedCompanyName =
+    rawValidationData?.company_name ||
+    rawValidationData?.employee?.company_name ||
+    "";
+
+  // 4. Granular Error Classification
   const normValError = isValidationError ? normalizeError(validationError) : null;
+  const errStatus = normValError?.status;
+  const errMsg = (normValError?.message || "").toLowerCase();
+  const rawMsg = (typeof rawValidationData?.message === "string" ? rawValidationData.message : "").toLowerCase();
+
+  // Network / Server Error (500, 502, 503, 504, FETCH_ERROR, timeout)
   const isNetworkOrServerError =
     Boolean(normValError) &&
-    (normValError?.status === 500 ||
-      normValError?.status === 502 ||
-      normValError?.status === 503 ||
-      normValError?.status === 504 ||
-      normValError?.status === "FETCH_ERROR" ||
-      normValError?.status === "PARSING_ERROR" ||
-      (normValError?.message || "").toLowerCase().includes("failed to fetch") ||
-      (normValError?.message || "").toLowerCase().includes("network"));
+    (errStatus === 500 ||
+      errStatus === 502 ||
+      errStatus === 503 ||
+      errStatus === 504 ||
+      errStatus === "FETCH_ERROR" ||
+      errStatus === "PARSING_ERROR" ||
+      errStatus === "TIMEOUT_ERROR" ||
+      errMsg.includes("failed to fetch") ||
+      errMsg.includes("network error") ||
+      errMsg.includes("server error") ||
+      errMsg.includes("timeout"));
 
+  // Expired Token (410, or message indicates expired)
+  const isExpiredToken =
+    Boolean(normValError && !isNetworkOrServerError && (
+      errStatus === 410 ||
+      errMsg.includes("expired") ||
+      normValError?.code === "TOKEN_EXPIRED"
+    )) ||
+    (rawValidationData?.expired === true ||
+      rawValidationData?.status === "expired" ||
+      rawMsg.includes("expired"));
+
+  // Already Used Token (409, or message indicates already activated / used)
+  const isAlreadyUsedToken =
+    Boolean(normValError && !isNetworkOrServerError && !isExpiredToken && (
+      errStatus === 409 ||
+      errMsg.includes("already used") ||
+      errMsg.includes("already activated") ||
+      errMsg.includes("already accepted") ||
+      errMsg.includes("already registered") ||
+      normValError?.code === "TOKEN_ALREADY_USED"
+    )) ||
+    (rawValidationData?.already_used === true ||
+      rawValidationData?.activated === true ||
+      rawValidationData?.status === "already_used" ||
+      rawValidationData?.status === "activated" ||
+      rawMsg.includes("already used") ||
+      rawMsg.includes("already activated"));
+
+  // Explicit Invalid Token (Missing token, 400, 401, 403, 404, 422, or valid === false)
+  const isMissingToken = !token;
   const isExplicitInvalidToken =
-    !token ||
-    (validationData && rawValidationData?.valid === false) ||
+    isMissingToken ||
+    (Boolean(validationData) && rawValidationData?.valid === false) ||
     (Boolean(normValError) &&
       !isNetworkOrServerError &&
-      (normValError?.status === 400 ||
-        normValError?.status === 401 ||
-        normValError?.status === 403 ||
-        normValError?.status === 404 ||
-        normValError?.status === 422));
+      !isExpiredToken &&
+      !isAlreadyUsedToken &&
+      (errStatus === 400 ||
+        errStatus === 401 ||
+        errStatus === 403 ||
+        errStatus === 404 ||
+        errStatus === 422 ||
+        errStatus === "CUSTOM_ERROR"));
 
-  // Form State
+  // 5. Form State
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [activateEmployee, { isLoading: isActivating }] = useActivateEmployeeMutation();
+  const [activateEmployee, { isLoading: isActivatingMutation }] = useActivateEmployeeMutation();
+  const isActivating = isActivatingMutation || isSubmitting;
 
-  // Live password validation
+  // Live password validation rules
   const hasMinLength = password.length >= 8;
   const passwordsMatch = password.length > 0 && password === confirmPassword;
   const hasLetterAndNumber =
@@ -160,6 +173,7 @@ export default function EmployeeActivatePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isActivating) return;
     setErrorMessage(null);
 
     if (!token || !resolvedEmployeeId) {
@@ -182,6 +196,7 @@ export default function EmployeeActivatePage() {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const cleanEmpId = resolvedEmployeeId.trim();
 
@@ -189,13 +204,13 @@ export default function EmployeeActivatePage() {
       const res = await activateEmployee({
         id: cleanEmpId,
         employee_id: cleanEmpId,
-        token: token.trim(),
+        token: token,
         new_password: password,
         confirm_password: confirmPassword,
       }).unwrap();
 
       setIsSuccess(true);
-      toast.success("Password set successfully! Your account is activated.");
+      toast.success("Account activated successfully!");
 
       // Check if backend activation returned authentication session tokens
       const sessionToken =
@@ -213,30 +228,31 @@ export default function EmployeeActivatePage() {
             user: userObj,
           })
         );
-        // Directly navigate to employee onboarding
         setTimeout(() => {
           navigate("/employee/onboarding", { replace: true });
         }, 1200);
       }
     } catch (err: any) {
       const norm = normalizeError(err);
-      const errStatus = norm.status;
-      const rawMsg = (norm.message || "").toLowerCase();
+      const normStatus = norm.status;
+      const rawErr = (norm.message || "").toLowerCase();
 
       if (
-        errStatus === 400 &&
-        (rawMsg.includes("expired") ||
-          rawMsg.includes("invalid token") ||
-          rawMsg.includes("already used") ||
-          rawMsg.includes("not found"))
+        normStatus === 400 &&
+        (rawErr.includes("expired") ||
+          rawErr.includes("invalid token") ||
+          rawErr.includes("already used") ||
+          rawErr.includes("not found"))
       ) {
         setErrorMessage(
           "Your invitation link is invalid or has expired. Please contact HR for a new invitation."
         );
       } else {
-        setErrorMessage(norm.message || "Failed to set password. Please try again.");
+        setErrorMessage(norm.message || "Failed to activate account. Please try again.");
       }
-      toast.error(norm.message || "Password activation failed.");
+      toast.error(norm.message || "Account activation failed.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -253,7 +269,7 @@ export default function EmployeeActivatePage() {
   return (
     <>
       <SEOHead
-        title="Set Your Password | OFC360"
+        title="Activate Your Account | OFC360"
         description="Set your account password to activate your OFC360 employee account and access onboarding."
       />
 
@@ -328,7 +344,7 @@ export default function EmployeeActivatePage() {
                     <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto" />
                     <div className="space-y-1.5">
                       <h2 className="text-base font-semibold text-foreground">
-                        Verifying your invitation...
+                        Validating invitation...
                       </h2>
                       <p className="text-xs text-muted-foreground">
                         Please wait while we verify your invitation details.
@@ -374,8 +390,86 @@ export default function EmployeeActivatePage() {
                       </Button>
                     </div>
                   </motion.div>
+                ) : isExpiredToken ? (
+                  /* Expired Token View */
+                  <motion.div
+                    key="expired-token"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-center space-y-5 py-4"
+                  >
+                    <div className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-500 mx-auto shadow-inner">
+                      <Clock className="w-8 h-8" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <h2 className="text-lg font-bold text-foreground">
+                        Invitation Expired
+                      </h2>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        This invitation link has expired. Please request a new invitation.
+                      </p>
+                      {normValError?.status && (
+                        <p className="text-[11px] text-muted-foreground/70 font-mono">
+                          HTTP {normValError.status}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="pt-2 space-y-2">
+                      {token && (
+                        <Button
+                          onClick={() => refetchValidation()}
+                          className="w-full text-xs font-semibold gap-2 cursor-pointer"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          <span>Try Again</span>
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        onClick={() => navigate("/login")}
+                        className="w-full text-xs font-semibold cursor-pointer"
+                      >
+                        Return to Sign In
+                      </Button>
+                    </div>
+                  </motion.div>
+                ) : isAlreadyUsedToken ? (
+                  /* Already Used / Activated Token View */
+                  <motion.div
+                    key="already-used-token"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-center space-y-5 py-4"
+                  >
+                    <div className="w-14 h-14 rounded-2xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-500 mx-auto shadow-inner">
+                      <UserCheck className="w-8 h-8" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <h2 className="text-lg font-bold text-foreground">
+                        Invitation Already Used
+                      </h2>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        This invitation has already been activated.
+                      </p>
+                    </div>
+
+                    <div className="pt-2">
+                      <Button
+                        onClick={() => navigate("/login")}
+                        className="w-full text-xs font-semibold gap-2 cursor-pointer"
+                      >
+                        <span>Proceed to Sign In</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  </motion.div>
                 ) : isExplicitInvalidToken ? (
-                  /* Invalid / Expired Token Warning */
+                  /* Invalid Token Warning */
                   <motion.div
                     key="invalid-token"
                     initial={{ opacity: 0 }}
@@ -394,13 +488,13 @@ export default function EmployeeActivatePage() {
                       <p className="text-xs text-muted-foreground leading-relaxed">
                         {normValError?.message ||
                           rawValidationData?.message ||
-                          "Your invitation link is invalid or has expired. Please contact HR for a new invitation."}
+                          "This invitation link is invalid or no longer available."}
                       </p>
                       {normValError?.status && (
                         <p className="text-[11px] text-muted-foreground/70 font-mono">
                           HTTP {normValError.status}
-                          {typeof normValError.data === "object" && normValError.data?.message
-                            ? ` — ${normValError.data.message}`
+                          {typeof normValError.data === "object" && (normValError.data as any)?.message
+                            ? ` — ${(normValError.data as any).message}`
                             : ""}
                         </p>
                       )}
@@ -426,7 +520,7 @@ export default function EmployeeActivatePage() {
                     </div>
                   </motion.div>
                 ) : (
-                  /* Password Setup Form */
+                  /* Password Setup Form (Valid Token) */
                   <motion.div
                     key="form"
                     initial={{ opacity: 0 }}
@@ -440,6 +534,16 @@ export default function EmployeeActivatePage() {
                         <UserCheck className="w-3.5 h-3.5" />
                         <span>Welcome to OFC360</span>
                       </div>
+                      {(resolvedName || resolvedEmail) && (
+                        <p className="text-xs font-medium text-foreground">
+                          {resolvedName ? (
+                            <span>Welcome, <strong className="text-primary">{resolvedName}</strong> {resolvedEmail ? `(${resolvedEmail})` : ""}</span>
+                          ) : (
+                            <span>Account for <strong className="text-primary">{resolvedEmail}</strong></span>
+                          )}
+                          {resolvedCompanyName ? ` • ${resolvedCompanyName}` : ""}
+                        </p>
+                      )}
                       <h2 className="text-xl font-bold tracking-tight text-foreground">
                         Set Your Password
                       </h2>
@@ -601,7 +705,7 @@ export default function EmployeeActivatePage() {
                         </div>
                       </div>
 
-                      {/* Submit Button */}
+                      {/* Submit / Activate Account Button */}
                       <Button
                         type="submit"
                         disabled={isActivating || !isFormValid}
@@ -610,12 +714,12 @@ export default function EmployeeActivatePage() {
                         {isActivating ? (
                           <>
                             <Loader2 className="w-4 h-4 animate-spin" />
-                            <span>Setting Password...</span>
+                            <span>Activating Account...</span>
                           </>
                         ) : (
                           <>
                             <ShieldCheck className="w-4 h-4" />
-                            <span>Set Password</span>
+                            <span>Activate Account</span>
                           </>
                         )}
                       </Button>

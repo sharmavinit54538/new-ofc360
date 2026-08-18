@@ -142,7 +142,10 @@ export const onboardingApi = baseApi.injectEndpoints({
     }),
 
     validateInvitation: builder.query<{ valid: boolean; email?: string; company_name?: string }, string>({
-      query: (token) => `/api/v1/onboarding/validate?token=${encodeURIComponent(token)}`,
+      query: (token) => ({
+        url: "/api/v1/onboarding/validate",
+        params: { token },
+      }),
     }),
 
     activateAccount: builder.mutation<any, ActivateAccountRequest>({

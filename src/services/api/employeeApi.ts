@@ -742,7 +742,10 @@ export const employeeApi = baseApi.injectEndpoints({
       company_name?: string;
       [key: string]: any;
     }, string>({
-      query: (token) => `/api/v1/onboarding/validate?token=${encodeURIComponent(token)}`,
+      query: (token) => ({
+        url: "/api/v1/onboarding/validate",
+        params: { token },
+      }),
       transformResponse: (raw: any) => raw?.data || raw,
     }),
   }),

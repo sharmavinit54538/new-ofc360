@@ -48,6 +48,7 @@ describe("Employee Invitation & Password Activation Flow", () => {
           valid: true,
           employee_id: "550e8400-e29b-41d4-a716-446655440000",
           email: "employee@ofc360.com",
+          full_name: "Sarah Jenkins",
         },
         isLoading: false,
         isError: false,
@@ -63,12 +64,13 @@ describe("Employee Invitation & Password Activation Flow", () => {
       );
 
       expect(screen.getByText("Welcome to OFC360")).toBeDefined();
+      expect(screen.getByText(/Sarah Jenkins/i)).toBeDefined();
       expect(screen.getByText("Set Your Password")).toBeDefined();
       expect(screen.getByPlaceholderText("Enter new password")).toBeDefined();
       expect(screen.getByPlaceholderText("Confirm your password")).toBeDefined();
       expect(screen.getByText("Minimum 8 characters")).toBeDefined();
       expect(screen.getByText("Passwords must match")).toBeDefined();
-      expect(screen.getByRole("button", { name: "Set Password" })).toBeDefined();
+      expect(screen.getByRole("button", { name: /Activate Account|Set Password/i })).toBeDefined();
       expect(screen.queryByRole("heading", { name: "Invalid Invitation Link" })).toBeNull();
     });
 
@@ -88,7 +90,7 @@ describe("Employee Invitation & Password Activation Flow", () => {
         </MemoryRouter>
       );
 
-      expect(screen.getByText("Verifying your invitation...")).toBeDefined();
+      expect(screen.getByText("Validating invitation...")).toBeDefined();
       expect(screen.queryByText("Set Your Password")).toBeNull();
     });
 
@@ -110,21 +112,67 @@ describe("Employee Invitation & Password Activation Flow", () => {
 
       expect(screen.getByRole("heading", { name: "Invalid Invitation Link" })).toBeDefined();
       expect(
-        screen.getByText("Your invitation link is invalid or has expired. Please contact HR for a new invitation.")
+        screen.getByText("This invitation link is invalid or no longer available.")
       ).toBeDefined();
     });
 
-    it("displays error banner when token validation explicitly fails on backend (400/404)", () => {
+    it("displays Invitation Expired when token is expired (HTTP 410)", () => {
       vi.spyOn(employeeApiHooks, "useValidateEmployeeInvitationQuery").mockReturnValue({
         data: undefined,
         isLoading: false,
         isError: true,
-        error: { status: 400, data: { detail: "Token expired" } },
+        error: { status: 410, data: { detail: "Invitation has expired" } },
         refetch: vi.fn(),
       } as any);
 
       renderWithProviders(
-        <MemoryRouter initialEntries={["/employee/activate?token=invalid_expired_token"]}>
+        <MemoryRouter initialEntries={["/employee/activate?token=expired_token_123"]}>
+          <Routes>
+            <Route path="/employee/activate" element={<EmployeeActivatePage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      expect(screen.getByRole("heading", { name: "Invitation Expired" })).toBeDefined();
+      expect(
+        screen.getByText("This invitation link has expired. Please request a new invitation.")
+      ).toBeDefined();
+    });
+
+    it("displays Invitation Already Used when token was already activated (HTTP 409)", () => {
+      vi.spyOn(employeeApiHooks, "useValidateEmployeeInvitationQuery").mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isError: true,
+        error: { status: 409, data: { detail: "Invitation already used" } },
+        refetch: vi.fn(),
+      } as any);
+
+      renderWithProviders(
+        <MemoryRouter initialEntries={["/employee/activate?token=used_token_123"]}>
+          <Routes>
+            <Route path="/employee/activate" element={<EmployeeActivatePage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      expect(screen.getByRole("heading", { name: "Invitation Already Used" })).toBeDefined();
+      expect(
+        screen.getByText("This invitation has already been activated.")
+      ).toBeDefined();
+    });
+
+    it("displays error banner when token validation explicitly fails with invalid link (400/404)", () => {
+      vi.spyOn(employeeApiHooks, "useValidateEmployeeInvitationQuery").mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        isError: true,
+        error: { status: 400, data: { detail: "Token invalid or not found" } },
+        refetch: vi.fn(),
+      } as any);
+
+      renderWithProviders(
+        <MemoryRouter initialEntries={["/employee/activate?token=invalid_token"]}>
           <Routes>
             <Route path="/employee/activate" element={<EmployeeActivatePage />} />
           </Routes>
@@ -132,7 +180,7 @@ describe("Employee Invitation & Password Activation Flow", () => {
       );
 
       expect(screen.getByRole("heading", { name: "Invalid Invitation Link" })).toBeDefined();
-      expect(screen.getByText("Token expired")).toBeDefined();
+      expect(screen.getByText("Token invalid or not found")).toBeDefined();
       expect(screen.getByText(/HTTP 400/i)).toBeDefined();
     });
 
@@ -186,7 +234,7 @@ describe("Employee Invitation & Password Activation Flow", () => {
 
       const newPassInput = screen.getByPlaceholderText("Enter new password");
       const confirmPassInput = screen.getByPlaceholderText("Confirm your password");
-      const submitBtn = screen.getByRole("button", { name: "Set Password" }) as HTMLButtonElement;
+      const submitBtn = screen.getByRole("button", { name: /Activate Account|Set Password/i }) as HTMLButtonElement;
 
       // Initially disabled
       expect(submitBtn.disabled).toBe(true);
@@ -271,7 +319,7 @@ describe("Employee Invitation & Password Activation Flow", () => {
 
       const newPassInput = screen.getByPlaceholderText("Enter new password");
       const confirmPassInput = screen.getByPlaceholderText("Confirm your password");
-      const submitBtn = screen.getByRole("button", { name: "Set Password" });
+      const submitBtn = screen.getByRole("button", { name: /Activate Account|Set Password/i });
 
       fireEvent.change(newPassInput, { target: { value: "SecurePass2026!" } });
       fireEvent.change(confirmPassInput, { target: { value: "SecurePass2026!" } });
@@ -289,6 +337,64 @@ describe("Employee Invitation & Password Activation Flow", () => {
 
       expect(await screen.findByText("Password Set Successfully!")).toBeDefined();
       expect(screen.getByText("Proceed to Sign In")).toBeDefined();
+    });
+
+    it("disables Activate Account button while activation request is in flight to prevent duplicate requests", async () => {
+      vi.spyOn(employeeApiHooks, "useValidateEmployeeInvitationQuery").mockReturnValue({
+        data: {
+          valid: true,
+          employee_id: "550e8400-e29b-41d4-a716-446655440000",
+          email: "employee@ofc360.com",
+        },
+        isLoading: false,
+        isError: false,
+        refetch: vi.fn(),
+      } as any);
+
+      let resolveActivation: any;
+      const activationPromise = new Promise((res) => {
+        resolveActivation = res;
+      });
+
+      const mockActivateMutation = vi.fn().mockReturnValue({
+        unwrap: () => activationPromise,
+      });
+
+      vi.spyOn(employeeApiHooks, "useActivateEmployeeMutation").mockReturnValue([
+        mockActivateMutation as any,
+        { isLoading: false } as any,
+      ]);
+
+      renderWithProviders(
+        <MemoryRouter initialEntries={["/employee/activate?token=token_abc_123"]}>
+          <Routes>
+            <Route path="/employee/activate" element={<EmployeeActivatePage />} />
+          </Routes>
+        </MemoryRouter>
+      );
+
+      const newPassInput = screen.getByPlaceholderText("Enter new password");
+      const confirmPassInput = screen.getByPlaceholderText("Confirm your password");
+      const submitBtn = screen.getByRole("button", { name: /Activate Account|Set Password/i }) as HTMLButtonElement;
+
+      fireEvent.change(newPassInput, { target: { value: "SecurePass2026!" } });
+      fireEvent.change(confirmPassInput, { target: { value: "SecurePass2026!" } });
+
+      // First click
+      fireEvent.click(submitBtn);
+
+      // Button is now submitting and disabled
+      expect(submitBtn.disabled).toBe(true);
+
+      // Second rapid click should not invoke mutation again
+      fireEvent.click(submitBtn);
+      expect(mockActivateMutation).toHaveBeenCalledTimes(1);
+
+      // Resolve the activation
+      resolveActivation({ success: true });
+      await waitFor(() => {
+        expect(screen.getByText("Password Set Successfully!")).toBeDefined();
+      });
     });
 
     it("displays specific backend error message on activation failure", async () => {
@@ -328,7 +434,7 @@ describe("Employee Invitation & Password Activation Flow", () => {
 
       const newPassInput = screen.getByPlaceholderText("Enter new password");
       const confirmPassInput = screen.getByPlaceholderText("Confirm your password");
-      const submitBtn = screen.getByRole("button", { name: "Set Password" });
+      const submitBtn = screen.getByRole("button", { name: /Activate Account|Set Password/i });
 
       fireEvent.change(newPassInput, { target: { value: "Password123" } });
       fireEvent.change(confirmPassInput, { target: { value: "Password123" } });
@@ -434,7 +540,7 @@ describe("Employee Invitation & Password Activation Flow", () => {
       expect(employeeApiHooks.employeeApi.endpoints).toHaveProperty("validateEmployeeInvitation");
     });
 
-    it("generates /api/v1/onboarding/validate?token=... with encoded token", () => {
+    it("generates /api/v1/onboarding/validate with params token query", () => {
       const endpoint = employeeApiHooks.employeeApi.endpoints.validateEmployeeInvitation;
       expect(endpoint).toBeDefined();
 
@@ -443,3 +549,4 @@ describe("Employee Invitation & Password Activation Flow", () => {
     });
   });
 });
+
