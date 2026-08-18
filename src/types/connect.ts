@@ -2,6 +2,10 @@ export type PresenceStatus = "online" | "away" | "busy" | "dnd" | "offline";
 
 export interface ConnectUser {
   id: string;
+  userId?: string;
+  user_id?: string;
+  employee_id?: string;
+  employeeId?: string;
   name: string;
   email: string;
   role?: string;
@@ -110,6 +114,7 @@ export interface CallHistoryItem {
   callee: ConnectUser;
   type: CallType;
   status: "completed" | "missed" | "rejected" | "busy" | "failed";
+  direction?: "incoming" | "outgoing";
   duration: number; // in seconds
   startedAt: string;
   endedAt?: string;
@@ -303,7 +308,8 @@ export interface AddChannelMembersRequest {
 }
 
 export interface InitiateCallRequest {
-  targetUserId: string;
+  targetUserId?: string;
+  calleeId?: string;
   type: CallType;
 }
 

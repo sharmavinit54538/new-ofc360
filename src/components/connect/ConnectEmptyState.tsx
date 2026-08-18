@@ -1,7 +1,7 @@
 import { LucideIcon, MessageSquare, Hash, Calendar, FolderArchive, PhoneCall, Users, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export type EmptyStateVariant = "chats" | "channels" | "meetings" | "files" | "calls" | "contacts" | "thread" | "custom";
+export type EmptyStateVariant = "chats" | "messages" | "channels" | "meetings" | "files" | "calls" | "contacts" | "thread" | "custom";
 
 interface ConnectEmptyStateProps {
   variant?: EmptyStateVariant;
@@ -18,6 +18,11 @@ const PRESETS: Record<Exclude<EmptyStateVariant, "custom">, { icon: LucideIcon; 
     icon: MessageSquare,
     title: "No conversations yet",
     description: "Start a new conversation with your colleagues to begin collaborating.",
+  },
+  messages: {
+    icon: MessageSquare,
+    title: "No messages yet",
+    description: "Send a message to start the conversation.",
   },
   channels: {
     icon: Hash,

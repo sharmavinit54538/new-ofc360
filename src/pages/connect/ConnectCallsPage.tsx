@@ -127,7 +127,10 @@ export default function ConnectCallsPage() {
           ) : (
             <div className="space-y-2">
               {callLogs.map((log) => {
-                const isIncoming = log.direction === "incoming";
+                const isIncoming =
+                  log.direction === "incoming" ||
+                  log.callee?.id === currentUser?.id ||
+                  log.callee?.email === currentUser?.email;
                 const isMissed = log.status === "missed";
                 const otherUser = isIncoming ? log.caller : log.callee;
 
