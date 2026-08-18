@@ -365,7 +365,7 @@ export function normalizeEmployee(raw: any): Employee {
       id: String(Math.random()),
       name: "Employee",
       email: "",
-      role: "Employee",
+      role: "employee",
       department: "General",
       systemRole: "employee",
       status: "Active",
