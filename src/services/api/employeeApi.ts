@@ -674,6 +674,9 @@ export const employeeApi = baseApi.injectEndpoints({
     >({
       query: ({ id, employee_id, token, new_password, confirm_password, password }) => {
         const empId = id || employee_id;
+        if (!empId || empId === "me") {
+          throw new Error("Employee UUID is required for password activation.");
+        }
         return {
           url: `/api/v1/employees/${empId}/activate`,
           method: "POST",

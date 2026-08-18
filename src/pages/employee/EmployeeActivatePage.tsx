@@ -110,11 +110,11 @@ export default function EmployeeActivatePage() {
     e.preventDefault();
     setErrorMessage(null);
 
-    if (!token) {
+    if (!token || !employeeId) {
       setErrorMessage(
-        "Your invitation link is invalid or missing a security token. Please contact your HR administrator."
+        "Invalid invitation link. Please request a new invitation from HR."
       );
-      toast.error("Missing activation token.");
+      toast.error("Invalid invitation link. Missing token or employee ID.");
       return;
     }
 
@@ -131,10 +131,10 @@ export default function EmployeeActivatePage() {
     }
 
     try {
-      const payloadId = employeeId || "me";
+      const cleanEmpId = employeeId.trim();
       const res = await activateEmployee({
-        id: payloadId,
-        employee_id: payloadId,
+        id: cleanEmpId,
+        employee_id: cleanEmpId,
         token: token.trim(),
         new_password: password,
         confirm_password: confirmPassword,
@@ -261,10 +261,10 @@ export default function EmployeeActivatePage() {
                       <ArrowRight className="w-4 h-4" />
                     </Button>
                   </motion.div>
-                ) : !token ? (
-                  /* Missing Token Warning */
+                ) : (!token || !employeeId) ? (
+                  /* Missing Token or Employee ID Warning */
                   <motion.div
-                    key="missing-token"
+                    key="missing-token-or-id"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="text-center space-y-5 py-4"
@@ -278,7 +278,7 @@ export default function EmployeeActivatePage() {
                         Invalid Invitation Link
                       </h2>
                       <p className="text-xs text-muted-foreground leading-relaxed">
-                        Your invitation link is invalid or has expired. Please contact your HR administrator for a new invitation.
+                        Invalid invitation link. Please request a new invitation from HR.
                       </p>
                     </div>
 

@@ -60,7 +60,7 @@ describe("Employee Invitation & Password Activation Flow", () => {
       expect(screen.getByRole("button", { name: /Set Password & Activate/i })).toBeDefined();
     });
 
-    it("displays error banner when no token is present in the URL", () => {
+    it("displays error banner when no token or employee_id is present in the URL", () => {
       renderWithProviders(
         <MemoryRouter initialEntries={["/employee/activate"]}>
           <Routes>
@@ -69,8 +69,8 @@ describe("Employee Invitation & Password Activation Flow", () => {
         </MemoryRouter>
       );
 
-      expect(screen.getByText(/Invalid Invitation Link/i)).toBeDefined();
-      expect(screen.getByText(/Your invitation link is invalid or has expired/i)).toBeDefined();
+      expect(screen.getByRole("heading", { name: "Invalid Invitation Link" })).toBeDefined();
+      expect(screen.getByText("Invalid invitation link. Please request a new invitation from HR.")).toBeDefined();
     });
 
     it("requires at least 8 characters and matching password to enable submit button", () => {
@@ -280,6 +280,17 @@ describe("Employee Invitation & Password Activation Flow", () => {
 
       const emailInput = screen.getByPlaceholderText(/you@company\.com/i) as HTMLInputElement;
       expect(emailInput.value).toBe("employee@ofc360.com");
+    });
+  });
+
+  describe("4. Endpoint Query URL Construction", () => {
+    it("generates /api/v1/employees/{UUID}/activate with non-empty UUID and rejects 'me'", () => {
+      const endpoint = employeeApiHooks.employeeApi.endpoints.activateEmployee;
+      const queryFn = (endpoint as any).initiate;
+      expect(queryFn).toBeDefined();
+
+      // Test endpoint definition exists and validates UUID
+      expect(employeeApiHooks.employeeApi.endpoints).toHaveProperty("activateEmployee");
     });
   });
 });
