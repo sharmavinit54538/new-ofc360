@@ -46,10 +46,15 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(true);
 
   useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const emailParam = params.get("email");
+    if (emailParam) {
+      setWorkEmail(emailParam);
+    }
     if (location.pathname === "/register") {
       setIsSignup(true);
     }
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   const checkOnboardingAndNavigate = (role: SystemRole, _userId?: string) => {
     if (role === "super_admin") {
@@ -162,9 +167,14 @@ export default function LoginPage() {
           `Welcome back to OFC360! Signed in as ${roleLabels[activeRole] || activeRole}.`
         );
 
+        const redirectParam = new URLSearchParams(location.search).get("redirect");
         const fromPath = (location.state as any)?.from?.pathname;
-        if (fromPath && fromPath !== "/login" && fromPath !== "/register") {
-          navigate(fromPath, { replace: true });
+        const targetPath =
+          redirectParam ||
+          (fromPath && fromPath !== "/login" && fromPath !== "/register" ? fromPath : null);
+
+        if (targetPath) {
+          navigate(targetPath, { replace: true });
         } else {
           checkOnboardingAndNavigate(activeRole, res.user.id);
         }

@@ -130,6 +130,7 @@ import SecurityLandingPage from "@/pages/super-admin/security/SecurityLandingPag
 import AdminSessionsPage from "@/pages/super-admin/security/AdminSessionsPage";
 import SecurityEventsPage from "@/pages/super-admin/security/SecurityEventsPage";
 import VerifyEmailPage from "@/pages/VerifyEmailPage";
+import EmployeeActivatePage from "@/pages/employee/EmployeeActivatePage";
 
 import { ReduxProvider } from "@/app/providers";
 
@@ -160,6 +161,8 @@ const App = () => (
         <Route path="/verify-reset-otp" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ForgotPasswordPage />} />
         <Route path="/auth/reset-password" element={<ForgotPasswordPage />} />
+        <Route path="/employee/activate" element={<EmployeeActivatePage />} />
+        <Route path="/activate" element={<EmployeeActivatePage />} />
         <Route path="/careers" element={<PublicCareersPage />} />
         <Route path="/hr-admin/onboarding" element={<HRAdminOnboardingGuard><HRAdminOnboardingPage /></HRAdminOnboardingGuard>} />
         <Route element={<ProtectedRoute />}>

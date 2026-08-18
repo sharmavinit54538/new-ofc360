@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { UserCheck, FileText, Shield, CheckCircle2, Circle, Clock, Upload, MessageSquare, Package, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,21 @@ import { useGetOnboardingTasksQuery, useGetOnboardingProgressQuery } from "@/ser
 import { toast } from "sonner";
 
 export default function OnboardingPage() {
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token =
+      searchParams.get("token") ||
+      searchParams.get("activation_token") ||
+      searchParams.get("invite_token");
+
+    if (token) {
+      navigate(`/employee/activate${location.search}`, { replace: true });
+    }
+  }, [searchParams, location.search, navigate]);
+
   const { data: tasks = [], isLoading: isLoadingTasks } = useGetOnboardingTasksQuery(undefined);
   const { data: progressData } = useGetOnboardingProgressQuery(undefined);
 

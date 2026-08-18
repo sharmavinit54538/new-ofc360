@@ -43,6 +43,25 @@ export interface OnboardingStatus {
   steps?: Array<{ id: string; name: string; isCompleted: boolean }>;
 }
 
+export interface ActivateEmployeePayload {
+  id?: string;
+  employee_id?: string;
+  token: string;
+  new_password?: string;
+  confirm_password?: string;
+  password?: string;
+}
+
+export interface ActivateEmployeeResponse {
+  success?: boolean;
+  message?: string;
+  data?: any;
+  token?: string;
+  access_token?: string;
+  refreshToken?: string;
+  user?: any;
+}
+
 /**
  * Builds a clean payload matching the backend `EmployeeCreate` Pydantic model.
  * Excludes unknown aliases, client IDs, and extra properties that trigger 422 errors.
@@ -649,15 +668,28 @@ export const employeeApi = baseApi.injectEndpoints({
       invalidatesTags: (_r, _e, id) => [{ type: "Employee", id }, { type: "Employee", id: "LIST" }],
     }),
 
-    activateEmployee: builder.mutation<Employee, { id: string; token?: string }>({
-      query: ({ id, token }) => ({
-        url: `/api/v1/employees/${id}/activate`,
-        method: "POST",
-        body: { token },
-      }),
-      transformResponse: (raw: RawEnvelope<Employee> | Employee) =>
-        (raw as RawEnvelope<Employee>)?.data || (raw as Employee),
-      invalidatesTags: (_r, _e, { id }) => [{ type: "Employee", id }, { type: "Employee", id: "LIST" }],
+    activateEmployee: builder.mutation<
+      ActivateEmployeeResponse,
+      ActivateEmployeePayload
+    >({
+      query: ({ id, employee_id, token, new_password, confirm_password, password }) => {
+        const empId = id || employee_id;
+        return {
+          url: `/api/v1/employees/${empId}/activate`,
+          method: "POST",
+          body: {
+            token,
+            new_password: new_password || password,
+            confirm_password: confirm_password || new_password || password,
+          },
+        };
+      },
+      transformResponse: (raw: RawEnvelope<ActivateEmployeeResponse> | ActivateEmployeeResponse) =>
+        (raw as RawEnvelope<ActivateEmployeeResponse>)?.data || (raw as ActivateEmployeeResponse),
+      invalidatesTags: (_r, _e, arg) => [
+        { type: "Employee", id: arg.id || arg.employee_id },
+        { type: "Employee", id: "LIST" },
+      ],
     }),
 
     approveOnboarding: builder.mutation<Employee, string>({

@@ -34,6 +34,16 @@ export default function ProtectedRoute() {
   }
 
   if (!isAuthenticated) {
+    const searchParams = new URLSearchParams(location.search);
+    const token =
+      searchParams.get("token") ||
+      searchParams.get("activation_token") ||
+      searchParams.get("invite_token");
+
+    if (location.pathname === "/onboarding" && token) {
+      return <Navigate to={`/employee/activate${location.search}`} replace />;
+    }
+
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
