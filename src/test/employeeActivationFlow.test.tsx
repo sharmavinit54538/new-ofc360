@@ -56,9 +56,9 @@ describe("Employee Invitation & Password Activation Flow", () => {
       expect(screen.getByText("Set your password")).toBeDefined();
       expect(screen.getByPlaceholderText("Enter new password")).toBeDefined();
       expect(screen.getByPlaceholderText("Confirm your password")).toBeDefined();
-      expect(screen.getByText(/Minimum 8 characters/i)).toBeDefined();
-      expect(screen.getByText(/Passwords match/i)).toBeDefined();
-      expect(screen.getByRole("button", { name: /Set Password/i })).toBeDefined();
+      expect(screen.getByText("Minimum 8 characters")).toBeDefined();
+      expect(screen.getByText("Passwords must match")).toBeDefined();
+      expect(screen.getByRole("button", { name: "Set Password" })).toBeDefined();
       // Must NOT show Invalid Invitation Link
       expect(screen.queryByRole("heading", { name: "Invalid Invitation Link" })).toBeNull();
     });
