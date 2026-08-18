@@ -116,7 +116,8 @@ export interface VerifyResetOtpRequest {
 }
 
 export interface ResetPasswordRequest {
-  identifier: string;
+  identifier?: string;
+  email?: string;
   otp: string;
   newPassword?: string;
   new_password?: string;
@@ -240,16 +241,20 @@ export const authApi = baseApi.injectEndpoints({
     }),
 
     resetPassword: builder.mutation<{ success: boolean; message: string }, ResetPasswordRequest>({
-      query: (body) => ({
-        url: "/api/v1/auth/reset-password",
-        method: "POST",
-        body: {
-          email: body.email,
-          otp: body.otp,
-          new_password: body.new_password || body.newPassword,
-          newPassword: body.newPassword || body.new_password,
-        },
-      }),
+      query: (body) => {
+        const emailOrIdentifier = body.email || body.identifier || "";
+        return {
+          url: "/api/v1/auth/reset-password",
+          method: "POST",
+          body: {
+            identifier: emailOrIdentifier,
+            email: emailOrIdentifier,
+            otp: body.otp,
+            new_password: body.new_password || body.newPassword,
+            newPassword: body.newPassword || body.new_password,
+          },
+        };
+      },
       transformResponse: (raw: any) => ({
         success: raw?.success ?? true,
         message: raw?.message || "Password reset successfully",
