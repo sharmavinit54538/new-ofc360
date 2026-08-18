@@ -61,9 +61,6 @@ import {
   Database,
   FileSpreadsheet,
   Loader2,
-  CheckCircle2,
-  RefreshCw,
-  SlidersHorizontal,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -251,11 +248,6 @@ export default function IntelligenceLandingPage() {
               <Badge variant="secondary" className="text-[11px] font-medium bg-secondary/80">
                 11 Domains
               </Badge>
-              {isError && (
-                <Badge variant="outline" className="text-[10px] border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/10 gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> Local Neural Engine Active
-                </Badge>
-              )}
             </div>
 
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
@@ -283,17 +275,6 @@ export default function IntelligenceLandingPage() {
                 <FileSearch className="w-4 h-4" /> ATS Screening
               </Button>
             </Link>
-            {isError && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => refetch()}
-                className="h-9 px-2.5 text-xs text-muted-foreground hover:text-foreground gap-1.5"
-                title="Sync with cloud AI server"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-              </Button>
-            )}
           </div>
         </div>
       </div>
