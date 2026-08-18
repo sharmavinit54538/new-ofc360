@@ -36,6 +36,8 @@ const PUBLIC_AUTH_ENDPOINTS = [
   "resetPassword",
   "verifyEmail",
   "resendOtp",
+  "verifyEmailOtp",
+  "resendEmailOtp",
   "createAuthLogin",
   "createAuthRegister",
   "createAuthForgotPassword",
@@ -57,7 +59,9 @@ const PUBLIC_AUTH_URL_PATTERNS = [
   "/auth/verify-reset-otp",
   "/auth/reset-password",
   "/auth/verify-email",
+  "/auth/verify-email-otp",
   "/auth/resend-otp",
+  "/auth/resend-email-otp",
   "/onboarding/validate",
   "/onboarding/validate-token",
   "/onboarding/activate",
@@ -76,6 +80,7 @@ export const isPublicRequest = (url?: string, endpoint?: string): boolean => {
 const needsCompanyId = (url: string, endpoint?: string): boolean => {
   if (isPublicRequest(url, endpoint)) return false;
   if (url.includes("/auth/me") || url.includes("/auth/refresh")) return false;
+  if (url.includes("/hr-admin/onboarding") || url.includes("/onboarding")) return false;
 
   return true;
 };

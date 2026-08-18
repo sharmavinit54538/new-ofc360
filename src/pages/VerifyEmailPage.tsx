@@ -4,25 +4,41 @@ import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Sparkles, Shield, ArrowRight, ArrowLeft, CheckCircle2, Mail, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useVerifyEmailMutation, useResendOtpMutation } from "@/services/api/authApi";
+import {
+  useVerifyEmailMutation,
+  useVerifyEmailOtpMutation,
+  useResendOtpMutation,
+  useResendEmailOtpMutation,
+} from "@/services/api/authApi";
+import { useAppDispatch } from "@/app/hooks";
+import { setCredentials } from "@/features/auth/authSlice";
 import { normalizeError } from "@/services/api/normalizeError";
 import { toast } from "sonner";
 
 export default function VerifyEmailPage() {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const [searchParams] = useSearchParams();
   const initialEmail = searchParams.get("email") || "";
+  const initialVid = searchParams.get("verification_id") || searchParams.get("vid") || "";
 
   const [email, setEmail] = useState(initialEmail);
+  const [verificationId, setVerificationId] = useState(initialVid);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [resendTimer, setResendTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const [hasAuthTokens, setHasAuthTokens] = useState(false);
 
   const otpInputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
-  const [verifyEmail, { isLoading: isVerifying }] = useVerifyEmailMutation();
-  const [resendOtp, { isLoading: isResending }] = useResendOtpMutation();
+  const [verifyEmail, { isLoading: isVerifyingStandard }] = useVerifyEmailMutation();
+  const [verifyEmailOtp, { isLoading: isVerifyingOtp }] = useVerifyEmailOtpMutation();
+  const [resendOtp, { isLoading: isResendingStandard }] = useResendOtpMutation();
+  const [resendEmailOtp, { isLoading: isResendingOtp }] = useResendEmailOtpMutation();
+
+  const isVerifying = isVerifyingStandard || isVerifyingOtp;
+  const isResending = isResendingStandard || isResendingOtp;
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
@@ -71,7 +87,7 @@ export default function VerifyEmailPage() {
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     const enteredOtp = otp.join("");
-    if (!email.trim()) {
+    if (!email.trim() && !verificationId) {
       toast.error("Please provide your work email address.");
       return;
     }
@@ -81,8 +97,30 @@ export default function VerifyEmailPage() {
     }
 
     try {
-      await verifyEmail({ identifier: email, otp: enteredOtp }).unwrap();
-      toast.success("Email verified successfully! You can now sign in.");
+      if (verificationId) {
+        const res = await verifyEmailOtp({
+          verification_id: verificationId,
+          otp: enteredOtp,
+          email: email.trim(),
+          identifier: email.trim(),
+        }).unwrap();
+
+        if (res.token && res.token.length > 10) {
+          dispatch(
+            setCredentials({
+              user: res.user,
+              token: res.token,
+              refreshToken: res.refreshToken,
+              companyId: res.user.companyId,
+            })
+          );
+          setHasAuthTokens(true);
+        }
+      } else {
+        await verifyEmail({ identifier: email.trim(), otp: enteredOtp }).unwrap();
+      }
+
+      toast.success("Email verified successfully!");
       setIsVerified(true);
     } catch (err) {
       const norm = normalizeError(err);
@@ -92,13 +130,25 @@ export default function VerifyEmailPage() {
 
   const handleResend = async () => {
     if (!canResend || isResending) return;
-    if (!email.trim()) {
+    if (!email.trim() && !verificationId) {
       toast.error("Please enter your work email address.");
       return;
     }
 
     try {
-      await resendOtp({ identifier: email }).unwrap();
+      if (verificationId) {
+        const res = await resendEmailOtp({
+          verification_id: verificationId,
+          email: email.trim(),
+          identifier: email.trim(),
+        }).unwrap();
+        if (res.verification_id) {
+          setVerificationId(res.verification_id);
+        }
+      } else {
+        await resendOtp({ identifier: email.trim() }).unwrap();
+      }
+
       toast.success(`Verification code resent to ${email}`);
       setOtp(["", "", "", "", "", ""]);
       setResendTimer(60);
@@ -142,10 +192,10 @@ export default function VerifyEmailPage() {
               </div>
 
               <Button
-                onClick={() => navigate("/login")}
+                onClick={() => navigate(hasAuthTokens ? "/dashboard" : "/login")}
                 className="w-full gradient-bg text-primary-foreground font-bold text-xs h-10 shadow-md gap-2"
               >
-                <span>Proceed to Sign In</span>
+                <span>{hasAuthTokens ? "Proceed to Workspace" : "Proceed to Sign In"}</span>
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </div>

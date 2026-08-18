@@ -12,26 +12,42 @@ export interface LoginResponse {
   user: AuthUser;
   token: string;
   refreshToken?: string;
+  requires_email_verification?: boolean;
+  verification_id?: string;
+  masked_email?: string;
+  email?: string;
 }
 
 export interface RawLoginData {
-  access_token: string;
+  access_token?: string;
   refresh_token?: string;
   expires_in?: number;
   token_type?: string;
   user?: AuthUser;
   token?: string;
   refreshToken?: string;
+  requires_email_verification?: boolean;
+  verification_id?: string;
+  masked_email?: string;
+  email?: string;
 }
 
-export const unwrapLoginResponse = (raw: RawEnvelope<RawLoginData> | RawLoginData): LoginResponse => {
-  const data = (raw as RawEnvelope<RawLoginData>)?.data || (raw as RawLoginData);
+export const unwrapLoginResponse = (raw: RawEnvelope<RawLoginData> | RawLoginData | any): LoginResponse => {
+  const root = raw as any;
+  const data = root?.data || root;
+  const requires_email_verification = Boolean(
+    root?.requires_email_verification ?? data?.requires_email_verification ?? false
+  );
+  const verification_id = root?.verification_id || data?.verification_id || undefined;
+  const masked_email = data?.masked_email || undefined;
+  const email = data?.email || undefined;
+
   const u = data?.user;
   const computedName =
     u?.name?.trim() ||
     u?.full_name?.trim() ||
     (u?.first_name ? `${u.first_name} ${u.last_name || ""}`.trim() : "") ||
-    (u?.email ? u.email.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "User");
+    (u?.email ? u.email.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) : "User");
 
   const normalizedRole = normalizeRole(u?.role);
   const normalizedUser: AuthUser = u
@@ -44,7 +60,7 @@ export const unwrapLoginResponse = (raw: RawEnvelope<RawLoginData> | RawLoginDat
     : {
         id: "usr_me",
         name: computedName,
-        email: "",
+        email: email || "",
         role: "employee",
       };
 
@@ -52,8 +68,31 @@ export const unwrapLoginResponse = (raw: RawEnvelope<RawLoginData> | RawLoginDat
     user: normalizedUser,
     token: data?.access_token || data?.token || "",
     refreshToken: data?.refresh_token || data?.refreshToken,
+    requires_email_verification,
+    verification_id,
+    masked_email,
+    email,
   };
 };
+
+export interface VerifyEmailOtpRequest {
+  verification_id?: string;
+  otp: string;
+  identifier?: string;
+  email?: string;
+}
+
+export interface ResendEmailOtpRequest {
+  verification_id?: string;
+  email?: string;
+  identifier?: string;
+}
+
+export interface ResendEmailOtpResponse {
+  success: boolean;
+  message: string;
+  verification_id?: string;
+}
 
 export interface RegisterRequest {
   first_name?: string;
@@ -234,6 +273,29 @@ export const authApi = baseApi.injectEndpoints({
       }),
     }),
 
+    verifyEmailOtp: builder.mutation<LoginResponse, VerifyEmailOtpRequest>({
+      query: (body) => ({
+        url: "/api/v1/auth/verify-email-otp",
+        method: "POST",
+        body,
+      }),
+      transformResponse: (raw: RawEnvelope<RawLoginData> | RawLoginData | any) => unwrapLoginResponse(raw),
+      invalidatesTags: ["Auth", "User"],
+    }),
+
+    resendEmailOtp: builder.mutation<ResendEmailOtpResponse, ResendEmailOtpRequest>({
+      query: (body) => ({
+        url: "/api/v1/auth/resend-email-otp",
+        method: "POST",
+        body,
+      }),
+      transformResponse: (raw: any) => ({
+        success: raw?.success ?? true,
+        message: raw?.message || "OTP resent successfully",
+        verification_id: raw?.verification_id || raw?.data?.verification_id,
+      }),
+    }),
+
     logoutSession: builder.mutation<{ success: boolean; message: string }, void>({
       query: () => ({
         url: "/api/v1/auth/logout",
@@ -259,6 +321,8 @@ export const {
   useLogoutSessionMutation,
   useVerifyEmailMutation,
   useResendOtpMutation,
+  useVerifyEmailOtpMutation,
+  useResendEmailOtpMutation,
   useForgotPasswordMutation,
   useVerifyResetOtpMutation,
   useResetPasswordMutation,

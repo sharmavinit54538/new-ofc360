@@ -78,14 +78,21 @@ export const authSlice = createSlice({
       }>
     ) => {
       const { user, token, refreshToken, companyId } = action.payload;
-      const computedName =
-        user.name?.trim() ||
-        (user as any).full_name?.trim() ||
-        ((user as any).first_name ? `${(user as any).first_name} ${(user as any).last_name || ""}`.trim() : "") ||
-        (user.email ? user.email.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "User");
+      const hasValidToken =
+        typeof token === "string" &&
+        token.trim().length > 10 &&
+        token !== "undefined" &&
+        token !== "null" &&
+        token !== "[object Object]";
 
-      const normalizedRole = normalizeRole(user.role);
-      const activeCompanyId = companyId || user.companyId || (user as any).company_id || state.companyId;
+      const computedName =
+        user?.name?.trim() ||
+        (user as any)?.full_name?.trim() ||
+        ((user as any)?.first_name ? `${(user as any).first_name} ${(user as any).last_name || ""}`.trim() : "") ||
+        (user?.email ? user.email.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "User");
+
+      const normalizedRole = normalizeRole(user?.role);
+      const activeCompanyId = companyId || user?.companyId || (user as any)?.company_id || state.companyId;
 
       const normalizedUser: AuthUser = {
         ...user,
@@ -95,27 +102,29 @@ export const authSlice = createSlice({
       };
 
       state.user = normalizedUser;
-      state.token = token;
-      if (refreshToken) {
-        state.refreshToken = refreshToken;
+      state.token = hasValidToken ? token.trim() : null;
+      if (refreshToken && typeof refreshToken === "string" && refreshToken.trim().length > 10) {
+        state.refreshToken = refreshToken.trim();
       }
-      state.isAuthenticated = true;
+      state.isAuthenticated = hasValidToken;
       state.isInitializing = false;
-      state.sessionStatus = "authenticated";
+      state.sessionStatus = hasValidToken ? "authenticated" : "unauthenticated";
       state.role = normalizedRole;
       state.companyId = activeCompanyId;
 
-      try {
-        localStorage.setItem(TOKEN_KEY, token);
-        if (refreshToken) {
-          localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+      if (hasValidToken) {
+        try {
+          localStorage.setItem(TOKEN_KEY, token.trim());
+          if (refreshToken && typeof refreshToken === "string" && refreshToken.trim().length > 10) {
+            localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken.trim());
+          }
+          if (activeCompanyId) {
+            localStorage.setItem(COMPANY_KEY, activeCompanyId);
+          }
+          localStorage.setItem(USER_KEY, JSON.stringify(normalizedUser));
+        } catch {
+          // ignore storage write error
         }
-        if (activeCompanyId) {
-          localStorage.setItem(COMPANY_KEY, activeCompanyId);
-        }
-        localStorage.setItem(USER_KEY, JSON.stringify(normalizedUser));
-      } catch {
-        // ignore storage write error
       }
     },
 

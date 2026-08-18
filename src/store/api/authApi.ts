@@ -9,6 +9,8 @@ import {
   useLogoutSessionMutation,
   useVerifyEmailMutation,
   useResendOtpMutation,
+  useVerifyEmailOtpMutation,
+  useResendEmailOtpMutation,
   useForgotPasswordMutation,
   useVerifyResetOtpMutation,
   useResetPasswordMutation,
