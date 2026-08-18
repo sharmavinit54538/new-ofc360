@@ -1,40 +1,6 @@
-export interface AIToolItem {
-  id: string;
-  title: string;
-  category:
-    | "Recruitment AI"
-    | "Employee AI"
-    | "Workforce & Shift AI"
-    | "Performance & OKR AI"
-    | "Payroll & Comp AI"
-    | "Compliance & Legal AI"
-    | "Document Gen AI"
-    | "Meeting Intelligence AI"
-    | "Analytics & Predictive AI"
-    | "Knowledge & RAG AI"
-    | "Biometrics & Vision AI";
-  description: string;
-  badge: string;
-  route?: string;
-  iconName: string;
-  demoPrompt?: string;
-  defaultOutput?: string;
-}
-
-export const AI_CATEGORIES = [
-  "ALL",
-  "Recruitment AI",
-  "Employee AI",
-  "Workforce & Shift AI",
-  "Performance & OKR AI",
-  "Payroll & Comp AI",
-  "Compliance & Legal AI",
-  "Document Gen AI",
-  "Meeting Intelligence AI",
-  "Analytics & Predictive AI",
-  "Knowledge & RAG AI",
-  "Biometrics & Vision AI"
-] as const;
+import { type AIToolItem, AI_CATEGORIES } from "@/types/ai";
+export type { AIToolItem };
+export { AI_CATEGORIES };
 
 export const ALL_71_AI_MODELS: AIToolItem[] = [
   // ---------------- 1. RECRUITMENT AI SUITE (10 Models) ----------------

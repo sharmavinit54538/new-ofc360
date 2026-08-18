@@ -58,12 +58,19 @@ export const reportsApi = baseApi.injectEndpoints({
 
 export const {
   useGetExportsEmployeesQuery,
+  useLazyGetExportsEmployeesQuery,
   useGetExportsDepartmentsQuery,
+  useLazyGetExportsDepartmentsQuery,
   useGetExportsManagersQuery,
+  useLazyGetExportsManagersQuery,
   useGetExportsAttendanceQuery,
+  useLazyGetExportsAttendanceQuery,
   useGetExportsLeavesQuery,
+  useLazyGetExportsLeavesQuery,
   useGetExportsPayrollQuery,
+  useLazyGetExportsPayrollQuery,
   useGetExportsPerformanceQuery,
+  useLazyGetExportsPerformanceQuery,
 } = reportsApi;
 
 // Re-export specific feature API hooks for full compatibility
