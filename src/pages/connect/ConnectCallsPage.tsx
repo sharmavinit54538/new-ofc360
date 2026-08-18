@@ -7,8 +7,9 @@ import {
   useInitiateCallMutation,
   useGetIceServersQuery,
 } from "@/services/api/connectApi";
-import { useAppDispatch } from "@/app/hooks";
+import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { setIceServers } from "@/features/connect/callSlice";
+import { selectUserPresenceMap } from "@/features/connect/selectors";
 import { useAuth } from "@/hooks/useAuth";
 import { ConnectUser } from "@/types/connect";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -34,6 +35,7 @@ export default function ConnectCallsPage() {
   const { user: currentUser } = useAuth();
   const { setActiveTab } = useConnect();
   const { startOutgoingCall } = useConnectCall();
+  const userPresenceMap = useAppSelector(selectUserPresenceMap);
 
   const [search, setSearch] = useState("");
 
@@ -209,6 +211,16 @@ export default function ConnectCallsPage() {
               filteredEmployees.map((emp) => {
                 const fullName = emp.name || emp.email;
                 const initials = fullName.slice(0, 2).toUpperCase();
+                const empId = String(emp.id || "").trim();
+                const empUserId = String(emp.userId || "").trim();
+                const empEmail = emp.email ? emp.email.trim().toLowerCase() : "";
+
+                const dynamicPresence =
+                  (empId && userPresenceMap[empId]) ||
+                  (empUserId && userPresenceMap[empUserId]) ||
+                  (empEmail && userPresenceMap[empEmail]) ||
+                  emp.presence ||
+                  "offline";
 
                 return (
                   <div
@@ -224,14 +236,31 @@ export default function ConnectCallsPage() {
                           </AvatarFallback>
                         </Avatar>
                         <PresenceIndicator
-                          status={emp.presence || "online"}
+                          status={dynamicPresence}
                           size="sm"
+                          withPulse={dynamicPresence === "online"}
                           className="absolute -bottom-0.5 -right-0.5"
                         />
                       </div>
                       <div className="min-w-0">
                         <p className="font-semibold text-foreground truncate">{fullName}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{emp.department || "General"}</p>
+                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground truncate">
+                          <span>{emp.department || "General"}</span>
+                          <span>•</span>
+                          <span
+                            className={
+                              dynamicPresence === "online"
+                                ? "text-emerald-500 font-semibold"
+                                : dynamicPresence === "away"
+                                ? "text-amber-500 font-semibold"
+                                : dynamicPresence === "busy" || dynamicPresence === "dnd"
+                                ? "text-rose-500 font-semibold"
+                                : "text-muted-foreground"
+                            }
+                          >
+                            {dynamicPresence === "online" ? "Online" : "Offline"}
+                          </span>
+                        </div>
                       </div>
                     </div>
 

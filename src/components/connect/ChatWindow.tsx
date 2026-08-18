@@ -404,15 +404,28 @@ export function ChatWindow({
 
   // Dynamic Real-time Recipient Presence
   const recipientPresence: PresenceStatus = useMemo(() => {
-    const rId = (recipientEntity as any)?.id ? String((recipientEntity as any).id) : "";
-    const rUserId = (recipientEntity as any)?.userId ? String((recipientEntity as any).userId) : "";
-    const rEmail = (recipientEntity as any)?.email ? String((recipientEntity as any).email).toLowerCase() : "";
-    const convId = activeConversationId ? String(activeConversationId).replace(/^conv_/, "") : "";
+    const rId = (recipientEntity as any)?.id ? String((recipientEntity as any).id).trim() : "";
+    const rUserId = ((recipientEntity as any)?.userId || (recipientEntity as any)?.user_id)
+      ? String((recipientEntity as any).userId || (recipientEntity as any).user_id).trim()
+      : "";
+    const rEmpId = ((recipientEntity as any)?.employee_id || (recipientEntity as any)?.employeeId)
+      ? String((recipientEntity as any).employee_id || (recipientEntity as any).employeeId).trim()
+      : "";
+    const rEmail = (recipientEntity as any)?.email ? String((recipientEntity as any).email).toLowerCase().trim() : "";
+    const convId = activeConversationId ? String(activeConversationId).replace(/^conv_/, "").trim() : "";
 
     if (rId && userPresenceMap[rId]) return userPresenceMap[rId];
     if (rUserId && userPresenceMap[rUserId]) return userPresenceMap[rUserId];
+    if (rEmpId && userPresenceMap[rEmpId]) return userPresenceMap[rEmpId];
     if (rEmail && userPresenceMap[rEmail]) return userPresenceMap[rEmail];
     if (convId && userPresenceMap[convId]) return userPresenceMap[convId];
+
+    // Clean prefix lookups
+    const cleanRId = rId.replace(/^conv_/, "").replace(/^usr_/, "");
+    if (cleanRId && userPresenceMap[cleanRId]) return userPresenceMap[cleanRId];
+
+    const cleanRUserId = rUserId.replace(/^conv_/, "").replace(/^usr_/, "");
+    if (cleanRUserId && userPresenceMap[cleanRUserId]) return userPresenceMap[cleanRUserId];
 
     const staticPresence = (recipientEntity as any)?.presence;
     if (
@@ -560,6 +573,7 @@ export function ChatWindow({
             <PresenceIndicator
               status={participant.presence}
               size="sm"
+              withPulse={participant.presence === "online"}
               className="absolute -bottom-0.5 -right-0.5 ring-2 ring-background"
             />
           </div>

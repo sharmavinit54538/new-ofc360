@@ -2,6 +2,8 @@ import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ConnectLayout } from "@/components/connect/ConnectLayout";
 import { useConnect, useConnectCall } from "@/features/connect/hooks";
+import { useAppSelector } from "@/app/hooks";
+import { selectUserPresenceMap } from "@/features/connect/selectors";
 import { useGetColleaguesQuery, useCreateConversationMutation } from "@/services/api/connectApi";
 import { useAuth } from "@/hooks/useAuth";
 import { ConnectUser } from "@/types/connect";
@@ -25,6 +27,7 @@ export default function ConnectContactsPage() {
   const { user: currentUser } = useAuth();
   const { setActiveTab, setActiveConversationId } = useConnect();
   const { startOutgoingCall } = useConnectCall();
+  const userPresenceMap = useAppSelector(selectUserPresenceMap);
 
   const [search, setSearch] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("ALL");
@@ -176,6 +179,16 @@ export default function ConnectContactsPage() {
               {filteredEmployees.map((emp) => {
                 const fullName = emp.name || emp.email;
                 const initials = fullName.slice(0, 2).toUpperCase();
+                const empId = String(emp.id || "").trim();
+                const empUserId = String(emp.userId || "").trim();
+                const empEmail = emp.email ? emp.email.trim().toLowerCase() : "";
+
+                const dynamicPresence =
+                  (empId && userPresenceMap[empId]) ||
+                  (empUserId && userPresenceMap[empUserId]) ||
+                  (empEmail && userPresenceMap[empEmail]) ||
+                  emp.presence ||
+                  "offline";
 
                 return (
                   <div
@@ -193,8 +206,9 @@ export default function ConnectContactsPage() {
                             </AvatarFallback>
                           </Avatar>
                           <PresenceIndicator
-                            status={emp.presence || "online"}
+                            status={dynamicPresence}
                             size="md"
+                            withPulse={dynamicPresence === "online"}
                             className="absolute -bottom-0.5 -right-0.5 ring-2 ring-card"
                           />
                         </div>
@@ -206,9 +220,33 @@ export default function ConnectContactsPage() {
                           <p className="text-[11px] text-muted-foreground truncate">
                             {emp.designation || emp.role || "Team Member"}
                           </p>
-                          <span className="text-[10px] text-primary/80 font-medium truncate block">
-                            {emp.department || "General"}
-                          </span>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] text-primary/80 font-medium truncate">
+                              {emp.department || "General"}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">•</span>
+                            <span
+                              className={`text-[10px] font-semibold ${
+                                dynamicPresence === "online"
+                                  ? "text-emerald-500"
+                                  : dynamicPresence === "away"
+                                  ? "text-amber-500"
+                                  : dynamicPresence === "busy" || dynamicPresence === "dnd"
+                                  ? "text-rose-500"
+                                  : "text-muted-foreground"
+                              }`}
+                            >
+                              {dynamicPresence === "online"
+                                ? "● Online"
+                                : dynamicPresence === "away"
+                                ? "● Away"
+                                : dynamicPresence === "busy"
+                                ? "● Busy"
+                                : dynamicPresence === "dnd"
+                                ? "● DND"
+                                : "○ Offline"}
+                            </span>
+                          </div>
                         </div>
                       </div>
 

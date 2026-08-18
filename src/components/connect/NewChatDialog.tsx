@@ -169,12 +169,14 @@ export function NewChatDialog({ open, onOpenChange, onSelectConversation }: NewC
                         </AvatarFallback>
                       </Avatar>
                       {(() => {
-                        const eId = emp.id;
-                        const eUserId = emp.userId;
-                        const eEmail = emp.email?.toLowerCase();
+                        const eId = String(emp.id || "").trim();
+                        const eUserId = String(emp.userId || (emp as any).user_id || "").trim();
+                        const eEmpId = String((emp as any).employee_id || (emp as any).employeeId || "").trim();
+                        const eEmail = emp.email ? emp.email.toLowerCase().trim() : "";
                         const dynamicPresence =
                           (eId && userPresenceMap[eId]) ||
                           (eUserId && userPresenceMap[eUserId]) ||
+                          (eEmpId && userPresenceMap[eEmpId]) ||
                           (eEmail && userPresenceMap[eEmail]) ||
                           emp.presence ||
                           "offline";
@@ -183,6 +185,7 @@ export function NewChatDialog({ open, onOpenChange, onSelectConversation }: NewC
                           <PresenceIndicator
                             status={dynamicPresence}
                             size="sm"
+                            withPulse={dynamicPresence === "online"}
                             className="absolute -bottom-0.5 -right-0.5 ring-2 ring-background"
                           />
                         );

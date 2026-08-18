@@ -194,6 +194,7 @@ export function ChatList({ onSelectConversation, className = "" }: ChatListProps
                       <PresenceIndicator
                         status={dynamicPresence}
                         size="sm"
+                        withPulse={dynamicPresence === "online"}
                         className="absolute -bottom-0.5 -right-0.5 ring-2 ring-background"
                       />
                     );

@@ -19,9 +19,20 @@ import {
   addParticipant,
   removeParticipant,
 } from "@/features/connect/meetingSlice";
-import { setUserPresence, setBatchUserPresences } from "@/features/connect/presenceSlice";
+import {
+  setUserPresence,
+  setBatchUserPresences,
+  setCurrentUserPresence,
+} from "@/features/connect/presenceSlice";
 import { connectAudioManager } from "@/services/connectAudioManager";
-import { ConnectMessage, ConnectNotification, WebSocketEvent, WebSocketEventType, PresenceStatus } from "@/types/connect";
+import { tabSessionManager } from "@/services/tabSessionManager";
+import {
+  ConnectMessage,
+  ConnectNotification,
+  WebSocketEvent,
+  WebSocketEventType,
+  PresenceStatus,
+} from "@/types/connect";
 
 class ConnectWebSocketService {
   private ws: WebSocket | null = null;
@@ -40,7 +51,11 @@ class ConnectWebSocketService {
       return;
     }
 
-    const token = localStorage.getItem("accessToken") || localStorage.getItem("auth_token") || localStorage.getItem("token") || "";
+    const token =
+      localStorage.getItem("accessToken") ||
+      localStorage.getItem("auth_token") ||
+      localStorage.getItem("token") ||
+      "";
     if (!token) {
       return;
     }
@@ -67,17 +82,30 @@ class ConnectWebSocketService {
         this.reconnectAttempts = 0;
         console.log("[PRESENCE_CONNECT] WebSocket connection established successfully.");
         store.dispatch(setConnected(true));
+        store.dispatch(setCurrentUserPresence("online"));
         this.startHeartbeat();
 
-        // Broadcast client online presence to server and connected peers
+        // Register active browser tab
         const currentUser = store.getState().auth.user;
-        const currentUserId = currentUser?.id || currentUser?._id || "";
+        const currentUserId = String(currentUser?.id || currentUser?._id || "");
         if (currentUserId) {
-          this.send("presence:change", {
+          tabSessionManager.registerTab(currentUserId);
+
+          // Broadcast client online presence to server and connected peers
+          const onlinePayload = {
             userId: currentUserId,
+            user_id: currentUserId,
+            employeeId: currentUser?.employee_id || currentUser?.employeeId,
+            employee_id: currentUser?.employee_id || currentUser?.employeeId,
+            email: currentUser?.email,
+            name: currentUser?.name,
             status: "online",
             lastSeen: new Date().toISOString(),
-          });
+          };
+
+          this.send("presence:change", onlinePayload);
+          this.send("USER_ONLINE", onlinePayload);
+          this.send("presence:sync", { userId: currentUserId });
           console.log(`[PRESENCE_ONLINE] Sent client online presence for user: ${currentUserId}`);
         }
       };
@@ -147,35 +175,61 @@ class ConnectWebSocketService {
     }
   }
 
-  public disconnect() {
-    this.isExplicitlyClosed = true;
-    console.log("[PRESENCE_DISCONNECT] Explicitly closing WebSocket connection...");
+  public disconnect(isExplicitLogout: boolean = true) {
+    const currentUser = store.getState().auth.user;
+    const currentUserId = String(currentUser?.id || currentUser?._id || "");
+
+    const { remainingTabsCount } = tabSessionManager.unregisterTab(currentUserId, isExplicitLogout);
+
+    if (isExplicitLogout) {
+      this.isExplicitlyClosed = true;
+      store.dispatch(setCurrentUserPresence("offline"));
+    }
+
+    console.log(
+      `[PRESENCE_DISCONNECT] Closing WebSocket (explicit: ${isExplicitLogout}, remainingTabs: ${remainingTabsCount})...`
+    );
+
     this.stopHeartbeat();
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
+
     if (this.ws) {
       if (this.ws.readyState === WebSocket.OPEN) {
-        const currentUser = store.getState().auth.user;
-        const currentUserId = currentUser?.id || currentUser?._id || "";
-        try {
-          this.ws.send(
-            JSON.stringify({
-              event: "presence:change",
-              data: {
-                userId: currentUserId,
-                status: "offline",
-                lastSeen: new Date().toISOString(),
-              },
-              timestamp: new Date().toISOString(),
-            })
-          );
-          console.log(`[PRESENCE_OFFLINE] Sent client offline presence before closing.`);
-        } catch {}
+        // Only broadcast USER_OFFLINE if this is an explicit logout OR it's the last active tab
+        if (isExplicitLogout || remainingTabsCount === 0) {
+          try {
+            const offlinePayload = {
+              userId: currentUserId,
+              user_id: currentUserId,
+              employee_id: currentUser?.employee_id || currentUser?.employeeId,
+              email: currentUser?.email,
+              status: "offline",
+              lastSeen: new Date().toISOString(),
+            };
+
+            this.ws.send(
+              JSON.stringify({
+                event: "presence:change",
+                data: offlinePayload,
+                timestamp: new Date().toISOString(),
+              })
+            );
+            this.ws.send(
+              JSON.stringify({
+                event: "USER_OFFLINE",
+                data: offlinePayload,
+                timestamp: new Date().toISOString(),
+              })
+            );
+            console.log(`[PRESENCE_OFFLINE] Sent client offline presence before closing.`);
+          } catch {}
+        }
       }
       try {
-        this.ws.close(1000, "Client disconnect");
+        this.ws.close(1000, isExplicitLogout ? "Explicit logout" : "Tab closed");
       } catch {}
       this.ws = null;
     }
@@ -559,22 +613,46 @@ class ConnectWebSocketService {
             setUserPresence({
               userId: targetUserId,
               user_id: data.user_id,
-              employee_id: data.employee_id,
+              employeeId: data.employeeId || data.employee_id,
+              employee_id: data.employee_id || data.employeeId,
+              id: data.id || data._id,
               email: data.email,
               status: targetStatus,
             })
           );
+
+          const candidateIds = new Set<string>(
+            [
+              targetUserId,
+              data.user_id,
+              data.userId,
+              data.id,
+              data._id,
+              data.employee_id,
+              data.employeeId,
+            ]
+              .filter(Boolean)
+              .map((x) => String(x).trim())
+          );
+          const cleanTargetId = targetUserId.replace(/^conv_/, "").replace(/^usr_/, "");
+          if (cleanTargetId) candidateIds.add(cleanTargetId);
+
+          const candidateEmail = data.email ? String(data.email).trim().toLowerCase() : "";
 
           // Real-time cache updates in RTK Query
           store.dispatch(
             connectApi.util.updateQueryData("getConversations", undefined, (draft) => {
               draft.forEach((conv) => {
                 const p = conv.participant;
+                if (!p) return;
+                const pId = String(p.id || "").trim();
+                const pUserId = String(p.userId || "").trim();
+                const pEmail = p.email ? p.email.trim().toLowerCase() : "";
+
                 if (
-                  p &&
-                  (String(p.id) === targetUserId ||
-                    String(p.userId) === targetUserId ||
-                    (p.email && data.email && p.email.toLowerCase() === data.email.toLowerCase()))
+                  candidateIds.has(pId) ||
+                  candidateIds.has(pUserId) ||
+                  (candidateEmail && pEmail && pEmail === candidateEmail)
                 ) {
                   p.presence = targetStatus;
                 }
@@ -586,10 +664,14 @@ class ConnectWebSocketService {
             connectApi.util.updateQueryData("getColleagues", undefined, (draft) => {
               if (Array.isArray(draft)) {
                 draft.forEach((colleague) => {
+                  const cId = String(colleague.id || "").trim();
+                  const cUserId = String(colleague.userId || "").trim();
+                  const cEmail = colleague.email ? colleague.email.trim().toLowerCase() : "";
+
                   if (
-                    String(colleague.id) === targetUserId ||
-                    String(colleague.userId) === targetUserId ||
-                    (colleague.email && data.email && colleague.email.toLowerCase() === data.email.toLowerCase())
+                    candidateIds.has(cId) ||
+                    candidateIds.has(cUserId) ||
+                    (candidateEmail && cEmail && cEmail === candidateEmail)
                   ) {
                     colleague.presence = targetStatus;
                   }

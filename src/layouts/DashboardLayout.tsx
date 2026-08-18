@@ -62,7 +62,7 @@ export default function DashboardLayout() {
     }
 
     const handleBeforeUnload = () => {
-      connectWebSocketService.disconnect();
+      connectWebSocketService.disconnect(false);
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
