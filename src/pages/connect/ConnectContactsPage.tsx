@@ -1,12 +1,13 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ConnectLayout } from "@/components/connect/ConnectLayout";
-import { useConnect, useConnectCall } from "@/features/connect/hooks";
+import { useConnect } from "@/features/connect/hooks";
 import { useAppSelector } from "@/app/hooks";
 import { selectUserPresenceMap } from "@/features/connect/selectors";
 import { useGetColleaguesQuery, useCreateConversationMutation } from "@/services/api/connectApi";
 import { useAuth } from "@/hooks/useAuth";
 import { ConnectUser } from "@/types/connect";
+import { connectCallOrchestrator } from "@/services/connectCallOrchestrator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +27,6 @@ export default function ConnectContactsPage() {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const { setActiveTab, setActiveConversationId } = useConnect();
-  const { startOutgoingCall } = useConnectCall();
   const userPresenceMap = useAppSelector(selectUserPresenceMap);
 
   const [search, setSearch] = useState("");
@@ -44,54 +44,37 @@ export default function ConnectContactsPage() {
 
   const [createConversation] = useCreateConversationMutation();
 
-  const employeesList: ConnectUser[] = useMemo(() => {
+  const colleaguesList: ConnectUser[] = useMemo(() => {
     let list: ConnectUser[] = [];
     if (Array.isArray(colleaguesData)) {
       list = colleaguesData;
-    } else if (colleaguesData && typeof colleaguesData === "object") {
-      const src = colleaguesData as any;
-      if (Array.isArray(src.colleagues)) {
-        list = src.colleagues;
-      } else if (Array.isArray(src.data?.colleagues)) {
-        list = src.data.colleagues;
-      } else if (Array.isArray(src.data)) {
-        list = src.data;
-      } else if (Array.isArray(src.items)) {
-        list = src.items;
-      }
+    } else if (colleaguesData && (colleaguesData as any).colleagues) {
+      list = (colleaguesData as any).colleagues;
     }
-    const userId = currentUser?.id || (currentUser as any)?._id;
-    const userEmail = currentUser?.email || (currentUser as any)?.emailAddress;
-    return list.filter((emp) => {
-      const empId = emp.id || (emp as any)?._id;
-      const empEmail = emp.email || (emp as any)?.emailAddress;
-      return empId !== userId && empEmail !== userEmail;
-    });
+    return list.filter((emp) => emp?.id && (emp.name || emp.email) && emp.id !== currentUser?.id && emp.email !== currentUser?.email);
   }, [colleaguesData, currentUser]);
 
   const departments = useMemo(() => {
     const set = new Set<string>();
-    employeesList.forEach((e) => {
-      if (e.department) set.add(e.department);
+    colleaguesList.forEach((c) => {
+      if (c.department) set.add(c.department);
     });
-    return Array.from(set);
-  }, [employeesList]);
+    return ["ALL", ...Array.from(set)];
+  }, [colleaguesList]);
 
   const filteredEmployees = useMemo(() => {
-    let list = employeesList;
-    if (departmentFilter !== "ALL") {
-      list = list.filter((e) => e.department === departmentFilter);
-    }
-    if (!search.trim()) return list;
-    const q = search.toLowerCase();
-    return list.filter(
-      (e) =>
-        (e.name && e.name.toLowerCase().includes(q)) ||
-        (e.email && e.email.toLowerCase().includes(q)) ||
-        (e.role && e.role.toLowerCase().includes(q)) ||
-        (e.designation && e.designation.toLowerCase().includes(q))
-    );
-  }, [employeesList, departmentFilter, search]);
+    return colleaguesList.filter((emp) => {
+      const matchesDept = departmentFilter === "ALL" || emp.department === departmentFilter;
+      const q = search.toLowerCase();
+      const matchesSearch =
+        !search.trim() ||
+        (emp.name && emp.name.toLowerCase().includes(q)) ||
+        (emp.email && emp.email.toLowerCase().includes(q)) ||
+        (emp.role && emp.role.toLowerCase().includes(q));
+
+      return matchesDept && matchesSearch;
+    });
+  }, [colleaguesList, departmentFilter, search]);
 
   const handleStartMessage = async (emp: ConnectUser) => {
     try {
@@ -107,9 +90,9 @@ export default function ConnectContactsPage() {
     }
   };
 
-  const handleStartCall = (emp: ConnectUser, type: "audio" | "video") => {
-    startOutgoingCall(emp, type);
+  const handleStartCall = async (emp: ConnectUser, type: "audio" | "video") => {
     toast.info(`Calling ${emp.name}...`);
+    await connectCallOrchestrator.initiateCall(emp, type);
   };
 
   return (
