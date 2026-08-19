@@ -16,7 +16,7 @@ import { normalizeError } from "@/services/api/normalizeError";
 
 describe("Manager Module — Payload Builders & Error Handling", () => {
   describe("buildManagerCreatePayload", () => {
-    it("should build dual camelCase and snake_case payload from standard EmployeeFormDialog submission", () => {
+    it("should build clean snake_case payload with distinct designation and role", () => {
       const formInput = {
         firstName: "Rajesh",
         lastName: "Kumar",
@@ -52,83 +52,91 @@ describe("Manager Module — Payload Builders & Error Handling", () => {
 
       const payload = buildManagerCreatePayload(formInput);
 
-      // Name variants
-      expect(payload.firstName).toBe("Rajesh");
+      // Core name & contact
       expect(payload.first_name).toBe("Rajesh");
-      expect(payload.lastName).toBe("Kumar");
       expect(payload.last_name).toBe("Kumar");
-      expect(payload.name).toBe("Rajesh Kumar");
-      expect(payload.fullName).toBe("Rajesh Kumar");
-      expect(payload.full_name).toBe("Rajesh Kumar");
-
-      // Email variants
-      expect(payload.email).toBe("rajesh@company.com");
-      expect(payload.work_email).toBe("rajesh@company.com");
-      expect(payload.company_email).toBe("rajesh@company.com");
       expect(payload.personal_email).toBe("rajesh.k@gmail.com");
-      expect(payload.personalEmail).toBe("rajesh.k@gmail.com");
-      expect(payload.companyWorkEmail).toBe("rajesh@company.com");
-
-      // Phone variants
+      expect(payload.company_email).toBe("rajesh@company.com");
       expect(payload.phone).toBe("+91 9876543210");
-      expect(payload.phone_number).toBe("+91 9876543210");
-      expect(payload.phoneNumber).toBe("+91 9876543210");
       expect(payload.alternate_phone).toBe("+91 9876543211");
-      expect(payload.alternatePhone).toBe("+91 9876543211");
 
-      // Department & Role variants
+      // Verify strict separation of job designation and system role
       expect(payload.department).toBe("Engineering");
-      expect(payload.department_name).toBe("Engineering");
       expect(payload.designation).toBe("Engineering Lead");
-      expect(payload.role).toBe("Engineering Lead");
-      expect(payload.systemRole).toBe("manager");
-      expect(payload.system_role).toBe("manager");
+      expect(payload.role).toBe("manager");
+      expect(payload.role).not.toBe("Engineering Lead");
 
-      // Core details
+      // Ensure no duplicate camelCase keys
+      expect(payload.firstName).toBeUndefined();
+      expect(payload.lastName).toBeUndefined();
+      expect(payload.personalEmail).toBeUndefined();
+      expect(payload.systemRole).toBeUndefined();
+      expect(payload.system_role).toBeUndefined();
+
+      // Employment & compensation
       expect(payload.joining_date).toBe("2024-01-15");
-      expect(payload.joiningDate).toBe("2024-01-15");
       expect(payload.employment_type).toBe("FULL_TIME");
-      expect(payload.employmentType).toBe("FULL_TIME");
-      expect(payload.status).toBe("Active");
+      expect(payload.employment_status).toBe("ACTIVE");
+      expect(payload.gender).toBe("MALE");
+      expect(payload.marital_status).toBe("MARRIED");
+      expect(payload.blood_group).toBe("O+");
+      expect(payload.branch).toBe("Bengaluru Tech Park");
+      expect(payload.work_location).toBe("Hybrid");
+      expect(payload.probation_period_months).toBe(3);
       expect(payload.ctc).toBe(2400000);
-      expect(payload.salary).toBe(2400000);
       expect(payload.basic_salary).toBe(1200000);
-      expect(payload.basicSalary).toBe(1200000);
+      expect(payload.hra).toBe(600000);
+      expect(payload.bonus).toBe(300000);
+      expect(payload.pf).toBe(144000);
+      expect(payload.esi).toBe(0);
+      expect(payload.professional_tax).toBe(2500);
+      expect(payload.leave_group).toBe("Management Policy");
     });
 
-    it("should handle snake_case inputs and produce complete normalized payload", () => {
-      const snakeInput = {
-        first_name: "Priya",
-        last_name: "Sharma",
-        personal_email: "priya.sharma@example.com",
-        phone_number: "9876543210",
-        department_name: "Design",
-        role: "Design Manager",
-        system_role: "manager",
-        joining_date: "2023-05-01",
-        employment_type: "FULL_TIME",
-        salary: 1800000,
+    it("should handle exact user case: Cloud & DevOps Engineer with systemRole manager", () => {
+      const input = {
+        firstName: "Mamraj",
+        lastName: "Yadav",
+        personalEmail: "themamraj0131@gmail.com",
+        companyWorkEmail: "mamraj@ofc360.com",
+        phoneNumber: "9828740131",
+        department: "Engineering",
+        designation: "Cloud & DevOps Engineer",
+        systemRole: "manager",
+        joiningDate: "2026-08-19",
+        status: "Active",
       };
 
-      const payload = buildManagerCreatePayload(snakeInput);
+      const payload = buildManagerCreatePayload(input);
 
-      expect(payload.first_name).toBe("Priya");
-      expect(payload.firstName).toBe("Priya");
-      expect(payload.last_name).toBe("Sharma");
-      expect(payload.lastName).toBe("Sharma");
-      expect(payload.full_name).toBe("Priya Sharma");
-      expect(payload.personal_email).toBe("priya.sharma@example.com");
-      expect(payload.phone).toBe("9876543210");
-      expect(payload.phone_number).toBe("9876543210");
-      expect(payload.department).toBe("Design");
-      expect(payload.department_name).toBe("Design");
-      expect(payload.systemRole).toBe("manager");
-      expect(payload.system_role).toBe("manager");
-      expect(payload.ctc).toBe(1800000);
-      expect(payload.salary).toBe(1800000);
+      expect(payload.first_name).toBe("Mamraj");
+      expect(payload.last_name).toBe("Yadav");
+      expect(payload.personal_email).toBe("themamraj0131@gmail.com");
+      expect(payload.company_email).toBe("mamraj@ofc360.com");
+      expect(payload.phone).toBe("9828740131");
+      expect(payload.department).toBe("Engineering");
+      expect(payload.designation).toBe("Cloud & DevOps Engineer");
+      expect(payload.role).toBe("manager");
+      expect(payload.employment_status).toBe("ACTIVE");
     });
 
-    it("should handle sub-arrays (addresses, kyc, education, experience, emergency contacts, bank accounts)", () => {
+    it("should handle employee system role gracefully", () => {
+      const input = {
+        firstName: "Anil",
+        lastName: "Kapoor",
+        personalEmail: "anil@example.com",
+        phone: "9876543210",
+        department: "Engineering",
+        designation: "Software Engineer",
+        systemRole: "employee",
+      };
+
+      const payload = buildManagerCreatePayload(input);
+      expect(payload.designation).toBe("Software Engineer");
+      expect(payload.role).toBe("employee");
+    });
+
+    it("should handle sub-arrays (addresses, documents, education, experience, emergency contacts, skills)", () => {
       const input = {
         name: "Vikram Malhotra",
         email: "vikram@example.com",
@@ -148,13 +156,11 @@ describe("Manager Module — Payload Builders & Error Handling", () => {
             documentNumber: "ABCDE1234F",
           },
         ],
-        bankAccounts: [
-          {
-            bankName: "HDFC Bank",
-            accountNumber: "1234567890",
-            ifscCode: "HDFC0001234",
-            accountType: "SAVINGS",
-          },
+        skills: [
+          { name: "Kubernetes", proficiency: "Expert", years: 5 },
+        ],
+        emergencyContacts: [
+          { name: "Rohit Sharma", relation: "Brother", phone: "9876543210" },
         ],
       };
 
@@ -170,36 +176,43 @@ describe("Manager Module — Payload Builders & Error Handling", () => {
       expect(payload.documents?.[0].document_type).toBe("PAN");
       expect(payload.documents?.[0].document_number).toBe("ABCDE1234F");
 
-      expect(payload.bank_accounts).toBeDefined();
-      expect(payload.bank_accounts?.length).toBe(1);
-      expect(payload.bank_accounts?.[0].bank_name).toBe("HDFC Bank");
-      expect(payload.bank_accounts?.[0].account_number).toBe("1234567890");
+      expect(payload.skills).toBeDefined();
+      expect(payload.skills?.[0].skill_name).toBe("Kubernetes");
+      expect(payload.skills?.[0].proficiency).toBe("EXPERT");
+
+      expect(payload.emergency_contacts).toBeDefined();
+      expect(payload.emergency_contacts?.[0].name).toBe("Rohit Sharma");
     });
   });
 
   describe("buildManagerUpdatePayload", () => {
-    it("should build dual keys for partial updates", () => {
+    it("should build clean snake_case payload for partial updates", () => {
       const changes = {
         firstName: "Ananya",
         lastName: "Deshmukh",
         department: "Product",
+        designation: "Lead Product Manager",
+        systemRole: "manager",
         phone: "+91 9123456789",
+        status: "Active",
         ctc: 3000000,
       };
 
       const payload = buildManagerUpdatePayload(changes);
 
-      expect(payload.firstName).toBe("Ananya");
       expect(payload.first_name).toBe("Ananya");
-      expect(payload.lastName).toBe("Deshmukh");
       expect(payload.last_name).toBe("Deshmukh");
-      expect(payload.full_name).toBe("Ananya Deshmukh");
       expect(payload.department).toBe("Product");
-      expect(payload.department_name).toBe("Product");
+      expect(payload.designation).toBe("Lead Product Manager");
+      expect(payload.role).toBe("manager");
       expect(payload.phone).toBe("+91 9123456789");
-      expect(payload.phone_number).toBe("+91 9123456789");
+      expect(payload.employment_status).toBe("ACTIVE");
       expect(payload.ctc).toBe(3000000);
-      expect(payload.salary).toBe(3000000);
+
+      // Ensure no duplicate camelCase keys
+      expect(payload.firstName).toBeUndefined();
+      expect(payload.lastName).toBeUndefined();
+      expect(payload.systemRole).toBeUndefined();
     });
   });
 
