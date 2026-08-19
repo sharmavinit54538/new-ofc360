@@ -1,3 +1,12 @@
+import type {
+  CompanyDetails,
+  HRAdminProfile,
+  CompanyBranding,
+  OnboardingPreferences,
+  OnboardingStatus,
+  CompleteOnboardingData,
+} from "@/types/hrAdminOnboarding";
+
 // ─── Generic API Envelope ────────────────────────────────────────────
 export interface APIResponse<T> {
   success: boolean;
@@ -14,30 +23,16 @@ export interface OnboardingStatusResponse {
   total_steps: number;
 }
 
-export interface OnboardingWizardData {
-  current_step: number;
-  completed: boolean;
-  completed_at: string | null;
-  companyName: string;
-  logo: string;
-  industry: string;
-  companySize: string;
-  website: string;
-  country: string;
-  timezone: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  gstNumber: string;
-  fullName: string;
-  phone: string;
-  avatar: string;
-  termsAccepted: boolean;
-  dpaAccepted: boolean;
-}
+export type OnboardingWizardData = CompleteOnboardingData;
 
-export type SaveStepPayload = Partial<Omit<OnboardingWizardData, "current_step" | "completed" | "completed_at">>;
+export type SaveStepPayload = {
+  company?: Partial<CompanyDetails>;
+  hr_admin?: Partial<HRAdminProfile>;
+  branding?: Partial<CompanyBranding>;
+  preferences?: Partial<OnboardingPreferences>;
+  onboarding?: Partial<OnboardingStatus>;
+  [key: string]: any;
+};
 
 // ─── B. Workflows ────────────────────────────────────────────────────
 

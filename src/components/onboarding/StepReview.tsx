@@ -3,7 +3,7 @@ import { CompanyDetails, HRAdminProfile, CompanyBranding, OnboardingPreferences 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Building2, User, Stamp, Sliders, CheckCircle2, Edit3, ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
+import { Building2, User, Stamp, Sliders, CheckCircle2, Edit3, ArrowRight, ShieldCheck, Sparkles, Loader2 } from "lucide-react";
 
 interface StepReviewProps {
   company: CompanyDetails;
@@ -11,8 +11,9 @@ interface StepReviewProps {
   branding: CompanyBranding;
   preferences: OnboardingPreferences;
   onEditStep: (stepIndex: number) => void;
-  onComplete: () => void;
+  onComplete: () => Promise<void> | void;
   onBack: () => void;
+  isLoading?: boolean;
 }
 
 export function StepReview({
@@ -23,37 +24,20 @@ export function StepReview({
   onEditStep,
   onComplete,
   onBack,
+  isLoading,
 }: StepReviewProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isCompletedState, setIsCompletedState] = useState(false);
 
-  const handleFinalSubmit = () => {
+  const handleFinalSubmit = async () => {
     setIsSubmitting(true);
-    setTimeout(() => {
+    try {
+      await onComplete();
+    } finally {
       setIsSubmitting(false);
-      setIsCompletedState(true);
-      onComplete();
-    }, 600);
+    }
   };
 
-  if (isCompletedState) {
-    return (
-      <div className="text-center py-12 space-y-5 animate-in zoom-in-95 duration-300">
-        <div className="w-20 h-20 rounded-full bg-success/10 border-2 border-success/30 text-success flex items-center justify-center mx-auto shadow-lg">
-          <CheckCircle2 className="w-10 h-10" />
-        </div>
-        <div className="space-y-2 max-w-md mx-auto">
-          <Badge className="bg-success text-success-foreground font-semibold px-3 py-1 text-xs">Setup Complete</Badge>
-          <h2 className="text-2xl font-extrabold text-foreground tracking-tight">
-            Your HR Workspace is Ready!
-          </h2>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Organization details, HR Admin credentials, official stamps, and preferences have been persisted securely. Redirecting to your HR Dashboard...
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const isWorking = isSubmitting || isLoading;
 
   return (
     <div className="space-y-6">
@@ -71,7 +55,7 @@ export function StepReview({
             <Building2 className="w-4 h-4 text-primary" />
             <span>Company Details</span>
           </h4>
-          <Button variant="ghost" size="sm" onClick={() => onEditStep(1)} className="h-7 text-xs gap-1 text-primary hover:text-primary/80">
+          <Button variant="ghost" size="sm" onClick={() => onEditStep(1)} disabled={isWorking} className="h-7 text-xs gap-1 text-primary hover:text-primary/80">
             <Edit3 className="w-3.5 h-3.5" /> Edit
           </Button>
         </div>
@@ -98,6 +82,18 @@ export function StepReview({
             <span className="font-semibold text-foreground">{company.timezone}</span>
           </div>
           <div>
+            <span className="text-muted-foreground block text-[10px]">Official Email</span>
+            <span className="font-semibold text-foreground">{company.official_email || "None"}</span>
+          </div>
+          <div>
+            <span className="text-muted-foreground block text-[10px]">Official Phone</span>
+            <span className="font-semibold text-foreground">{company.official_phone || "None"}</span>
+          </div>
+          <div>
+            <span className="text-muted-foreground block text-[10px]">Website</span>
+            <span className="font-semibold text-foreground truncate block">{company.website || "None"}</span>
+          </div>
+          <div>
             <span className="text-muted-foreground block text-[10px]">CIN</span>
             <span className="font-mono text-foreground">{company.cin_number || "None"}</span>
           </div>
@@ -109,6 +105,18 @@ export function StepReview({
             <span className="text-muted-foreground block text-[10px]">PAN</span>
             <span className="font-mono text-foreground">{company.pan_number || "None"}</span>
           </div>
+          <div>
+            <span className="text-muted-foreground block text-[10px]">TAN</span>
+            <span className="font-mono text-foreground">{company.tan_number || "None"}</span>
+          </div>
+          <div className="col-span-2">
+            <span className="text-muted-foreground block text-[10px]">MSME Registration</span>
+            <span className="font-semibold text-foreground">{company.msme_registration_number || "None"}</span>
+          </div>
+          <div className="col-span-2">
+            <span className="text-muted-foreground block text-[10px]">Registered Address</span>
+            <span className="font-semibold text-foreground">{company.address || "None"}</span>
+          </div>
         </div>
       </Card>
 
@@ -119,7 +127,7 @@ export function StepReview({
             <User className="w-4 h-4 text-primary" />
             <span>HR Admin Profile</span>
           </h4>
-          <Button variant="ghost" size="sm" onClick={() => onEditStep(2)} className="h-7 text-xs gap-1 text-primary hover:text-primary/80">
+          <Button variant="ghost" size="sm" onClick={() => onEditStep(2)} disabled={isWorking} className="h-7 text-xs gap-1 text-primary hover:text-primary/80">
             <Edit3 className="w-3.5 h-3.5" /> Edit
           </Button>
         </div>
@@ -151,7 +159,7 @@ export function StepReview({
             <Stamp className="w-4 h-4 text-primary" />
             <span>Branding & Stamp</span>
           </h4>
-          <Button variant="ghost" size="sm" onClick={() => onEditStep(3)} className="h-7 text-xs gap-1 text-primary hover:text-primary/80">
+          <Button variant="ghost" size="sm" onClick={() => onEditStep(3)} disabled={isWorking} className="h-7 text-xs gap-1 text-primary hover:text-primary/80">
             <Edit3 className="w-3.5 h-3.5" /> Edit
           </Button>
         </div>
@@ -185,38 +193,56 @@ export function StepReview({
             <Sliders className="w-4 h-4 text-primary" />
             <span>Onboarding Preferences</span>
           </h4>
-          <Button variant="ghost" size="sm" onClick={() => onEditStep(4)} className="h-7 text-xs gap-1 text-primary hover:text-primary/80">
+          <Button variant="ghost" size="sm" onClick={() => onEditStep(4)} disabled={isWorking} className="h-7 text-xs gap-1 text-primary hover:text-primary/80">
             <Edit3 className="w-3.5 h-3.5" /> Edit
           </Button>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
           <div>
             <span className="text-muted-foreground block text-[10px]">Working Days</span>
-            <span className="font-semibold text-foreground">{preferences.work_days.join(", ")}</span>
+            <span className="font-semibold text-foreground">{preferences.work_days?.join(", ") || "Mon - Fri"}</span>
           </div>
           <div>
             <span className="text-muted-foreground block text-[10px]">Work Hours</span>
-            <span className="font-semibold text-foreground">{preferences.work_hours}</span>
+            <span className="font-semibold text-foreground">{preferences.work_hours || "09:00 - 18:00"}</span>
           </div>
           <div>
             <span className="text-muted-foreground block text-[10px]">Attendance Telemetry</span>
-            <span className="font-semibold text-foreground">{preferences.attendance_telemetry}</span>
+            <span className="font-semibold text-foreground">{preferences.attendance_telemetry || "Face + Web Check-in"}</span>
+          </div>
+          <div>
+            <span className="text-muted-foreground block text-[10px]">Payroll Cycle Day</span>
+            <span className="font-semibold text-foreground">{preferences.payroll_cycle_start ?? 1}</span>
+          </div>
+          <div className="col-span-2">
+            <span className="text-muted-foreground block text-[10px]">Notification Channels</span>
+            <span className="font-semibold text-foreground">{preferences.notification_channels?.join(", ") || "Email, In-App"}</span>
           </div>
         </div>
       </Card>
 
       <div className="pt-4 flex items-center justify-between">
-        <Button type="button" variant="outline" onClick={onBack} className="rounded-xl px-5 text-xs">
+        <Button type="button" variant="outline" onClick={onBack} disabled={isWorking} className="rounded-xl px-5 text-xs">
           Back
         </Button>
         <Button
           type="button"
           onClick={handleFinalSubmit}
-          disabled={isSubmitting}
+          disabled={isWorking}
           className="rounded-xl px-7 text-xs gap-2 bg-primary text-primary-foreground font-semibold shadow-md hover:bg-primary/90"
         >
-          {isSubmitting ? "Saving Setup..." : "Complete HR Admin Setup"} <ArrowRight className="w-4 h-4" />
+          {isWorking ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Saving Setup...</span>
+            </>
+          ) : (
+            <>
+              <span>Complete HR Admin Setup</span>
+              <ArrowRight className="w-4 h-4" />
+            </>
+          )}
         </Button>
       </div>
     </div>

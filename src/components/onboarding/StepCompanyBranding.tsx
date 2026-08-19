@@ -1,21 +1,34 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CompanyBranding } from "@/types/hrAdminOnboarding";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Upload, X, ArrowRight, AlertCircle, Stamp, Image, UserCheck, ShieldCheck } from "lucide-react";
+import { Upload, X, ArrowRight, AlertCircle, Stamp, Image, UserCheck, ShieldCheck, Loader2 } from "lucide-react";
 import { validateImageFile, fileToBase64 } from "@/utils/onboardingValidation";
 
 interface StepCompanyBrandingProps {
   initialData: CompanyBranding;
-  onSave: (data: CompanyBranding) => void;
+  onSave: (data: CompanyBranding) => Promise<void> | void;
   onBack: () => void;
+  isLoading?: boolean;
 }
 
-export function StepCompanyBranding({ initialData, onSave, onBack }: StepCompanyBrandingProps) {
+export function StepCompanyBranding({ initialData, onSave, onBack, isLoading }: StepCompanyBrandingProps) {
   const [formData, setFormData] = useState<CompanyBranding>(initialData);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData((prev) => ({
+        company_logo: initialData.company_logo !== undefined ? initialData.company_logo : prev.company_logo,
+        company_stamp: initialData.company_stamp !== undefined ? initialData.company_stamp : prev.company_stamp,
+        authorized_signatory_name: initialData.authorized_signatory_name || prev.authorized_signatory_name || "",
+        authorized_signatory_designation: initialData.authorized_signatory_designation || prev.authorized_signatory_designation || "",
+        letterhead: initialData.letterhead !== undefined ? initialData.letterhead : prev.letterhead,
+      }));
+    }
+  }, [initialData]);
 
   const handleChange = (field: keyof CompanyBranding, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -201,11 +214,21 @@ export function StepCompanyBranding({ initialData, onSave, onBack }: StepCompany
       </div>
 
       <div className="pt-4 flex items-center justify-between">
-        <Button type="button" variant="outline" onClick={onBack} className="rounded-xl px-5 text-xs">
+        <Button type="button" variant="outline" onClick={onBack} disabled={isLoading} className="rounded-xl px-5 text-xs">
           Back
         </Button>
-        <Button type="submit" className="rounded-xl px-6 text-xs gap-2">
-          Save & Continue <ArrowRight className="w-4 h-4" />
+        <Button type="submit" disabled={isLoading} className="rounded-xl px-6 text-xs gap-2">
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Saving Branding...</span>
+            </>
+          ) : (
+            <>
+              <span>Save & Continue</span>
+              <ArrowRight className="w-4 h-4" />
+            </>
+          )}
         </Button>
       </div>
     </form>

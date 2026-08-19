@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CompanyDetails, CompanySize } from "@/types/hrAdminOnboarding";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,6 +77,28 @@ const TIMEZONE_OPTIONS = [
 export function StepCompanyDetails({ initialData, onSave, isLoading }: StepCompanyDetailsProps) {
   const [formData, setFormData] = useState<CompanyDetails>(initialData);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData((prev) => ({
+        company_name: initialData.company_name || prev.company_name || "",
+        industry: initialData.industry || prev.industry || "",
+        country: initialData.country || prev.country || "India",
+        city: initialData.city || prev.city || "",
+        company_size: initialData.company_size || prev.company_size || "",
+        timezone: initialData.timezone || prev.timezone || "Asia/Kolkata",
+        address: initialData.address || prev.address || "",
+        cin_number: initialData.cin_number !== undefined ? initialData.cin_number : prev.cin_number,
+        gst_number: initialData.gst_number !== undefined ? initialData.gst_number : prev.gst_number,
+        pan_number: initialData.pan_number !== undefined ? initialData.pan_number : prev.pan_number,
+        tan_number: initialData.tan_number !== undefined ? initialData.tan_number : prev.tan_number,
+        msme_registration_number: initialData.msme_registration_number !== undefined ? initialData.msme_registration_number : prev.msme_registration_number,
+        website: initialData.website !== undefined ? initialData.website : prev.website,
+        official_email: initialData.official_email !== undefined ? initialData.official_email : prev.official_email,
+        official_phone: initialData.official_phone !== undefined ? initialData.official_phone : prev.official_phone,
+      }));
+    }
+  }, [initialData]);
 
   const availableCities = CITY_OPTIONS[formData.country] || ["Capital City", "Regional Metro", "Other"];
 
