@@ -4,17 +4,29 @@ import { SystemRole } from "@/features/auth/authTypes";
 export interface PlatformCompany {
   id: string;
   name: string;
-  domain: string;
-  plan: "Starter" | "Growth" | "Enterprise" | string;
+  domain?: string | null;
+  plan?: "Starter" | "Growth" | "Enterprise" | string | null;
   status: "Active" | "Suspended" | "Trial" | string;
   employeeCount: number;
-  hrAdminName: string;
-  hrAdminEmail: string;
-  storageUsedGb: number;
+  hrAdminName?: string;
+  hrAdminEmail?: string;
+  hr_admin?: {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string | null;
+  } | null;
+  hr_admins?: Array<{
+    id: string;
+    name: string;
+    email: string;
+    phone?: string | null;
+  }>;
+  storageUsedGb?: number;
   mrr: number;
   createdAt: string;
-  industry: string;
-  location: string;
+  industry?: string;
+  location?: string;
 }
 
 export interface PlatformUser {

@@ -121,13 +121,13 @@ export default function CompaniesPage() {
   const handleOpenEdit = (company: SuperAdminOrganization) => {
     setSelectedCompany(company);
     setName(company.name);
-    setDomain(company.domain);
-    setPlan(company.plan);
-    setStatus(company.status);
-    setHrAdminName(company.hrAdminName || "");
-    setHrAdminEmail(company.hrAdminEmail || "");
+    setDomain(company.domain || "");
+    setPlan(company.plan || "Growth");
+    setStatus(company.status || "Active");
+    setHrAdminName(company.hr_admin?.name || company.hrAdminName || "");
+    setHrAdminEmail(company.hr_admin?.email || company.hrAdminEmail || "");
     setEmployeeCount(String(company.employeeCount || company.employee_count || 10));
-    setMrr(String(company.mrr || 299));
+    setMrr(String(company.mrr || 0));
     setIndustry(company.industry || "Technology");
     setLocation(company.location || "Global");
     setIsEditOpen(true);
@@ -135,21 +135,21 @@ export default function CompaniesPage() {
 
   const handleSaveNewCompany = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !domain.trim() || !hrAdminEmail.trim()) {
-      toast.error("Please fill in the required company name, domain, and HR admin email.");
+    if (!name.trim() || !hrAdminEmail.trim()) {
+      toast.error("Please fill in the required company name and HR admin email.");
       return;
     }
 
     try {
       await createOrganization({
-        name,
-        domain,
+        name: name.trim(),
+        domain: domain.trim() || undefined,
         plan,
         status,
-        hrAdminName: hrAdminName || "HR Admin",
-        hrAdminEmail,
+        hrAdminName: hrAdminName.trim() || "HR Administrator",
+        hrAdminEmail: hrAdminEmail.trim().toLowerCase(),
         employeeCount: parseInt(employeeCount) || 10,
-        mrr: parseInt(mrr) || 1000,
+        mrr: parseFloat(mrr) || 0,
         industry,
         location,
       }).unwrap();
@@ -165,19 +165,23 @@ export default function CompaniesPage() {
   const handleSaveEditCompany = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCompany) return;
+    if (!name.trim()) {
+      toast.error("Organization name is required.");
+      return;
+    }
 
     try {
       await updateOrganization({
         id: selectedCompany.id,
         data: {
-          name,
-          domain,
+          name: name.trim(),
+          domain: domain.trim() || undefined,
           plan,
           status,
-          hrAdminName,
-          hrAdminEmail,
-          employeeCount: parseInt(employeeCount) || 10,
-          mrr: parseInt(mrr) || 1000,
+          hrAdminName: hrAdminName.trim() || undefined,
+          hrAdminEmail: hrAdminEmail.trim().toLowerCase() || undefined,
+          employeeCount: parseInt(employeeCount) || 0,
+          mrr: parseFloat(mrr) || 0,
           industry,
           location,
         },
@@ -332,14 +336,18 @@ export default function CompaniesPage() {
                       <div className="space-y-0.5">
                         <p className="text-xs font-bold text-foreground">{c.name}</p>
                         <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-mono">
-                          <Globe className="w-3 h-3 text-muted-foreground" />
-                          <span>{c.domain}</span>
+                          <Globe className="w-3 h-3 text-muted-foreground shrink-0" />
+                          {c.domain ? (
+                            <span>{c.domain}</span>
+                          ) : (
+                            <span className="italic text-muted-foreground/70">No domain configured</span>
+                          )}
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-[10px] font-semibold bg-secondary/50">
-                        {c.plan}
+                        {c.plan || "No Plan"}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -359,15 +367,28 @@ export default function CompaniesPage() {
                       {c.employeeCount || c.employee_count || 0} staff
                     </TableCell>
                     <TableCell>
-                      <div className="space-y-0.5">
-                        <p className="text-xs text-foreground font-medium">{c.hrAdminName}</p>
-                        <p className="text-[11px] text-muted-foreground">{c.hrAdminEmail}</p>
-                      </div>
+                      {c.hr_admin || (c.hrAdminName && c.hrAdminName.trim()) || (c.hrAdminEmail && c.hrAdminEmail.trim()) ? (
+                        <div className="space-y-0.5">
+                          <p className="text-xs text-foreground font-medium">
+                            {c.hr_admin?.name || c.hrAdminName || "HR Admin"}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground font-mono">
+                            {c.hr_admin?.email || c.hrAdminEmail}
+                          </p>
+                          {c.hr_admins && c.hr_admins.length > 1 && (
+                            <span className="inline-block text-[10px] text-primary font-medium bg-primary/10 px-1.5 py-0.5 rounded-full">
+                              +{c.hr_admins.length - 1} more
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground/70 italic">No HR Admin assigned</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <HardDrive className="w-3.5 h-3.5 text-primary" />
-                        <span>{c.storageUsedGb || 15.0} GB</span>
+                        <span>{c.storageUsedGb || 0.0} GB</span>
                       </div>
                     </TableCell>
                     <TableCell className="text-xs font-bold text-foreground">
@@ -440,10 +461,9 @@ export default function CompaniesPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Workspace Domain *</Label>
+                <Label className="text-xs font-semibold">Workspace Domain (Optional)</Label>
                 <Input
-                  required
-                  placeholder="e.g. acme.ofc360.com"
+                  placeholder="e.g. acme.com"
                   value={domain}
                   onChange={(e) => setDomain(e.target.value)}
                   className="text-xs h-8 font-mono"
@@ -565,7 +585,7 @@ export default function CompaniesPage() {
           <form onSubmit={handleSaveEditCompany} className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Company Name</Label>
+                <Label className="text-xs font-semibold">Company Name *</Label>
                 <Input
                   required
                   value={name}
@@ -577,7 +597,7 @@ export default function CompaniesPage() {
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold">Workspace Domain</Label>
                 <Input
-                  required
+                  placeholder="e.g. acme.com"
                   value={domain}
                   onChange={(e) => setDomain(e.target.value)}
                   className="text-xs h-8 font-mono"

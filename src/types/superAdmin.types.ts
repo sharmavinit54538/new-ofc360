@@ -66,11 +66,18 @@ export interface SuperAdminDashboardData {
   unpaid_active_customers: unknown[];
 }
 
+export interface SuperAdminHRAdminSummary {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+}
+
 export interface SuperAdminOrganization {
   id: string;
   name: string;
-  domain: string;
-  plan: "Starter" | "Growth" | "Enterprise" | string;
+  domain?: string | null;
+  plan?: "Starter" | "Growth" | "Enterprise" | string | null;
   status: "Active" | "Suspended" | "Trial" | "Deactivated" | string;
   access_status?: string;
   access_type?: string;
@@ -79,31 +86,34 @@ export interface SuperAdminOrganization {
   access_granted_by?: string;
   access_expires_at?: string | null;
   access_grant_reason?: string;
-  mrr: number;
-  storageUsedGb: number;
-  industry: string;
-  location: string;
-  user_count: number;
-  employee_count: number;
-  employeeCount: number;
-  hrAdminName: string;
-  hrAdminEmail: string;
+  mrr?: number;
+  storageUsedGb?: number;
+  industry?: string;
+  location?: string;
+  user_count?: number;
+  employee_count?: number;
+  employeeCount?: number;
+  hr_admin?: SuperAdminHRAdminSummary | null;
+  hr_admins?: SuperAdminHRAdminSummary[];
+  hrAdminName?: string;
+  hrAdminEmail?: string;
   owner?: {
     name: string;
     email: string;
-    phone: string;
-  };
+    phone?: string;
+  } | null;
   created_at: string;
   createdAt: string;
 }
 
 export interface CreateOrganizationPayload {
   name: string;
-  domain: string;
-  plan: "Starter" | "Growth" | "Enterprise" | string;
-  status: "Active" | "Suspended" | "Trial" | string;
+  domain?: string;
+  plan?: "Starter" | "Growth" | "Enterprise" | string;
+  status?: "Active" | "Suspended" | "Trial" | string;
   hrAdminName?: string;
   hrAdminEmail: string;
+  phone?: string;
   employeeCount?: number;
   mrr?: number;
   industry?: string;
@@ -117,6 +127,7 @@ export interface UpdateOrganizationPayload {
   status?: string;
   hrAdminName?: string;
   hrAdminEmail?: string;
+  phone?: string;
   employeeCount?: number;
   mrr?: number;
   industry?: string;
