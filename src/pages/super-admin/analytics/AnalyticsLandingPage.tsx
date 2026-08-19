@@ -1,15 +1,12 @@
-import { useMemo } from "react";
-import { motion } from "framer-motion";
 import {
   Activity,
   TrendingUp,
   PieChart as PieChartIcon,
-  BarChart3,
-  Globe,
-  Layers
 } from "lucide-react";
 import { TalentIntelligenceCard } from "@/components/talent-intelligence/TalentIntelligenceCard";
-import { useSuperAdminStore } from "@/stores/superAdminStore";
+import {
+  useGetSuperAdminDashboardQuery,
+} from "@/services/api/superAdminApi";
 
 const analyticsModules = [
   {
@@ -36,14 +33,13 @@ const analyticsModules = [
 ];
 
 export default function AnalyticsLandingPage() {
-  const { companies, users } = useSuperAdminStore();
-  const totalEmployees = useMemo(() => {
-    return companies.reduce((acc, c) => acc + (c.employeeCount || 0), 0);
-  }, [companies]);
+  const { data: dashboardData } = useGetSuperAdminDashboardQuery();
 
-  const activeUsers = useMemo(() => {
-    return users.filter((u) => u.status === "Active").length;
-  }, [users]);
+  const kpis = dashboardData?.kpis;
+  const activeUsers = kpis?.active_users ?? 0;
+  const totalUsers = kpis?.total_users ?? 0;
+  const totalWorkforce = kpis?.total_workforce_managed ?? kpis?.total_employees_count ?? 0;
+  const totalOrgs = kpis?.total_organizations ?? 0;
 
   return (
     <div className="space-y-6">
@@ -81,15 +77,15 @@ export default function AnalyticsLandingPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
           <div className="p-3 bg-secondary/30 rounded-xl border border-border/40 space-y-1">
             <p className="text-xs text-muted-foreground font-medium">Active DAU / Registered</p>
-            <p className="text-lg font-bold text-foreground">{activeUsers} / {users.length}</p>
+            <p className="text-lg font-bold text-foreground">{activeUsers} / {totalUsers}</p>
           </div>
           <div className="p-3 bg-secondary/30 rounded-xl border border-border/40 space-y-1">
             <p className="text-xs text-muted-foreground font-medium">Tenant Retention</p>
-            <p className="text-lg font-bold text-emerald-600">{companies.length > 0 ? "100.0%" : "0.0%"}</p>
+            <p className="text-lg font-bold text-emerald-600">{totalOrgs > 0 ? "100.0%" : "0.0%"}</p>
           </div>
           <div className="p-3 bg-secondary/30 rounded-xl border border-border/40 space-y-1">
             <p className="text-xs text-muted-foreground font-medium">Managed Workforce</p>
-            <p className="text-lg font-bold text-foreground">{totalEmployees.toLocaleString()}</p>
+            <p className="text-lg font-bold text-foreground">{totalWorkforce.toLocaleString()}</p>
           </div>
         </div>
       </div>
