@@ -283,14 +283,14 @@ export function VideoCallModal() {
             {isSharing ? <MonitorOff className="w-5 h-5" /> : <Monitor className="w-5 h-5" />}
           </Button>
 
-          {/* End Call */}
+          {/* End / Cancel Call */}
           <Button
             type="button"
             variant="destructive"
             size="icon"
             onClick={handleEndCall}
             className="w-14 h-14 rounded-full bg-rose-600 hover:bg-rose-700 shadow-xl transition-transform hover:scale-105 mx-2"
-            title="End Call"
+            title={status === "calling" || status === "ringing" ? "Cancel Call" : "End Call"}
           >
             <PhoneOff className="w-6 h-6" />
           </Button>

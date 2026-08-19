@@ -16,6 +16,7 @@ import {
 } from "@/services/api/connectApi";
 import { useAuth } from "@/hooks/useAuth";
 import { ConnectUser, ConnectMessage, PresenceStatus } from "@/types/connect";
+import { connectCallOrchestrator } from "@/services/connectCallOrchestrator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -545,15 +546,17 @@ export function ChatWindow({
     }
   };
 
-  const handleStartAudio = () => {
+  const handleStartAudio = async () => {
     if (!participant) return;
-    startOutgoingCall(participant, "audio");
+    toast.info(`Calling ${participant.name}...`);
+    await connectCallOrchestrator.initiateCall(participant, "audio");
     onOpenAudioCall?.(participant);
   };
 
-  const handleStartVideo = () => {
+  const handleStartVideo = async () => {
     if (!participant) return;
-    startOutgoingCall(participant, "video");
+    toast.info(`Calling ${participant.name}...`);
+    await connectCallOrchestrator.initiateCall(participant, "video");
     onOpenVideoCall?.(participant);
   };
 

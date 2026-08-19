@@ -4,6 +4,8 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { TopNav } from "@/components/TopNav";
 import { FloatingAIAssistant } from "@/components/FloatingAIAssistant";
 import { IncomingCallModal } from "@/components/connect/IncomingCallModal";
+import { CallScreen } from "@/components/connect/CallScreen";
+import { VideoCallModal } from "@/components/connect/VideoCallModal";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -145,8 +147,10 @@ export default function DashboardLayout() {
           </main>
         </div>
         <FloatingAIAssistant />
-        {/* Global Incoming Call Alert & Ringtone Modal */}
+        {/* Global Real-time Call Modals (Active on all pages: Dashboard, Chat, Attendance, HR, etc.) */}
         <IncomingCallModal />
+        <CallScreen />
+        <VideoCallModal />
       </div>
     </LayoutContext.Provider>
   );

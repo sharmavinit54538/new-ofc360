@@ -123,14 +123,14 @@ export function CallScreen() {
               {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
             </Button>
 
-            {/* End Call */}
+            {/* End / Cancel Call */}
             <Button
               type="button"
               variant="destructive"
               size="icon"
               onClick={handleEndCall}
               className="w-14 h-14 rounded-full bg-rose-600 hover:bg-rose-700 shadow-lg transition-all hover:scale-105"
-              title="End Call"
+              title={status === "calling" || status === "ringing" ? "Cancel Call" : "End Call"}
             >
               <PhoneOff className="w-6 h-6" />
             </Button>

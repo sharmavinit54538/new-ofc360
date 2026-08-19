@@ -8,9 +8,7 @@
  * - WebRTC media and peer connection
  * - Audio/ringtone management
  * - Missed call timeout handling
- * 
- * This eliminates scattered call logic and ensures every step
- * of the call flow executes in the correct order.
+ * - Self-call prevention and user feedback
  */
 import { store } from "@/app/store";
 import {
@@ -28,6 +26,7 @@ import { connectWebRTCService } from "./connectWebRTCService";
 import { connectAudioManager } from "./connectAudioManager";
 import { connectApi } from "./api/connectApi";
 import { ConnectUser, CallType, ActiveCall } from "@/types/connect";
+import { toast } from "sonner";
 
 /** Configurable missed-call timeout in milliseconds (default 30s) */
 const MISSED_CALL_TIMEOUT_MS = 30_000;
@@ -44,20 +43,38 @@ class ConnectCallOrchestrator {
     const callerId = String(currentUser?.id || currentUser?._id || "");
 
     if (!callerId) {
-      console.error("[CALL_ORCHESTRATOR] Cannot initiate call: no authenticated user");
+      console.error("[CALL] Cannot initiate call: no authenticated user");
+      toast.error("You must be logged in to make a call.");
       return null;
     }
 
     if (!targetUser?.id) {
-      console.error("[CALL_ORCHESTRATOR] Cannot initiate call: no target user ID");
+      console.error("[CALL] Cannot initiate call: no target user ID");
+      toast.error("Invalid recipient.");
       return null;
     }
 
-    console.log(`[CALL_INITIATED] Caller: ${callerId} (${currentUser?.name}) → Target: ${targetUser.id} (${targetUser.name}), Type: ${type}`);
+    // Prevent self-calling (Requirement #14)
+    const targetId = String(targetUser.id || targetUser.userId || targetUser.user_id || "");
+    const currentEmail = currentUser?.email ? String(currentUser.email).toLowerCase().trim() : "";
+    const targetEmail = targetUser?.email ? String(targetUser.email).toLowerCase().trim() : "";
+
+    if (
+      callerId === targetId ||
+      String(currentUser?.id) === targetId ||
+      String(currentUser?._id) === targetId ||
+      (currentEmail && targetEmail && currentEmail === targetEmail)
+    ) {
+      console.warn("[CALL] Self-call attempt prevented");
+      toast.error("You cannot call yourself.");
+      return null;
+    }
+
+    console.log(`[CALL] outgoing started — Caller: ${callerId} (${currentUser?.name}) → Target: ${targetUser.id} (${targetUser.name}), Type: ${type}`);
 
     let callId = `call_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
-    // Step 1: Notify backend via API (backend should push call:incoming to receiver's socket)
+    // Step 1: Notify backend via API (backend routes call:incoming to receiver's socket)
     try {
       const result = await store.dispatch(
         connectApi.endpoints.initiateCall.initiate({
@@ -70,18 +87,19 @@ class ConnectCallOrchestrator {
       if (result?.callId) {
         callId = result.callId;
       }
-      console.log(`[CALL_TARGET_RESOLVED] Backend acknowledged call initiation. callId: ${callId}`);
+      console.log(`[CALL] backend call target resolved. callId: ${callId}`);
     } catch (err) {
-      console.warn("[CALL_ORCHESTRATOR] Backend initiateCall failed (continuing with WebSocket fallback):", err);
+      console.warn("[CALL] backend initiateCall failed (continuing with WebSocket signaling):", err);
     }
 
-    // Step 2: Update Redux state (this causes CallScreen/VideoCallModal to mount)
+    // Step 2: Update Redux state (causes CallScreen/VideoCallModal to mount)
     store.dispatch(startOutgoingCall({ targetUser, type, callId }));
-    console.log(`[CALL_ORCHESTRATOR] Redux state updated: outgoing call started`);
 
-    // Step 3: Send call:incoming event via WebSocket as fallback/redundant signal
+    // Step 3: Send real-time call events via WebSocket (supports both call:start and call:incoming)
     const callerPayload = {
       id: callerId,
+      userId: callerId,
+      user_id: callerId,
       name: currentUser?.name || "Colleague",
       email: currentUser?.email || "",
       avatar: currentUser?.avatar || currentUser?.photoUrl || currentUser?.photo_url || "",
@@ -89,20 +107,34 @@ class ConnectCallOrchestrator {
       department: currentUser?.department || "",
     };
 
-    const sent = connectWebSocketService.send("call:incoming", {
+    const callPayload = {
+      type: "call:start",
+      event: "call:start",
       callId,
-      type,
+      call_id: callId,
       callerId,
+      caller_id: callerId,
+      receiverId: targetUser.id,
+      receiver_id: targetUser.id,
       targetUserId: targetUser.id,
+      target_user_id: targetUser.id,
       calleeId: targetUser.id,
+      callee_id: targetUser.id,
+      callType: type,
+      call_type: type,
       caller: callerPayload,
-    });
-    console.log(`[CALL_SIGNAL_SENT] call:incoming event ${sent ? "sent" : "FAILED to send"} via WebSocket to target: ${targetUser.id}`);
+      status: "ringing",
+      timestamp: new Date().toISOString(),
+    };
+
+    connectWebSocketService.send("call:start", callPayload);
+    connectWebSocketService.send("call:incoming", { ...callPayload, type: "call:incoming", event: "call:incoming" });
+    console.log(`[CALL] websocket call:start and call:incoming sent to target: ${targetUser.id}`);
 
     // Step 4: Play outgoing ringtone
     connectAudioManager.playOutgoingCall();
 
-    // Step 5: Start missed call timeout
+    // Step 5: Start missed call timeout (30s)
     this.startMissedCallTimeout(callId, targetUser);
 
     // Step 6: Initialize WebRTC for caller side
@@ -116,14 +148,14 @@ class ConnectCallOrchestrator {
   // ──────────────────────────────────────────────
   public async acceptCall(incomingCall: ActiveCall): Promise<void> {
     if (!incomingCall) {
-      console.error("[CALL_ORCHESTRATOR] Cannot accept: no incoming call data");
+      console.error("[CALL] Cannot accept: no incoming call data");
       return;
     }
 
     const callId = incomingCall.id;
     const callerId = incomingCall.targetUser?.id;
 
-    console.log(`[CALL_ACCEPTED] Accepting call ${callId} from ${incomingCall.targetUser?.name} (${callerId})`);
+    console.log(`[CALL] accepted — callId: ${callId} from ${incomingCall.targetUser?.name} (${callerId})`);
 
     // Step 1: Clear missed call timeout
     this.clearMissedCallTimeout();
@@ -141,9 +173,9 @@ class ConnectCallOrchestrator {
             status: "connected",
           })
         ).unwrap();
-        console.log(`[CALL_ORCHESTRATOR] Backend notified: call ${callId} accepted`);
+        console.log(`[CALL] backend notified: call ${callId} connected`);
       } catch (err) {
-        console.warn("[CALL_ORCHESTRATOR] Backend accept status update failed:", err);
+        console.warn("[CALL] backend accept status update failed:", err);
       }
     }
 
@@ -152,11 +184,20 @@ class ConnectCallOrchestrator {
 
     // Step 5: Notify caller via WebSocket that call was accepted
     connectWebSocketService.send("call:accepted", {
+      type: "call:accepted",
+      event: "call:accepted",
       callId,
+      call_id: callId,
       callerId,
-      type: incomingCall.type,
+      caller_id: callerId,
+      receiverId: store.getState().auth.user?.id,
+      receiver_id: store.getState().auth.user?.id,
+      callType: incomingCall.type,
+      call_type: incomingCall.type,
+      status: "connected",
+      timestamp: new Date().toISOString(),
     });
-    console.log(`[CALL_SIGNAL_SENT] call:accepted event sent to caller: ${callerId}`);
+    console.log(`[CALL] call:accepted event sent to caller: ${callerId}`);
 
     // Step 6: Initialize WebRTC for receiver side
     if (callerId) {
@@ -173,7 +214,7 @@ class ConnectCallOrchestrator {
     const callId = incomingCall.id;
     const callerId = incomingCall.targetUser?.id;
 
-    console.log(`[CALL_REJECTED] Rejecting call ${callId} from ${incomingCall.targetUser?.name}`);
+    console.log(`[CALL] rejected — callId: ${callId} from ${incomingCall.targetUser?.name}`);
 
     // Step 1: Clear timeout
     this.clearMissedCallTimeout();
@@ -192,7 +233,7 @@ class ConnectCallOrchestrator {
           })
         ).unwrap();
       } catch (err) {
-        console.warn("[CALL_ORCHESTRATOR] Backend reject status update failed:", err);
+        console.warn("[CALL] backend reject status update failed:", err);
       }
     }
 
@@ -201,10 +242,65 @@ class ConnectCallOrchestrator {
 
     // Step 5: Notify caller via WebSocket
     connectWebSocketService.send("call:rejected", {
+      type: "call:rejected",
+      event: "call:rejected",
       callId,
+      call_id: callId,
       callerId,
+      caller_id: callerId,
+      receiverId: store.getState().auth.user?.id,
+      receiver_id: store.getState().auth.user?.id,
+      reason: "rejected",
+      timestamp: new Date().toISOString(),
     });
-    console.log(`[CALL_SIGNAL_SENT] call:rejected event sent to caller: ${callerId}`);
+    console.log(`[CALL] call:rejected event sent to caller: ${callerId}`);
+  }
+
+  // ──────────────────────────────────────────────
+  // CALLER: Cancel outgoing call while ringing
+  // ──────────────────────────────────────────────
+  public async cancelCall(callIdParam?: string): Promise<void> {
+    const state = store.getState().connectCall;
+    const callId = callIdParam || state.activeCall?.id;
+    const targetUserId = state.remoteUser?.id;
+
+    console.log(`[CALL] cancelled — callId: ${callId}, target: ${targetUserId}`);
+
+    this.clearMissedCallTimeout();
+    connectAudioManager.stopOutgoingCall();
+    connectAudioManager.stopIncomingCall();
+    connectAudioManager.playCallEnded();
+
+    if (callId) {
+      try {
+        await store.dispatch(
+          connectApi.endpoints.updateCallStatus.initiate({
+            callId,
+            status: "rejected",
+          })
+        ).unwrap();
+      } catch {}
+    }
+
+    if (targetUserId) {
+      const cancelPayload = {
+        type: "call:cancel",
+        event: "call:cancel",
+        callId,
+        call_id: callId,
+        targetUserId,
+        target_user_id: targetUserId,
+        receiverId: targetUserId,
+        receiver_id: targetUserId,
+        reason: "cancelled",
+        timestamp: new Date().toISOString(),
+      };
+      connectWebSocketService.send("call:cancel", cancelPayload);
+      connectWebSocketService.send("call:cancelled", { ...cancelPayload, type: "call:cancelled", event: "call:cancelled" });
+    }
+
+    this.cleanupWebRTC();
+    store.dispatch(endCall());
   }
 
   // ──────────────────────────────────────────────
@@ -214,8 +310,14 @@ class ConnectCallOrchestrator {
     const state = store.getState().connectCall;
     const activeCall = state.activeCall;
     const remoteUserId = state.remoteUser?.id;
+    const isRinging = state.status === "calling" || state.status === "ringing";
 
-    console.log(`[CALL_ENDED] Ending call ${activeCall?.id}, remote: ${remoteUserId}`);
+    if (isRinging) {
+      await this.cancelCall(activeCall?.id);
+      return;
+    }
+
+    console.log(`[CALL] ended — callId: ${activeCall?.id}, remote: ${remoteUserId}`);
 
     // Step 1: Clear timeout
     this.clearMissedCallTimeout();
@@ -236,17 +338,23 @@ class ConnectCallOrchestrator {
           })
         ).unwrap();
       } catch (err) {
-        console.warn("[CALL_ORCHESTRATOR] Backend end call status update failed:", err);
+        console.warn("[CALL] backend end call status update failed:", err);
       }
     }
 
     // Step 4: Notify other party via WebSocket
     if (remoteUserId) {
       connectWebSocketService.send("call:ended", {
+        type: "call:ended",
+        event: "call:ended",
         callId: activeCall?.id,
+        call_id: activeCall?.id,
         targetUserId: remoteUserId,
+        receiver_id: remoteUserId,
+        reason: "ended",
+        timestamp: new Date().toISOString(),
       });
-      console.log(`[CALL_SIGNAL_SENT] call:ended event sent to remote: ${remoteUserId}`);
+      console.log(`[CALL] call:ended event sent to remote: ${remoteUserId}`);
     }
 
     // Step 5: Cleanup WebRTC
@@ -260,7 +368,7 @@ class ConnectCallOrchestrator {
   // WebRTC: Caller side initialization
   // ──────────────────────────────────────────────
   private async initWebRTCForCaller(targetUserId: string, callId: string, type: CallType): Promise<void> {
-    console.log(`[WEBRTC_INIT] Initializing WebRTC for CALLER, target: ${targetUserId}, type: ${type}`);
+    console.log(`[WEBRTC] Initializing WebRTC for CALLER, target: ${targetUserId}, type: ${type}`);
 
     try {
       // Initialize peer connection with signal listener
@@ -268,18 +376,17 @@ class ConnectCallOrchestrator {
         targetUserId,
         callId,
         onRemoteStream: (stream) => {
-          console.log("[WEBRTC_REMOTE_STREAM] Received remote stream from receiver");
+          console.log("[WEBRTC] Remote stream received from receiver");
           this.attachRemoteAudio(stream);
-          // When remote stream arrives, call is truly connected
           store.dispatch(setCallConnected({ callId }));
         },
         onConnectionStateChange: (state) => {
-          console.log(`[WEBRTC_STATE] Peer connection state: ${state}`);
           if (state === "connected") {
             connectAudioManager.stopOutgoingCall();
             connectAudioManager.playCallConnected();
+            store.dispatch(setCallConnected({ callId }));
           } else if (state === "failed" || state === "disconnected") {
-            console.warn(`[WEBRTC_STATE] Connection ${state}`);
+            console.warn(`[WEBRTC] Connection ${state}`);
           }
         },
       });
@@ -289,20 +396,20 @@ class ConnectCallOrchestrator {
       const isVideo = type === "video";
       const localStream = await connectWebRTCService.getLocalMedia(true, isVideo);
       if (localStream) {
-        console.log(`[WEBRTC_MEDIA] Local media acquired: audio=true, video=${isVideo}`);
+        console.log(`[WEBRTC] Local media acquired: audio=true, video=${isVideo}`);
       } else {
-        console.warn("[WEBRTC_MEDIA] Failed to acquire local media");
+        console.warn("[WEBRTC] Failed to acquire local media");
       }
 
       // Create and send offer
       const offer = await connectWebRTCService.createOffer();
       if (offer) {
-        console.log("[WEBRTC_OFFER_SENT] SDP offer created and sent to receiver via signaling");
+        console.log("[WEBRTC] offer sent to receiver via signaling");
       } else {
-        console.warn("[WEBRTC_OFFER_SENT] Failed to create SDP offer");
+        console.warn("[WEBRTC] Failed to create offer");
       }
     } catch (err) {
-      console.error("[WEBRTC_INIT] Caller WebRTC initialization failed:", err);
+      console.error("[WEBRTC] Caller initialization failed:", err);
     }
   }
 
@@ -310,25 +417,23 @@ class ConnectCallOrchestrator {
   // WebRTC: Receiver side initialization
   // ──────────────────────────────────────────────
   private async initWebRTCForReceiver(callerUserId: string, callId: string, type: CallType): Promise<void> {
-    console.log(`[WEBRTC_INIT] Initializing WebRTC for RECEIVER, caller: ${callerUserId}, type: ${type}`);
+    console.log(`[WEBRTC] Initializing WebRTC for RECEIVER, caller: ${callerUserId}, type: ${type}`);
 
     try {
-      // Initialize peer connection with signal listener
-      // When the offer arrives via signaling, handleIncomingSignal will auto-create answer
       await connectWebRTCService.init({
         targetUserId: callerUserId,
         callId,
         onRemoteStream: (stream) => {
-          console.log("[WEBRTC_REMOTE_STREAM] Received remote stream from caller");
+          console.log("[WEBRTC] Remote stream received from caller");
           this.attachRemoteAudio(stream);
           store.dispatch(setCallConnected({ callId }));
         },
         onConnectionStateChange: (state) => {
-          console.log(`[WEBRTC_STATE] Peer connection state: ${state}`);
           if (state === "connected") {
             connectAudioManager.stopIncomingCall();
+            store.dispatch(setCallConnected({ callId }));
           } else if (state === "failed" || state === "disconnected") {
-            console.warn(`[WEBRTC_STATE] Connection ${state}`);
+            console.warn(`[WEBRTC] Connection ${state}`);
           }
         },
       });
@@ -338,16 +443,14 @@ class ConnectCallOrchestrator {
       const isVideo = type === "video";
       const localStream = await connectWebRTCService.getLocalMedia(true, isVideo);
       if (localStream) {
-        console.log(`[WEBRTC_MEDIA] Receiver local media acquired: audio=true, video=${isVideo}`);
+        console.log(`[WEBRTC] Receiver local media acquired: audio=true, video=${isVideo}`);
       } else {
-        console.warn("[WEBRTC_MEDIA] Receiver failed to acquire local media");
+        console.warn("[WEBRTC] Receiver failed to acquire local media");
       }
 
-      // Answer will be automatically created when offer is received via signaling
-      // (handled by connectWebRTCService.handleIncomingSignal)
-      console.log("[WEBRTC_INIT] Receiver ready. Waiting for SDP offer from caller...");
+      console.log("[WEBRTC] Receiver ready. Waiting for SDP offer from caller...");
     } catch (err) {
-      console.error("[WEBRTC_INIT] Receiver WebRTC initialization failed:", err);
+      console.error("[WEBRTC] Receiver initialization failed:", err);
     }
   }
 
@@ -355,29 +458,25 @@ class ConnectCallOrchestrator {
   // Remote audio playback helper
   // ──────────────────────────────────────────────
   private attachRemoteAudio(stream: MediaStream): void {
-    // Remove any existing remote audio element
     const existingAudio = document.getElementById("ofc360-remote-audio") as HTMLAudioElement;
     if (existingAudio) {
       existingAudio.srcObject = null;
       existingAudio.remove();
     }
 
-    // Create a new audio element for remote audio playback
     const audioEl = document.createElement("audio");
     audioEl.id = "ofc360-remote-audio";
     audioEl.autoplay = true;
     audioEl.setAttribute("playsinline", "true");
-    // Don't set muted=true — we need to hear the remote audio
     audioEl.srcObject = stream;
     audioEl.volume = 1.0;
     document.body.appendChild(audioEl);
 
-    // Attempt to play (may fail without user gesture, but we're in a call context)
     audioEl.play().catch((err) => {
-      console.warn("[WEBRTC_AUDIO] Remote audio autoplay blocked:", err);
+      console.warn("[WEBRTC] Remote audio autoplay blocked:", err);
     });
 
-    console.log("[WEBRTC_AUDIO] Remote audio element attached and playing");
+    console.log("[WEBRTC] Remote audio element attached and playing");
   }
 
   // ──────────────────────────────────────────────
@@ -388,13 +487,13 @@ class ConnectCallOrchestrator {
 
     this.missedCallTimer = setTimeout(() => {
       const currentState = store.getState().connectCall;
-      // Only trigger missed if still in calling/ringing state
       if (currentState.status === "calling" || currentState.status === "ringing") {
-        console.log(`[CALL_MISSED] Call ${callId} to ${targetUser.name} timed out after ${MISSED_CALL_TIMEOUT_MS / 1000}s`);
+        console.log(`[CALL] missed — Call ${callId} to ${targetUser.name} timed out after ${MISSED_CALL_TIMEOUT_MS / 1000}s`);
 
         connectAudioManager.stopOutgoingCall();
         connectAudioManager.stopIncomingCall();
         connectAudioManager.playCallFailed();
+        toast.info(`No answer from ${targetUser.name}`);
 
         // Notify backend
         store.dispatch(
@@ -406,15 +505,16 @@ class ConnectCallOrchestrator {
 
         // Notify other party via WebSocket
         connectWebSocketService.send("call:ended", {
+          type: "call:ended",
+          event: "call:ended",
           callId,
+          call_id: callId,
           reason: "missed",
           targetUserId: targetUser.id,
+          receiver_id: targetUser.id,
         });
 
-        // Cleanup WebRTC
         this.cleanupWebRTC();
-
-        // Update Redux - set status to missed, then reset after brief display
         store.dispatch(setCallStatus("missed"));
         setTimeout(() => {
           store.dispatch(resetCallState());
@@ -433,22 +533,18 @@ class ConnectCallOrchestrator {
   // ──────────────────────────────────────────────
   // WebRTC cleanup
   // ──────────────────────────────────────────────
-  private cleanupWebRTC(): void {
+  public cleanupWebRTC(): void {
     connectWebRTCService.cleanup();
     this.isWebRTCInitialized = false;
 
-    // Remove remote audio element
     const existingAudio = document.getElementById("ofc360-remote-audio") as HTMLAudioElement;
     if (existingAudio) {
       existingAudio.srcObject = null;
       existingAudio.remove();
     }
-    console.log("[WEBRTC_CLEANUP] WebRTC resources released");
+    console.log("[WEBRTC] cleanup completed");
   }
 
-  /**
-   * Get whether WebRTC is currently initialized.
-   */
   public get isInitialized(): boolean {
     return this.isWebRTCInitialized;
   }

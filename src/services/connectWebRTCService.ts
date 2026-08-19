@@ -1,6 +1,7 @@
 import { connectWebSocketService } from "./connectWebSocketService";
 import { store } from "@/app/store";
 import { connectApi } from "./api/connectApi";
+import { toast } from "sonner";
 
 export interface WebRTCConfig {
   iceServers?: RTCIceServer[];
@@ -23,6 +24,7 @@ class ConnectWebRTCService {
   private remoteStream: MediaStream | null = null;
   private targetUserId: string | null = null;
   private callId: string | null = null;
+  private iceCandidateQueue: RTCIceCandidateInit[] = [];
   private onRemoteStreamCallback: ((stream: MediaStream) => void) | null = null;
   private onStateChangeCallback: ((state: RTCPeerConnectionState) => void) | null = null;
   private unsubscribeSignal: (() => void) | null = null;
@@ -34,8 +36,9 @@ class ConnectWebRTCService {
     this.callId = config.callId || null;
     this.onRemoteStreamCallback = config.onRemoteStream || null;
     this.onStateChangeCallback = config.onConnectionStateChange || null;
+    this.iceCandidateQueue = [];
 
-    console.log(`[WEBRTC_INIT] Initializing RTCPeerConnection (target: ${this.targetUserId}, callId: ${this.callId})`);
+    console.log(`[WEBRTC] init RTCPeerConnection (target: ${this.targetUserId}, callId: ${this.callId})`);
 
     // Fetch dynamic ICE servers if available from store/api
     let iceServers = config.iceServers || DEFAULT_ICE_SERVERS;
@@ -47,16 +50,16 @@ class ConnectWebRTCService {
     } catch {}
 
     if (typeof window === "undefined" || !window.RTCPeerConnection) {
-      console.warn("[WEBRTC_INIT] RTCPeerConnection is not supported in this environment");
+      console.warn("[WEBRTC] RTCPeerConnection is not supported in this environment");
       return null;
     }
 
     this.pc = new RTCPeerConnection({ iceServers });
-    console.log(`[WEBRTC_INIT] RTCPeerConnection created with ${iceServers.length} ICE server(s)`);
+    console.log(`[WEBRTC] RTCPeerConnection created with ${iceServers.length} ICE server(s)`);
 
     this.pc.onicecandidate = (event) => {
       if (event.candidate && this.targetUserId) {
-        console.log(`[ICE_CANDIDATE_SENT] Sending ICE candidate to ${this.targetUserId}: ${event.candidate.candidate.substring(0, 60)}...`);
+        console.log(`[WEBRTC] ICE candidate generated for ${this.targetUserId}`);
         this.sendSignal({
           type: "ice-candidate",
           candidate: event.candidate.toJSON(),
@@ -65,11 +68,14 @@ class ConnectWebRTCService {
     };
 
     this.pc.oniceconnectionstatechange = () => {
-      console.log(`[WEBRTC_ICE_STATE] ICE connection state: ${this.pc?.iceConnectionState}`);
+      console.log(`[WEBRTC] ICE connection state: ${this.pc?.iceConnectionState}`);
+      if (this.pc?.iceConnectionState === "failed") {
+        console.warn("[WEBRTC] failed ICE connection");
+      }
     };
 
     this.pc.ontrack = (event) => {
-      console.log(`[WEBRTC_TRACK] Remote track received: kind=${event.track.kind}, streams=${event.streams.length}`);
+      console.log(`[WEBRTC] Remote track received: kind=${event.track.kind}, streams=${event.streams.length}`);
       if (event.streams && event.streams[0]) {
         this.remoteStream = event.streams[0];
         this.onRemoteStreamCallback?.(this.remoteStream);
@@ -78,8 +84,15 @@ class ConnectWebRTCService {
 
     this.pc.onconnectionstatechange = () => {
       if (this.pc) {
-        console.log(`[WEBRTC_STATE] Connection state changed: ${this.pc.connectionState}`);
-        this.onStateChangeCallback?.(this.pc.connectionState);
+        const state = this.pc.connectionState;
+        if (state === "connected") {
+          console.log(`[WEBRTC] connected`);
+        } else if (state === "failed") {
+          console.warn(`[WEBRTC] failed`);
+        } else {
+          console.log(`[WEBRTC] connection state: ${state}`);
+        }
+        this.onStateChangeCallback?.(state);
       }
     };
 
@@ -109,8 +122,17 @@ class ConnectWebRTCService {
       }
 
       return this.localStream;
-    } catch (err) {
-      console.warn("Error obtaining user media:", err);
+    } catch (err: any) {
+      console.warn("[WEBRTC] Error obtaining user media:", err);
+      if (err?.name === "NotAllowedError" || err?.name === "PermissionDeniedError") {
+        toast.error(
+          video
+            ? "Camera and microphone permissions are required to make this call."
+            : "Microphone permission is required to make this call."
+        );
+      } else if (err?.name === "NotFoundError" || err?.name === "DevicesNotFoundError") {
+        toast.error("No microphone or camera device detected on this system.");
+      }
       return null;
     }
   }
@@ -139,7 +161,7 @@ class ConnectWebRTCService {
 
       return this.screenStream;
     } catch (err) {
-      console.warn("Error starting screen share:", err);
+      console.warn("[WEBRTC] Error starting screen share:", err);
       return null;
     }
   }
@@ -164,60 +186,66 @@ class ConnectWebRTCService {
 
   public async createOffer(): Promise<RTCSessionDescriptionInit | null> {
     if (!this.pc) {
-      console.warn("[WEBRTC_OFFER] Cannot create offer: no RTCPeerConnection");
+      console.warn("[WEBRTC] Cannot create offer: no RTCPeerConnection");
       return null;
     }
     try {
-      console.log("[WEBRTC_OFFER_SENT] Creating SDP offer...");
+      console.log("[WEBRTC] offer creating...");
       const offer = await this.pc.createOffer({
         offerToReceiveAudio: true,
         offerToReceiveVideo: true,
       });
       await this.pc.setLocalDescription(offer);
-      console.log("[WEBRTC_OFFER_SENT] Local description set (offer)");
+      console.log("[WEBRTC] offer local description set");
 
       if (this.targetUserId) {
         this.sendSignal({
           type: "offer",
           sdp: offer.sdp,
         });
-        console.log(`[WEBRTC_OFFER_SENT] Offer sent to ${this.targetUserId} via signaling`);
+        console.log(`[WEBRTC] offer sent to ${this.targetUserId}`);
       }
       return offer;
     } catch (err) {
-      console.warn("[WEBRTC_OFFER_SENT] Error creating WebRTC offer:", err);
+      console.warn("[WEBRTC] Error creating offer:", err);
       return null;
     }
   }
 
   public async createAnswer(): Promise<RTCSessionDescriptionInit | null> {
     if (!this.pc) {
-      console.warn("[WEBRTC_ANSWER] Cannot create answer: no RTCPeerConnection");
+      console.warn("[WEBRTC] Cannot create answer: no RTCPeerConnection");
       return null;
     }
     try {
-      console.log("[WEBRTC_ANSWER_SENT] Creating SDP answer...");
+      console.log("[WEBRTC] answer creating...");
       const answer = await this.pc.createAnswer();
       await this.pc.setLocalDescription(answer);
-      console.log("[WEBRTC_ANSWER_SENT] Local description set (answer)");
+      console.log("[WEBRTC] answer local description set");
 
       if (this.targetUserId) {
         this.sendSignal({
           type: "answer",
           sdp: answer.sdp,
         });
-        console.log(`[WEBRTC_ANSWER_SENT] Answer sent to ${this.targetUserId} via signaling`);
+        console.log(`[WEBRTC] answer sent to ${this.targetUserId}`);
       }
       return answer;
     } catch (err) {
-      console.warn("[WEBRTC_ANSWER_SENT] Error creating WebRTC answer:", err);
+      console.warn("[WEBRTC] Error creating answer:", err);
       return null;
     }
   }
 
   public async handleIncomingSignal(payload: any) {
     if (!this.pc || !payload) {
-      console.warn("[WEBRTC_SIGNAL] Cannot handle signal: pc or payload missing", { hasPc: !!this.pc, hasPayload: !!payload });
+      return;
+    }
+
+    // Match call_id if both are present
+    const payloadCallId = String(payload.call_id || payload.callId || "");
+    if (this.callId && payloadCallId && this.callId !== payloadCallId) {
+      console.log(`[WEBRTC] Ignoring signal for different callId (${payloadCallId} != ${this.callId})`);
       return;
     }
 
@@ -225,48 +253,71 @@ class ConnectWebRTCService {
       const { signal, type, sdp, candidate } = payload;
       const signalType = signal?.type || type;
 
-      console.log(`[CALL_SIGNAL_RECEIVED] Incoming WebRTC signal: ${signalType}`);
-
       if (signalType === "offer") {
-        console.log("[WEBRTC_SIGNAL] Processing SDP offer, setting remote description...");
+        console.log("[WEBRTC] offer received, setting remote description...");
         const remoteDesc = new RTCSessionDescription({
           type: "offer",
           sdp: signal?.sdp || sdp,
         });
         await this.pc.setRemoteDescription(remoteDesc);
-        console.log("[WEBRTC_SIGNAL] Remote description set (offer). Creating answer...");
+        console.log("[WEBRTC] offer remote description set. Flushing queued ICE candidates...");
+        await this.flushIceCandidateQueue();
         await this.createAnswer();
       } else if (signalType === "answer") {
-        console.log("[WEBRTC_SIGNAL] Processing SDP answer, setting remote description...");
+        console.log("[WEBRTC] answer received, setting remote description...");
         const remoteDesc = new RTCSessionDescription({
           type: "answer",
           sdp: signal?.sdp || sdp,
         });
         await this.pc.setRemoteDescription(remoteDesc);
-        console.log("[WEBRTC_SIGNAL] Remote description set (answer). WebRTC negotiation complete.");
+        console.log("[WEBRTC] answer remote description set. Flushing queued ICE candidates...");
+        await this.flushIceCandidateQueue();
       } else if (signalType === "ice-candidate") {
         const candidateData = signal?.candidate || candidate;
         if (candidateData) {
-          console.log(`[ICE_CANDIDATE_SENT] Adding remote ICE candidate`);
-          await this.pc.addIceCandidate(new RTCIceCandidate(candidateData));
+          if (this.pc.remoteDescription && this.pc.remoteDescription.type) {
+            console.log(`[WEBRTC] ICE candidate added`);
+            await this.pc.addIceCandidate(new RTCIceCandidate(candidateData));
+          } else {
+            console.log(`[WEBRTC] ICE candidate queued (remote description pending)`);
+            this.iceCandidateQueue.push(candidateData);
+          }
         }
-      } else {
-        console.warn(`[WEBRTC_SIGNAL] Unknown signal type: ${signalType}`);
       }
     } catch (err) {
-      console.warn("[WEBRTC_SIGNAL] Error handling incoming WebRTC signal:", err);
+      console.warn("[WEBRTC] Error handling incoming signal:", err);
+    }
+  }
+
+  private async flushIceCandidateQueue() {
+    if (!this.pc) return;
+    while (this.iceCandidateQueue.length > 0) {
+      const candidateData = this.iceCandidateQueue.shift();
+      if (candidateData) {
+        try {
+          await this.pc.addIceCandidate(new RTCIceCandidate(candidateData));
+          console.log("[WEBRTC] Flushed queued ICE candidate");
+        } catch (e) {
+          console.warn("[WEBRTC] Failed to add queued ICE candidate:", e);
+        }
+      }
     }
   }
 
   private sendSignal(signal: { type: "offer" | "answer" | "ice-candidate"; sdp?: string; candidate?: any }) {
     if (!this.targetUserId) return;
 
-    // Send via WebSocket
-    const sent = connectWebSocketService.send("webrtc:signal", {
+    const payload = {
+      type: "webrtc:signal",
       targetUserId: this.targetUserId,
+      receiver_id: this.targetUserId,
       callId: this.callId,
+      call_id: this.callId,
       signal,
-    });
+    };
+
+    // Send via WebSocket
+    const sent = connectWebSocketService.send("webrtc:signal", payload);
 
     // Fallback via HTTP if WebSocket is offline
     if (!sent && this.callId) {
@@ -307,13 +358,17 @@ class ConnectWebRTCService {
     this.stopLocalMedia();
     this.stopScreenShare();
 
+    this.iceCandidateQueue = [];
+
     if (this.unsubscribeSignal) {
       this.unsubscribeSignal();
       this.unsubscribeSignal = null;
     }
 
     if (this.pc) {
-      this.pc.close();
+      try {
+        this.pc.close();
+      } catch {}
       this.pc = null;
     }
 
@@ -326,3 +381,4 @@ class ConnectWebRTCService {
 }
 
 export const connectWebRTCService = new ConnectWebRTCService();
+
