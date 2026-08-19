@@ -50,13 +50,7 @@ export default function PlatformUsagePage() {
         adoptionPercent: m.usage,
       }));
     }
-    return [
-      { module: "Attendance & Time", requests: Math.round(totalApiThroughput * 0.35), adoptionPercent: 92 },
-      { module: "Payroll & Salary", requests: Math.round(totalApiThroughput * 0.25), adoptionPercent: 84 },
-      { module: "Intelligence Hub & AI", requests: Math.round(totalApiThroughput * 0.2), adoptionPercent: 78 },
-      { module: "Talent & ATS", requests: Math.round(totalApiThroughput * 0.12), adoptionPercent: 65 },
-      { module: "Employee Experience", requests: Math.round(totalApiThroughput * 0.08), adoptionPercent: 58 },
-    ];
+    return [];
   }, [analytics?.module_usage, totalApiThroughput]);
 
   const trafficHourlyData = useMemo(() => {

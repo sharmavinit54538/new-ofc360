@@ -108,8 +108,8 @@ export default function SuperAdminDashboardPage() {
     if (charts?.revenue_trend && charts.revenue_trend.length > 0) {
       return charts.revenue_trend;
     }
-    return [{ month: "Current", mrr: totalMRR, revenue: totalMRR }];
-  }, [charts?.revenue_trend, totalMRR]);
+    return [];
+  }, [charts?.revenue_trend]);
 
   if (isDashboardLoading || isCompaniesLoading) {
     return (

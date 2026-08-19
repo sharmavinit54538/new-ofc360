@@ -50,7 +50,7 @@ export default function UserGrowthPage() {
   const avgUsersPerOrg = companies.length > 0 ? Math.round(users.length / companies.length) : 0;
 
   const userGrowthMonthly = useMemo(() => {
-    if (users.length === 0) return [{ month: "Current", totalUsers: 0, newUsers: 0, activeUsers: 0 }];
+    if (users.length === 0) return [];
 
     const monthsMap: Record<string, number> = {};
     users.forEach((u) => {
