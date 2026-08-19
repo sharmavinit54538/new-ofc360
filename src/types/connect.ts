@@ -403,6 +403,16 @@ export type WebSocketEventType =
   | "typing:start"
   | "typing:stop"
   | "presence:change"
+  | "presence:update"
+  | "presence_update"
+  | "user:presence"
+  | "status:change"
+  | "user:online"
+  | "USER_ONLINE"
+  | "user:offline"
+  | "USER_OFFLINE"
+  | "batch:presence"
+  | "presence:batch"
   | "call:incoming"
   | "call:accepted"
   | "call:rejected"
@@ -410,7 +420,8 @@ export type WebSocketEventType =
   | "webrtc:signal"
   | "meeting:participant_joined"
   | "meeting:participant_left"
-  | "meeting:screen_share";
+  | "meeting:screen_share"
+  | (string & {});
 
 export interface WebSocketEvent<T = any> {
   event: WebSocketEventType;
