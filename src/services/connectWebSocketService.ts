@@ -685,8 +685,29 @@ class ConnectWebSocketService {
 
       // 4. Calls
       case "call:incoming": {
-        console.log(`[NOTIFICATION_EVENT] Received call:incoming event (targetUserId: ${data.targetUserId}, calleeId: ${data.calleeId}, caller: ${data.caller?.name || "Unknown"})`);
+        // Don't process call:incoming if it was sent by current user (avoid ringing yourself)
+        const callerId = String(data.callerId || data.caller?.id || "");
+        if (callerId === currentUserId) {
+          console.log(`[CALL_SIGNAL_RECEIVED] Ignoring own call:incoming event (callerId matches currentUser)`);
+          break;
+        }
+
+        console.log(`[CALL_SIGNAL_RECEIVED] call:incoming event — targetUserId: ${data.targetUserId}, calleeId: ${data.calleeId}, callerId: ${callerId}, caller: ${data.caller?.name || "Unknown"}, type: ${data.type || "audio"}, callId: ${data.callId}`);
+
         if (data.targetUserId === currentUserId || data.calleeId === currentUserId) {
+          // Don't receive a new incoming call if already in a call
+          const currentCallState = store.getState().connectCall;
+          if (currentCallState.activeCall || currentCallState.incomingCall) {
+            console.log(`[CALL_SIGNAL_RECEIVED] Busy: already in a call or have pending incoming call. Sending busy signal.`);
+            connectWebSocketService.send("call:rejected", {
+              callId: data.callId,
+              callerId,
+              reason: "busy",
+            });
+            break;
+          }
+
+          console.log(`[CALL_SIGNAL_RECEIVED] Dispatching receiveIncomingCall for ${data.caller?.name || "Unknown"}`);
           store.dispatch(
             receiveIncomingCall({
               caller: data.caller,
@@ -705,32 +726,44 @@ class ConnectWebSocketService {
               });
             } catch {}
           }
+        } else {
+          console.log(`[CALL_SIGNAL_RECEIVED] call:incoming not for us (targetUserId: ${data.targetUserId}, our id: ${currentUserId})`);
         }
         break;
       }
 
       case "call:accepted": {
-        console.log(`[NOTIFICATION_EVENT] Received call:accepted event (callId: ${data.callId})`);
-        store.dispatch(setCallConnected({ callId: data.callId }));
+        console.log(`[CALL_ACCEPTED] Received call:accepted event (callId: ${data.callId})`);
+        // This is received by the CALLER when the receiver accepts
+        connectAudioManager.stopOutgoingCall();
         connectAudioManager.playCallConnected();
+        store.dispatch(setCallConnected({ callId: data.callId }));
         break;
       }
 
       case "call:rejected": {
-        console.log(`[NOTIFICATION_EVENT] Received call:rejected event`);
-        store.dispatch(rejectIncomingCall());
+        console.log(`[CALL_REJECTED] Received call:rejected event (callId: ${data.callId}, reason: ${data.reason || "rejected"})`);
+        // This is received by the CALLER when the receiver rejects
+        connectAudioManager.stopOutgoingCall();
+        connectAudioManager.stopIncomingCall();
         connectAudioManager.playCallRejected();
+        // Reset the call state entirely (caller side — their outgoing call was rejected)
+        store.dispatch(endCall());
         break;
       }
 
       case "call:ended": {
-        console.log(`[NOTIFICATION_EVENT] Received call:ended event`);
-        store.dispatch(endCall());
+        console.log(`[CALL_ENDED] Received call:ended event (callId: ${data.callId}, reason: ${data.reason || "ended"})`);
+        // Stop all ringtones and cleanup
+        connectAudioManager.stopOutgoingCall();
+        connectAudioManager.stopIncomingCall();
         connectAudioManager.playCallEnded();
+        store.dispatch(endCall());
         break;
       }
 
       case "webrtc:signal": {
+        console.log(`[CALL_SIGNAL_RECEIVED] webrtc:signal event — type: ${data.signal?.type || data.type || "unknown"}, from: ${data.callerId || data.senderId || "unknown"}`);
         this.signalListeners.forEach((listener) => listener(data));
         break;
       }

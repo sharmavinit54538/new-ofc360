@@ -1,7 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useConnectCall } from "@/features/connect/hooks";
-import { useEndCallMutation } from "@/services/api/connectApi";
+import { connectCallOrchestrator } from "@/services/connectCallOrchestrator";
 import { connectAudioManager } from "@/services/connectAudioManager";
+import { connectWebRTCService } from "@/services/connectWebRTCService";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +13,6 @@ import {
   PhoneOff,
   Wifi,
 } from "lucide-react";
-import { useWebRTC } from "@/hooks/useWebRTC";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function CallScreen() {
@@ -24,44 +24,12 @@ export function CallScreen() {
     isMuted,
     isSpeakerOn,
     duration,
-    endCall,
     toggleMute,
     toggleSpeaker,
     incrementDuration,
   } = useConnectCall();
 
-  const [endCallMutation] = useEndCallMutation();
-
-  // Outgoing ringtone / connected sounds
-  useEffect(() => {
-    if (!activeCall || type !== "audio") return;
-
-    if (status === "calling") {
-      connectAudioManager.playOutgoingCall();
-    } else if (status === "connected") {
-      connectAudioManager.stopOutgoingCall();
-      connectAudioManager.playCallConnected();
-    }
-
-    return () => {
-      connectAudioManager.stopOutgoingCall();
-    };
-  }, [status, type, activeCall]);
-
-  // WebRTC Audio media
-  const { startMedia, cleanup } = useWebRTC({
-    targetUserId: remoteUser?.id,
-    callId: activeCall?.id,
-  });
-
-  useEffect(() => {
-    if (activeCall && type === "audio") {
-      startMedia(true, false);
-    }
-    return () => {
-      cleanup();
-    };
-  }, [activeCall?.id, type]);
+  const remoteAudioRef = useRef<HTMLAudioElement>(null);
 
   // Duration counter
   useEffect(() => {
@@ -73,6 +41,11 @@ export function CallScreen() {
     }
   }, [status, incrementDuration]);
 
+  // Sync mute state to WebRTC
+  useEffect(() => {
+    connectWebRTCService.toggleMicrophone(!isMuted);
+  }, [isMuted]);
+
   if (!activeCall || type !== "audio" || !remoteUser) return null;
 
   const formatDuration = (seconds: number) => {
@@ -82,18 +55,7 @@ export function CallScreen() {
   };
 
   const handleEndCall = async () => {
-    connectAudioManager.playCallEnded();
-    if (activeCall?.id) {
-      try {
-        await endCallMutation({
-          callId: activeCall.id,
-          status: "ended",
-          duration,
-        }).unwrap();
-      } catch {}
-    }
-    cleanup();
-    endCall();
+    await connectCallOrchestrator.endActiveCall();
   };
 
   const initials = remoteUser.name
@@ -116,7 +78,7 @@ export function CallScreen() {
           <div className="w-full flex items-center justify-between text-xs text-muted-foreground mb-6">
             <div className="flex items-center gap-1.5 font-medium">
               <Wifi className="w-3.5 h-3.5 text-emerald-500" />
-              <span>{status === "connected" ? "Connected" : "Calling..."}</span>
+              <span>{status === "connected" ? "Connected" : status === "calling" ? "Calling..." : status === "ringing" ? "Ringing..." : "Connecting..."}</span>
             </div>
             <span className="font-mono bg-muted/60 px-2 py-0.5 rounded-full font-bold">
               {formatDuration(duration)}
@@ -127,6 +89,9 @@ export function CallScreen() {
           <div className="relative mb-6">
             {status === "connected" && (
               <span className="absolute inset-0 rounded-full bg-primary/20 animate-ping opacity-60" />
+            )}
+            {status === "calling" && (
+              <span className="absolute inset-0 rounded-full bg-amber-500/20 animate-pulse opacity-60" />
             )}
             <div className="relative w-24 h-24 rounded-full border-4 border-card shadow-xl overflow-hidden bg-primary/10 flex items-center justify-center">
               <Avatar className="w-full h-full">
@@ -183,7 +148,11 @@ export function CallScreen() {
             </Button>
           </div>
         </div>
+
+        {/* Hidden remote audio element (audio playback handled by orchestrator) */}
+        <audio ref={remoteAudioRef} autoPlay playsInline style={{ display: "none" }} />
       </motion.div>
     </AnimatePresence>
   );
 }
+

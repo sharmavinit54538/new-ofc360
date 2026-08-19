@@ -1,10 +1,9 @@
 import { useState, useMemo, useEffect } from "react";
 import { ConnectLayout } from "@/components/connect/ConnectLayout";
-import { useConnect, useConnectCall } from "@/features/connect/hooks";
+import { useConnect } from "@/features/connect/hooks";
 import {
   useGetCallLogsQuery,
   useGetColleaguesQuery,
-  useInitiateCallMutation,
   useGetIceServersQuery,
 } from "@/services/api/connectApi";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
@@ -12,6 +11,7 @@ import { setIceServers } from "@/features/connect/callSlice";
 import { selectUserPresenceMap } from "@/features/connect/selectors";
 import { useAuth } from "@/hooks/useAuth";
 import { ConnectUser } from "@/types/connect";
+import { connectCallOrchestrator } from "@/services/connectCallOrchestrator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +34,6 @@ export default function ConnectCallsPage() {
   const dispatch = useAppDispatch();
   const { user: currentUser } = useAuth();
   const { setActiveTab } = useConnect();
-  const { startOutgoingCall } = useConnectCall();
   const userPresenceMap = useAppSelector(selectUserPresenceMap);
 
   const [search, setSearch] = useState("");
@@ -54,8 +53,6 @@ export default function ConnectCallsPage() {
       dispatch(setIceServers(iceData.iceServers));
     }
   }, [iceData, dispatch]);
-
-  const [initiateCall] = useInitiateCallMutation();
 
   const employeesList: ConnectUser[] = useMemo(() => {
     let list: ConnectUser[] = [];
@@ -80,16 +77,8 @@ export default function ConnectCallsPage() {
   }, [employeesList, search]);
 
   const handleStartCall = async (emp: ConnectUser, type: "audio" | "video") => {
-    try {
-      const callRes = await initiateCall({
-        calleeId: emp.id,
-        type,
-      }).unwrap();
-
-      startOutgoingCall(emp, type, callRes.callId);
-    } catch {
-      startOutgoingCall(emp, type);
-    }
+    toast.info(`Calling ${emp.name}...`);
+    await connectCallOrchestrator.initiateCall(emp, type);
   };
 
   const formatDuration = (seconds: number) => {
