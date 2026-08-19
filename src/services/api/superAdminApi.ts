@@ -495,6 +495,19 @@ export const {
   useDeleteSuperAdminAnnouncementMutation,
 } = superAdminApi;
 
+// Hook aliases for component compatibility
+export const useResolveSecurityEventMutation = useResolveSuperAdminSecurityEventMutation;
+export const useBlockIpMutation = useBlockIpAddressMutation;
+export const useUnblockIpMutation = useUnblockIpAddressMutation;
+export const useTerminateSessionMutation = useTerminateSuperAdminSessionMutation;
+export const useTerminateAllSessionsMutation = useTerminateAllSuperAdminSessionsMutation;
+export const useClearAuditLogsMutation = useClearSuperAdminAuditLogsMutation;
+export const useUpdateSettingsMutation = useUpdateSuperAdminSettingsMutation;
+export const useFastTrackOnboardingMutation = useFastTrackSuperAdminOnboardingMutation;
+export const useCreateAnnouncementMutation = useCreateSuperAdminAnnouncementMutation;
+export const useUpdateAnnouncementMutation = useUpdateSuperAdminAnnouncementMutation;
+export const useDeleteAnnouncementMutation = useDeleteSuperAdminAnnouncementMutation;
+
 // ─── Direct Standalone API Service Functions (Dispatched via RTK Query Store) ───
 
 export const getDashboard = async (): Promise<SuperAdminDashboardData> => {

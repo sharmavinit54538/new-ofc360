@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { useSuperAdminStore } from "@/stores/superAdminStore";
 import { store } from "@/app/store";
 import { setCredentials, setRole } from "@/features/auth/authSlice";
-import { hasModuleAccess, hasPermission, ROLE_CONFIGS } from "@/lib/permissions";
+import { hasModuleAccess } from "@/lib/permissions";
 
 describe("Super Admin RBAC & Architecture Test Suite", () => {
   beforeEach(() => {
@@ -34,13 +34,13 @@ describe("Super Admin RBAC & Architecture Test Suite", () => {
     expect(hasModuleAccess("executive", "platform_companies")).toBe(false);
   });
 
-  it("should have all required CRUD capabilities on Super Admin store", () => {
+  it("should have temporary UI state capabilities on Super Admin store without localStorage persistence", () => {
     const adminStore = useSuperAdminStore.getState();
 
     // Zero-mock initial state
     expect(adminStore.companies).toBeDefined();
 
-    // Add new company
+    // Add temporary company in UI state
     adminStore.addCompany({
       name: "Test Aerospace Corp",
       domain: "testaerospace.com",
@@ -100,10 +100,51 @@ describe("Super Admin RBAC & Architecture Test Suite", () => {
     expect(superAdminApi.endpoints.getSuperAdminOrganizations).toBeDefined();
     expect(superAdminApi.endpoints.createSuperAdminOrganization).toBeDefined();
     expect(superAdminApi.endpoints.getSuperAdminUsers).toBeDefined();
+    expect(superAdminApi.endpoints.getSuperAdminHRAdmins).toBeDefined();
     expect(superAdminApi.endpoints.getSuperAdminSubscriptions).toBeDefined();
     expect(superAdminApi.endpoints.getSuperAdminAuditLogs).toBeDefined();
     expect(superAdminApi.endpoints.getSuperAdminSystemHealth).toBeDefined();
     expect(superAdminApi.endpoints.getSuperAdminSettings).toBeDefined();
+    expect(superAdminApi.endpoints.getSuperAdminAnnouncements).toBeDefined();
+  });
+
+  it("should export direct API service functions for all Super Admin operations", async () => {
+    const api = await import("@/services/superAdminApi");
+    expect(typeof api.getDashboard).toBe("function");
+    expect(typeof api.getStatistics).toBe("function");
+    expect(typeof api.getOrganizations).toBe("function");
+    expect(typeof api.getOrganization).toBe("function");
+    expect(typeof api.createOrganization).toBe("function");
+    expect(typeof api.updateOrganization).toBe("function");
+    expect(typeof api.grantOrganizationAccess).toBe("function");
+    expect(typeof api.extendOrganizationAccess).toBe("function");
+    expect(typeof api.suspendOrganization).toBe("function");
+    expect(typeof api.cancelOrganization).toBe("function");
+    expect(typeof api.reactivateOrganization).toBe("function");
+    expect(typeof api.getUsers).toBe("function");
+    expect(typeof api.createUser).toBe("function");
+    expect(typeof api.updateUser).toBe("function");
+    expect(typeof api.deleteUser).toBe("function");
+    expect(typeof api.activateUser).toBe("function");
+    expect(typeof api.deactivateUser).toBe("function");
+    expect(typeof api.resetUserPassword).toBe("function");
+    expect(typeof api.getHRAdmins).toBe("function");
+    expect(typeof api.createHRAdmin).toBe("function");
+    expect(typeof api.updateHRAdmin).toBe("function");
+    expect(typeof api.deleteHRAdmin).toBe("function");
+    expect(typeof api.getOnboarding).toBe("function");
+    expect(typeof api.getSubscriptions).toBe("function");
+    expect(typeof api.getPlans).toBe("function");
+    expect(typeof api.getEntitlements).toBe("function");
+    expect(typeof api.getBilling).toBe("function");
+    expect(typeof api.getPayments).toBe("function");
+    expect(typeof api.getAnalytics).toBe("function");
+    expect(typeof api.getSecurityEvents).toBe("function");
+    expect(typeof api.getSessions).toBe("function");
+    expect(typeof api.getAuditLogs).toBe("function");
+    expect(typeof api.getSystemHealth).toBe("function");
+    expect(typeof api.getSettings).toBe("function");
+    expect(typeof api.updateSettings).toBe("function");
+    expect(typeof api.getAnnouncements).toBe("function");
   });
 });
-

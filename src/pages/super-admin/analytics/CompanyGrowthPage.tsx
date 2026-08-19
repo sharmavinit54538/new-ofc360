@@ -51,7 +51,7 @@ export default function CompanyGrowthPage() {
   }, [companies, totalMRR]);
 
   const companyAcquisitionMonthly = useMemo(() => {
-    if (companies.length === 0) return [{ month: "Current", newTenants: 0, totalTenants: 0, mrr: 0 }];
+    if (companies.length === 0) return [];
 
     const monthsMap: Record<string, { newTenants: number; mrr: number }> = {};
     companies.forEach((c) => {
