@@ -11,6 +11,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { HRAdminOnboardingGuard } from "@/components/auth/HRAdminOnboardingGuard";
 import * as hrAdminApiHooks from "@/services/api/hrAdminOnboardingApi";
 import * as authHooks from "@/hooks/useAuth";
+import { useHRAdminOnboardingStore } from "@/stores/hrAdminOnboardingStore";
 import DashboardLayout from "@/layouts/DashboardLayout";
 
 vi.mock("@/services/api/connectApi", () => ({
@@ -436,6 +437,99 @@ describe("HR Admin Onboarding Flow & Route Guard Tests", () => {
       // On error, does not redirect to onboarding
       expect(screen.getByTestId("dashboard-view")).toBeInTheDocument();
       expect(screen.queryByTestId("onboarding-view")).toBeNull();
+    });
+  });
+
+  // ─── 4. Snake Case Data Hydration & Store Synchronization Tests ───
+  describe("4. Snake Case Data Hydration & Store Synchronization", () => {
+    it("synchronizes CompleteOnboardingData snake_case fields into store directly", () => {
+      const backendResponse = {
+        company: {
+          company_name: "Acme Technologies Pvt Ltd",
+          industry: "Information Technology & Services",
+          country: "India",
+          city: "Bengaluru",
+          company_size: "51-200",
+          timezone: "Asia/Kolkata",
+          address: "123 Tech Park, Outer Ring Road",
+          cin_number: "U72200KA2020PTC123456",
+          gst_number: "29AAAAA0000A1Z5",
+          pan_number: "ABCDE1234F",
+          tan_number: "BLRA12345E",
+          msme_registration_number: "UDYAM-KR-03-0012345",
+          website: "https://acme.tech",
+          official_email: "hr@acme.tech",
+          official_phone: "+91 9876543210",
+        },
+        hr_admin: {
+          first_name: "Rohan",
+          last_name: "Verma",
+          profile_photo: "data:image/png;base64,sample_photo",
+          mobile_number: "+91 9876543210",
+          designation: "VP Human Resources",
+          preferred_language: "English",
+        },
+        branding: {
+          company_logo: "data:image/png;base64,sample_logo",
+          company_stamp: "data:image/png;base64,sample_stamp",
+          authorized_signatory_name: "Rohan Verma",
+          authorized_signatory_designation: "VP HR",
+          letterhead: "data:image/png;base64,sample_letterhead",
+        },
+        preferences: {
+          work_days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+          work_hours: "09:30 - 18:30",
+          attendance_telemetry: "Face + Web Check-in",
+          payroll_cycle_start: 1,
+          notification_channels: ["Email", "In-App", "Slack"],
+        },
+        onboarding: {
+          current_step: 3,
+          completed_steps: [1, 2],
+          remaining_steps: [3, 4, 5],
+          completion_percentage: 40,
+          is_completed: false,
+        },
+      };
+
+      useHRAdminOnboardingStore.getState().syncFromBackend(backendResponse);
+      const state = useHRAdminOnboardingStore.getState();
+
+      // Check Company
+      expect(state.company.cin_number).toBe("U72200KA2020PTC123456");
+      expect(state.company.pan_number).toBe("ABCDE1234F");
+      expect(state.company.tan_number).toBe("BLRA12345E");
+      expect(state.company.msme_registration_number).toBe("UDYAM-KR-03-0012345");
+      expect(state.company.official_email).toBe("hr@acme.tech");
+      expect(state.company.official_phone).toBe("+91 9876543210");
+      expect(state.company.company_name).toBe("Acme Technologies Pvt Ltd");
+
+      // Check HR Admin
+      expect(state.hr_admin.first_name).toBe("Rohan");
+      expect(state.hr_admin.last_name).toBe("Verma");
+      expect(state.hr_admin.profile_photo).toBe("data:image/png;base64,sample_photo");
+      expect(state.hr_admin.mobile_number).toBe("+91 9876543210");
+      expect(state.hr_admin.designation).toBe("VP Human Resources");
+      expect(state.hr_admin.preferred_language).toBe("English");
+
+      // Check Branding
+      expect(state.branding.company_stamp).toBe("data:image/png;base64,sample_stamp");
+      expect(state.branding.authorized_signatory_name).toBe("Rohan Verma");
+      expect(state.branding.authorized_signatory_designation).toBe("VP HR");
+      expect(state.branding.letterhead).toBe("data:image/png;base64,sample_letterhead");
+
+      // Check Preferences
+      expect(state.preferences.work_days).toEqual(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]);
+      expect(state.preferences.work_hours).toBe("09:30 - 18:30");
+      expect(state.preferences.attendance_telemetry).toBe("Face + Web Check-in");
+      expect(state.preferences.payroll_cycle_start).toBe(1);
+      expect(state.preferences.notification_channels).toEqual(["Email", "In-App", "Slack"]);
+
+      // Check Onboarding
+      expect(state.onboarding.current_step).toBe(3);
+      expect(state.onboarding.completed_steps).toEqual([1, 2]);
+      expect(state.onboarding.completion_percentage).toBe(40);
+      expect(state.onboarding.is_completed).toBe(false);
     });
   });
 });
