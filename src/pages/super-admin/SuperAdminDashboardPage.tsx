@@ -406,7 +406,7 @@ export default function SuperAdminDashboardPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs font-medium text-foreground">
-                      {comp.employeeCount || comp.employee_count || 0} staff
+                      {comp.employeeCount ?? comp.employee_count ?? 0} staff
                     </TableCell>
                     <TableCell>
                       <div className="space-y-0.5">

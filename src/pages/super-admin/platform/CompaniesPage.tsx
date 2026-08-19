@@ -364,7 +364,7 @@ export default function CompaniesPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs font-medium text-foreground">
-                      {c.employeeCount || c.employee_count || 0} staff
+                      {c.employeeCount ?? c.employee_count ?? 0} staff
                     </TableCell>
                     <TableCell>
                       {c.hr_admin || (c.hrAdminName && c.hrAdminName.trim()) || (c.hrAdminEmail && c.hrAdminEmail.trim()) ? (

@@ -254,7 +254,7 @@ export default function UserGrowthPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {c.employeeCount || c.employee_count || 0} employees
+                        {c.employeeCount ?? c.employee_count ?? 0} employees
                       </TableCell>
                       <TableCell className="text-xs font-medium text-foreground">
                         {companyUserCount} accounts

@@ -532,7 +532,11 @@ export const employeeApi = baseApi.injectEndpoints({
         const payload = raw?.data !== undefined ? raw.data : raw;
         return normalizeEmployee(payload);
       },
-      invalidatesTags: [{ type: "Employee", id: "LIST" }],
+      invalidatesTags: [
+        { type: "Employee", id: "LIST" },
+        "SuperAdminOrganizations",
+        "SuperAdminDashboard",
+      ],
     }),
 
     updateEmployee: builder.mutation<Employee, { id: string; changes: Partial<Employee> }>({
@@ -566,6 +570,8 @@ export const employeeApi = baseApi.injectEndpoints({
         { type: "Employee", id },
         { type: "Employee", id: "LIST" },
         "Timeline",
+        "SuperAdminOrganizations",
+        "SuperAdminDashboard",
       ],
     }),
 
@@ -581,6 +587,8 @@ export const employeeApi = baseApi.injectEndpoints({
         { type: "Employee", id },
         { type: "Employee", id: "LIST" },
         "Timeline",
+        "SuperAdminOrganizations",
+        "SuperAdminDashboard",
       ],
     }),
 
@@ -594,6 +602,8 @@ export const employeeApi = baseApi.injectEndpoints({
       invalidatesTags: (_result, _error, id) => [
         { type: "Employee", id },
         { type: "Employee", id: "LIST" },
+        "SuperAdminOrganizations",
+        "SuperAdminDashboard",
       ],
     }),
 
@@ -619,7 +629,11 @@ export const employeeApi = baseApi.injectEndpoints({
       }),
       transformResponse: (raw: RawEnvelope<ImportResult> | ImportResult) =>
         (raw as RawEnvelope<ImportResult>)?.data || (raw as ImportResult),
-      invalidatesTags: [{ type: "Employee", id: "LIST" }],
+      invalidatesTags: [
+        { type: "Employee", id: "LIST" },
+        "SuperAdminOrganizations",
+        "SuperAdminDashboard",
+      ],
     }),
 
     exportEmployees: builder.query<Blob, { format: "xlsx" | "csv" | "pdf" }>({
@@ -654,7 +668,12 @@ export const employeeApi = baseApi.injectEndpoints({
       }),
       transformResponse: (raw: RawEnvelope<Employee> | Employee) =>
         (raw as RawEnvelope<Employee>)?.data || (raw as Employee),
-      invalidatesTags: (_r, _e, id) => [{ type: "Employee", id }, { type: "Employee", id: "LIST" }],
+      invalidatesTags: (_r, _e, id) => [
+        { type: "Employee", id },
+        { type: "Employee", id: "LIST" },
+        "SuperAdminOrganizations",
+        "SuperAdminDashboard",
+      ],
     }),
 
     activateEmployeeByAdmin: builder.mutation<Employee, string>({
@@ -664,7 +683,12 @@ export const employeeApi = baseApi.injectEndpoints({
       }),
       transformResponse: (raw: RawEnvelope<Employee> | Employee) =>
         (raw as RawEnvelope<Employee>)?.data || (raw as Employee),
-      invalidatesTags: (_r, _e, id) => [{ type: "Employee", id }, { type: "Employee", id: "LIST" }],
+      invalidatesTags: (_r, _e, id) => [
+        { type: "Employee", id },
+        { type: "Employee", id: "LIST" },
+        "SuperAdminOrganizations",
+        "SuperAdminDashboard",
+      ],
     }),
 
     activateEmployee: builder.mutation<
@@ -691,6 +715,8 @@ export const employeeApi = baseApi.injectEndpoints({
       invalidatesTags: (_r, _e, arg) => [
         { type: "Employee", id: arg.id || arg.employee_id },
         { type: "Employee", id: "LIST" },
+        "SuperAdminOrganizations",
+        "SuperAdminDashboard",
       ],
     }),
 
@@ -701,7 +727,12 @@ export const employeeApi = baseApi.injectEndpoints({
       }),
       transformResponse: (raw: RawEnvelope<Employee> | Employee) =>
         (raw as RawEnvelope<Employee>)?.data || (raw as Employee),
-      invalidatesTags: (_r, _e, id) => [{ type: "Employee", id }, { type: "Employee", id: "LIST" }],
+      invalidatesTags: (_r, _e, id) => [
+        { type: "Employee", id },
+        { type: "Employee", id: "LIST" },
+        "SuperAdminOrganizations",
+        "SuperAdminDashboard",
+      ],
     }),
 
     rejectOnboarding: builder.mutation<Employee, { id: string; reason?: string }>({
@@ -712,7 +743,12 @@ export const employeeApi = baseApi.injectEndpoints({
       }),
       transformResponse: (raw: RawEnvelope<Employee> | Employee) =>
         (raw as RawEnvelope<Employee>)?.data || (raw as Employee),
-      invalidatesTags: (_r, _e, { id }) => [{ type: "Employee", id }, { type: "Employee", id: "LIST" }],
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: "Employee", id },
+        { type: "Employee", id: "LIST" },
+        "SuperAdminOrganizations",
+        "SuperAdminDashboard",
+      ],
     }),
 
     resetEmployeePassword: builder.mutation<{ temporaryPassword?: string }, string>({

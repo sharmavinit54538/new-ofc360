@@ -43,10 +43,30 @@ export const superAdminApi = baseApi.injectEndpoints({
         url: "/api/v1/super-admin/organizations",
         params: params || undefined,
       }),
+      transformResponse: (raw: any): SuperAdminOrganization[] => {
+        const items = Array.isArray(raw) ? raw : (raw?.data || []);
+        return items.map((org: any) => {
+          const count = Number(org.employee_count ?? org.employeeCount ?? 0);
+          return {
+            ...org,
+            employee_count: count,
+            employeeCount: count,
+          };
+        });
+      },
       providesTags: ["SuperAdminOrganizations"],
     }),
     getSuperAdminOrganizationDetail: builder.query<any, string>({
       query: (orgId) => `/api/v1/super-admin/organizations/${orgId}`,
+      transformResponse: (raw: any): any => {
+        const data = raw?.data !== undefined ? raw.data : raw;
+        if (data && data.stats) {
+          const count = Number(data.stats.employee_count ?? data.stats.employeeCount ?? 0);
+          data.stats.employee_count = count;
+          data.stats.employeeCount = count;
+        }
+        return data;
+      },
       providesTags: (_res, _err, id) => [{ type: "SuperAdminOrganizations", id }],
     }),
     createSuperAdminOrganization: builder.mutation<SuperAdminOrganization, CreateOrganizationPayload>({
