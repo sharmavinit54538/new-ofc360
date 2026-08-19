@@ -6,15 +6,11 @@ import {
   Users,
   DollarSign,
   ShieldAlert,
-  Server,
   TrendingUp,
-  Activity,
   ArrowRight,
   Plus,
-  Radio,
-  FileCheck2,
-  CheckCircle2,
-  AlertTriangle
+  RefreshCw,
+  AlertCircle,
 } from "lucide-react";
 import {
   AreaChart,
@@ -26,7 +22,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer
+  ResponsiveContainer,
 } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,9 +32,12 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@/components/ui/table";
-import { useSuperAdminStore } from "@/stores/superAdminStore";
+import {
+  useGetSuperAdminDashboardQuery,
+  useGetSuperAdminOrganizationsQuery,
+} from "@/services/api/superAdminApi";
 
 const CHART_COLORS = [
   "#6366F1", // Indigo (Brand Primary)
@@ -58,54 +57,97 @@ const customTooltipStyle = {
 };
 
 export default function SuperAdminDashboardPage() {
-  const { companies, users, hrAdmins, onboardingItems, subscriptions, securityEvents } = useSuperAdminStore();
+  const {
+    data: dashboardData,
+    isLoading: isDashboardLoading,
+    isError: isDashboardError,
+    refetch: refetchDashboard,
+  } = useGetSuperAdminDashboardQuery();
 
-  const totalMRR = useMemo(() => {
-    return companies.reduce((acc, c) => acc + (c.mrr || 0), 0);
-  }, [companies]);
+  const {
+    data: companies = [],
+    isLoading: isCompaniesLoading,
+    refetch: refetchCompanies,
+  } = useGetSuperAdminOrganizationsQuery();
 
-  const totalEmployeesUnderManagement = useMemo(() => {
-    return companies.reduce((acc, c) => acc + (c.employeeCount || 0), 0);
-  }, [companies]);
+  const handleRefresh = () => {
+    refetchDashboard();
+    refetchCompanies();
+  };
 
-  const activeCompanies = companies.filter((c) => c.status === "Active").length;
-  const trialCompanies = companies.filter((c) => c.status === "Trial").length;
+  const kpis = dashboardData?.kpis;
+  const financials = dashboardData?.financials;
+  const charts = dashboardData?.charts;
 
+  const totalMRR = financials?.mrr ?? 0;
+  const totalEmployees = kpis?.total_workforce_managed ?? kpis?.total_employees_count ?? 0;
+  const activeCompanies = kpis?.active_organizations ?? 0;
+  const trialCompanies = kpis?.trial_organizations ?? 0;
+  const criticalSecurityEvents = kpis?.active_security_incidents ?? 0;
+
+  // Plan Distribution Pie Chart Data
   const planDistribution = useMemo(() => {
+    if (charts?.subscription_distribution && charts.subscription_distribution.length > 0) {
+      return charts.subscription_distribution.map((item) => ({
+        name: item.plan,
+        value: item.count,
+      }));
+    }
+    // Fallback: derive from companies array
     const counts: Record<string, number> = {};
     companies.forEach((c) => {
       counts[c.plan] = (counts[c.plan] || 0) + 1;
     });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, [companies]);
+  }, [charts?.subscription_distribution, companies]);
 
   const hasPlanData = planDistribution.some((p) => p.value > 0);
 
-  // Dynamically compute monthly revenue growth curve from real subscriptions/companies
+  // Revenue Growth Curve
   const revenueGrowthData = useMemo(() => {
-    if (companies.length === 0) return [];
-    
-    // Group MRR and companies by created month
-    const monthsMap: Record<string, { mrr: number; companies: number }> = {};
-    companies.forEach((c) => {
-      const month = c.createdAt ? new Date(c.createdAt).toLocaleString("en-US", { month: "short" }) : "Current";
-      if (!monthsMap[month]) {
-        monthsMap[month] = { mrr: 0, companies: 0 };
-      }
-      monthsMap[month].mrr += (c.mrr || 0);
-      monthsMap[month].companies += 1;
-    });
+    if (charts?.revenue_trend && charts.revenue_trend.length > 0) {
+      return charts.revenue_trend;
+    }
+    return [{ month: "Current", mrr: totalMRR, revenue: totalMRR }];
+  }, [charts?.revenue_trend, totalMRR]);
 
-    const entries = Object.entries(monthsMap).map(([month, data]) => ({
-      month,
-      mrr: data.mrr,
-      companies: data.companies,
-    }));
+  if (isDashboardLoading || isCompaniesLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center pb-2 border-b border-border/40">
+          <div className="h-8 w-64 bg-muted/60 animate-pulse rounded" />
+          <div className="h-9 w-36 bg-muted/60 animate-pulse rounded" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-28 rounded-xl bg-muted/40 animate-pulse border border-border/40" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div className="lg:col-span-2 h-72 rounded-2xl bg-muted/40 animate-pulse border border-border/40" />
+          <div className="h-72 rounded-2xl bg-muted/40 animate-pulse border border-border/40" />
+        </div>
+      </div>
+    );
+  }
 
-    return entries.length > 0 ? entries : [{ month: "Current", mrr: totalMRR, companies: companies.length }];
-  }, [companies, totalMRR]);
-
-  const criticalSecurityEvents = securityEvents.filter((e) => e.status !== "Resolved").length;
+  if (isDashboardError) {
+    return (
+      <div className="p-8 glass-card rounded-2xl border border-destructive/30 flex flex-col items-center justify-center text-center space-y-4">
+        <AlertCircle className="w-10 h-10 text-destructive animate-bounce" />
+        <div>
+          <h3 className="text-base font-bold text-foreground">Failed to Load Platform Telemetry</h3>
+          <p className="text-xs text-muted-foreground mt-1">
+            Unable to connect to the backend server. Please verify your connection or retry.
+          </p>
+        </div>
+        <Button onClick={handleRefresh} variant="outline" className="gap-2 text-xs">
+          <RefreshCw className="w-3.5 h-3.5" />
+          Retry Connection
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -116,11 +158,20 @@ export default function SuperAdminDashboardPage() {
             Platform Master Dashboard
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Multi-tenant infrastructure overview, tenant performance, subscription billing, and security posture.
+            Multi-tenant infrastructure overview, live database metrics, subscription revenue, and security posture.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            className="h-9 text-xs gap-1.5 border-border/60"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Refresh</span>
+          </Button>
           <Button asChild className="gradient-bg text-primary-foreground h-9 text-xs gap-1.5 font-medium shadow-sm">
             <Link to="/super-admin/companies">
               <Plus className="w-3.5 h-3.5" />
@@ -139,7 +190,7 @@ export default function SuperAdminDashboardPage() {
         >
           <div className="space-y-1">
             <p className="text-xs font-medium text-muted-foreground">Total Managed Organizations</p>
-            <div className="text-2xl font-bold text-foreground">{companies.length}</div>
+            <div className="text-2xl font-bold text-foreground">{kpis?.total_organizations ?? companies.length}</div>
             <div className="flex items-center gap-1 text-[11px] text-emerald-600 font-medium">
               <TrendingUp className="w-3 h-3" />
               <span>{activeCompanies} Active · {trialCompanies} Trial</span>
@@ -178,8 +229,8 @@ export default function SuperAdminDashboardPage() {
         >
           <div className="space-y-1">
             <p className="text-xs font-medium text-muted-foreground">Total Workforce Managed</p>
-            <div className="text-2xl font-bold text-foreground">{totalEmployeesUnderManagement.toLocaleString()}</div>
-            <p className="text-[11px] text-muted-foreground">Across {hrAdmins.length} HR Administrators</p>
+            <div className="text-2xl font-bold text-foreground">{totalEmployees.toLocaleString()}</div>
+            <p className="text-[11px] text-muted-foreground">Across {kpis?.total_hr_admins ?? 0} HR Administrators</p>
           </div>
           <div className="w-11 h-11 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
             <Users className="w-5 h-5" />
@@ -195,7 +246,7 @@ export default function SuperAdminDashboardPage() {
           <div className="space-y-1">
             <p className="text-xs font-medium text-muted-foreground">Active Security Incidents</p>
             <div className="text-2xl font-bold text-foreground">{criticalSecurityEvents}</div>
-            <p className="text-[11px] text-emerald-600 font-medium">Global MFA Enforced</p>
+            <p className="text-[11px] text-emerald-600 font-medium">Platform Shield Active</p>
           </div>
           <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600">
             <ShieldAlert className="w-5 h-5" />
@@ -254,7 +305,7 @@ export default function SuperAdminDashboardPage() {
           <div className="h-48 w-full">
             {!hasPlanData ? (
               <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
-                No data available for this period.
+                No subscription plan data available.
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
@@ -268,7 +319,7 @@ export default function SuperAdminDashboardPage() {
                     paddingAngle={5}
                     dataKey="value"
                   >
-                    {planDistribution.map((entry, index) => (
+                    {planDistribution.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
                     ))}
                   </Pie>
@@ -324,7 +375,7 @@ export default function SuperAdminDashboardPage() {
               {companies.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-10 text-muted-foreground text-xs">
-                    No companies registered yet.
+                    No companies registered yet. Click &quot;Add Organization&quot; to provision the first tenant.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -355,7 +406,7 @@ export default function SuperAdminDashboardPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs font-medium text-foreground">
-                      {comp.employeeCount} staff
+                      {comp.employeeCount || comp.employee_count || 0} staff
                     </TableCell>
                     <TableCell>
                       <div className="space-y-0.5">
@@ -364,7 +415,7 @@ export default function SuperAdminDashboardPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-xs font-bold text-foreground">
-                      ${comp.mrr.toLocaleString()}
+                      ${(comp.mrr || 0).toLocaleString()}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm" asChild className="h-7 px-2 text-xs text-primary">

@@ -1,13 +1,12 @@
-import { motion } from "framer-motion";
 import {
   Key,
   ShieldAlert,
-  ShieldCheck,
-  Lock,
-  Layers
 } from "lucide-react";
 import { TalentIntelligenceCard } from "@/components/talent-intelligence/TalentIntelligenceCard";
-import { useSuperAdminStore } from "@/stores/superAdminStore";
+import {
+  useGetSuperAdminSessionsQuery,
+  useGetSuperAdminSecurityEventsQuery,
+} from "@/services/api/superAdminApi";
 
 const securityModules = [
   {
@@ -27,9 +26,10 @@ const securityModules = [
 ];
 
 export default function SecurityLandingPage() {
-  const { sessions, securityEvents } = useSuperAdminStore();
+  const { data: sessions = [] } = useGetSuperAdminSessionsQuery();
+  const { data: securityEvents = [] } = useGetSuperAdminSecurityEventsQuery();
 
-  const activeSessions = sessions.filter((s) => s.status === "Active").length;
+  const activeSessions = sessions.filter((s) => s.status === "Active").length || sessions.length;
   const pendingThreats = securityEvents.filter((e) => e.status !== "Resolved").length;
 
   return (

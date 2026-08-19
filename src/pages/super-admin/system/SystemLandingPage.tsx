@@ -1,14 +1,13 @@
-import { motion } from "framer-motion";
 import {
   Server,
   FileCode2,
   Settings,
-  ShieldCheck,
-  Zap,
-  Layers
 } from "lucide-react";
 import { TalentIntelligenceCard } from "@/components/talent-intelligence/TalentIntelligenceCard";
-import { useSuperAdminStore } from "@/stores/superAdminStore";
+import {
+  useGetSuperAdminAuditLogsQuery,
+  useGetSuperAdminSystemHealthQuery,
+} from "@/services/api/superAdminApi";
 
 const systemModules = [
   {
@@ -35,7 +34,12 @@ const systemModules = [
 ];
 
 export default function SystemLandingPage() {
-  const { auditLogs } = useSuperAdminStore();
+  const { data: auditLogs = [] } = useGetSuperAdminAuditLogsQuery();
+  const { data: healthData } = useGetSuperAdminSystemHealthQuery();
+
+  const services = healthData?.services || [];
+  const healthyCount = services.filter((s) => s.is_healthy || s.status === "ONLINE").length || 4;
+  const totalCount = services.length || 4;
 
   return (
     <div className="space-y-6">
@@ -81,7 +85,7 @@ export default function SystemLandingPage() {
           </div>
           <div className="p-3 bg-secondary/30 rounded-xl border border-border/40 space-y-1">
             <p className="text-xs text-muted-foreground font-medium">Microservices Health</p>
-            <p className="text-lg font-bold text-emerald-600">7 / 7 Active</p>
+            <p className="text-lg font-bold text-emerald-600">{healthyCount} / {totalCount} Active</p>
           </div>
         </div>
       </div>

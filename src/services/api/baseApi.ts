@@ -82,6 +82,7 @@ const needsCompanyId = (url: string, endpoint?: string): boolean => {
   if (url.includes("/auth/me") || url.includes("/auth/refresh")) return false;
   if (url.includes("/hr-admin/onboarding") || url.includes("/onboarding")) return false;
   if (url.includes("/connect") || url.includes("/api/v1/connect")) return false;
+  if (url.includes("/super-admin") || url.includes("/api/v1/super-admin")) return false;
 
   return true;
 };
