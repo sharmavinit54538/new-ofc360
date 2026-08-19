@@ -93,5 +93,17 @@ describe("Super Admin RBAC & Architecture Test Suite", () => {
     store.dispatch(setRole("super_admin"));
     expect(store.getState().auth.role).toBe("super_admin");
   });
+
+  it("should have all superAdminApi endpoints properly registered in baseApi", async () => {
+    const { superAdminApi } = await import("@/services/api/superAdminApi");
+    expect(superAdminApi.endpoints.getSuperAdminDashboard).toBeDefined();
+    expect(superAdminApi.endpoints.getSuperAdminOrganizations).toBeDefined();
+    expect(superAdminApi.endpoints.createSuperAdminOrganization).toBeDefined();
+    expect(superAdminApi.endpoints.getSuperAdminUsers).toBeDefined();
+    expect(superAdminApi.endpoints.getSuperAdminSubscriptions).toBeDefined();
+    expect(superAdminApi.endpoints.getSuperAdminAuditLogs).toBeDefined();
+    expect(superAdminApi.endpoints.getSuperAdminSystemHealth).toBeDefined();
+    expect(superAdminApi.endpoints.getSuperAdminSettings).toBeDefined();
+  });
 });
 
