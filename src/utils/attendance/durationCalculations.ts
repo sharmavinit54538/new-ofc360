@@ -1,4 +1,5 @@
 import { timeStringToMinutes } from "./timeConversions";
+export { formatSecondsToHms } from "./formatSeconds";
 
 export function calculateDurationMinutes(start: string, end: string): number {
   const s = timeStringToMinutes(start);
@@ -12,11 +13,4 @@ export function computeNetWorkHours(gross: number, breakMins = 0) {
   const h = Math.floor(netMinutes / 60);
   const m = netMinutes % 60;
   return { netMinutes, netHoursDecimal, formattedNetDuration: `${String(h).padStart(2, "0")}h ${String(m).padStart(2, "0")}m` };
-}
-
-export function formatSecondsToHms(sec: number): string {
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = sec % 60;
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }

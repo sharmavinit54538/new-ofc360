@@ -3,22 +3,20 @@ import { decomposeCtc } from "./decomposeCtc";
 import { calculatePfContribution, calculateEsiContribution, calculateProfessionalTax } from "./pfEsiTax";
 import { calculateMonthlyTds } from "./calculateMonthlyTds";
 
-export function computeEmployeePayroll(params: any): DetailedPayrollComputation {
-  const { employeeId, employeeName, annualCtc, approvedBonus = 0, approvedOvertimeHours = 0, hourlyOtRate = 500, approvedReimbursement = 0, activeSalaryAdvanceEmi = 0, lopDays = 0, daysInMonth = 30, taxRegime, declared80C = 0, declared80D = 0 } = params;
-  const components = decomposeCtc(annualCtc);
-  const overtimeAmount = Math.round(approvedOvertimeHours * hourlyOtRate * 1.5);
-  const lopDeduction = Math.round(lopDays * (components.grossMonthly / daysInMonth));
-  const grossEarnings = Math.max(0, components.grossMonthly + approvedBonus + overtimeAmount - lopDeduction);
-  const pf = calculatePfContribution(components.basic);
-  const esi = calculateEsiContribution(grossEarnings);
-  const pt = calculateProfessionalTax(grossEarnings);
-  const monthlyTds = calculateMonthlyTds(annualCtc, taxRegime, declared80C, declared80D);
-  const totalDeductions = pf.employeePf + esi.employeeEsi + pt + monthlyTds + activeSalaryAdvanceEmi;
+export function computeEmployeePayroll(p: any): DetailedPayrollComputation {
+  const comp = decomposeCtc(p.annualCtc);
+  const ot = Math.round((p.approvedOvertimeHours || 0) * (p.hourlyOtRate || 500) * 1.5);
+  const lop = Math.round((p.lopDays || 0) * (comp.grossMonthly / (p.daysInMonth || 30)));
+  const gross = Math.max(0, comp.grossMonthly + (p.approvedBonus || 0) + ot - lop);
+  const pf = calculatePfContribution(comp.basic);
+  const esi = calculateEsiContribution(gross);
+  const pt = calculateProfessionalTax(gross);
+  const tds = calculateMonthlyTds(p.annualCtc, p.taxRegime, p.declared80C || 0, p.declared80D || 0);
+  const stat = { employeePf: pf.employeePf, employerPf: pf.employerPf, employeeEsi: esi.employeeEsi, employerEsi: esi.employerEsi, professionalTax: pt, monthlyTds: tds, totalEmployeeDeductions: pf.employeePf + esi.employeeEsi + pt + tds };
   return {
-    employeeId, employeeName, annualCtc, monthlyCtc: Math.round(annualCtc / 12), components,
-    bonusAmount: approvedBonus, overtimeAmount, reimbursementAmount: approvedReimbursement,
-    grossEarnings, statutoryDeductions: { employeePf: pf.employeePf, employerPf: pf.employerPf, employeeEsi: esi.employeeEsi, employerEsi: esi.employerEsi, professionalTax: pt, monthlyTds, totalEmployeeDeductions: pf.employeePf + esi.employeeEsi + pt + monthlyTds },
-    advanceEmiDeduction: activeSalaryAdvanceEmi, lopDays, lopDeduction, totalDeductions,
-    netSalary: Math.max(0, grossEarnings - totalDeductions + approvedReimbursement),
+    employeeId: p.employeeId, employeeName: p.employeeName, annualCtc: p.annualCtc, monthlyCtc: Math.round(p.annualCtc / 12), components: comp,
+    bonusAmount: p.approvedBonus || 0, overtimeAmount: ot, reimbursementAmount: p.approvedReimbursement || 0, grossEarnings: gross, statutoryDeductions: stat,
+    advanceEmiDeduction: p.activeSalaryAdvanceEmi || 0, lopDays: p.lopDays || 0, lopDeduction: lop, totalDeductions: stat.totalEmployeeDeductions + (p.activeSalaryAdvanceEmi || 0),
+    netSalary: Math.max(0, gross - (stat.totalEmployeeDeductions + (p.activeSalaryAdvanceEmi || 0)) + (p.approvedReimbursement || 0)),
   };
 }
