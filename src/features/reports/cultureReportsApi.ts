@@ -1,49 +1,90 @@
-/**
- * TODO: backend not implemented — replace when /culture or /diversity endpoints ship
- * 
- * Note: This slice currently uses RTK Query `queryFn` to return typed static mock data
- * enclosed within the standard APIResponse<T> structure.
- * When real endpoints are available, swap `queryFn: async () => ({ data: ... })` 
- * to standard `query: () => ({ url: '/v1/culture/...', method: 'GET' })`.
- */
-
 import { baseApi } from "@/services/api/baseApi";
-import { APIResponse, CultureDiTelemetry } from "./types";
-
-const MOCK_CULTURE_TELEMETRY: CultureDiTelemetry = {
-  genderDistribution: [
-    { label: "Female", value: 46 },
-    { label: "Male", value: 48 },
-    { label: "Non-Binary / Undisclosed", value: 6 },
-  ],
-  ageDistribution: [
-    { label: "18-25", value: 18 },
-    { label: "26-35", value: 52 },
-    { label: "36-45", value: 20 },
-    { label: "46+", value: 10 },
-  ],
-  inclusionIndex: 84, // 0 - 100
-  diHiringRatio: 51.5, // %
-};
+import { RawEnvelope } from "@/services/api/envelope";
+import {
+  APIResponse,
+  CultureDiTelemetry,
+  CultureTrendItem,
+  CultureBreakdownItem,
+  CultureFeedbackItem,
+} from "./types";
+import { extractData, extractArray } from "./unwrapHelper";
 
 export const cultureReportsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getCultureTelemetry: builder.query<APIResponse<CultureDiTelemetry>, void>({
-      // TODO: backend not implemented — replace when /culture or /diversity endpoints ship
-      queryFn: async () => {
+      query: () => ({
+        url: "/api/v1/reports/culture/telemetry",
+        method: "GET",
+      }),
+      transformResponse: (raw: RawEnvelope<CultureDiTelemetry> | APIResponse<CultureDiTelemetry> | CultureDiTelemetry) => {
+        const data = extractData<CultureDiTelemetry>(raw);
         return {
-          data: {
-            success: true,
-            message: "Culture & D&I Telemetry retrieved (Mocked Data)",
-            data: MOCK_CULTURE_TELEMETRY,
-            errors: null,
-          },
+          success: true,
+          message: "Culture & D&I Telemetry retrieved",
+          data,
+          errors: null,
         };
       },
       providesTags: [{ type: "CultureReport", id: "TELEMETRY" }],
+    }),
+
+    getCultureTrend: builder.query<APIResponse<CultureTrendItem[]>, void>({
+      query: () => ({
+        url: "/api/v1/reports/culture/trend",
+        method: "GET",
+      }),
+      transformResponse: (raw: RawEnvelope<CultureTrendItem[]> | APIResponse<CultureTrendItem[]> | CultureTrendItem[]) => {
+        const data = extractArray<CultureTrendItem>(raw);
+        return {
+          success: true,
+          message: "Culture trend retrieved",
+          data,
+          errors: null,
+        };
+      },
+      providesTags: [{ type: "CultureReport", id: "TREND" }],
+    }),
+
+    getCultureBreakdown: builder.query<APIResponse<CultureBreakdownItem[]>, void>({
+      query: () => ({
+        url: "/api/v1/reports/culture/breakdown",
+        method: "GET",
+      }),
+      transformResponse: (raw: RawEnvelope<CultureBreakdownItem[]> | APIResponse<CultureBreakdownItem[]> | CultureBreakdownItem[]) => {
+        const data = extractArray<CultureBreakdownItem>(raw);
+        return {
+          success: true,
+          message: "Culture breakdown retrieved",
+          data,
+          errors: null,
+        };
+      },
+      providesTags: [{ type: "CultureReport", id: "BREAKDOWN" }],
+    }),
+
+    getCultureFeedback: builder.query<APIResponse<CultureFeedbackItem[]>, void>({
+      query: () => ({
+        url: "/api/v1/reports/culture/feedback",
+        method: "GET",
+      }),
+      transformResponse: (raw: RawEnvelope<CultureFeedbackItem[]> | APIResponse<CultureFeedbackItem[]> | CultureFeedbackItem[]) => {
+        const data = extractArray<CultureFeedbackItem>(raw);
+        return {
+          success: true,
+          message: "Culture feedback retrieved",
+          data,
+          errors: null,
+        };
+      },
+      providesTags: [{ type: "CultureReport", id: "FEEDBACK" }],
     }),
   }),
   overrideExisting: false,
 });
 
-export const { useGetCultureTelemetryQuery } = cultureReportsApi;
+export const {
+  useGetCultureTelemetryQuery,
+  useGetCultureTrendQuery,
+  useGetCultureBreakdownQuery,
+  useGetCultureFeedbackQuery,
+} = cultureReportsApi;

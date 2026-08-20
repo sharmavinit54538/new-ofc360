@@ -23,14 +23,27 @@ interface HRAdminOnboardingGuardProps {
  */
 export function HRAdminOnboardingGuard({ children }: HRAdminOnboardingGuardProps) {
   const { user, isAuthenticated, role } = useAuth();
+  const activeRole = user?.role || role || "employee";
+  const isHRAdmin = isAuthenticated && !!user && activeRole === "hr_admin";
 
-  // 1. Unauthenticated -> redirect to login
+  // 1. Fetch backend onboarding status unconditionally at top level
+  const {
+    data: statusData,
+    isLoading: isStatusLoading,
+    isFetching: isStatusFetching,
+    isError: isStatusError,
+    refetch: refetchStatus,
+  } = useGetHRAdminOnboardingStatusQuery(undefined, {
+    skip: !isHRAdmin,
+    refetchOnMountOrArgChange: true,
+  });
+
+  // 2. Unauthenticated -> redirect to login
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />;
   }
 
-  // 2. Non-HR Admin role -> access restricted
-  const activeRole = user.role || role || "employee";
+  // 3. Non-HR Admin role -> access restricted
   if (activeRole !== "hr_admin") {
     return (
       <div className="min-h-[70vh] flex items-center justify-center p-4">
@@ -67,17 +80,6 @@ export function HRAdminOnboardingGuard({ children }: HRAdminOnboardingGuardProps
       </div>
     );
   }
-
-  // 3. Fetch backend onboarding status
-  const {
-    data: statusData,
-    isLoading: isStatusLoading,
-    isFetching: isStatusFetching,
-    isError: isStatusError,
-    refetch: refetchStatus,
-  } = useGetHRAdminOnboardingStatusQuery(undefined, {
-    refetchOnMountOrArgChange: true,
-  });
 
   // CASE 4: Loading State — do NOT temporarily render onboarding before status is known
   if (isStatusLoading || (!statusData && isStatusFetching)) {

@@ -1,57 +1,76 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
 import {
-  Settings,
   Shield,
   Lock,
   Mail,
   Cpu,
   Save,
-  AlertTriangle,
   Clock,
-  CheckCircle2,
   HardDrive,
-  Globe
+  Globe,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
-import { useSuperAdminStore } from "@/stores/superAdminStore";
+import {
+  useGetSuperAdminSettingsQuery,
+  useUpdateSuperAdminSettingsMutation,
+} from "@/services/api/superAdminApi";
 import { toast } from "sonner";
 
 export default function PlatformSettingsPage() {
-  const { settings, updateSettings } = useSuperAdminStore();
+  const { data: serverSettings, isLoading, refetch } = useGetSuperAdminSettingsQuery();
+  const [updateSettings, { isLoading: isSaving }] = useUpdateSuperAdminSettingsMutation();
 
-  const [maintenanceMode, setMaintenanceMode] = useState(settings.maintenanceMode);
-  const [allowNewRegistrations, setAllowNewRegistrations] = useState(settings.allowNewRegistrations);
-  const [enforceMfaGlobally, setEnforceMfaGlobally] = useState(settings.enforceMfaGlobally);
-  const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = useState(String(settings.sessionTimeoutMinutes));
-  const [defaultTrialDays, setDefaultTrialDays] = useState(String(settings.defaultTrialDays));
-  const [emailSenderName, setEmailSenderName] = useState(settings.emailSenderName);
-  const [emailSenderAddress, setEmailSenderAddress] = useState(settings.emailSenderAddress);
-  const [aiTokenRateLimitPerHour, setAiTokenRateLimitPerHour] = useState(String(settings.aiTokenRateLimitPerHour));
-  const [securityAlertEmail, setSecurityAlertEmail] = useState(settings.securityAlertEmail);
-  const [autoBackupIntervalHours, setAutoBackupIntervalHours] = useState(String(settings.autoBackupIntervalHours));
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [allowNewRegistrations, setAllowNewRegistrations] = useState(true);
+  const [enforceMfaGlobally, setEnforceMfaGlobally] = useState(true);
+  const [sessionTimeoutMinutes, setSessionTimeoutMinutes] = useState("60");
+  const [defaultTrialDays, setDefaultTrialDays] = useState("14");
+  const [emailSenderName, setEmailSenderName] = useState("OFC360 Enterprise");
+  const [emailSenderAddress, setEmailSenderAddress] = useState("no-reply@ofc360.com");
+  const [aiTokenRateLimitPerHour, setAiTokenRateLimitPerHour] = useState("50000");
+  const [securityAlertEmail, setSecurityAlertEmail] = useState("security@ofc360.com");
+  const [autoBackupIntervalHours, setAutoBackupIntervalHours] = useState("6");
 
-  const handleSave = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (serverSettings) {
+      setMaintenanceMode(serverSettings.maintenanceMode ?? false);
+      setAllowNewRegistrations(serverSettings.allowNewRegistrations ?? true);
+      setEnforceMfaGlobally(serverSettings.enforceMfaGlobally ?? true);
+      setSessionTimeoutMinutes(String(serverSettings.sessionTimeoutMinutes ?? 60));
+      setDefaultTrialDays(String(serverSettings.defaultTrialDays ?? 14));
+      setEmailSenderName(serverSettings.emailSenderName ?? "OFC360 Enterprise");
+      setEmailSenderAddress(serverSettings.emailSenderAddress ?? "no-reply@ofc360.com");
+      setAiTokenRateLimitPerHour(String(serverSettings.aiTokenRateLimitPerHour ?? 50000));
+      setSecurityAlertEmail(serverSettings.securityAlertEmail ?? "security@ofc360.com");
+      setAutoBackupIntervalHours(String(serverSettings.autoBackupIntervalHours ?? 6));
+    }
+  }, [serverSettings]);
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    updateSettings({
-      maintenanceMode,
-      allowNewRegistrations,
-      enforceMfaGlobally,
-      sessionTimeoutMinutes: parseInt(sessionTimeoutMinutes) || 60,
-      defaultTrialDays: parseInt(defaultTrialDays) || 14,
-      emailSenderName,
-      emailSenderAddress,
-      aiTokenRateLimitPerHour: parseInt(aiTokenRateLimitPerHour) || 50000,
-      securityAlertEmail,
-      autoBackupIntervalHours: parseInt(autoBackupIntervalHours) || 6,
-    });
+    try {
+      await updateSettings({
+        maintenanceMode,
+        allowNewRegistrations,
+        enforceMfaGlobally,
+        sessionTimeoutMinutes: parseInt(sessionTimeoutMinutes) || 60,
+        defaultTrialDays: parseInt(defaultTrialDays) || 14,
+        emailSenderName,
+        emailSenderAddress,
+        aiTokenRateLimitPerHour: parseInt(aiTokenRateLimitPerHour) || 50000,
+        securityAlertEmail,
+        autoBackupIntervalHours: parseInt(autoBackupIntervalHours) || 6,
+      }).unwrap();
 
-    toast.success("Global platform configuration saved successfully.");
+      toast.success("Global platform configuration saved and persisted to database.");
+    } catch (err: any) {
+      toast.error(err?.data?.detail || "Failed to save settings.");
+    }
   };
 
   return (
@@ -67,10 +86,26 @@ export default function PlatformSettingsPage() {
           </p>
         </div>
 
-        <Button onClick={handleSave} className="gradient-bg text-primary-foreground h-9 text-xs gap-1.5 font-medium shadow-sm">
-          <Save className="w-3.5 h-3.5" />
-          <span>Save Changes</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            className="h-9 text-xs gap-1.5 border-border/60"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Reset</span>
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={isSaving || isLoading}
+            className="gradient-bg text-primary-foreground h-9 text-xs gap-1.5 font-medium shadow-sm"
+          >
+            <Save className="w-3.5 h-3.5" />
+            <span>{isSaving ? "Saving..." : "Save Changes"}</span>
+          </Button>
+        </div>
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
@@ -102,115 +137,120 @@ export default function PlatformSettingsPage() {
               <Switch checked={allowNewRegistrations} onCheckedChange={setAllowNewRegistrations} />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold">Default Trial Period (Days)</Label>
                 <Input
                   type="number"
                   value={defaultTrialDays}
                   onChange={(e) => setDefaultTrialDays(e.target.value)}
-                  className="h-9 text-xs"
+                  className="text-xs h-8"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Automated DB Backup Interval (Hours)</Label>
+                <Label className="text-xs font-semibold">User Session Timeout (Minutes)</Label>
                 <Input
                   type="number"
-                  value={autoBackupIntervalHours}
-                  onChange={(e) => setAutoBackupIntervalHours(e.target.value)}
-                  className="h-9 text-xs"
+                  value={sessionTimeoutMinutes}
+                  onChange={(e) => setSessionTimeoutMinutes(e.target.value)}
+                  className="text-xs h-8"
                 />
               </div>
             </div>
           </div>
         </div>
 
-        {/* Section 2: Security & Authentication Defaults */}
+        {/* Section 2: Security & Global Authentication */}
         <div className="glass-card rounded-2xl p-6 border border-border/60 space-y-4">
           <div className="flex items-center gap-2 pb-2 border-b border-border/40">
             <Shield className="w-4 h-4 text-primary" />
-            <h3 className="text-sm font-bold text-foreground">Security & Session Policies</h3>
+            <h3 className="text-sm font-bold text-foreground">Security & Global Compliance</h3>
           </div>
 
           <div className="space-y-4 text-xs">
             <div className="flex items-center justify-between p-3.5 rounded-xl bg-muted/40 border border-border/50">
               <div>
-                <p className="font-semibold text-foreground">Enforce Multi-Factor Authentication (MFA)</p>
+                <p className="font-semibold text-foreground">Enforce Multi-Factor Authentication (MFA) Globally</p>
                 <p className="text-[11px] text-muted-foreground">
-                  Require all HR Admins and Super Administrators to configure TOTP authenticator app or security key.
+                  Require all HR Administrators, Executives, and Platform Admins to use TOTP 2FA.
                 </p>
               </div>
               <Switch checked={enforceMfaGlobally} onCheckedChange={setEnforceMfaGlobally} />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Session Inactivity Timeout (Minutes)</Label>
-                <Input
-                  type="number"
-                  value={sessionTimeoutMinutes}
-                  onChange={(e) => setSessionTimeoutMinutes(e.target.value)}
-                  className="h-9 text-xs"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Security Alert Dispatch Email</Label>
-                <Input
-                  type="email"
-                  value={securityAlertEmail}
-                  onChange={(e) => setSecurityAlertEmail(e.target.value)}
-                  className="h-9 text-xs"
-                />
-              </div>
+            <div className="space-y-1.5 pt-2">
+              <Label className="text-xs font-semibold">Security Alert Dispatch Email</Label>
+              <Input
+                type="email"
+                value={securityAlertEmail}
+                onChange={(e) => setSecurityAlertEmail(e.target.value)}
+                className="text-xs h-8"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                All suspicious login events, brute force attempts, and privilege escalations dispatch instant alerts here.
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Section 3: AI Engine & Communications Gateway */}
+        {/* Section 3: AI Inference & System Operations */}
         <div className="glass-card rounded-2xl p-6 border border-border/60 space-y-4">
           <div className="flex items-center gap-2 pb-2 border-b border-border/40">
             <Cpu className="w-4 h-4 text-primary" />
-            <h3 className="text-sm font-bold text-foreground">AI Token Throttle & Email Gateway</h3>
+            <h3 className="text-sm font-bold text-foreground">AI Copilot Rate Limits & Backups</h3>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Email Sender Name</Label>
-              <Input
-                value={emailSenderName}
-                onChange={(e) => setEmailSenderName(e.target.value)}
-                className="h-9 text-xs"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Email Sender Address</Label>
-              <Input
-                type="email"
-                value={emailSenderAddress}
-                onChange={(e) => setEmailSenderAddress(e.target.value)}
-                className="h-9 text-xs"
-              />
-            </div>
-
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label className="text-xs font-semibold">AI Token Rate Limit per Tenant (Tokens / Hour)</Label>
+              <Label className="text-xs font-semibold">AI Token Rate Limit (Tokens / Hour / Tenant)</Label>
               <Input
                 type="number"
                 value={aiTokenRateLimitPerHour}
                 onChange={(e) => setAiTokenRateLimitPerHour(e.target.value)}
-                className="h-9 text-xs font-mono"
+                className="text-xs h-8"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Automated Database Snapshot Interval (Hours)</Label>
+              <Input
+                type="number"
+                value={autoBackupIntervalHours}
+                onChange={(e) => setAutoBackupIntervalHours(e.target.value)}
+                className="text-xs h-8"
               />
             </div>
           </div>
         </div>
 
-        <div className="flex justify-end pt-2">
-          <Button type="submit" className="gradient-bg text-primary-foreground h-10 px-6 font-semibold shadow-md">
-            Save All Platform Settings
-          </Button>
+        {/* Section 4: System Email Dispatch */}
+        <div className="glass-card rounded-2xl p-6 border border-border/60 space-y-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-border/40">
+            <Mail className="w-4 h-4 text-primary" />
+            <h3 className="text-sm font-bold text-foreground">System Notification & Email Sender</h3>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Sender Display Name</Label>
+              <Input
+                value={emailSenderName}
+                onChange={(e) => setEmailSenderName(e.target.value)}
+                className="text-xs h-8"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Sender Email Address</Label>
+              <Input
+                type="email"
+                value={emailSenderAddress}
+                onChange={(e) => setEmailSenderAddress(e.target.value)}
+                className="text-xs h-8"
+              />
+            </div>
+          </div>
         </div>
       </form>
     </div>

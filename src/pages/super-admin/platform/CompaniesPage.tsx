@@ -1,20 +1,16 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
 import {
   Building2,
   Search,
   Plus,
-  Filter,
   MoreVertical,
   Edit2,
   Trash2,
-  Power,
-  Users,
-  ShieldCheck,
-  CheckCircle2,
-  ExternalLink,
+  HardDrive,
   Globe,
-  HardDrive
+  Power,
+  RefreshCw,
+  Clock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,15 +24,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -44,6 +31,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -52,26 +47,51 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useSuperAdminStore, PlatformCompany } from "@/stores/superAdminStore";
+import { SuperAdminOrganization } from "@/types/superAdmin.types";
+import {
+  useGetSuperAdminOrganizationsQuery,
+  useCreateSuperAdminOrganizationMutation,
+  useUpdateSuperAdminOrganizationMutation,
+  useDeleteSuperAdminOrganizationMutation,
+  useSuspendOrganizationAccessMutation,
+  useReactivateOrganizationAccessMutation,
+  useExtendOrganizationAccessMutation,
+} from "@/services/api/superAdminApi";
 import { toast } from "sonner";
 
 export default function CompaniesPage() {
-  const { companies, addCompany, updateCompany, deleteCompany, toggleCompanyStatus } = useSuperAdminStore();
-
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [planFilter, setPlanFilter] = useState("ALL");
 
+  const {
+    data: companies = [],
+    isLoading,
+    isFetching,
+    refetch,
+  } = useGetSuperAdminOrganizationsQuery({
+    search: search || undefined,
+    status: statusFilter !== "ALL" ? statusFilter : undefined,
+    plan: planFilter !== "ALL" ? planFilter : undefined,
+  });
+
+  const [createOrganization, { isLoading: isCreating }] = useCreateSuperAdminOrganizationMutation();
+  const [updateOrganization, { isLoading: isUpdating }] = useUpdateSuperAdminOrganizationMutation();
+  const [deleteOrganization] = useDeleteSuperAdminOrganizationMutation();
+  const [suspendAccess] = useSuspendOrganizationAccessMutation();
+  const [reactivateAccess] = useReactivateOrganizationAccessMutation();
+  const [extendAccess] = useExtendOrganizationAccessMutation();
+
   // Modal State
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState<PlatformCompany | null>(null);
+  const [selectedCompany, setSelectedCompany] = useState<SuperAdminOrganization | null>(null);
 
   // Form State
   const [name, setName] = useState("");
   const [domain, setDomain] = useState("");
-  const [plan, setPlan] = useState<"Starter" | "Growth" | "Enterprise">("Growth");
-  const [status, setStatus] = useState<"Active" | "Suspended" | "Trial">("Active");
+  const [plan, setPlan] = useState<string>("Growth");
+  const [status, setStatus] = useState<string>("Active");
   const [hrAdminName, setHrAdminName] = useState("");
   const [hrAdminEmail, setHrAdminEmail] = useState("");
   const [employeeCount, setEmployeeCount] = useState("50");
@@ -98,89 +118,116 @@ export default function CompaniesPage() {
     setIsAddOpen(true);
   };
 
-  const handleOpenEdit = (company: PlatformCompany) => {
+  const handleOpenEdit = (company: SuperAdminOrganization) => {
     setSelectedCompany(company);
     setName(company.name);
-    setDomain(company.domain);
-    setPlan(company.plan);
-    setStatus(company.status);
-    setHrAdminName(company.hrAdminName);
-    setHrAdminEmail(company.hrAdminEmail);
-    setEmployeeCount(String(company.employeeCount));
-    setMrr(String(company.mrr));
-    setIndustry(company.industry);
-    setLocation(company.location);
+    setDomain(company.domain || "");
+    setPlan(company.plan || "Growth");
+    setStatus(company.status || "Active");
+    setHrAdminName(company.hr_admin?.name || company.hrAdminName || "");
+    setHrAdminEmail(company.hr_admin?.email || company.hrAdminEmail || "");
+    setEmployeeCount(String(company.employeeCount || company.employee_count || 10));
+    setMrr(String(company.mrr || 0));
+    setIndustry(company.industry || "Technology");
+    setLocation(company.location || "Global");
     setIsEditOpen(true);
   };
 
-  const handleSaveNewCompany = (e: React.FormEvent) => {
+  const handleSaveNewCompany = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !domain.trim() || !hrAdminEmail.trim()) {
-      toast.error("Please fill in the required company name, domain, and HR admin email.");
+    if (!name.trim() || !hrAdminEmail.trim()) {
+      toast.error("Please fill in the required company name and HR admin email.");
       return;
     }
 
-    addCompany({
-      name,
-      domain,
-      plan,
-      status,
-      hrAdminName: hrAdminName || "HR Admin",
-      hrAdminEmail,
-      employeeCount: parseInt(employeeCount) || 10,
-      mrr: parseInt(mrr) || 1000,
-      storageUsedGb: 15.0,
-      industry,
-      location,
-    });
+    try {
+      await createOrganization({
+        name: name.trim(),
+        domain: domain.trim() || undefined,
+        plan,
+        status,
+        hrAdminName: hrAdminName.trim() || "HR Administrator",
+        hrAdminEmail: hrAdminEmail.trim().toLowerCase(),
+        employeeCount: parseInt(employeeCount) || 10,
+        mrr: parseFloat(mrr) || 0,
+        industry,
+        location,
+      }).unwrap();
 
-    toast.success(`Organization "${name}" has been successfully provisioned!`);
-    setIsAddOpen(false);
-    resetForm();
-  };
-
-  const handleSaveEditCompany = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedCompany) return;
-
-    updateCompany(selectedCompany.id, {
-      name,
-      domain,
-      plan,
-      status,
-      hrAdminName,
-      hrAdminEmail,
-      employeeCount: parseInt(employeeCount) || 10,
-      mrr: parseInt(mrr) || 1000,
-      industry,
-      location,
-    });
-
-    toast.success(`Organization "${name}" updated successfully.`);
-    setIsEditOpen(false);
-    resetForm();
-  };
-
-  const handleDelete = (id: string, compName: string) => {
-    if (confirm(`Are you sure you want to delete workspace "${compName}"? This action cannot be undone.`)) {
-      deleteCompany(id);
-      toast.success(`Workspace "${compName}" removed.`);
+      toast.success(`Organization "${name}" has been successfully provisioned in PostgreSQL!`);
+      setIsAddOpen(false);
+      resetForm();
+    } catch (err: any) {
+      toast.error(err?.data?.detail || "Failed to create organization.");
     }
   };
 
-  const filteredCompanies = companies.filter((c) => {
-    const matchesSearch =
-      !search ||
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.domain.toLowerCase().includes(search.toLowerCase()) ||
-      c.hrAdminEmail.toLowerCase().includes(search.toLowerCase()) ||
-      c.industry.toLowerCase().includes(search.toLowerCase());
+  const handleSaveEditCompany = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedCompany) return;
+    if (!name.trim()) {
+      toast.error("Organization name is required.");
+      return;
+    }
 
-    const matchesStatus = statusFilter === "ALL" || c.status === statusFilter;
-    const matchesPlan = planFilter === "ALL" || c.plan === planFilter;
+    try {
+      await updateOrganization({
+        id: selectedCompany.id,
+        data: {
+          name: name.trim(),
+          domain: domain.trim() || undefined,
+          plan,
+          status,
+          hrAdminName: hrAdminName.trim() || undefined,
+          hrAdminEmail: hrAdminEmail.trim().toLowerCase() || undefined,
+          employeeCount: parseInt(employeeCount) || 0,
+          mrr: parseFloat(mrr) || 0,
+          industry,
+          location,
+        },
+      }).unwrap();
 
-    return matchesSearch && matchesStatus && matchesPlan;
-  });
+      toast.success(`Organization "${name}" updated successfully in database.`);
+      setIsEditOpen(false);
+      resetForm();
+    } catch (err: any) {
+      toast.error(err?.data?.detail || "Failed to update organization.");
+    }
+  };
+
+  const handleToggleStatus = async (comp: SuperAdminOrganization) => {
+    try {
+      if (comp.status === "Active") {
+        await suspendAccess(comp.id).unwrap();
+        toast.success(`Workspace "${comp.name}" suspended.`);
+      } else {
+        await reactivateAccess(comp.id).unwrap();
+        toast.success(`Workspace "${comp.name}" reactivated.`);
+      }
+    } catch (err: any) {
+      toast.error(err?.data?.detail || "Failed to update status.");
+    }
+  };
+
+  const handleExtendAccess = async (comp: SuperAdminOrganization) => {
+    try {
+      await extendAccess({ id: comp.id, days: 30 }).unwrap();
+      toast.success(`Extended access for "${comp.name}" by 30 days.`);
+    } catch (err: any) {
+      toast.error(err?.data?.detail || "Failed to extend access.");
+    }
+  };
+
+  const handleDelete = async (id: string, compName: string) => {
+    if (confirm(`Are you sure you want to deactivate workspace "${compName}"? This will revoke active platform licenses.`)) {
+      try {
+        await deleteOrganization(id).unwrap();
+        toast.success(`Workspace "${compName}" deactivated.`);
+      } catch (err: any) {
+        toast.error(err?.data?.detail || "Failed to deactivate workspace.");
+      }
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -196,6 +243,16 @@ export default function CompaniesPage() {
         </div>
 
         <div className="flex items-center gap-2.5">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            className="h-9 text-xs gap-1.5 border-border/60"
+            disabled={isFetching}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
+          </Button>
           <Button onClick={handleOpenAdd} className="gradient-bg text-primary-foreground h-9 text-xs gap-1.5 font-medium shadow-sm">
             <Plus className="w-3.5 h-3.5" />
             <span>Add Organization</span>
@@ -259,27 +316,38 @@ export default function CompaniesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredCompanies.length === 0 ? (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-10 text-muted-foreground text-xs">
+                    <RefreshCw className="w-5 h-5 animate-spin mx-auto text-primary mb-2" />
+                    Loading tenants from database...
+                  </TableCell>
+                </TableRow>
+              ) : companies.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-10 text-muted-foreground text-xs">
                     No organizations found matching the selected filters.
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredCompanies.map((c) => (
+                companies.map((c) => (
                   <TableRow key={c.id} className="hover:bg-secondary/30 transition-colors">
                     <TableCell>
                       <div className="space-y-0.5">
                         <p className="text-xs font-bold text-foreground">{c.name}</p>
                         <div className="flex items-center gap-1 text-[11px] text-muted-foreground font-mono">
-                          <Globe className="w-3 h-3 text-muted-foreground" />
-                          <span>{c.domain}</span>
+                          <Globe className="w-3 h-3 text-muted-foreground shrink-0" />
+                          {c.domain ? (
+                            <span>{c.domain}</span>
+                          ) : (
+                            <span className="italic text-muted-foreground/70">No domain configured</span>
+                          )}
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-[10px] font-semibold bg-secondary/50">
-                        {c.plan}
+                        {c.plan || "No Plan"}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -296,22 +364,35 @@ export default function CompaniesPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs font-medium text-foreground">
-                      {c.employeeCount} staff
+                      {c.employeeCount ?? c.employee_count ?? 0} staff
                     </TableCell>
                     <TableCell>
-                      <div className="space-y-0.5">
-                        <p className="text-xs text-foreground font-medium">{c.hrAdminName}</p>
-                        <p className="text-[11px] text-muted-foreground">{c.hrAdminEmail}</p>
-                      </div>
+                      {c.hr_admin || (c.hrAdminName && c.hrAdminName.trim()) || (c.hrAdminEmail && c.hrAdminEmail.trim()) ? (
+                        <div className="space-y-0.5">
+                          <p className="text-xs text-foreground font-medium">
+                            {c.hr_admin?.name || c.hrAdminName || "HR Admin"}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground font-mono">
+                            {c.hr_admin?.email || c.hrAdminEmail}
+                          </p>
+                          {c.hr_admins && c.hr_admins.length > 1 && (
+                            <span className="inline-block text-[10px] text-primary font-medium bg-primary/10 px-1.5 py-0.5 rounded-full">
+                              +{c.hr_admins.length - 1} more
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground/70 italic">No HR Admin assigned</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <HardDrive className="w-3.5 h-3.5 text-primary" />
-                        <span>{c.storageUsedGb} GB</span>
+                        <span>{c.storageUsedGb || 0.0} GB</span>
                       </div>
                     </TableCell>
                     <TableCell className="text-xs font-bold text-foreground">
-                      ${c.mrr.toLocaleString()}
+                      ${(c.mrr || 0).toLocaleString()}
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -326,7 +407,11 @@ export default function CompaniesPage() {
                             <Edit2 className="w-3.5 h-3.5 text-muted-foreground" />
                             <span>Edit Details</span>
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => toggleCompanyStatus(c.id)} className="gap-2 cursor-pointer">
+                          <DropdownMenuItem onClick={() => handleExtendAccess(c)} className="gap-2 cursor-pointer">
+                            <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                            <span>Extend 30 Days</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleToggleStatus(c)} className="gap-2 cursor-pointer">
                             <Power className="w-3.5 h-3.5 text-muted-foreground" />
                             <span>{c.status === "Active" ? "Suspend Workspace" : "Activate Workspace"}</span>
                           </DropdownMenuItem>
@@ -336,7 +421,7 @@ export default function CompaniesPage() {
                             className="gap-2 text-destructive focus:text-destructive cursor-pointer"
                           >
                             <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                            <span>Delete Workspace</span>
+                            <span>Deactivate Workspace</span>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -358,126 +443,126 @@ export default function CompaniesPage() {
               <span>Provision New Organization Workspace</span>
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Configure tenant parameters, domain registration, and assign the primary HR administrator.
+              Create a dedicated tenant environment, allocate licenses, and assign initial administrator access.
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSaveNewCompany} className="space-y-3.5 py-2">
+          <form onSubmit={handleSaveNewCompany} className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <Label className="text-xs font-semibold">Company Name *</Label>
                 <Input
                   required
-                  placeholder="e.g. Acme Global Corp"
+                  placeholder="e.g. Acme Global Inc"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="h-8 text-xs"
+                  className="text-xs h-8"
                 />
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Domain *</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Workspace Domain (Optional)</Label>
                 <Input
-                  required
-                  placeholder="e.g. acmecorp.com"
+                  placeholder="e.g. acme.com"
                   value={domain}
                   onChange={(e) => setDomain(e.target.value)}
-                  className="h-8 text-xs"
+                  className="text-xs h-8 font-mono"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Subscription Plan</Label>
-                <Select value={plan} onValueChange={(val: any) => setPlan(val)}>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Starter">Starter ($450/mo)</SelectItem>
-                    <SelectItem value="Growth">Growth ($1,800/mo)</SelectItem>
-                    <SelectItem value="Enterprise">Enterprise ($4,800/mo)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Initial Status</Label>
-                <Select value={status} onValueChange={(val: any) => setStatus(val)}>
-                  <SelectTrigger className="h-8 text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Trial">Trial (14 Days)</SelectItem>
-                    <SelectItem value="Suspended">Suspended</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">HR Admin Name</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Primary HR Admin Name</Label>
                 <Input
-                  placeholder="e.g. John Doe"
+                  placeholder="e.g. Sarah Connor"
                   value={hrAdminName}
                   onChange={(e) => setHrAdminName(e.target.value)}
-                  className="h-8 text-xs"
+                  className="text-xs h-8"
                 />
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <Label className="text-xs font-semibold">HR Admin Email *</Label>
                 <Input
                   required
                   type="email"
-                  placeholder="e.g. hr@acmecorp.com"
+                  placeholder="admin@acme.com"
                   value={hrAdminEmail}
                   onChange={(e) => setHrAdminEmail(e.target.value)}
-                  className="h-8 text-xs"
+                  className="text-xs h-8"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Estimated Staff</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Subscription Tier</Label>
+                <Select value={plan} onValueChange={(val: any) => setPlan(val)}>
+                  <SelectTrigger className="text-xs h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Starter">Starter ($99/mo)</SelectItem>
+                    <SelectItem value="Growth">Growth ($299/mo)</SelectItem>
+                    <SelectItem value="Enterprise">Enterprise ($1500/mo)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Initial Status</Label>
+                <Select value={status} onValueChange={(val: any) => setStatus(val)}>
+                  <SelectTrigger className="text-xs h-8">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Trial">Trial</SelectItem>
+                    <SelectItem value="Suspended">Suspended</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Allocated Seats</Label>
                 <Input
                   type="number"
                   value={employeeCount}
                   onChange={(e) => setEmployeeCount(e.target.value)}
-                  className="h-8 text-xs"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Monthly MRR ($)</Label>
-                <Input
-                  type="number"
-                  value={mrr}
-                  onChange={(e) => setMrr(e.target.value)}
-                  className="h-8 text-xs"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Industry</Label>
-                <Input
-                  value={industry}
-                  onChange={(e) => setIndustry(e.target.value)}
-                  className="h-8 text-xs"
+                  className="text-xs h-8"
                 />
               </div>
             </div>
 
-            <DialogFooter className="pt-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Industry Vertical</Label>
+                <Input
+                  placeholder="e.g. Fintech, Healthcare"
+                  value={industry}
+                  onChange={(e) => setIndustry(e.target.value)}
+                  className="text-xs h-8"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">HQ Location</Label>
+                <Input
+                  placeholder="e.g. San Francisco, US"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="text-xs h-8"
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="pt-2">
               <Button type="button" variant="outline" size="sm" onClick={() => setIsAddOpen(false)} className="text-xs">
                 Cancel
               </Button>
-              <Button type="submit" size="sm" className="gradient-bg text-primary-foreground text-xs shadow-sm">
-                Provision Workspace
+              <Button type="submit" size="sm" disabled={isCreating} className="gradient-bg text-primary-foreground text-xs font-medium">
+                {isCreating ? "Provisioning..." : "Provision Workspace"}
               </Button>
             </DialogFooter>
           </form>
@@ -490,41 +575,63 @@ export default function CompaniesPage() {
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2">
               <Edit2 className="w-4 h-4 text-primary" />
-              <span>Edit Organization Workspace</span>
+              <span>Modify Workspace Configuration</span>
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Modify organization settings, subscription plan, and assigned administrator contact.
+              Update organization profile details, subscription level, or assigned contact points.
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSaveEditCompany} className="space-y-3.5 py-2">
+          <form onSubmit={handleSaveEditCompany} className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Company Name</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Company Name *</Label>
                 <Input
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="h-8 text-xs"
+                  className="text-xs h-8"
                 />
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Domain</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Workspace Domain</Label>
                 <Input
-                  required
+                  placeholder="e.g. acme.com"
                   value={domain}
                   onChange={(e) => setDomain(e.target.value)}
-                  className="h-8 text-xs"
+                  className="text-xs h-8 font-mono"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Plan</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Primary HR Admin Name</Label>
+                <Input
+                  value={hrAdminName}
+                  onChange={(e) => setHrAdminName(e.target.value)}
+                  className="text-xs h-8"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">HR Admin Email</Label>
+                <Input
+                  required
+                  type="email"
+                  value={hrAdminEmail}
+                  onChange={(e) => setHrAdminEmail(e.target.value)}
+                  className="text-xs h-8"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Subscription Tier</Label>
                 <Select value={plan} onValueChange={(val: any) => setPlan(val)}>
-                  <SelectTrigger className="h-8 text-xs">
+                  <SelectTrigger className="text-xs h-8">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -535,10 +642,10 @@ export default function CompaniesPage() {
                 </Select>
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Status</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Workspace Status</Label>
                 <Select value={status} onValueChange={(val: any) => setStatus(val)}>
-                  <SelectTrigger className="h-8 text-xs">
+                  <SelectTrigger className="text-xs h-8">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -548,58 +655,24 @@ export default function CompaniesPage() {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">HR Admin Name</Label>
-                <Input
-                  value={hrAdminName}
-                  onChange={(e) => setHrAdminName(e.target.value)}
-                  className="h-8 text-xs"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">HR Admin Email</Label>
-                <Input
-                  required
-                  type="email"
-                  value={hrAdminEmail}
-                  onChange={(e) => setHrAdminEmail(e.target.value)}
-                  className="h-8 text-xs"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Staff Count</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Seats Limit</Label>
                 <Input
                   type="number"
                   value={employeeCount}
                   onChange={(e) => setEmployeeCount(e.target.value)}
-                  className="h-8 text-xs"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Monthly MRR ($)</Label>
-                <Input
-                  type="number"
-                  value={mrr}
-                  onChange={(e) => setMrr(e.target.value)}
-                  className="h-8 text-xs"
+                  className="text-xs h-8"
                 />
               </div>
             </div>
 
-            <DialogFooter className="pt-3">
+            <DialogFooter className="pt-2">
               <Button type="button" variant="outline" size="sm" onClick={() => setIsEditOpen(false)} className="text-xs">
                 Cancel
               </Button>
-              <Button type="submit" size="sm" className="gradient-bg text-primary-foreground text-xs shadow-sm">
-                Save Changes
+              <Button type="submit" size="sm" disabled={isUpdating} className="gradient-bg text-primary-foreground text-xs font-medium">
+                {isUpdating ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>
           </form>

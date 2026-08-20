@@ -5,7 +5,7 @@ export const calendarApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     createCalendarEvents: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/calendar/events` : typeof data === 'object' && data?.id ? `/api/v1/calendar/events` : '/api/v1/calendar/events',
+        url: '/api/v1/calendar/events',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -13,7 +13,7 @@ export const calendarApi = baseApi.injectEndpoints({
     }),
     getCalendarEvents: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/calendar/events` : typeof params === 'object' && params?.id ? `/api/v1/calendar/events` : '/api/v1/calendar/events',
+        url: '/api/v1/calendar/events',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Calendar'],
@@ -43,7 +43,7 @@ export const calendarApi = baseApi.injectEndpoints({
     }),
     createCalendarHolidays: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/calendar/holidays` : typeof data === 'object' && data?.id ? `/api/v1/calendar/holidays` : '/api/v1/calendar/holidays',
+        url: '/api/v1/calendar/holidays',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -51,7 +51,7 @@ export const calendarApi = baseApi.injectEndpoints({
     }),
     getCalendarHolidays: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/calendar/holidays` : typeof params === 'object' && params?.id ? `/api/v1/calendar/holidays` : '/api/v1/calendar/holidays',
+        url: '/api/v1/calendar/holidays',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Calendar'],
@@ -74,7 +74,7 @@ export const calendarApi = baseApi.injectEndpoints({
     }),
     createCalendarMeetings: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/calendar/meetings` : typeof data === 'object' && data?.id ? `/api/v1/calendar/meetings` : '/api/v1/calendar/meetings',
+        url: '/api/v1/calendar/meetings',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -82,7 +82,7 @@ export const calendarApi = baseApi.injectEndpoints({
     }),
     getCalendarMeetings: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/calendar/meetings` : typeof params === 'object' && params?.id ? `/api/v1/calendar/meetings` : '/api/v1/calendar/meetings',
+        url: '/api/v1/calendar/meetings',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Calendar'],
@@ -112,21 +112,21 @@ export const calendarApi = baseApi.injectEndpoints({
     }),
     getCalendarBirthdays: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/calendar/birthdays` : typeof params === 'object' && params?.id ? `/api/v1/calendar/birthdays` : '/api/v1/calendar/birthdays',
+        url: '/api/v1/calendar/birthdays',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Calendar'],
     }),
     getCalendarAnniversaries: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/calendar/anniversaries` : typeof params === 'object' && params?.id ? `/api/v1/calendar/anniversaries` : '/api/v1/calendar/anniversaries',
+        url: '/api/v1/calendar/anniversaries',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Calendar'],
     }),
     getCalendarDashboard: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/calendar/dashboard` : typeof params === 'object' && params?.id ? `/api/v1/calendar/dashboard` : '/api/v1/calendar/dashboard',
+        url: '/api/v1/calendar/dashboard',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Calendar'],

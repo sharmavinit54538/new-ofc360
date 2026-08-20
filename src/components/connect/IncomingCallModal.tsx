@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useConnectCall } from "@/features/connect/hooks";
-import { useAcceptCallMutation, useRejectCallMutation } from "@/services/api/connectApi";
+import { connectCallOrchestrator } from "@/services/connectCallOrchestrator";
 import { connectAudioManager } from "@/services/connectAudioManager";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,7 @@ import { Phone, PhoneOff, Video } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function IncomingCallModal() {
-  const { incomingCall, acceptIncomingCall, rejectIncomingCall } = useConnectCall();
-  const [acceptCall] = useAcceptCallMutation();
-  const [rejectCall] = useRejectCallMutation();
+  const { incomingCall } = useConnectCall();
 
   // Play incoming ringtone while ringing
   useEffect(() => {
@@ -25,32 +23,17 @@ export function IncomingCallModal() {
   if (!incomingCall) return null;
 
   const handleAccept = async () => {
-    connectAudioManager.playCallConnected();
-    if (incomingCall.id) {
-      try {
-        await acceptCall({
-          callId: incomingCall.id,
-          status: "connected",
-        }).unwrap();
-      } catch {}
-    }
-    acceptIncomingCall();
+    console.log(`[CALL_ACCEPTED] User accepting incoming call ${incomingCall.id} from ${incomingCall.targetUser?.name}`);
+    await connectCallOrchestrator.acceptCall(incomingCall);
   };
 
   const handleReject = async () => {
-    connectAudioManager.playCallRejected();
-    if (incomingCall.id) {
-      try {
-        await rejectCall({
-          callId: incomingCall.id,
-          status: "rejected",
-        }).unwrap();
-      } catch {}
-    }
-    rejectIncomingCall();
+    console.log(`[CALL_REJECTED] User rejecting incoming call ${incomingCall.id} from ${incomingCall.targetUser?.name}`);
+    await connectCallOrchestrator.rejectCall(incomingCall);
   };
 
-  const initials = incomingCall.targetUser.name
+  const callerName = incomingCall.targetUser?.name || "Unknown";
+  const initials = callerName
     .split(" ")
     .map((n) => n[0])
     .join("")
@@ -69,7 +52,7 @@ export function IncomingCallModal() {
           <div className="relative">
             <span className="absolute inset-0 rounded-full bg-emerald-500/30 animate-ping" />
             <Avatar className="w-12 h-12 border-2 border-emerald-500 shadow-md">
-              <AvatarImage src={incomingCall.targetUser.avatar} alt={incomingCall.targetUser.name} />
+              <AvatarImage src={incomingCall.targetUser.avatar} alt={callerName} />
               <AvatarFallback className="text-sm font-bold bg-primary/10 text-primary">
                 {initials}
               </AvatarFallback>
@@ -80,7 +63,7 @@ export function IncomingCallModal() {
             <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">
               Incoming {incomingCall.type === "video" ? "Video" : "Audio"} Call...
             </span>
-            <h4 className="text-sm font-bold text-foreground truncate">{incomingCall.targetUser.name}</h4>
+            <h4 className="text-sm font-bold text-foreground truncate">{callerName}</h4>
             <p className="text-[11px] text-muted-foreground truncate">
               {incomingCall.targetUser.role || "Colleague"} • {incomingCall.targetUser.department || "General"}
             </p>
@@ -112,3 +95,4 @@ export function IncomingCallModal() {
     </AnimatePresence>
   );
 }
+

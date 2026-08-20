@@ -1,4 +1,5 @@
 import { baseApi } from "@/services/api/baseApi";
+import { RawEnvelope } from "@/services/api/envelope";
 import {
   APIResponse,
   ReportCreate,
@@ -9,12 +10,13 @@ import {
   DepartmentAnalytics,
   TenureAnalytics,
 } from "./types";
+import { extractData, extractArray } from "./unwrapHelper";
 
 export const reportsCoreApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getReports: builder.query<APIResponse<ReportResponse[]>, ReportListQueryParams | void>({
       query: (params) => ({
-        url: "/v2/reports",
+        url: "/api/v2/reports",
         method: "GET",
         params: {
           type: params?.type,
@@ -24,6 +26,15 @@ export const reportsCoreApi = baseApi.injectEndpoints({
           limit: params?.limit ?? 100,
         },
       }),
+      transformResponse: (raw: RawEnvelope<ReportResponse[]> | APIResponse<ReportResponse[]> | ReportResponse[]) => {
+        const data = extractArray<ReportResponse>(raw);
+        return {
+          success: true,
+          message: "Reports retrieved",
+          data,
+          errors: null,
+        };
+      },
       providesTags: (result) =>
         result?.data
           ? [
@@ -35,15 +46,24 @@ export const reportsCoreApi = baseApi.injectEndpoints({
 
     getReportStats: builder.query<APIResponse<ReportStats>, void>({
       query: () => ({
-        url: "/v2/reports/stats",
+        url: "/api/v2/reports/stats",
         method: "GET",
       }),
+      transformResponse: (raw: RawEnvelope<ReportStats> | APIResponse<ReportStats> | ReportStats) => {
+        const data = extractData<ReportStats>(raw);
+        return {
+          success: true,
+          message: "Report stats retrieved",
+          data,
+          errors: null,
+        };
+      },
       providesTags: [{ type: "Report", id: "STATS" }],
     }),
 
     createReport: builder.mutation<APIResponse<ReportResponse>, ReportCreate>({
       query: (body) => ({
-        url: "/v2/reports",
+        url: "/api/v2/reports",
         method: "POST",
         body,
       }),
@@ -55,7 +75,7 @@ export const reportsCoreApi = baseApi.injectEndpoints({
 
     refreshReport: builder.mutation<APIResponse<ReportResponse>, string>({
       query: (id) => ({
-        url: `/v2/reports/${id}/refresh`,
+        url: `/api/v2/reports/${id}/refresh`,
         method: "POST",
       }),
       invalidatesTags: (_res, _err, id) => [
@@ -67,7 +87,7 @@ export const reportsCoreApi = baseApi.injectEndpoints({
 
     deleteReport: builder.mutation<APIResponse<void>, string>({
       query: (id) => ({
-        url: `/v2/reports/${id}`,
+        url: `/api/v2/reports/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: (_res, _err, id) => [
@@ -79,25 +99,52 @@ export const reportsCoreApi = baseApi.injectEndpoints({
 
     getHeadcountAnalytics: builder.query<APIResponse<HeadcountAnalytics[]>, void>({
       query: () => ({
-        url: "/v2/reports/analytics/headcount",
+        url: "/api/v2/reports/analytics/headcount",
         method: "GET",
       }),
+      transformResponse: (raw: RawEnvelope<HeadcountAnalytics[]> | APIResponse<HeadcountAnalytics[]> | HeadcountAnalytics[]) => {
+        const data = extractArray<HeadcountAnalytics>(raw);
+        return {
+          success: true,
+          message: "Headcount analytics retrieved",
+          data,
+          errors: null,
+        };
+      },
       providesTags: [{ type: "Report", id: "HEADCOUNT_ANALYTICS" }],
     }),
 
     getDepartmentAnalytics: builder.query<APIResponse<DepartmentAnalytics[]>, void>({
       query: () => ({
-        url: "/v2/reports/analytics/department",
+        url: "/api/v2/reports/analytics/department",
         method: "GET",
       }),
+      transformResponse: (raw: RawEnvelope<DepartmentAnalytics[]> | APIResponse<DepartmentAnalytics[]> | DepartmentAnalytics[]) => {
+        const data = extractArray<DepartmentAnalytics>(raw);
+        return {
+          success: true,
+          message: "Department analytics retrieved",
+          data,
+          errors: null,
+        };
+      },
       providesTags: [{ type: "Report", id: "DEPARTMENT_ANALYTICS" }],
     }),
 
     getTenureAnalytics: builder.query<APIResponse<TenureAnalytics[]>, void>({
       query: () => ({
-        url: "/v2/reports/analytics/tenure",
+        url: "/api/v2/reports/analytics/tenure",
         method: "GET",
       }),
+      transformResponse: (raw: RawEnvelope<TenureAnalytics[]> | APIResponse<TenureAnalytics[]> | TenureAnalytics[]) => {
+        const data = extractArray<TenureAnalytics>(raw);
+        return {
+          success: true,
+          message: "Tenure analytics retrieved",
+          data,
+          errors: null,
+        };
+      },
       providesTags: [{ type: "Report", id: "TENURE_ANALYTICS" }],
     }),
   }),

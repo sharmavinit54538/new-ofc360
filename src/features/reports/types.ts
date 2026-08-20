@@ -29,7 +29,7 @@ export interface ReportCreate {
   description?: string;
   type: ReportType | string; // default "employee"
   format?: ReportFormat; // default "pdf"
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
   schedule?: ReportSchedule; // default "none"
 }
 
@@ -40,7 +40,7 @@ export interface ReportResponse {
   type: string;
   status: 'pending' | 'processing' | 'completed' | 'failed' | 'scheduled' | string;
   format: ReportFormat;
-  filters?: Record<string, any>;
+  filters?: Record<string, unknown>;
   schedule?: ReportSchedule;
   file_path?: string;
   file_size_kb?: number;
@@ -293,7 +293,7 @@ export interface ComplianceReportData {
   overallStatus: string;
   executiveSummary: string;
   riskAuditRegister: ComplianceRisk[];
-  detailedFindings: any[];
+  detailedFindings: Record<string, unknown>[];
 }
 
 export interface EmployeeComplianceDetail {
@@ -331,33 +331,95 @@ export interface SecurityAuditLog {
 }
 
 // ----------------------------------------------------------------------
-// 5. Engagement & eNPS Reports Types (MOCKED)
+// 5. Engagement & eNPS Reports Types
 // ----------------------------------------------------------------------
 
 export interface EngagementSummary {
-  enpsScore: number; // -100 to 100
-  responseRate: number; // %
-  promoters: number;
-  passives: number;
-  detractors: number;
-  trend: { month: string; score: number }[];
+  engagementScore?: number;
+  participationRate?: number;
+  enpsScore?: number;
+  enps?: number;
+  responseRate?: number;
+  totalResponses?: number;
+  totalSurveys?: number;
+  promoters?: number;
+  passives?: number;
+  detractors?: number;
+  trend?: { month: string; score: number; responses?: number }[];
+  status?: string;
+}
+
+export interface EngagementTrendItem {
+  month: string;
+  score: number;
+  participationRate?: number;
+  responses?: number;
 }
 
 export interface EnpsTrendItem {
   month: string;
   score: number;
   responses: number;
+  promoters?: number;
+  passives?: number;
+  detractors?: number;
+}
+
+export interface EngagementBreakdownItem {
+  department?: string;
+  team?: string;
+  score: number;
+  participationRate?: number;
+  responses?: number;
+  enps?: number;
+}
+
+export interface EngagementSurveyItem {
+  id: string;
+  title: string;
+  status: 'active' | 'completed' | 'draft' | string;
+  responses: number;
+  totalEligible?: number;
+  responseRate?: number;
+  score?: number;
+  createdAt?: string;
+  dueDate?: string;
 }
 
 // ----------------------------------------------------------------------
-// 6. Culture & D&I Telemetry Types (MOCKED)
+// 6. Culture & D&I Telemetry Types
 // ----------------------------------------------------------------------
 
 export interface CultureDiTelemetry {
-  genderDistribution: { label: string; value: number }[];
-  ageDistribution: { label: string; value: number }[];
-  inclusionIndex: number; // 0-100
-  diHiringRatio: number; // %
+  inclusionIndex?: number;
+  psychologicalSafetyScore?: number;
+  diHiringRatio?: number;
+  genderDistribution?: { label: string; value: number }[];
+  ageDistribution?: { label: string; value: number }[];
+  departmentScores?: { department: string; score: number }[];
+}
+
+export interface CultureTrendItem {
+  month: string;
+  inclusionIndex?: number;
+  score?: number;
+  safetyScore?: number;
+}
+
+export interface CultureBreakdownItem {
+  category: string;
+  score: number;
+  benchmark?: number;
+  status?: string;
+}
+
+export interface CultureFeedbackItem {
+  id: string;
+  sentiment: 'positive' | 'neutral' | 'negative' | string;
+  theme: string;
+  comment?: string;
+  department?: string;
+  date?: string;
 }
 
 // ----------------------------------------------------------------------

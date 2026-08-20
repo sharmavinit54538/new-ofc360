@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { useConnectCall } from "@/features/connect/hooks";
-import { useEndCallMutation } from "@/services/api/connectApi";
+import { connectCallOrchestrator } from "@/services/connectCallOrchestrator";
 import { connectAudioManager } from "@/services/connectAudioManager";
+import { connectWebRTCService } from "@/services/connectWebRTCService";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +15,6 @@ import {
   PhoneOff,
   Wifi,
 } from "lucide-react";
-import { useWebRTC } from "@/hooks/useWebRTC";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function VideoCallModal() {
@@ -34,33 +34,31 @@ export function VideoCallModal() {
     incrementDuration,
   } = useConnectCall();
 
-  const [endCallMutation] = useEndCallMutation();
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+  const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
+  const [isSharing, setIsSharing] = useState(false);
+
   const screenVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
 
-  // WebRTC hook
-  const {
-    localStream,
-    remoteStream,
-    screenStream,
-    isSharing,
-    startMedia,
-    startScreenShare,
-    stopScreenShare,
-    cleanup,
-  } = useWebRTC({
-    targetUserId: remoteUser?.id,
-    callId: activeCall?.id,
-  });
-
+  // Observe WebRTC remote and local streams via polling (orchestrator handles init)
   useEffect(() => {
-    if (activeCall && type === "video") {
-      startMedia(true, true);
-    }
-    return () => {
-      cleanup();
-    };
-  }, [activeCall?.id, type]);
+    if (!activeCall || type !== "video") return;
+
+    // Poll for stream updates from the WebRTC service
+    const interval = setInterval(() => {
+      const rtcService = connectWebRTCService as any;
+      if (rtcService.localStream && rtcService.localStream !== localStream) {
+        setLocalStream(rtcService.localStream);
+      }
+      if (rtcService.remoteStream && rtcService.remoteStream !== remoteStream) {
+        setRemoteStream(rtcService.remoteStream);
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, [activeCall?.id, type, localStream, remoteStream]);
 
   // Screen video stream attachment
   useEffect(() => {
@@ -79,18 +77,18 @@ export function VideoCallModal() {
   // Sounds
   useEffect(() => {
     if (!activeCall || type !== "video") return;
-
-    if (status === "calling") {
-      connectAudioManager.playOutgoingCall();
-    } else if (status === "connected") {
-      connectAudioManager.stopOutgoingCall();
-      connectAudioManager.playCallConnected();
-    }
-
-    return () => {
-      connectAudioManager.stopOutgoingCall();
-    };
+    // Ringtone sounds are handled by the orchestrator at call initiation.
+    // No duplicate sound playback needed here.
   }, [status, type, activeCall]);
+
+  // Sync mute/camera state to WebRTC
+  useEffect(() => {
+    connectWebRTCService.toggleMicrophone(!isMuted);
+  }, [isMuted]);
+
+  useEffect(() => {
+    connectWebRTCService.toggleCamera(isCameraEnabled);
+  }, [isCameraEnabled]);
 
   // Duration timer
   useEffect(() => {
@@ -111,28 +109,21 @@ export function VideoCallModal() {
   };
 
   const handleEndCall = async () => {
-    connectAudioManager.playCallEnded();
-    if (activeCall?.id) {
-      try {
-        await endCallMutation({
-          callId: activeCall.id,
-          status: "ended",
-          duration,
-        }).unwrap();
-      } catch {}
-    }
-    cleanup();
-    endCall();
+    await connectCallOrchestrator.endActiveCall();
   };
 
   const handleToggleScreenShare = async () => {
     if (isSharing) {
-      await stopScreenShare();
+      await connectWebRTCService.stopScreenShare();
+      setScreenStream(null);
+      setIsSharing(false);
       toggleScreenShare(false);
       connectAudioManager.playScreenShareStopped();
     } else {
-      const stream = await startScreenShare();
+      const stream = await connectWebRTCService.startScreenShare();
       if (stream) {
+        setScreenStream(stream);
+        setIsSharing(true);
         toggleScreenShare(true);
         connectAudioManager.playScreenShareStarted();
       }
@@ -292,14 +283,14 @@ export function VideoCallModal() {
             {isSharing ? <MonitorOff className="w-5 h-5" /> : <Monitor className="w-5 h-5" />}
           </Button>
 
-          {/* End Call */}
+          {/* End / Cancel Call */}
           <Button
             type="button"
             variant="destructive"
             size="icon"
             onClick={handleEndCall}
             className="w-14 h-14 rounded-full bg-rose-600 hover:bg-rose-700 shadow-xl transition-transform hover:scale-105 mx-2"
-            title="End Call"
+            title={status === "calling" || status === "ringing" ? "Cancel Call" : "End Call"}
           >
             <PhoneOff className="w-6 h-6" />
           </Button>

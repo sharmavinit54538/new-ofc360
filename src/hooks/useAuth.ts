@@ -5,23 +5,34 @@ import {
   selectCurrentRole,
   selectCompanyId,
   selectSessionStatus,
+  selectAuthInitializing,
 } from "@/features/auth/authSelectors";
 import { logout as logoutAction, setRole as setRoleAction, setCredentials } from "@/features/auth/authSlice";
+import { resetPresenceState } from "@/features/connect/presenceSlice";
 import { baseApi } from "@/services/api/baseApi";
 import { useLogoutSessionMutation } from "@/services/api/authApi";
+import { connectWebSocketService } from "@/services/connectWebSocketService";
 import { useCallback } from "react";
-import { SystemRole } from "@/features/auth/authTypes";
+import { SystemRole, normalizeRole } from "@/features/auth/authTypes";
 
 export function useAuth() {
   const dispatch = useAppDispatch();
   const [logoutSessionApi] = useLogoutSessionMutation();
   const user = useAppSelector(selectCurrentUser);
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
-  const role = useAppSelector(selectCurrentRole);
+  const rawRole = useAppSelector(selectCurrentRole);
   const companyId = useAppSelector(selectCompanyId);
   const sessionStatus = useAppSelector(selectSessionStatus);
+  const isInitializing = useAppSelector(selectAuthInitializing);
+
+  const loading = isInitializing || sessionStatus === "loading";
+  const role: SystemRole = normalizeRole(user?.role || rawRole);
 
   const logout = useCallback(async () => {
+    console.log("[LOGOUT] User initiated logout. Disconnecting WebSocket and broadcasting offline presence...");
+    connectWebSocketService.disconnect();
+    dispatch(resetPresenceState());
+
     try {
       await Promise.race([
         logoutSessionApi().unwrap(),
@@ -45,6 +56,9 @@ export function useAuth() {
   return {
     user,
     isAuthenticated,
+    loading,
+    isLoading: loading,
+    isInitializing,
     role,
     companyId,
     sessionStatus,
@@ -53,3 +67,4 @@ export function useAuth() {
     setCredentials: (payload: Parameters<typeof setCredentials>[0]) => dispatch(setCredentials(payload)),
   };
 }
+

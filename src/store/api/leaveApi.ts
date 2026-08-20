@@ -5,46 +5,52 @@ export const leaveApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getLeavesBalances: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/leaves/balances` : typeof params === 'object' && params?.id ? `/api/v1/leaves/balances` : '/api/v1/leaves/balances',
+        url: '/api/v1/leaves/balances',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Leave'],
     }),
     createLeavesApply: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/leaves/apply` : typeof data === 'object' && data?.id ? `/api/v1/leaves/apply` : '/api/v1/leaves/apply',
+        url: '/api/v1/leaves/apply',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
-      invalidatesTags: ['Leave'],
+      invalidatesTags: ['Leave', 'Attendance'],
     }),
     getLeavesHistory: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/leaves/history` : typeof params === 'object' && params?.id ? `/api/v1/leaves/history` : '/api/v1/leaves/history',
+        url: '/api/v1/leaves/history',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Leave'],
     }),
     getLeavesPending: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/leaves/pending` : typeof params === 'object' && params?.id ? `/api/v1/leaves/pending` : '/api/v1/leaves/pending',
+        url: '/api/v1/leaves/pending',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Leave'],
     }),
     createLeavesLeaveIdReview: builder.mutation<ApiResponse<any>, any>({
-      query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/leaves/${data.leave_id}/review` : typeof data === 'object' && data?.id ? `/api/v1/leaves/{leave_id}/review` : '/api/v1/leaves/{leave_id}/review',
-        method: 'POST',
-        body: typeof data === 'object' ? data : undefined,
-      }),
-      invalidatesTags: ['Leave'],
+      query: (data) => {
+        const id = typeof data === 'object' ? (data?.leave_id || data?.leaveId || data?.id) : data;
+        return {
+          url: `/api/v1/leaves/${id}/review`,
+          method: 'POST',
+          body: typeof data === 'object' ? data : undefined,
+        };
+      },
+      invalidatesTags: ['Leave', 'Attendance'],
     }),
     getLeavesBalancesEmployeeId: builder.query<ApiResponse<any>, any>({
-      query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/leaves/balances/${params.employee_id}` : typeof params === 'object' && params?.id ? `/api/v1/leaves/balances/{employee_id}` : '/api/v1/leaves/balances/{employee_id}',
-        params: typeof params === 'object' ? params : undefined,
-      }),
+      query: (params) => {
+        const empId = typeof params === 'object' ? (params?.employee_id || params?.employeeId || params?.id) : params;
+        return {
+          url: `/api/v1/leaves/balances/${empId}`,
+          params: typeof params === 'object' ? params : undefined,
+        };
+      },
       providesTags: ['Leave'],
     }),
   }),

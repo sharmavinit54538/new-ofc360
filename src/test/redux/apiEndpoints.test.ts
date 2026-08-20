@@ -21,7 +21,6 @@ import {
 } from "@/services/api/employeeApi";
 import { payrollApi, useGetPayrollPeriodsQuery, useFinalizePayrollMutation } from "@/services/api/payrollApi";
 import { recruitmentApi, useGetJobsQuery, useUploadResumeMutation } from "@/services/api/recruitmentApi";
-import { intelligenceApi, useGetAiModelsQuery, useExecuteAiModelMutation } from "@/services/api/intelligenceApi";
 import { timelineApi, useGetEmployeeTimelineQuery, useAddTimelineEventMutation } from "@/services/api/timelineApi";
 import { attendanceApi, useGetAttendanceRecordsQuery, useClockInMutation } from "@/services/api/attendanceApi";
 import { onboardingApi, useGetOnboardingTasksQuery } from "@/services/api/onboardingApi";
@@ -55,9 +54,6 @@ describe("RTK Query Feature API Endpoints", () => {
 
     expect(recruitmentApi.endpoints).toHaveProperty("getJobs");
     expect(recruitmentApi.endpoints).toHaveProperty("uploadResume");
-
-    expect(intelligenceApi.endpoints).toHaveProperty("getAiModels");
-    expect(intelligenceApi.endpoints).toHaveProperty("executeAiModel");
 
     expect(timelineApi.endpoints).toHaveProperty("getEmployeeTimeline");
     expect(timelineApi.endpoints).toHaveProperty("addTimelineEvent");
@@ -93,8 +89,6 @@ describe("RTK Query Feature API Endpoints", () => {
     expect(typeof useFinalizePayrollMutation).toBe("function");
     expect(typeof useGetJobsQuery).toBe("function");
     expect(typeof useUploadResumeMutation).toBe("function");
-    expect(typeof useGetAiModelsQuery).toBe("function");
-    expect(typeof useExecuteAiModelMutation).toBe("function");
     expect(typeof useGetEmployeeTimelineQuery).toBe("function");
     expect(typeof useAddTimelineEventMutation).toBe("function");
     expect(typeof useGetAttendanceRecordsQuery).toBe("function");

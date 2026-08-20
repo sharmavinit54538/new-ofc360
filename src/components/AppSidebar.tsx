@@ -3,20 +3,20 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Users, UserSearch, Clock, DollarSign,
   ChevronLeft, Briefcase, UserPlus, GraduationCap,
-  FileText, Monitor, UserMinus, BrainCircuit, Building2, ShieldCheck,
+  FileText, Monitor, UserMinus, Building2, ShieldCheck,
   Heart, BarChart3, PieChart, TrendingUp, Lightbulb, Target, PanelLeft,
   Boxes, Settings, Globe, Award, Key, Zap, FileCode2, FileCheck2, Server, Cpu, Lock,
-  Activity, ShieldAlert, MessageSquare, Sparkles
+  Activity, ShieldAlert, MessageSquare, Sparkles, BrainCircuit
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { SystemRole } from "@/features/auth/authTypes";
+import { SystemRole, normalizeRole } from "@/features/auth/authTypes";
 import { usePayrollStore } from "@/stores/payrollStore";
 import { getCurrencyIcon } from "@/utils/currency";
 
 export function AppSidebar({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   const location = useLocation();
-  const { user } = useAuth();
-  const currentRole: SystemRole = user?.role || "hr_admin";
+  const { user, role } = useAuth();
+  const currentRole: SystemRole = role || normalizeRole(user?.role);
   const payrollSettings = usePayrollStore((state) => state.settings);
   const PayrollIcon = getCurrencyIcon(payrollSettings?.currency);
 
@@ -195,7 +195,7 @@ export function AppSidebar({ open, onToggle }: { open: boolean; onToggle: () => 
                   (item.path === "/connect" && location.pathname.startsWith("/connect")) ||
                   (item.path !== "/super-admin" && item.path.startsWith("/super-admin") && location.pathname.startsWith(item.path)) ||
                   (item.path === "/people" && (location.pathname.startsWith("/people") || location.pathname.startsWith("/employees") || location.pathname.startsWith("/departments"))) ||
-                  (item.path === "/intelligence" && location.pathname.startsWith("/intelligence")) ||
+                  (item.path === "/intelligence" && (location.pathname.startsWith("/intelligence") || location.pathname.startsWith("/ai"))) ||
                   (item.path === "/talent-intelligence" && location.pathname.startsWith("/talent-intelligence")) ||
                   (item.path === "/resource-intelligence" && location.pathname.startsWith("/resource-intelligence")) ||
                   (item.path === "/employee-experience" && location.pathname.startsWith("/employee-experience"))

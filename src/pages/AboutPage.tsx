@@ -20,7 +20,7 @@ export default function AboutPage() {
     {
       num: "02",
       title: "Intelligent",
-      desc: "Autonomous AI agents and computer vision models that extract insights, predict attrition, and streamline workflows.",
+      desc: "AI-driven copilot and computer vision models that extract insights, automate audits, and streamline workflows.",
       icon: Cpu,
     },
     {

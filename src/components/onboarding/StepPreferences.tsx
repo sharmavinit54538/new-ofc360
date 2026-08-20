@@ -1,22 +1,35 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { OnboardingPreferences } from "@/types/hrAdminOnboarding";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Sliders, Clock, Calendar, Bell, ShieldCheck, ArrowRight } from "lucide-react";
+import { Sliders, Clock, Calendar, Bell, ShieldCheck, ArrowRight, Loader2 } from "lucide-react";
 
 interface StepPreferencesProps {
   initialData: OnboardingPreferences;
-  onSave: (data: OnboardingPreferences) => void;
+  onSave: (data: OnboardingPreferences) => Promise<void> | void;
   onBack: () => void;
+  isLoading?: boolean;
 }
 
 const ALL_DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const ALL_CHANNELS = ["Email", "In-App", "WhatsApp", "Slack"];
 
-export function StepPreferences({ initialData, onSave, onBack }: StepPreferencesProps) {
+export function StepPreferences({ initialData, onSave, onBack, isLoading }: StepPreferencesProps) {
   const [formData, setFormData] = useState<OnboardingPreferences>(initialData);
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData((prev) => ({
+        work_days: initialData.work_days || prev.work_days || ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        work_hours: initialData.work_hours || prev.work_hours || "09:00 - 18:00",
+        attendance_telemetry: initialData.attendance_telemetry || prev.attendance_telemetry || "Face + Web Check-in",
+        payroll_cycle_start: initialData.payroll_cycle_start ?? prev.payroll_cycle_start ?? 1,
+        notification_channels: initialData.notification_channels || prev.notification_channels || ["Email", "In-App"],
+      }));
+    }
+  }, [initialData]);
 
   const toggleDay = (day: string) => {
     const exists = formData.work_days.includes(day);
@@ -143,11 +156,21 @@ export function StepPreferences({ initialData, onSave, onBack }: StepPreferences
       </div>
 
       <div className="pt-4 flex items-center justify-between">
-        <Button type="button" variant="outline" onClick={onBack} className="rounded-xl px-5 text-xs">
+        <Button type="button" variant="outline" onClick={onBack} disabled={isLoading} className="rounded-xl px-5 text-xs">
           Back
         </Button>
-        <Button type="submit" className="rounded-xl px-6 text-xs gap-2">
-          Save & Review <ArrowRight className="w-4 h-4" />
+        <Button type="submit" disabled={isLoading} className="rounded-xl px-6 text-xs gap-2">
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Saving Preferences...</span>
+            </>
+          ) : (
+            <>
+              <span>Save & Review</span>
+              <ArrowRight className="w-4 h-4" />
+            </>
+          )}
         </Button>
       </div>
     </form>

@@ -1,20 +1,13 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useAppSelector } from "@/app/hooks";
-import {
-  selectIsAuthenticated,
-  selectAuthInitializing,
-  selectSessionStatus,
-} from "@/features/auth/authSelectors";
+import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
 
 export default function ProtectedRoute() {
   const location = useLocation();
-  const isAuthenticated = useAppSelector(selectIsAuthenticated);
-  const isInitializing = useAppSelector(selectAuthInitializing);
-  const sessionStatus = useAppSelector(selectSessionStatus);
+  const { user, isAuthenticated, loading } = useAuth();
 
-  if (isInitializing || sessionStatus === "loading") {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 space-y-6">
         <div className="flex items-center gap-3">
@@ -33,10 +26,21 @@ export default function ProtectedRoute() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !user) {
+    const searchParams = new URLSearchParams(location.search);
+    const token =
+      searchParams.get("token") ||
+      searchParams.get("activation_token") ||
+      searchParams.get("invite_token");
+
+    if (location.pathname === "/onboarding" && token) {
+      return <Navigate to={`/employee/activate${location.search}`} replace />;
+    }
+
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return <Outlet />;
 }
+
 

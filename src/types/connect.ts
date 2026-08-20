@@ -2,6 +2,10 @@ export type PresenceStatus = "online" | "away" | "busy" | "dnd" | "offline";
 
 export interface ConnectUser {
   id: string;
+  userId?: string;
+  user_id?: string;
+  employee_id?: string;
+  employeeId?: string;
   name: string;
   email: string;
   role?: string;
@@ -110,6 +114,7 @@ export interface CallHistoryItem {
   callee: ConnectUser;
   type: CallType;
   status: "completed" | "missed" | "rejected" | "busy" | "failed";
+  direction?: "incoming" | "outgoing";
   duration: number; // in seconds
   startedAt: string;
   endedAt?: string;
@@ -303,7 +308,8 @@ export interface AddChannelMembersRequest {
 }
 
 export interface InitiateCallRequest {
-  targetUserId: string;
+  targetUserId?: string;
+  calleeId?: string;
   type: CallType;
 }
 
@@ -397,6 +403,16 @@ export type WebSocketEventType =
   | "typing:start"
   | "typing:stop"
   | "presence:change"
+  | "presence:update"
+  | "presence_update"
+  | "user:presence"
+  | "status:change"
+  | "user:online"
+  | "USER_ONLINE"
+  | "user:offline"
+  | "USER_OFFLINE"
+  | "batch:presence"
+  | "presence:batch"
   | "call:incoming"
   | "call:accepted"
   | "call:rejected"
@@ -404,7 +420,8 @@ export type WebSocketEventType =
   | "webrtc:signal"
   | "meeting:participant_joined"
   | "meeting:participant_left"
-  | "meeting:screen_share";
+  | "meeting:screen_share"
+  | (string & {});
 
 export interface WebSocketEvent<T = any> {
   event: WebSocketEventType;

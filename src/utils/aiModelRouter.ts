@@ -5,6 +5,7 @@
  */
 
 import { type AIToolItem, type AICategory } from "@/types/ai";
+import { ALL_71_AI_MODELS } from "@/data/aiToolsData";
 
 export interface AIExecutionOptions {
   stream?: boolean;
@@ -42,10 +43,13 @@ export async function executeAiModel(
   options?: AIExecutionOptions
 ): Promise<AIExecutionResponse> {
   const startTime = Date.now();
-  const modelId = typeof modelOrId === "string" ? modelOrId : modelOrId.id;
-  const modelTitle = typeof modelOrId === "object" && modelOrId.title ? modelOrId.title : modelId;
-  const modelCategory = typeof modelOrId === "object" && modelOrId.category ? modelOrId.category : "General AI";
-  const modelBadge = typeof modelOrId === "object" && modelOrId.badge ? modelOrId.badge : "AI";
+  const rawId = typeof modelOrId === "string" ? modelOrId : modelOrId.id;
+  const knownModel = ALL_71_AI_MODELS.find((m) => m.id === rawId);
+
+  const modelId = rawId;
+  const modelTitle = typeof modelOrId === "object" && modelOrId.title ? modelOrId.title : (knownModel?.title || modelId);
+  const modelCategory = typeof modelOrId === "object" && modelOrId.category ? modelOrId.category : (knownModel?.category || "General AI");
+  const modelBadge = typeof modelOrId === "object" && modelOrId.badge ? modelOrId.badge : (knownModel?.badge || "AI");
 
   const promptLower = normalizePrompt(userPrompt);
 

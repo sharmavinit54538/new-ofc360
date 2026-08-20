@@ -1,7 +1,7 @@
 import { useMemo, useRef, useEffect, useState } from "react";
 import { useConnect, useConnectCall } from "@/features/connect/hooks";
 import { useAppSelector } from "@/app/hooks";
-import { selectTargetTypingUsers } from "@/features/connect/selectors";
+import { selectTargetTypingUsers, selectUserPresenceMap } from "@/features/connect/selectors";
 import {
   useGetConversationsQuery,
   useGetColleaguesQuery,
@@ -12,9 +12,11 @@ import {
   usePinMessageMutation,
   useDeleteMessageMutation,
   useEditMessageMutation,
+  isCurrentUser,
 } from "@/services/api/connectApi";
 import { useAuth } from "@/hooks/useAuth";
-import { ConnectUser, ConnectMessage } from "@/types/connect";
+import { ConnectUser, ConnectMessage, PresenceStatus } from "@/types/connect";
+import { connectCallOrchestrator } from "@/services/connectCallOrchestrator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +39,7 @@ import { PresenceIndicator } from "./PresenceIndicator";
 import { MessageBubble } from "./MessageBubble";
 import { ChatComposer } from "./ChatComposer";
 import { ConnectEmptyState } from "./ConnectEmptyState";
+import { ConnectErrorState } from "./ConnectErrorState";
 import { toast } from "sonner";
 
 /**
@@ -169,6 +172,9 @@ export function ChatWindow({
   const {
     data: messages = [],
     isLoading: isMessagesLoading,
+    isError: isMessagesError,
+    error: messagesError,
+    refetch: refetchMessages,
   } = useGetConversationMessagesQuery(
     {
       conversationId: activeConversationId || "",
@@ -176,6 +182,15 @@ export function ChatWindow({
     },
     { skip: !activeConversationId }
   );
+
+  useEffect(() => {
+    if (activeConversationId) {
+      console.log(`[CHAT_INIT] ChatWindow active conversation: ${activeConversationId}`);
+    }
+    if (isMessagesError) {
+      console.error(`[CHAT_MESSAGES] Error fetching messages for ${activeConversationId}:`, messagesError);
+    }
+  }, [activeConversationId, isMessagesError, messagesError]);
 
   const [sendMessage] = useSendMessageMutation();
   const [markConversationRead] = useMarkConversationReadMutation();
@@ -187,6 +202,7 @@ export function ChatWindow({
   const typingUsers = useAppSelector((state) =>
     selectTargetTypingUsers(state, activeConversationId || "")
   );
+  const userPresenceMap = useAppSelector(selectUserPresenceMap);
 
   const colleaguesList: ConnectUser[] = useMemo(() => {
     if (Array.isArray(colleaguesData)) {
@@ -254,42 +270,48 @@ export function ChatWindow({
     const targetId = String(activeConversationId);
     const cleanTargetId = targetId.replace(/^conv_/, "");
 
-    // 1. From activeConversation
+    // 1. From activeConversation (ensure we pick the non-current user)
     if (activeConversation) {
       const convAny = activeConversation as any;
-      if (convAny.participant && typeof convAny.participant === "object") {
-        return convAny.participant;
-      }
-      if (convAny.user && typeof convAny.user === "object") {
-        return convAny.user;
-      }
-      if (convAny.recipient && typeof convAny.recipient === "object") {
-        return convAny.recipient;
-      }
-      if (convAny.colleague && typeof convAny.colleague === "object") {
-        return convAny.colleague;
-      }
-      if (convAny.targetUser && typeof convAny.targetUser === "object") {
-        return convAny.targetUser;
-      }
-      if (convAny.otherUser && typeof convAny.otherUser === "object") {
-        return convAny.otherUser;
-      }
-      if (Array.isArray(convAny.participants)) {
+
+      if (Array.isArray(convAny.participants) && convAny.participants.length > 0) {
         const other = convAny.participants.find(
-          (p: any) => String(p.id || p._id) !== String(currentUserId)
+          (p: any) => p && typeof p === "object" && !isCurrentUser(p, currentUser)
         );
         if (other) return other;
       }
-      if (convAny.name || convAny.full_name || convAny.firstName || convAny.first_name) {
-        return convAny;
+
+      if (
+        convAny.participant &&
+        typeof convAny.participant === "object" &&
+        !isCurrentUser(convAny.participant, currentUser)
+      ) {
+        return convAny.participant;
+      }
+
+      const candidates = [
+        convAny.other_user,
+        convAny.otherUser,
+        convAny.recipient,
+        convAny.target_user,
+        convAny.targetUser,
+        convAny.colleague,
+        convAny.user,
+        convAny.sender,
+        convAny.receiver,
+      ];
+      for (const c of candidates) {
+        if (c && typeof c === "object" && !isCurrentUser(c, currentUser)) {
+          return c;
+        }
       }
     }
 
-    // 2. From colleagues list
+    // 2. From colleagues list (find colleague matching targetId who is NOT current user)
     if (colleaguesList.length > 0) {
       const matchedColleague = colleaguesList.find((emp: any) => {
-        const empId = String(emp.id || emp._id || "");
+        if (isCurrentUser(emp, currentUser)) return false;
+        const empId = String(emp.id || emp._id || emp.userId || emp.user_id || "");
         const cleanEmpId = empId.replace(/^conv_/, "");
         return (
           empId === targetId ||
@@ -301,10 +323,14 @@ export function ChatWindow({
       if (matchedColleague) return matchedColleague;
     }
 
-    // 3. From message history
+    // 3. From message history: find any message where sender is NOT the current user
     if (messages.length > 0) {
       const otherMsg = messages.find(
-        (m) => String(m.senderId) !== String(currentUserId) && m.senderName
+        (m) =>
+          !isCurrentUser(
+            m.senderId || (m as any).sender_id || (m as any).user_id,
+            currentUser
+          ) && m.senderName
       );
       if (otherMsg) {
         return {
@@ -315,8 +341,16 @@ export function ChatWindow({
       }
     }
 
-    return null;
-  }, [activeConversation, activeConversationId, colleaguesList, messages, currentUserId]);
+    // 4. Fallback if activeConversation.participant is available
+    if (
+      activeConversation?.participant &&
+      !isCurrentUser(activeConversation.participant, currentUser)
+    ) {
+      return activeConversation.participant;
+    }
+
+    return activeConversation?.participant || null;
+  }, [activeConversation, activeConversationId, colleaguesList, messages, currentUser]);
 
   // Recipient Display Name
   const recipientName = useMemo(() => {
@@ -369,14 +403,41 @@ export function ChatWindow({
     );
   }, [recipientEntity]);
 
-  // Recipient Presence
-  const recipientPresence = useMemo(() => {
-    return (
-      (recipientEntity as any)?.presence ||
-      (recipientEntity as any)?.status ||
-      "online"
-    );
-  }, [recipientEntity]);
+  // Dynamic Real-time Recipient Presence
+  const recipientPresence: PresenceStatus = useMemo(() => {
+    const rId = (recipientEntity as any)?.id ? String((recipientEntity as any).id).trim() : "";
+    const rUserId = ((recipientEntity as any)?.userId || (recipientEntity as any)?.user_id)
+      ? String((recipientEntity as any).userId || (recipientEntity as any).user_id).trim()
+      : "";
+    const rEmpId = ((recipientEntity as any)?.employee_id || (recipientEntity as any)?.employeeId)
+      ? String((recipientEntity as any).employee_id || (recipientEntity as any).employeeId).trim()
+      : "";
+    const rEmail = (recipientEntity as any)?.email ? String((recipientEntity as any).email).toLowerCase().trim() : "";
+    const convId = activeConversationId ? String(activeConversationId).replace(/^conv_/, "").trim() : "";
+
+    if (rId && userPresenceMap[rId]) return userPresenceMap[rId];
+    if (rUserId && userPresenceMap[rUserId]) return userPresenceMap[rUserId];
+    if (rEmpId && userPresenceMap[rEmpId]) return userPresenceMap[rEmpId];
+    if (rEmail && userPresenceMap[rEmail]) return userPresenceMap[rEmail];
+    if (convId && userPresenceMap[convId]) return userPresenceMap[convId];
+
+    // Clean prefix lookups
+    const cleanRId = rId.replace(/^conv_/, "").replace(/^usr_/, "");
+    if (cleanRId && userPresenceMap[cleanRId]) return userPresenceMap[cleanRId];
+
+    const cleanRUserId = rUserId.replace(/^conv_/, "").replace(/^usr_/, "");
+    if (cleanRUserId && userPresenceMap[cleanRUserId]) return userPresenceMap[cleanRUserId];
+
+    const staticPresence = (recipientEntity as any)?.presence;
+    if (
+      staticPresence &&
+      ["online", "away", "busy", "dnd", "offline"].includes(String(staticPresence).toLowerCase())
+    ) {
+      return String(staticPresence).toLowerCase() as PresenceStatus;
+    }
+
+    return "offline";
+  }, [recipientEntity, activeConversationId, userPresenceMap]);
 
   // Recipient Email
   const recipientEmail = useMemo(() => {
@@ -485,15 +546,17 @@ export function ChatWindow({
     }
   };
 
-  const handleStartAudio = () => {
+  const handleStartAudio = async () => {
     if (!participant) return;
-    startOutgoingCall(participant, "audio");
+    toast.info(`Calling ${participant.name}...`);
+    await connectCallOrchestrator.initiateCall(participant, "audio");
     onOpenAudioCall?.(participant);
   };
 
-  const handleStartVideo = () => {
+  const handleStartVideo = async () => {
     if (!participant) return;
-    startOutgoingCall(participant, "video");
+    toast.info(`Calling ${participant.name}...`);
+    await connectCallOrchestrator.initiateCall(participant, "video");
     onOpenVideoCall?.(participant);
   };
 
@@ -511,8 +574,9 @@ export function ChatWindow({
               </AvatarFallback>
             </Avatar>
             <PresenceIndicator
-              status={participant.presence || "online"}
+              status={participant.presence}
               size="sm"
+              withPulse={participant.presence === "online"}
               className="absolute -bottom-0.5 -right-0.5 ring-2 ring-background"
             />
           </div>
@@ -521,9 +585,31 @@ export function ChatWindow({
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-bold text-foreground truncate">{participant.name}</h3>
             </div>
-            <p className="text-[11px] text-muted-foreground truncate">
-              {participant.role || "Team Member"} • {participant.department || "General"}
-            </p>
+            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground truncate">
+              <span>{participant.role || "Team Member"} • {participant.department || "General"}</span>
+              <span>•</span>
+              <span
+                className={`inline-flex items-center gap-1 font-medium ${
+                  participant.presence === "online"
+                    ? "text-emerald-500"
+                    : participant.presence === "away"
+                    ? "text-amber-500"
+                    : participant.presence === "busy" || participant.presence === "dnd"
+                    ? "text-rose-500"
+                    : "text-muted-foreground"
+                }`}
+              >
+                {participant.presence === "online"
+                  ? "● Online"
+                  : participant.presence === "away"
+                  ? "● Away"
+                  : participant.presence === "busy"
+                  ? "● Busy"
+                  : participant.presence === "dnd"
+                  ? "● Do Not Disturb"
+                  : "○ Offline"}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -590,6 +676,15 @@ export function ChatWindow({
               />
             ))}
           </div>
+        ) : isMessagesError ? (
+          <div className="p-6">
+            <ConnectErrorState
+              variant="connection_failed"
+              title="Failed to Load Messages"
+              description="Could not load messages for this conversation. Please check your connection and try again."
+              onRetry={() => refetchMessages()}
+            />
+          </div>
         ) : messages.length === 0 ? (
           <ConnectEmptyState
             variant="messages"
@@ -597,13 +692,28 @@ export function ChatWindow({
             description={`Say hello to ${participant.name} to kick off the conversation!`}
           />
         ) : (
-          messages.map((message) => {
-            const isOutgoing = message.senderId === currentUserId;
+          messages.map((message, idx) => {
+            const isOutgoing = isCurrentUser(
+              message.senderId || (message as any).sender_id || (message as any).user_id || (message as any).sender,
+              currentUser
+            );
+
+            const prevMsg = idx > 0 ? messages[idx - 1] : null;
+            const isConsecutive = prevMsg
+              ? isCurrentUser(
+                  prevMsg.senderId || (prevMsg as any).sender_id || (prevMsg as any).user_id,
+                  currentUser
+                ) === isOutgoing &&
+                String(prevMsg.senderId || (prevMsg as any).sender_id || "") ===
+                  String(message.senderId || (message as any).sender_id || "")
+              : false;
+
             return (
               <MessageBubble
                 key={message.id}
                 message={message}
                 isOutgoing={isOutgoing}
+                isConsecutive={isConsecutive}
                 currentUserId={currentUserId}
                 onReplyInThread={() => setActiveThreadMessage(message)}
                 onToggleReaction={(msgId, emoji) =>

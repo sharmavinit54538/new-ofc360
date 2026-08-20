@@ -1,10 +1,13 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ConnectLayout } from "@/components/connect/ConnectLayout";
-import { useConnect, useConnectCall } from "@/features/connect/hooks";
+import { useConnect } from "@/features/connect/hooks";
+import { useAppSelector } from "@/app/hooks";
+import { selectUserPresenceMap } from "@/features/connect/selectors";
 import { useGetColleaguesQuery, useCreateConversationMutation } from "@/services/api/connectApi";
 import { useAuth } from "@/hooks/useAuth";
 import { ConnectUser } from "@/types/connect";
+import { connectCallOrchestrator } from "@/services/connectCallOrchestrator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +27,7 @@ export default function ConnectContactsPage() {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const { setActiveTab, setActiveConversationId } = useConnect();
-  const { startOutgoingCall } = useConnectCall();
+  const userPresenceMap = useAppSelector(selectUserPresenceMap);
 
   const [search, setSearch] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("ALL");
@@ -41,54 +44,37 @@ export default function ConnectContactsPage() {
 
   const [createConversation] = useCreateConversationMutation();
 
-  const employeesList: ConnectUser[] = useMemo(() => {
+  const colleaguesList: ConnectUser[] = useMemo(() => {
     let list: ConnectUser[] = [];
     if (Array.isArray(colleaguesData)) {
       list = colleaguesData;
-    } else if (colleaguesData && typeof colleaguesData === "object") {
-      const src = colleaguesData as any;
-      if (Array.isArray(src.colleagues)) {
-        list = src.colleagues;
-      } else if (Array.isArray(src.data?.colleagues)) {
-        list = src.data.colleagues;
-      } else if (Array.isArray(src.data)) {
-        list = src.data;
-      } else if (Array.isArray(src.items)) {
-        list = src.items;
-      }
+    } else if (colleaguesData && (colleaguesData as any).colleagues) {
+      list = (colleaguesData as any).colleagues;
     }
-    const userId = currentUser?.id || (currentUser as any)?._id;
-    const userEmail = currentUser?.email || (currentUser as any)?.emailAddress;
-    return list.filter((emp) => {
-      const empId = emp.id || (emp as any)?._id;
-      const empEmail = emp.email || (emp as any)?.emailAddress;
-      return empId !== userId && empEmail !== userEmail;
-    });
+    return list.filter((emp) => emp?.id && (emp.name || emp.email) && emp.id !== currentUser?.id && emp.email !== currentUser?.email);
   }, [colleaguesData, currentUser]);
 
   const departments = useMemo(() => {
     const set = new Set<string>();
-    employeesList.forEach((e) => {
-      if (e.department) set.add(e.department);
+    colleaguesList.forEach((c) => {
+      if (c.department) set.add(c.department);
     });
-    return Array.from(set);
-  }, [employeesList]);
+    return ["ALL", ...Array.from(set)];
+  }, [colleaguesList]);
 
   const filteredEmployees = useMemo(() => {
-    let list = employeesList;
-    if (departmentFilter !== "ALL") {
-      list = list.filter((e) => e.department === departmentFilter);
-    }
-    if (!search.trim()) return list;
-    const q = search.toLowerCase();
-    return list.filter(
-      (e) =>
-        (e.name && e.name.toLowerCase().includes(q)) ||
-        (e.email && e.email.toLowerCase().includes(q)) ||
-        (e.role && e.role.toLowerCase().includes(q)) ||
-        (e.designation && e.designation.toLowerCase().includes(q))
-    );
-  }, [employeesList, departmentFilter, search]);
+    return colleaguesList.filter((emp) => {
+      const matchesDept = departmentFilter === "ALL" || emp.department === departmentFilter;
+      const q = search.toLowerCase();
+      const matchesSearch =
+        !search.trim() ||
+        (emp.name && emp.name.toLowerCase().includes(q)) ||
+        (emp.email && emp.email.toLowerCase().includes(q)) ||
+        (emp.role && emp.role.toLowerCase().includes(q));
+
+      return matchesDept && matchesSearch;
+    });
+  }, [colleaguesList, departmentFilter, search]);
 
   const handleStartMessage = async (emp: ConnectUser) => {
     try {
@@ -104,9 +90,9 @@ export default function ConnectContactsPage() {
     }
   };
 
-  const handleStartCall = (emp: ConnectUser, type: "audio" | "video") => {
-    startOutgoingCall(emp, type);
+  const handleStartCall = async (emp: ConnectUser, type: "audio" | "video") => {
     toast.info(`Calling ${emp.name}...`);
+    await connectCallOrchestrator.initiateCall(emp, type);
   };
 
   return (
@@ -176,6 +162,16 @@ export default function ConnectContactsPage() {
               {filteredEmployees.map((emp) => {
                 const fullName = emp.name || emp.email;
                 const initials = fullName.slice(0, 2).toUpperCase();
+                const empId = String(emp.id || "").trim();
+                const empUserId = String(emp.userId || "").trim();
+                const empEmail = emp.email ? emp.email.trim().toLowerCase() : "";
+
+                const dynamicPresence =
+                  (empId && userPresenceMap[empId]) ||
+                  (empUserId && userPresenceMap[empUserId]) ||
+                  (empEmail && userPresenceMap[empEmail]) ||
+                  emp.presence ||
+                  "offline";
 
                 return (
                   <div
@@ -193,8 +189,9 @@ export default function ConnectContactsPage() {
                             </AvatarFallback>
                           </Avatar>
                           <PresenceIndicator
-                            status={emp.presence || "online"}
+                            status={dynamicPresence}
                             size="md"
+                            withPulse={dynamicPresence === "online"}
                             className="absolute -bottom-0.5 -right-0.5 ring-2 ring-card"
                           />
                         </div>
@@ -206,9 +203,33 @@ export default function ConnectContactsPage() {
                           <p className="text-[11px] text-muted-foreground truncate">
                             {emp.designation || emp.role || "Team Member"}
                           </p>
-                          <span className="text-[10px] text-primary/80 font-medium truncate block">
-                            {emp.department || "General"}
-                          </span>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[10px] text-primary/80 font-medium truncate">
+                              {emp.department || "General"}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">•</span>
+                            <span
+                              className={`text-[10px] font-semibold ${
+                                dynamicPresence === "online"
+                                  ? "text-emerald-500"
+                                  : dynamicPresence === "away"
+                                  ? "text-amber-500"
+                                  : dynamicPresence === "busy" || dynamicPresence === "dnd"
+                                  ? "text-rose-500"
+                                  : "text-muted-foreground"
+                              }`}
+                            >
+                              {dynamicPresence === "online"
+                                ? "● Online"
+                                : dynamicPresence === "away"
+                                ? "● Away"
+                                : dynamicPresence === "busy"
+                                ? "● Busy"
+                                : dynamicPresence === "dnd"
+                                ? "● DND"
+                                : "○ Offline"}
+                            </span>
+                          </div>
                         </div>
                       </div>
 

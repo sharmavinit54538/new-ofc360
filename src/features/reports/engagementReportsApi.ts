@@ -1,71 +1,109 @@
-/**
- * TODO: backend not implemented — replace when /engagement or /enps endpoints ship
- * 
- * Note: This slice currently uses RTK Query `queryFn` to return typed static mock data
- * enclosed within the standard APIResponse<T> structure.
- * When real endpoints are available, swap `queryFn: async () => ({ data: ... })` 
- * to standard `query: () => ({ url: '/v1/engagement/...', method: 'GET' })`.
- */
-
 import { baseApi } from "@/services/api/baseApi";
-import { APIResponse, EngagementSummary, EnpsTrendItem } from "./types";
-
-const MOCK_ENGAGEMENT_SUMMARY: EngagementSummary = {
-  enpsScore: 42,
-  responseRate: 88.5,
-  promoters: 58,
-  passives: 26,
-  detractors: 16,
-  trend: [
-    { month: "Jan 2026", score: 32 },
-    { month: "Feb 2026", score: 35 },
-    { month: "Mar 2026", score: 38 },
-    { month: "Apr 2026", score: 40 },
-    { month: "May 2026", score: 42 },
-  ],
-};
-
-const MOCK_ENPS_TREND: EnpsTrendItem[] = [
-  { month: "Jan 2026", score: 32, responses: 142 },
-  { month: "Feb 2026", score: 35, responses: 156 },
-  { month: "Mar 2026", score: 38, responses: 168 },
-  { month: "Apr 2026", score: 40, responses: 175 },
-  { month: "May 2026", score: 42, responses: 188 },
-];
+import { RawEnvelope } from "@/services/api/envelope";
+import {
+  APIResponse,
+  EngagementSummary,
+  EngagementTrendItem,
+  EnpsTrendItem,
+  EngagementBreakdownItem,
+  EngagementSurveyItem,
+} from "./types";
+import { extractData, extractArray } from "./unwrapHelper";
 
 export const engagementReportsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getEngagementSummary: builder.query<APIResponse<EngagementSummary>, void>({
-      // TODO: backend not implemented — replace when /engagement or /enps endpoints ship
-      queryFn: async () => {
+      query: () => ({
+        url: "/api/v1/reports/engagement/summary",
+        method: "GET",
+      }),
+      transformResponse: (raw: RawEnvelope<EngagementSummary> | APIResponse<EngagementSummary> | EngagementSummary) => {
+        const data = extractData<EngagementSummary>(raw);
         return {
-          data: {
-            success: true,
-            message: "Engagement summary retrieved (Mocked Data)",
-            data: MOCK_ENGAGEMENT_SUMMARY,
-            errors: null,
-          },
+          success: true,
+          message: "Engagement summary retrieved",
+          data,
+          errors: null,
         };
       },
       providesTags: [{ type: "EngagementReport", id: "SUMMARY" }],
     }),
 
-    getEnpsTrend: builder.query<APIResponse<EnpsTrendItem[]>, void>({
-      // TODO: backend not implemented — replace when /engagement or /enps endpoints ship
-      queryFn: async () => {
+    getEngagementTrend: builder.query<APIResponse<EngagementTrendItem[]>, void>({
+      query: () => ({
+        url: "/api/v1/reports/engagement/trend",
+        method: "GET",
+      }),
+      transformResponse: (raw: RawEnvelope<EngagementTrendItem[]> | APIResponse<EngagementTrendItem[]> | EngagementTrendItem[]) => {
+        const data = extractArray<EngagementTrendItem>(raw);
         return {
-          data: {
-            success: true,
-            message: "eNPS trend retrieved (Mocked Data)",
-            data: MOCK_ENPS_TREND,
-            errors: null,
-          },
+          success: true,
+          message: "Engagement trend retrieved",
+          data,
+          errors: null,
         };
       },
       providesTags: [{ type: "EngagementReport", id: "TREND" }],
+    }),
+
+    getEnpsTrend: builder.query<APIResponse<EnpsTrendItem[]>, void>({
+      query: () => ({
+        url: "/api/v1/reports/engagement/enps-trend",
+        method: "GET",
+      }),
+      transformResponse: (raw: RawEnvelope<EnpsTrendItem[]> | APIResponse<EnpsTrendItem[]> | EnpsTrendItem[]) => {
+        const data = extractArray<EnpsTrendItem>(raw);
+        return {
+          success: true,
+          message: "eNPS trend retrieved",
+          data,
+          errors: null,
+        };
+      },
+      providesTags: [{ type: "EngagementReport", id: "ENPS_TREND" }],
+    }),
+
+    getEngagementBreakdown: builder.query<APIResponse<EngagementBreakdownItem[]>, void>({
+      query: () => ({
+        url: "/api/v1/reports/engagement/breakdown",
+        method: "GET",
+      }),
+      transformResponse: (raw: RawEnvelope<EngagementBreakdownItem[]> | APIResponse<EngagementBreakdownItem[]> | EngagementBreakdownItem[]) => {
+        const data = extractArray<EngagementBreakdownItem>(raw);
+        return {
+          success: true,
+          message: "Engagement breakdown retrieved",
+          data,
+          errors: null,
+        };
+      },
+      providesTags: [{ type: "EngagementReport", id: "BREAKDOWN" }],
+    }),
+
+    getEngagementSurveys: builder.query<APIResponse<EngagementSurveyItem[]>, void>({
+      query: () => ({
+        url: "/api/v1/reports/engagement/surveys",
+        method: "GET",
+      }),
+      transformResponse: (raw: RawEnvelope<EngagementSurveyItem[]> | APIResponse<EngagementSurveyItem[]> | EngagementSurveyItem[]) => {
+        const data = extractArray<EngagementSurveyItem>(raw);
+        return {
+          success: true,
+          message: "Engagement surveys retrieved",
+          data,
+          errors: null,
+        };
+      },
+      providesTags: [{ type: "EngagementReport", id: "SURVEYS" }],
     }),
   }),
   overrideExisting: false,
 });
 
-export const { useGetEngagementSummaryQuery, useGetEnpsTrendQuery } = engagementReportsApi;
+export const {
+  useGetEngagementSummaryQuery,
+  useGetEngagementTrendQuery,
+  useGetEnpsTrendQuery,
+  useGetEngagementBreakdownQuery,
+  useGetEngagementSurveysQuery,
+} = engagementReportsApi;

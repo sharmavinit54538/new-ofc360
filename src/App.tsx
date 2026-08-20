@@ -39,6 +39,7 @@ import CultureIntelligencePage from "@/pages/intelligence/CultureIntelligencePag
 import ComplianceIntelligencePage from "@/pages/intelligence/ComplianceIntelligencePage";
 import PredictiveWorkforcePage from "@/pages/intelligence/PredictiveWorkforcePage";
 import AIRecommendationsPage from "@/pages/intelligence/AIRecommendationsPage";
+
 import TalentIntelligenceLandingPage from "@/pages/talent-intelligence/TalentIntelligenceLandingPage";
 import DocumentIntelligencePage from "@/pages/talent-intelligence/DocumentIntelligencePage";
 import OnboardingIntelligencePage from "@/pages/talent-intelligence/OnboardingIntelligencePage";
@@ -139,6 +140,7 @@ import SecurityLandingPage from "@/pages/super-admin/security/SecurityLandingPag
 import AdminSessionsPage from "@/pages/super-admin/security/AdminSessionsPage";
 import SecurityEventsPage from "@/pages/super-admin/security/SecurityEventsPage";
 import VerifyEmailPage from "@/pages/VerifyEmailPage";
+import EmployeeActivatePage from "@/pages/employee/EmployeeActivatePage";
 
 import { ReduxProvider } from "@/app/providers";
 
@@ -169,6 +171,8 @@ const App = () => (
         <Route path="/verify-reset-otp" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ForgotPasswordPage />} />
         <Route path="/auth/reset-password" element={<ForgotPasswordPage />} />
+        <Route path="/employee/activate" element={<EmployeeActivatePage />} />
+        <Route path="/activate" element={<EmployeeActivatePage />} />
         <Route path="/careers" element={<PublicCareersPage />} />
         <Route path="/hr-admin/onboarding" element={<HRAdminOnboardingGuard><HRAdminOnboardingPage /></HRAdminOnboardingGuard>} />
         <Route element={<ProtectedRoute />}>
@@ -252,7 +256,7 @@ const App = () => (
             <Route path="/culture" element={<RoleGuard module="culture"><CulturePage /></RoleGuard>} />
             <Route path="/rbac" element={<RoleGuard module="rbac"><RolesAndPermissionsPage /></RoleGuard>} />
 
-            {/* Intelligence Hub Routes */}
+            {/* Intelligence Hub & AI Routes */}
             <Route path="/intelligence" element={<RoleGuard module="intelligence_hub"><IntelligenceLandingPage /></RoleGuard>} />
             <Route path="/intelligence/performance" element={<RoleGuard module="intelligence_hub"><PerformanceIntelligencePage /></RoleGuard>} />
             <Route path="/intelligence/workforce" element={<RoleGuard module="intelligence_hub"><WorkforceAnalyticsPage /></RoleGuard>} />
@@ -301,21 +305,21 @@ const App = () => (
             <Route path="/connect/files" element={<RoleGuard module="connect"><ConnectFilesPage /></RoleGuard>} />
             <Route path="/connect/contacts" element={<RoleGuard module="connect"><ConnectContactsPage /></RoleGuard>} />
 
-            {/* Legacy AI Routes */}
+            {/* AI Routes */}
+            <Route path="/ai" element={<RoleGuard module="intelligence_hub"><IntelligenceLandingPage /></RoleGuard>} />
             <Route path="/ai-chat" element={<AIChatPage />} />
-            <Route path="/ai" element={<IntelligenceLandingPage />} />
             <Route path="/ai/ats" element={<AIATSPage />} />
             {/* Resume ATS Checker Tool (All Authenticated Users) */}
             <Route path="/tools/ats-checker" element={<ResumeATSCheckerPage />} />
             <Route path="/tools/resume-ats-checker" element={<ResumeATSCheckerPage />} />
             <Route path="/resume-ats-checker" element={<ResumeATSCheckerPage />} />
 
-            <Route path="/ai/insights" element={<IntelligenceLandingPage />} />
+            <Route path="/ai/insights" element={<RoleGuard module="intelligence_hub"><IntelligenceLandingPage /></RoleGuard>} />
             <Route path="/ai/interview" element={<AIInterviewPage />} />
             <Route path="/ai/cctv" element={<AIFaceAttendancePage />} />
             <Route path="/ai/face-attendance" element={<AIFaceAttendancePage />} />
             <Route path="/ai/copilot" element={<AIRecruiterCopilotPage />} />
-            <Route path="/ai/predictive" element={<PredictiveWorkforcePage />} />
+            <Route path="/ai/predictive" element={<RoleGuard module="intelligence_hub"><PredictiveWorkforcePage /></RoleGuard>} />
             <Route path="/ai/documents" element={<AIDocumentIntelligencePage />} />
           </Route>
         </Route>

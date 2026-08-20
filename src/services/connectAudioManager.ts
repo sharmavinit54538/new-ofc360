@@ -1,5 +1,8 @@
+import { store } from "@/app/store";
+import { setAudioUnlocked as setReduxAudioUnlocked } from "@/features/connect/soundSettingsSlice";
 import { useConnectSoundStore } from "@/stores/connectSoundStore";
 import { useConnectStore } from "@/stores/connectStore";
+import { SOUND_ASSET_PATHS } from "@/assets/sounds";
 
 export type ConnectAudioEventType =
   | "incoming_call"
@@ -61,76 +64,129 @@ class ConnectAudioManager {
   private isIncomingRinging = false;
   private isOutgoingRinging = false;
   private processedEvents = new Map<string, number>(); // eventId -> timestamp
-  private currentPriority = 999;
+  private audioElements = new Map<string, HTMLAudioElement>();
+  private activeIncomingAudio: HTMLAudioElement | null = null;
+  private activeOutgoingAudio: HTMLAudioElement | null = null;
 
   constructor() {
-    // Lazy initialize AudioContext on demand or on unlock
+    // Audio elements will be lazily loaded or pre-warmed on demand
   }
 
   private getAudioContext(): AudioContext | null {
     if (typeof window === "undefined") return null;
 
     if (!this.audioCtx) {
-      const AudioCtxClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const AudioCtxClass =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (AudioCtxClass) {
-        this.audioCtx = new AudioCtxClass();
+        try {
+          this.audioCtx = new AudioCtxClass();
+        } catch (err) {
+          console.warn("[NOTIFICATION_AUDIO] Failed to construct AudioContext:", err);
+        }
       }
     }
 
     if (this.audioCtx && this.audioCtx.state === "suspended") {
-      this.audioCtx.resume().catch(() => {});
+      this.audioCtx.resume().catch((err) => {
+        console.warn("[NOTIFICATION_AUDIO] AudioContext resume waiting for user interaction:", err);
+      });
     }
 
     return this.audioCtx;
   }
 
   /**
-   * Unlock AudioContext on user interaction
+   * Unlock AudioContext & HTML5 Audio on user interaction
    */
   public async unlockAudio(): Promise<boolean> {
     try {
-      const ctx = this.getAudioContext();
-      if (!ctx) return false;
+      console.log("[NOTIFICATION_AUDIO] Initializing and unlocking audio engine...");
+      let audioCtxSuccess = false;
 
-      if (ctx.state === "suspended") {
-        await ctx.resume();
+      const ctx = this.getAudioContext();
+      if (ctx) {
+        if (ctx.state === "suspended") {
+          await ctx.resume();
+        }
+        // Play ultra-short silent buffer to unlock browser audio policy
+        const buffer = ctx.createBuffer(1, 1, 22050);
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(ctx.destination);
+        source.start(0);
+        audioCtxSuccess = ctx.state === "running";
       }
 
-      // Play ultra-short silent buffer to unlock browser audio policy
-      const buffer = ctx.createBuffer(1, 1, 22050);
-      const source = ctx.createBufferSource();
-      source.buffer = buffer;
-      source.connect(ctx.destination);
-      source.start(0);
+      // Unlock HTML5 Audio element policy by touching a silent Audio instance
+      try {
+        const silentAudio = new Audio();
+        silentAudio.src =
+          "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+        const playPromise = silentAudio.play();
+        if (playPromise !== undefined) {
+          await playPromise.catch(() => {});
+        }
+      } catch {}
 
-      useConnectSoundStore.getState().setAudioUnlocked(true);
-      return ctx.state === "running";
+      // Update Redux and Zustand stores
+      try {
+        store.dispatch(setReduxAudioUnlocked(true));
+      } catch {}
+      try {
+        useConnectSoundStore.getState().setAudioUnlocked(true);
+      } catch {}
+
+      console.log("[NOTIFICATION_AUDIO] Audio engine unlocked successfully. WebAudio active:", audioCtxSuccess);
+      return true;
     } catch (e) {
-      console.warn("Failed to unlock Web Audio API context:", e);
+      console.warn("[NOTIFICATION_AUDIO] Failed to unlock audio context:", e);
       return false;
     }
   }
 
   public isUnlocked(): boolean {
-    if (!this.audioCtx) return false;
-    return this.audioCtx.state === "running";
+    try {
+      const reduxUnlocked = store.getState().connectSound?.isAudioUnlocked;
+      if (reduxUnlocked) return true;
+    } catch {}
+
+    if (this.audioCtx && this.audioCtx.state === "running") {
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Get unified sound settings (prioritizing Redux store, falling back to Zustand / localStorage)
+   */
+  public getSoundSettings() {
+    try {
+      const reduxSettings = store.getState().connectSound;
+      if (reduxSettings && typeof reduxSettings.masterVolume === "number") {
+        return reduxSettings;
+      }
+    } catch {}
+
+    return useConnectSoundStore.getState();
   }
 
   /**
    * Get effective volume multiplier (0.0 to 1.0) based on settings & state
    */
   private getMasterGain(): number {
-    const soundSettings = useConnectSoundStore.getState();
-    if (soundSettings.isMutedAll || !soundSettings.isMasterEnabled) {
+    const settings = this.getSoundSettings();
+    if (settings.isMutedAll || !settings.isMasterEnabled) {
       return 0;
     }
-    return Math.max(0, Math.min(1, soundSettings.masterVolume / 100));
+    return Math.max(0, Math.min(1, settings.masterVolume / 100));
   }
 
   /**
    * Duplicate Event Check
    */
-  private isDuplicateEvent(eventId?: string): boolean {
+  public isDuplicateEvent(eventId?: string): boolean {
     if (!eventId) return false;
 
     const now = Date.now();
@@ -142,6 +198,7 @@ class ConnectAudioManager {
     }
 
     if (this.processedEvents.has(eventId)) {
+      console.log(`[NOTIFICATION_EVENT] Dropping duplicate event ID: ${eventId}`);
       return true;
     }
 
@@ -153,9 +210,12 @@ class ConnectAudioManager {
    * DND & Preference Checks
    */
   private shouldPlaySound(type: ConnectAudioEventType, options: PlaySoundOptions = {}): boolean {
-    const soundSettings = useConnectSoundStore.getState();
+    const soundSettings = this.getSoundSettings();
 
-    if (soundSettings.isMutedAll || !soundSettings.isMasterEnabled) return false;
+    if (soundSettings.isMutedAll || !soundSettings.isMasterEnabled) {
+      console.log(`[NOTIFICATION_AUDIO] Sound suppressed for ${type}: Master sound disabled or muted.`);
+      return false;
+    }
 
     // Check specific toggle settings
     switch (type) {
@@ -193,17 +253,26 @@ class ConnectAudioManager {
     }
 
     // Check DND presence status
-    const presence = useConnectStore.getState().currentUserPresence;
+    let presence: string | undefined;
+    try {
+      presence = store.getState().connectPresence?.currentUserPresence;
+    } catch {}
+    if (!presence) {
+      presence = useConnectStore.getState().currentUserPresence;
+    }
+
     if (presence === "dnd") {
       // DND allows incoming calls, but suppresses messages/mentions/meetings unless forced
       if (type !== "incoming_call" && type !== "call_connected" && type !== "call_ended" && !options.force) {
+        console.log(`[NOTIFICATION_AUDIO] Sound suppressed for ${type}: User is in DND mode.`);
         return false;
       }
     }
 
-    // Check Sound Priority (if incoming call is ringing, suppress low-priority notification sounds)
+    // Check Sound Priority (if incoming call is ringing, suppress lower-priority notification sounds)
     const priority = SOUND_PRIORITIES[type] || 6;
     if (this.isIncomingRinging && priority > SOUND_PRIORITIES.incoming_call) {
+      console.log(`[NOTIFICATION_AUDIO] Sound suppressed for ${type}: Incoming call ringtone takes priority.`);
       return false;
     }
 
@@ -211,7 +280,46 @@ class ConnectAudioManager {
   }
 
   // ==========================================
-  // SYNTHESIZER UTILITIES (Web Audio API)
+  // HTML5 AUDIO ASSET PLAYBACK (Asset First)
+  // ==========================================
+
+  private playAssetSound(assetPath: string, volumeScale = 1.0, loop = false): HTMLAudioElement | null {
+    if (typeof window === "undefined") return null;
+
+    const masterGain = this.getMasterGain();
+    if (masterGain === 0) return null;
+
+    try {
+      const audio = new Audio(assetPath);
+      audio.volume = Math.max(0, Math.min(1, masterGain * volumeScale));
+      audio.loop = loop;
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn(`[NOTIFICATION_AUDIO] HTML5 Audio playback failed for ${assetPath}:`, err);
+        });
+      }
+
+      if (!loop) {
+        audio.addEventListener(
+          "ended",
+          () => {
+            audio.remove();
+          },
+          { once: true }
+        );
+      }
+
+      return audio;
+    } catch (err) {
+      console.warn(`[NOTIFICATION_AUDIO] Failed to instantiate Audio for ${assetPath}:`, err);
+      return null;
+    }
+  }
+
+  // ==========================================
+  // SYNTHESIZER UTILITIES (Web Audio API Fallback)
   // ==========================================
 
   private playTone(freq: number, duration: number, type: OscillatorType = "sine", delay = 0, gainLevel = 1.0) {
@@ -239,7 +347,7 @@ class ConnectAudioManager {
       osc.start(ctx.currentTime + delay);
       osc.stop(ctx.currentTime + delay + duration + 0.05);
     } catch (e) {
-      console.warn("Error playing tone:", e);
+      console.warn("[NOTIFICATION_AUDIO] Web Audio tone playback warning:", e);
     }
   }
 
@@ -259,26 +367,49 @@ class ConnectAudioManager {
     if (this.isIncomingRinging) return;
 
     this.isIncomingRinging = true;
+    console.log("[CALL_RINGTONE] Starting incoming call ringtone, volume:", `${Math.round(this.getMasterGain() * 100)}%`);
 
+    // 1. Primary: Loopable HTML5 Audio element (native background thread loop)
+    const ringAudio = this.playAssetSound(SOUND_ASSET_PATHS.incomingCall, 1.0, true);
+    if (ringAudio) {
+      this.activeIncomingAudio = ringAudio;
+    }
+
+    // 2. Synthesizer fallback cadence if HTML5 Audio context fails
     const runIncomingRingStep = () => {
       if (!this.isIncomingRinging) return;
-      // Soft pleasant two-stage marimba ring chime (E5 -> G5 -> C6)
-      this.playTone(659.25, 0.15, "sine", 0, 1.0);  // E5
-      this.playTone(783.99, 0.15, "sine", 0.12, 1.0); // G5
-      this.playTone(1046.5, 0.3, "sine", 0.24, 1.2);  // C6
-
-      this.playTone(659.25, 0.15, "sine", 0.7, 1.0);
-      this.playTone(783.99, 0.15, "sine", 0.82, 1.0);
-      this.playTone(1046.5, 0.4, "sine", 0.94, 1.2);
+      if (!this.activeIncomingAudio || this.activeIncomingAudio.paused) {
+        this.playTone(659.25, 0.15, "sine", 0, 1.0); // E5
+        this.playTone(783.99, 0.15, "sine", 0.12, 1.0); // G5
+        this.playTone(1046.5, 0.3, "sine", 0.24, 1.2); // C6
+        this.playTone(659.25, 0.15, "sine", 0.7, 1.0);
+        this.playTone(783.99, 0.15, "sine", 0.82, 1.0);
+        this.playTone(1046.5, 0.4, "sine", 0.94, 1.2);
+      }
     };
 
-    runIncomingRingStep();
-    if (this.incomingCallTimer) clearInterval(this.incomingCallTimer);
-    this.incomingCallTimer = window.setInterval(runIncomingRingStep, 2200);
+    if (!ringAudio) {
+      runIncomingRingStep();
+      if (this.incomingCallTimer) clearInterval(this.incomingCallTimer);
+      this.incomingCallTimer = window.setInterval(runIncomingRingStep, 2200);
+    }
   }
 
   public stopIncomingCall() {
+    if (!this.isIncomingRinging && !this.activeIncomingAudio) return;
+
     this.isIncomingRinging = false;
+    console.log("[CALL_RINGTONE] Stopping incoming call ringtone.");
+
+    if (this.activeIncomingAudio) {
+      try {
+        this.activeIncomingAudio.pause();
+        this.activeIncomingAudio.currentTime = 0;
+        this.activeIncomingAudio.remove();
+      } catch {}
+      this.activeIncomingAudio = null;
+    }
+
     if (this.incomingCallTimer) {
       clearInterval(this.incomingCallTimer);
       this.incomingCallTimer = null;
@@ -293,20 +424,42 @@ class ConnectAudioManager {
     if (this.isOutgoingRinging) return;
 
     this.isOutgoingRinging = true;
+    console.log("[CALL_RINGTONE] Starting outgoing call ringback tone.");
+
+    const ringbackAudio = this.playAssetSound(SOUND_ASSET_PATHS.outgoingCall, 0.8, true);
+    if (ringbackAudio) {
+      this.activeOutgoingAudio = ringbackAudio;
+    }
 
     const runOutgoingRingStep = () => {
       if (!this.isOutgoingRinging) return;
-      // Soft classic telecom ringback tone (440Hz + 480Hz dual sine burst)
-      this.playChord([440, 480], 1.2, 0, 0.7);
+      if (!this.activeOutgoingAudio || this.activeOutgoingAudio.paused) {
+        this.playChord([440, 480], 1.2, 0, 0.7);
+      }
     };
 
-    runOutgoingRingStep();
-    if (this.outgoingCallTimer) clearInterval(this.outgoingCallTimer);
-    this.outgoingCallTimer = window.setInterval(runOutgoingRingStep, 3200);
+    if (!ringbackAudio) {
+      runOutgoingRingStep();
+      if (this.outgoingCallTimer) clearInterval(this.outgoingCallTimer);
+      this.outgoingCallTimer = window.setInterval(runOutgoingRingStep, 3200);
+    }
   }
 
   public stopOutgoingCall() {
+    if (!this.isOutgoingRinging && !this.activeOutgoingAudio) return;
+
     this.isOutgoingRinging = false;
+    console.log("[CALL_RINGTONE] Stopping outgoing call ringback tone.");
+
+    if (this.activeOutgoingAudio) {
+      try {
+        this.activeOutgoingAudio.pause();
+        this.activeOutgoingAudio.currentTime = 0;
+        this.activeOutgoingAudio.remove();
+      } catch {}
+      this.activeOutgoingAudio = null;
+    }
+
     if (this.outgoingCallTimer) {
       clearInterval(this.outgoingCallTimer);
       this.outgoingCallTimer = null;
@@ -329,14 +482,22 @@ class ConnectAudioManager {
 
     if (!this.shouldPlaySound(eventType, options)) return;
 
-    if (options.isMention) {
-      // Mention: Bright double chime (G5 -> D6)
-      this.playTone(783.99, 0.12, "triangle", 0, 1.1);
-      this.playTone(1174.66, 0.22, "sine", 0.1, 1.3);
-    } else {
-      // Standard Message: Soft warm pop chime (E5 -> B5)
-      this.playTone(659.25, 0.1, "sine", 0, 0.9);
-      this.playTone(987.77, 0.18, "sine", 0.08, 1.0);
+    console.log(
+      `[MESSAGE_SOUND] Playing message sound (${eventType}) for eventId:`,
+      options.eventId || "direct"
+    );
+
+    const assetPath = options.isMention ? SOUND_ASSET_PATHS.mention : SOUND_ASSET_PATHS.message;
+    const audio = this.playAssetSound(assetPath, 1.0, false);
+
+    if (!audio) {
+      if (options.isMention) {
+        this.playTone(783.99, 0.12, "triangle", 0, 1.1);
+        this.playTone(1174.66, 0.22, "sine", 0.1, 1.3);
+      } else {
+        this.playTone(659.25, 0.1, "sine", 0, 0.9);
+        this.playTone(987.77, 0.18, "sine", 0.08, 1.0);
+      }
     }
   }
 
@@ -359,44 +520,59 @@ class ConnectAudioManager {
     this.stopIncomingCall();
     this.stopOutgoingCall();
     if (!this.shouldPlaySound("call_connected")) return;
-    // Pleasant ascending chord (C5 -> E5 -> G5)
-    this.playTone(523.25, 0.12, "sine", 0, 0.9);
-    this.playTone(659.25, 0.12, "sine", 0.09, 1.0);
-    this.playTone(783.99, 0.25, "sine", 0.18, 1.2);
+
+    console.log("[CALL_RINGTONE] Playing call connected chime.");
+    const audio = this.playAssetSound(SOUND_ASSET_PATHS.callConnected, 1.0, false);
+    if (!audio) {
+      this.playTone(523.25, 0.12, "sine", 0, 0.9);
+      this.playTone(659.25, 0.12, "sine", 0.09, 1.0);
+      this.playTone(783.99, 0.25, "sine", 0.18, 1.2);
+    }
   }
 
   public playCallRejected() {
     this.stopIncomingCall();
     this.stopOutgoingCall();
     if (!this.shouldPlaySound("call_rejected")) return;
-    // Soft double descending note
-    this.playTone(587.33, 0.15, "sine", 0, 0.9);
-    this.playTone(440.0, 0.3, "sine", 0.12, 0.9);
+
+    console.log("[CALL_RINGTONE] Playing call rejected chime.");
+    const audio = this.playAssetSound(SOUND_ASSET_PATHS.callRejected, 0.9, false);
+    if (!audio) {
+      this.playTone(587.33, 0.15, "sine", 0, 0.9);
+      this.playTone(440.0, 0.3, "sine", 0.12, 0.9);
+    }
   }
 
   public playCallFailed() {
     this.stopIncomingCall();
     this.stopOutgoingCall();
     if (!this.shouldPlaySound("call_failed")) return;
-    // Low double warning pulse
-    this.playTone(220, 0.2, "sawtooth", 0, 0.6);
-    this.playTone(180, 0.3, "sawtooth", 0.15, 0.6);
+
+    console.log("[CALL_RINGTONE] Playing call failed chime.");
+    const audio = this.playAssetSound(SOUND_ASSET_PATHS.callFailed, 0.8, false);
+    if (!audio) {
+      this.playTone(220, 0.2, "sawtooth", 0, 0.6);
+      this.playTone(180, 0.3, "sawtooth", 0.15, 0.6);
+    }
   }
 
   public playCallEnded() {
     this.stopIncomingCall();
     this.stopOutgoingCall();
     if (!this.shouldPlaySound("call_ended")) return;
-    // Gentle end chime (G4 -> D4)
-    this.playTone(392.0, 0.15, "sine", 0, 0.8);
-    this.playTone(293.66, 0.3, "sine", 0.12, 0.8);
+
+    console.log("[CALL_RINGTONE] Playing call ended chime.");
+    const audio = this.playAssetSound(SOUND_ASSET_PATHS.callEnded, 0.9, false);
+    if (!audio) {
+      this.playTone(392.0, 0.15, "sine", 0, 0.8);
+      this.playTone(293.66, 0.3, "sine", 0.12, 0.8);
+    }
   }
 
   public playBusy() {
     this.stopIncomingCall();
     this.stopOutgoingCall();
     if (!this.shouldPlaySound("busy")) return;
-    // Busy tone cadence
     this.playChord([480, 620], 0.35, 0, 0.7);
     this.playChord([480, 620], 0.35, 0.5, 0.7);
   }
@@ -407,55 +583,83 @@ class ConnectAudioManager {
   public playParticipantJoined(options: PlaySoundOptions = {}) {
     if (options.eventId && this.isDuplicateEvent(options.eventId)) return;
     if (!this.shouldPlaySound("participant_joined", options)) return;
-    // Warm subtle join ding (F5 tone)
-    this.playTone(698.46, 0.18, "sine", 0, 0.7);
+
+    console.log("[NOTIFICATION_AUDIO] Playing participant joined chime.");
+    const audio = this.playAssetSound(SOUND_ASSET_PATHS.participantJoined, 0.8, false);
+    if (!audio) {
+      this.playTone(698.46, 0.18, "sine", 0, 0.7);
+    }
   }
 
   public playParticipantLeft(options: PlaySoundOptions = {}) {
     if (options.eventId && this.isDuplicateEvent(options.eventId)) return;
     if (!this.shouldPlaySound("participant_left", options)) return;
-    // Soft subtle leave dong (C5 tone)
-    this.playTone(523.25, 0.22, "sine", 0, 0.6);
+
+    console.log("[NOTIFICATION_AUDIO] Playing participant left chime.");
+    const audio = this.playAssetSound(SOUND_ASSET_PATHS.participantLeft, 0.8, false);
+    if (!audio) {
+      this.playTone(523.25, 0.22, "sine", 0, 0.6);
+    }
   }
 
   public playMeetingStarted(options: PlaySoundOptions = {}) {
     if (options.eventId && this.isDuplicateEvent(options.eventId)) return;
     if (!this.shouldPlaySound("meeting_start", options)) return;
-    // Inspiring 3-step acoustic chime (A4 -> C#5 -> E5)
-    this.playTone(440.0, 0.12, "sine", 0, 0.8);
-    this.playTone(554.37, 0.12, "sine", 0.08, 0.9);
-    this.playTone(659.25, 0.3, "sine", 0.16, 1.1);
+
+    console.log("[NOTIFICATION_AUDIO] Playing meeting start chime.");
+    const audio = this.playAssetSound(SOUND_ASSET_PATHS.meetingStart, 0.9, false);
+    if (!audio) {
+      this.playTone(440.0, 0.12, "sine", 0, 0.8);
+      this.playTone(554.37, 0.12, "sine", 0.08, 0.9);
+      this.playTone(659.25, 0.3, "sine", 0.16, 1.1);
+    }
   }
 
   public playMeetingEnded(options: PlaySoundOptions = {}) {
     if (options.eventId && this.isDuplicateEvent(options.eventId)) return;
     if (!this.shouldPlaySound("meeting_end", options)) return;
-    // Gentle resolve chime (E5 -> A4)
-    this.playTone(659.25, 0.15, "sine", 0, 0.8);
-    this.playTone(440.0, 0.35, "sine", 0.12, 0.8);
+
+    console.log("[NOTIFICATION_AUDIO] Playing meeting end chime.");
+    const audio = this.playAssetSound(SOUND_ASSET_PATHS.meetingEnd, 0.9, false);
+    if (!audio) {
+      this.playTone(659.25, 0.15, "sine", 0, 0.8);
+      this.playTone(440.0, 0.35, "sine", 0.12, 0.8);
+    }
   }
 
   public playScreenShareStarted(options: PlaySoundOptions = {}) {
     if (options.eventId && this.isDuplicateEvent(options.eventId)) return;
     if (!this.shouldPlaySound("screen_share_start", options)) return;
-    // High subtle tick-up (A5 -> E6)
-    this.playTone(880.0, 0.08, "sine", 0, 0.7);
-    this.playTone(1318.51, 0.15, "sine", 0.06, 0.8);
+
+    console.log("[NOTIFICATION_AUDIO] Playing screen share started chime.");
+    const audio = this.playAssetSound(SOUND_ASSET_PATHS.screenShareStart, 0.8, false);
+    if (!audio) {
+      this.playTone(880.0, 0.08, "sine", 0, 0.7);
+      this.playTone(1318.51, 0.15, "sine", 0.06, 0.8);
+    }
   }
 
   public playScreenShareStopped(options: PlaySoundOptions = {}) {
     if (options.eventId && this.isDuplicateEvent(options.eventId)) return;
     if (!this.shouldPlaySound("screen_share_stop", options)) return;
-    // Soft tick-down (E6 -> A5)
-    this.playTone(1318.51, 0.08, "sine", 0, 0.7);
-    this.playTone(880.0, 0.18, "sine", 0.06, 0.7);
+
+    console.log("[NOTIFICATION_AUDIO] Playing screen share stopped chime.");
+    const audio = this.playAssetSound(SOUND_ASSET_PATHS.screenShareStop, 0.8, false);
+    if (!audio) {
+      this.playTone(1318.51, 0.08, "sine", 0, 0.7);
+      this.playTone(880.0, 0.18, "sine", 0.06, 0.7);
+    }
   }
 
   public playNotification(options: PlaySoundOptions = {}) {
     if (options.eventId && this.isDuplicateEvent(options.eventId)) return;
     if (!this.shouldPlaySound("notification", options)) return;
-    // Soft notification ping
-    this.playTone(783.99, 0.15, "sine", 0, 0.8);
+
+    console.log("[NOTIFICATION_AUDIO] Playing notification ping.");
+    const audio = this.playAssetSound(SOUND_ASSET_PATHS.notification, 0.8, false);
+    if (!audio) {
+      this.playTone(783.99, 0.15, "sine", 0, 0.8);
+    }
   }
 
   /**

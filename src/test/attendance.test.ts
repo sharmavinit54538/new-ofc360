@@ -177,7 +177,7 @@ describe("Attendance Store & Regularization Synchronization", () => {
       timestamp: "09:00 AM",
       date: today,
       type: "Check-In",
-      method: "GPS Geofence",
+      method: "Selfie Camera",
       location: "Office HQ",
       status: "On Time",
     });
@@ -190,7 +190,7 @@ describe("Attendance Store & Regularization Synchronization", () => {
       timestamp: "09:05 AM",
       date: today,
       type: "Check-In",
-      method: "GPS Geofence",
+      method: "Selfie Camera",
       location: "Office HQ",
       status: "On Time",
     });

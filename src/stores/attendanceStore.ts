@@ -10,7 +10,7 @@ export interface PunchRecord {
   date?: string; // e.g. "2026-08-12"
   companyId?: string;
   type: "Check-In" | "Check-Out" | "Break-Start" | "Break-Resume";
-  method: "GPS Geofence" | "Selfie Camera" | "Office Wi-Fi" | "Dynamic QR";
+  method: "Selfie Camera";
   location: string;
   workHours?: string;
   breakHours?: string;
@@ -310,7 +310,7 @@ export const useAttendanceStore = create<AttendanceState>((set, get) => ({
         timestamp: target.requestedTime,
         date: target.date,
         type: punchType,
-        method: "GPS Geofence",
+        method: "Selfie Camera",
         location: "Main HQ Office (Regularized by HR)",
         taskNotes: `Regularized Missed Punch: ${target.reason}`,
         status: "Regularized",

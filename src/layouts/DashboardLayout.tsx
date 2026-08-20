@@ -3,11 +3,16 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { AppSidebar } from "@/components/AppSidebar";
 import { TopNav } from "@/components/TopNav";
 import { FloatingAIAssistant } from "@/components/FloatingAIAssistant";
+import { IncomingCallModal } from "@/components/connect/IncomingCallModal";
+import { CallScreen } from "@/components/connect/CallScreen";
+import { VideoCallModal } from "@/components/connect/VideoCallModal";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useGetHRAdminOnboardingStatusQuery } from "@/services/api/hrAdminOnboardingApi";
 import { Skeleton } from "@/components/ui/skeleton";
+import { connectAudioManager } from "@/services/connectAudioManager";
+import { connectWebSocketService } from "@/services/connectWebSocketService";
 
 interface LayoutContextType {
   sidebarOpen: boolean;
@@ -21,11 +26,11 @@ export default function DashboardLayout() {
   const isMobile = useIsMobile();
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const isHRAdmin = user?.role === "hr_admin";
+  const isHRAdmin = (user?.role || role) === "hr_admin";
   const {
     data: onboardingStatus,
     isLoading: isOnboardingLoading,
@@ -35,6 +40,44 @@ export default function DashboardLayout() {
   });
 
   useEffect(() => { setMobileOpen(false); }, [isMobile]);
+
+  // Global Audio Autoplay Unlock & WebSocket Connection Lifecycle
+  useEffect(() => {
+    connectWebSocketService.connect();
+
+    const handleGlobalInteraction = async () => {
+      await connectAudioManager.unlockAudio();
+      window.removeEventListener("pointerdown", handleGlobalInteraction);
+      window.removeEventListener("keydown", handleGlobalInteraction);
+      window.removeEventListener("touchstart", handleGlobalInteraction);
+    };
+
+    window.addEventListener("pointerdown", handleGlobalInteraction, { once: true });
+    window.addEventListener("keydown", handleGlobalInteraction, { once: true });
+    window.addEventListener("touchstart", handleGlobalInteraction, { once: true });
+
+    // Request browser notification permission if not yet decided
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+      try {
+        Notification.requestPermission().catch(() => {});
+      } catch {}
+    }
+
+    const handleBeforeUnload = () => {
+      connectWebSocketService.disconnect(false);
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("pagehide", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("pointerdown", handleGlobalInteraction);
+      window.removeEventListener("keydown", handleGlobalInteraction);
+      window.removeEventListener("touchstart", handleGlobalInteraction);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("pagehide", handleBeforeUnload);
+    };
+  }, []);
 
   useEffect(() => {
     if (isHRAdmin && !isOnboardingLoading && onboardingStatus) {
@@ -104,6 +147,10 @@ export default function DashboardLayout() {
           </main>
         </div>
         <FloatingAIAssistant />
+        {/* Global Real-time Call Modals (Active on all pages: Dashboard, Chat, Attendance, HR, etc.) */}
+        <IncomingCallModal />
+        <CallScreen />
+        <VideoCallModal />
       </div>
     </LayoutContext.Provider>
   );

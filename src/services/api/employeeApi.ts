@@ -6,7 +6,15 @@ import { RawEnvelope } from "./envelope";
 export interface GetEmployeesQueryParams {
   department?: string;
   status?: string;
+  role?: string;
   search?: string;
+  page?: number;
+  limit?: number;
+  employment_type?: string;
+  designation?: string;
+  shift?: string;
+  sort?: string;
+  order?: string;
 }
 
 export type GetEmployeesQueryArg = GetEmployeesQueryParams | void;
@@ -41,6 +49,24 @@ export interface OnboardingStatus {
   completedSteps: number;
   totalSteps: number;
   steps?: Array<{ id: string; name: string; isCompleted: boolean }>;
+}
+
+export interface ActivateEmployeePayload {
+  id?: string;
+  employee_id?: string;
+  token: string;
+  new_password: string;
+  confirm_password: string;
+}
+
+export interface ActivateEmployeeResponse {
+  success?: boolean;
+  message?: string;
+  data?: any;
+  token?: string;
+  access_token?: string;
+  refreshToken?: string;
+  user?: any;
 }
 
 /**
@@ -346,7 +372,7 @@ export function normalizeEmployee(raw: any): Employee {
       id: String(Math.random()),
       name: "Employee",
       email: "",
-      role: "Employee",
+      role: "employee",
       department: "General",
       systemRole: "employee",
       status: "Active",
@@ -449,8 +475,23 @@ export const employeeApi = baseApi.injectEndpoints({
         if (p?.status && p.status !== "ALL") {
           queryParams.append("status", p.status);
         }
+        if (p?.role && p.role !== "ALL") {
+          queryParams.append("role", p.role);
+        }
         if (p?.search) {
           queryParams.append("search", p.search);
+        }
+        if (p?.page) {
+          queryParams.append("page", String(p.page));
+        }
+        if (p?.limit) {
+          queryParams.append("limit", String(p.limit));
+        }
+        if (p?.sort) {
+          queryParams.append("sort", p.sort);
+        }
+        if (p?.order) {
+          queryParams.append("order", p.order);
         }
         const queryString = queryParams.toString();
         return `/api/v1/employees${queryString ? `?${queryString}` : ""}`;
@@ -514,7 +555,11 @@ export const employeeApi = baseApi.injectEndpoints({
         const payload = raw?.data !== undefined ? raw.data : raw;
         return normalizeEmployee(payload);
       },
-      invalidatesTags: [{ type: "Employee", id: "LIST" }],
+      invalidatesTags: [
+        { type: "Employee", id: "LIST" },
+        "SuperAdminOrganizations",
+        "SuperAdminDashboard",
+      ],
     }),
 
     updateEmployee: builder.mutation<Employee, { id: string; changes: Partial<Employee> }>({
@@ -548,6 +593,8 @@ export const employeeApi = baseApi.injectEndpoints({
         { type: "Employee", id },
         { type: "Employee", id: "LIST" },
         "Timeline",
+        "SuperAdminOrganizations",
+        "SuperAdminDashboard",
       ],
     }),
 
@@ -563,6 +610,8 @@ export const employeeApi = baseApi.injectEndpoints({
         { type: "Employee", id },
         { type: "Employee", id: "LIST" },
         "Timeline",
+        "SuperAdminOrganizations",
+        "SuperAdminDashboard",
       ],
     }),
 
@@ -576,6 +625,8 @@ export const employeeApi = baseApi.injectEndpoints({
       invalidatesTags: (_result, _error, id) => [
         { type: "Employee", id },
         { type: "Employee", id: "LIST" },
+        "SuperAdminOrganizations",
+        "SuperAdminDashboard",
       ],
     }),
 
@@ -601,7 +652,11 @@ export const employeeApi = baseApi.injectEndpoints({
       }),
       transformResponse: (raw: RawEnvelope<ImportResult> | ImportResult) =>
         (raw as RawEnvelope<ImportResult>)?.data || (raw as ImportResult),
-      invalidatesTags: [{ type: "Employee", id: "LIST" }],
+      invalidatesTags: [
+        { type: "Employee", id: "LIST" },
+        "SuperAdminOrganizations",
+        "SuperAdminDashboard",
+      ],
     }),
 
     exportEmployees: builder.query<Blob, { format: "xlsx" | "csv" | "pdf" }>({
@@ -636,7 +691,12 @@ export const employeeApi = baseApi.injectEndpoints({
       }),
       transformResponse: (raw: RawEnvelope<Employee> | Employee) =>
         (raw as RawEnvelope<Employee>)?.data || (raw as Employee),
-      invalidatesTags: (_r, _e, id) => [{ type: "Employee", id }, { type: "Employee", id: "LIST" }],
+      invalidatesTags: (_r, _e, id) => [
+        { type: "Employee", id },
+        { type: "Employee", id: "LIST" },
+        "SuperAdminOrganizations",
+        "SuperAdminDashboard",
+      ],
     }),
 
     activateEmployeeByAdmin: builder.mutation<Employee, string>({
@@ -646,18 +706,41 @@ export const employeeApi = baseApi.injectEndpoints({
       }),
       transformResponse: (raw: RawEnvelope<Employee> | Employee) =>
         (raw as RawEnvelope<Employee>)?.data || (raw as Employee),
-      invalidatesTags: (_r, _e, id) => [{ type: "Employee", id }, { type: "Employee", id: "LIST" }],
+      invalidatesTags: (_r, _e, id) => [
+        { type: "Employee", id },
+        { type: "Employee", id: "LIST" },
+        "SuperAdminOrganizations",
+        "SuperAdminDashboard",
+      ],
     }),
 
-    activateEmployee: builder.mutation<Employee, { id: string; token?: string }>({
-      query: ({ id, token }) => ({
-        url: `/api/v1/employees/${id}/activate`,
-        method: "POST",
-        body: { token },
-      }),
-      transformResponse: (raw: RawEnvelope<Employee> | Employee) =>
-        (raw as RawEnvelope<Employee>)?.data || (raw as Employee),
-      invalidatesTags: (_r, _e, { id }) => [{ type: "Employee", id }, { type: "Employee", id: "LIST" }],
+    activateEmployee: builder.mutation<
+      ActivateEmployeeResponse,
+      ActivateEmployeePayload
+    >({
+      query: ({ id, employee_id, token, new_password, confirm_password }) => {
+        const empId = id || employee_id;
+        if (!empId || empId === "me") {
+          throw new Error("Employee UUID is required for password activation.");
+        }
+        return {
+          url: `/api/v1/employees/${empId}/activate`,
+          method: "POST",
+          body: {
+            token,
+            new_password,
+            confirm_password,
+          },
+        };
+      },
+      transformResponse: (raw: RawEnvelope<ActivateEmployeeResponse> | ActivateEmployeeResponse) =>
+        (raw as RawEnvelope<ActivateEmployeeResponse>)?.data || (raw as ActivateEmployeeResponse),
+      invalidatesTags: (_r, _e, arg) => [
+        { type: "Employee", id: arg.id || arg.employee_id },
+        { type: "Employee", id: "LIST" },
+        "SuperAdminOrganizations",
+        "SuperAdminDashboard",
+      ],
     }),
 
     approveOnboarding: builder.mutation<Employee, string>({
@@ -667,7 +750,12 @@ export const employeeApi = baseApi.injectEndpoints({
       }),
       transformResponse: (raw: RawEnvelope<Employee> | Employee) =>
         (raw as RawEnvelope<Employee>)?.data || (raw as Employee),
-      invalidatesTags: (_r, _e, id) => [{ type: "Employee", id }, { type: "Employee", id: "LIST" }],
+      invalidatesTags: (_r, _e, id) => [
+        { type: "Employee", id },
+        { type: "Employee", id: "LIST" },
+        "SuperAdminOrganizations",
+        "SuperAdminDashboard",
+      ],
     }),
 
     rejectOnboarding: builder.mutation<Employee, { id: string; reason?: string }>({
@@ -678,7 +766,12 @@ export const employeeApi = baseApi.injectEndpoints({
       }),
       transformResponse: (raw: RawEnvelope<Employee> | Employee) =>
         (raw as RawEnvelope<Employee>)?.data || (raw as Employee),
-      invalidatesTags: (_r, _e, { id }) => [{ type: "Employee", id }, { type: "Employee", id: "LIST" }],
+      invalidatesTags: (_r, _e, { id }) => [
+        { type: "Employee", id },
+        { type: "Employee", id: "LIST" },
+        "SuperAdminOrganizations",
+        "SuperAdminDashboard",
+      ],
     }),
 
     resetEmployeePassword: builder.mutation<{ temporaryPassword?: string }, string>({
@@ -695,6 +788,24 @@ export const employeeApi = baseApi.injectEndpoints({
       transformResponse: (raw: RawEnvelope<OnboardingStatus> | OnboardingStatus) =>
         (raw as RawEnvelope<OnboardingStatus>)?.data || (raw as OnboardingStatus),
       providesTags: (_r, _e, id) => [{ type: "Employee", id: `ONBOARDING-${id}` }],
+    }),
+
+    validateEmployeeInvitation: builder.query<{
+      valid?: boolean;
+      employee_id?: string;
+      employeeId?: string;
+      id?: string;
+      email?: string;
+      name?: string;
+      full_name?: string;
+      company_name?: string;
+      [key: string]: any;
+    }, string>({
+      query: (token) => ({
+        url: "/api/v1/onboarding/validate",
+        params: { token },
+      }),
+      transformResponse: (raw: any) => raw?.data || raw,
     }),
   }),
 });
@@ -720,4 +831,8 @@ export const {
   useRejectOnboardingMutation,
   useResetEmployeePasswordMutation,
   useGetOnboardingStatusQuery,
+  useValidateEmployeeInvitationQuery,
+  useLazyValidateEmployeeInvitationQuery,
 } = employeeApi;
+ 
+

@@ -7,59 +7,54 @@ import {
   Sparkles,
   PieChart,
   BarChart3,
-  Heart,
   Globe,
   ShieldCheck,
   TrendingUp,
-  Lightbulb,
+  Target,
+  Award,
   ArrowRight,
   Database,
   Building2,
+  Lightbulb,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
-const executiveIntelligenceModules = [
+const executiveStrategyModules = [
   {
-    title: "Performance Intelligence",
-    desc: "Goal alignment, developmental trends, and appraisal dynamics.",
-    icon: BarChart3,
-    path: "/intelligence/performance",
-  },
-  {
-    title: "Workforce Analytics",
-    desc: "Org headcount split, departmental capacity, and tenure spread.",
+    title: "Executive Workforce Health",
+    desc: "Org headcount split, departmental capacity, and workforce spread.",
     icon: PieChart,
-    path: "/intelligence/workforce",
+    path: "/executive/workforce",
   },
   {
-    title: "Engagement Intelligence",
-    desc: "Employee satisfaction signals, pulse morale, and EX indicators.",
-    icon: Heart,
-    path: "/intelligence/engagement",
+    title: "Strategic KPIs & Objectives",
+    desc: "Company-level target tracking, progress alignment, and goal health.",
+    icon: Target,
+    path: "/executive/kpis",
   },
   {
-    title: "Culture Intelligence",
-    desc: "Workplace sentiment, psychological safety, and core values.",
-    icon: Globe,
-    path: "/intelligence/culture",
+    title: "Business Outcomes & Impact",
+    desc: "Cross-functional performance outcomes and organizational impact.",
+    icon: Award,
+    path: "/executive/outcomes",
   },
   {
-    title: "Compliance Intelligence",
-    desc: "Statutory filing readiness, labor policy gap analysis, and risks.",
-    icon: ShieldCheck,
-    path: "/intelligence/compliance",
+    title: "Organizational Structure",
+    desc: "Leadership hierarchy, business units, and team distribution.",
+    icon: Building2,
+    path: "/executive/organization",
   },
   {
-    title: "Predictive Workforce",
-    desc: "ML attrition signals, headcount forecast, and hiring demand.",
-    icon: TrendingUp,
-    path: "/intelligence/predictive",
+    title: "Executive Insights",
+    desc: "Synthesized executive analytics and key operating signals.",
+    icon: Sparkles,
+    path: "/executive/insights",
   },
   {
-    title: "AI Recommendations",
-    desc: "Prescriptive executive advisory for workforce interventions.",
-    icon: Lightbulb,
-    path: "/intelligence/recommendations",
+    title: "Executive Reports",
+    desc: "Board-ready workforce, financial, and compliance summary reporting.",
+    icon: BarChart3,
+    path: "/executive/reports",
   },
 ];
 
@@ -161,24 +156,24 @@ export default function ExecutiveDashboardPage() {
               Executive insights will synthesize when organizational data pipelines are connected.
             </h2>
             <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
-              NexaHR Executive Intelligence provides high-level organizational oversight across retention, culture, compliance, and departmental performance. Explore intelligence modules below.
+              OFC360 Executive Suite provides high-level organizational oversight across retention, structure, strategy, and departmental performance.
             </p>
           </div>
         </div>
 
-        {/* Executive Intelligence Grid */}
+        {/* Executive Strategy Grid */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-foreground tracking-tight">
-              Strategic Intelligence Hub
+              Strategic Executive Suite
             </h3>
             <span className="text-xs text-muted-foreground">
-              7 Executive Modules Available
+              6 Strategic Modules Available
             </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {executiveIntelligenceModules.map((mod) => (
+            {executiveStrategyModules.map((mod) => (
               <motion.div
                 key={mod.path}
                 whileHover={{ y: -3 }}

@@ -1,18 +1,14 @@
-import { motion } from "framer-motion";
 import {
   Building2,
   Users,
   ShieldCheck,
   UserPlus,
   DollarSign,
-  ArrowRight,
-  Globe,
-  Layers
+  RefreshCw,
 } from "lucide-react";
-import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
 import { TalentIntelligenceCard } from "@/components/talent-intelligence/TalentIntelligenceCard";
-import { useSuperAdminStore } from "@/stores/superAdminStore";
+import { useGetSuperAdminDashboardQuery } from "@/services/api/superAdminApi";
+import { Button } from "@/components/ui/button";
 
 const platformModules = [
   {
@@ -53,9 +49,10 @@ const platformModules = [
 ];
 
 export default function PlatformLandingPage() {
-  const { companies, users, hrAdmins, onboardingItems, subscriptions } = useSuperAdminStore();
+  const { data: dashboardData, isLoading, isFetching, refetch } = useGetSuperAdminDashboardQuery();
 
-  const totalMRR = companies.reduce((sum, c) => sum + c.mrr, 0);
+  const kpis = dashboardData?.kpis;
+  const financials = dashboardData?.financials;
 
   return (
     <div className="space-y-6">
@@ -68,6 +65,19 @@ export default function PlatformLandingPage() {
           <p className="text-xs text-muted-foreground mt-0.5">
             Centralized administration for enterprise workspaces, users, HR administrators, tenant onboarding, and SaaS subscriptions.
           </p>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            className="h-9 text-xs gap-1.5 border-border/60"
+            disabled={isFetching}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
+          </Button>
         </div>
       </div>
 
@@ -93,19 +103,27 @@ export default function PlatformLandingPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
           <div className="p-3 bg-secondary/30 rounded-xl border border-border/40 space-y-1">
             <p className="text-xs text-muted-foreground font-medium">Workspaces</p>
-            <p className="text-lg font-bold text-foreground">{companies.length}</p>
+            <p className="text-lg font-bold text-foreground">
+              {isLoading ? "—" : kpis?.total_organizations ?? 0}
+            </p>
           </div>
           <div className="p-3 bg-secondary/30 rounded-xl border border-border/40 space-y-1">
             <p className="text-xs text-muted-foreground font-medium">Total Users</p>
-            <p className="text-lg font-bold text-foreground">{users.length}</p>
+            <p className="text-lg font-bold text-foreground">
+              {isLoading ? "—" : kpis?.total_users ?? 0}
+            </p>
           </div>
           <div className="p-3 bg-secondary/30 rounded-xl border border-border/40 space-y-1">
             <p className="text-xs text-muted-foreground font-medium">HR Administrators</p>
-            <p className="text-lg font-bold text-foreground">{hrAdmins.length}</p>
+            <p className="text-lg font-bold text-foreground">
+              {isLoading ? "—" : kpis?.total_hr_admins ?? 0}
+            </p>
           </div>
           <div className="p-3 bg-secondary/30 rounded-xl border border-border/40 space-y-1">
-            <p className="text-xs text-muted-foreground font-medium">Contracted MRR</p>
-            <p className="text-lg font-bold text-emerald-600">${totalMRR.toLocaleString()}</p>
+            <p className="text-xs text-muted-foreground font-medium">Monthly Recurring Revenue</p>
+            <p className="text-lg font-bold text-foreground text-emerald-600">
+              {isLoading ? "—" : `$${(financials?.mrr ?? 0).toLocaleString()}`}
+            </p>
           </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   BarChart3,
   Users,
@@ -11,17 +12,19 @@ import {
   Plus,
   RefreshCw,
   Trash2,
-  AlertCircle,
   Search,
   CheckCircle2,
   TrendingUp,
-  Download,
   Calendar,
   Sparkles,
   PieChart,
-  Info,
   ShieldAlert,
   ArrowUpRight,
+  AlertTriangle,
+  FileSpreadsheet,
+  Target,
+  MessageSquare,
+  SmilePlus,
 } from "lucide-react";
 
 import {
@@ -59,23 +62,44 @@ import {
 
 import {
   useGetEngagementSummaryQuery,
+  useGetEngagementTrendQuery,
   useGetEnpsTrendQuery,
+  useGetEngagementBreakdownQuery,
+  useGetEngagementSurveysQuery,
 } from "./engagementReportsApi";
 
-import { useGetCultureTelemetryQuery } from "./cultureReportsApi";
+import {
+  useGetCultureTelemetryQuery,
+  useGetCultureTrendQuery,
+  useGetCultureBreakdownQuery,
+  useGetCultureFeedbackQuery,
+} from "./cultureReportsApi";
 
 import { ReportCategory } from "./types";
 
-const CATEGORIES: { id: ReportCategory; label: string; icon: React.ElementType; isMocked?: boolean }[] = [
+const CATEGORIES: { id: ReportCategory; label: string; icon: React.ElementType }[] = [
   { id: "workforce", label: "Workforce & Headcount", icon: Users },
   { id: "performance", label: "Performance & Appraisal", icon: Award },
-  { id: "engagement", label: "Engagement & eNPS", icon: Heart, isMocked: true },
-  { id: "culture", label: "Culture & D&I Telemetry", icon: Globe2, isMocked: true },
+  { id: "engagement", label: "Engagement & eNPS", icon: Heart },
+  { id: "culture", label: "Culture & D&I Telemetry", icon: Globe2 },
   { id: "compliance", label: "Compliance & Risk Audit", icon: ShieldCheck },
 ];
 
 export const ReportsHub: React.FC = () => {
-  const [activeCategory, setActiveCategory] = useState<ReportCategory>("workforce");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawTab = searchParams.get("tab");
+  const activeCategory: ReportCategory = (
+    rawTab === "performance" ||
+    rawTab === "engagement" ||
+    rawTab === "culture" ||
+    rawTab === "compliance" ||
+    rawTab === "workforce"
+  ) ? rawTab : "workforce";
+
+  const setActiveCategory = (tab: ReportCategory) => {
+    setSearchParams({ tab });
+  };
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedType, setSelectedType] = useState<string>("");
   const [dateFrom, setDateFrom] = useState("");
@@ -91,9 +115,8 @@ export const ReportsHub: React.FC = () => {
 
   // Core API hooks
   const { data: statsRes, isLoading: statsLoading } = useGetReportStatsQuery();
-  const { data: headcountRes } = useGetHeadcountAnalyticsQuery();
-  const { data: deptRes } = useGetDepartmentAnalyticsQuery();
-  const { data: tenureRes } = useGetTenureAnalyticsQuery();
+  const { data: headcountRes, isLoading: headcountLoading } = useGetHeadcountAnalyticsQuery();
+  const { data: deptRes, isLoading: deptLoading } = useGetDepartmentAnalyticsQuery();
   const { data: reportsRes, isLoading: reportsLoading } = useGetReportsQuery({
     search: searchTerm || undefined,
     type: selectedType || undefined,
@@ -106,7 +129,7 @@ export const ReportsHub: React.FC = () => {
   const [deleteReport, { isLoading: isDeleting }] = useDeleteReportMutation();
 
   // Category specific API queries
-  const { data: wfDashboardRes } = useGetExecutiveHrDashboardQuery(undefined, {
+  const { data: wfDashboardRes, isLoading: wfLoading } = useGetExecutiveHrDashboardQuery(undefined, {
     skip: activeCategory !== "workforce",
   });
   const { data: wfLeavesRes } = useGetLeavesAnalyticsQuery(undefined, {
@@ -114,10 +137,14 @@ export const ReportsHub: React.FC = () => {
   });
   const [triggerSnapshot, { isLoading: isSnapshotting }] = useCreateSnapshotMutation();
 
-  const { data: perfDashboardRes } = useGetPerformanceDashboardQuery(undefined, {
+  // Performance queries
+  const { data: perfDashboardRes, isLoading: perfLoading, isError: perfError } = useGetPerformanceDashboardQuery(undefined, {
     skip: activeCategory !== "performance",
   });
   const { data: perfTrendsRes } = useGetPerformanceTrendsQuery(undefined, {
+    skip: activeCategory !== "performance",
+  });
+  const { data: perfKpiRes } = useGetKpiAttainmentQuery(undefined, {
     skip: activeCategory !== "performance",
   });
   const { data: perfTopRes } = useGetTopPerformersQuery(undefined, {
@@ -127,7 +154,8 @@ export const ReportsHub: React.FC = () => {
     skip: activeCategory !== "performance",
   });
 
-  const { data: compDashboardRes } = useGetComplianceDashboardQuery(undefined, {
+  // Compliance queries
+  const { data: compDashboardRes, isLoading: compLoading, isError: compError } = useGetComplianceDashboardQuery(undefined, {
     skip: activeCategory !== "compliance",
   });
   const { data: compChecksRes } = useGetComplianceChecksQuery(undefined, {
@@ -143,15 +171,31 @@ export const ReportsHub: React.FC = () => {
     skip: activeCategory !== "compliance",
   });
 
-  // Mocked category queries
-  const { data: engagementRes } = useGetEngagementSummaryQuery(undefined, {
+  // Engagement queries
+  const { data: engagementRes, isLoading: engagementLoading, isError: engagementError } = useGetEngagementSummaryQuery(undefined, {
     skip: activeCategory !== "engagement",
   });
   const { data: enpsTrendRes } = useGetEnpsTrendQuery(undefined, {
     skip: activeCategory !== "engagement",
   });
+  const { data: engagementBreakdownRes } = useGetEngagementBreakdownQuery(undefined, {
+    skip: activeCategory !== "engagement",
+  });
+  const { data: engagementSurveysRes } = useGetEngagementSurveysQuery(undefined, {
+    skip: activeCategory !== "engagement",
+  });
 
-  const { data: cultureRes } = useGetCultureTelemetryQuery(undefined, {
+  // Culture queries
+  const { data: cultureRes, isLoading: cultureLoading, isError: cultureError } = useGetCultureTelemetryQuery(undefined, {
+    skip: activeCategory !== "culture",
+  });
+  const { data: cultureTrendRes } = useGetCultureTrendQuery(undefined, {
+    skip: activeCategory !== "culture",
+  });
+  const { data: cultureBreakdownRes } = useGetCultureBreakdownQuery(undefined, {
+    skip: activeCategory !== "culture",
+  });
+  const { data: cultureFeedbackRes } = useGetCultureFeedbackQuery(undefined, {
     skip: activeCategory !== "culture",
   });
 
@@ -249,11 +293,11 @@ export const ReportsHub: React.FC = () => {
           <div>
             <p className="text-xs font-medium text-slate-400">Total Generated</p>
             <p className="text-2xl font-bold text-white mt-1">
-              {statsLoading ? "..." : stats?.total ?? 128}
+              {statsLoading ? "..." : (stats?.total ?? 0)}
             </p>
             <span className="text-xs text-emerald-400 flex items-center gap-1 mt-1 font-medium">
               <TrendingUp className="w-3.5 h-3.5" />
-              {stats?.generated_today ?? 14} today
+              {stats?.generated_today ?? 0} today
             </span>
           </div>
           <div className="p-3 bg-blue-500/10 text-blue-400 rounded-xl border border-blue-500/20">
@@ -265,11 +309,11 @@ export const ReportsHub: React.FC = () => {
           <div>
             <p className="text-xs font-medium text-slate-400">Scheduled Automation</p>
             <p className="text-2xl font-bold text-white mt-1">
-              {statsLoading ? "..." : stats?.scheduled ?? 18}
+              {statsLoading ? "..." : (stats?.scheduled ?? 0)}
             </p>
             <span className="text-xs text-indigo-400 flex items-center gap-1 mt-1 font-medium">
               <Clock className="w-3.5 h-3.5" />
-              {stats?.pending ?? 3} queue pending
+              {stats?.pending ?? 0} queue pending
             </span>
           </div>
           <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
@@ -281,11 +325,11 @@ export const ReportsHub: React.FC = () => {
           <div>
             <p className="text-xs font-medium text-slate-400">Successful Exports</p>
             <p className="text-2xl font-bold text-white mt-1">
-              {statsLoading ? "..." : stats?.successful_exports ?? 112}
+              {statsLoading ? "..." : (stats?.successful_exports ?? 0)}
             </p>
             <span className="text-xs text-emerald-400 flex items-center gap-1 mt-1 font-medium">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              99.2% success rate
+              {stats?.successful_exports && stats?.total ? `${Math.round((stats.successful_exports / stats.total) * 100)}%` : "100%"} rate
             </span>
           </div>
           <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
@@ -297,11 +341,11 @@ export const ReportsHub: React.FC = () => {
           <div>
             <p className="text-xs font-medium text-slate-400">Storage Consumption</p>
             <p className="text-2xl font-bold text-white mt-1">
-              {statsLoading ? "..." : `${stats?.storage_usage_mb ?? 340} MB`}
+              {statsLoading ? "..." : `${stats?.storage_usage_mb ?? 0} MB`}
             </p>
             <span className="text-xs text-purple-400 flex items-center gap-1 mt-1 font-medium">
               <PieChart className="w-3.5 h-3.5" />
-              {stats?.active_dashboards ?? 5} active boards
+              {stats?.active_dashboards ?? 0} active boards
             </span>
           </div>
           <div className="p-3 bg-purple-500/10 text-purple-400 rounded-xl border border-purple-500/20">
@@ -328,11 +372,6 @@ export const ReportsHub: React.FC = () => {
               >
                 <Icon className="w-4 h-4" />
                 {tab.label}
-                {tab.isMocked && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30">
-                    Preview
-                  </span>
-                )}
               </button>
             );
           })}
@@ -341,26 +380,6 @@ export const ReportsHub: React.FC = () => {
 
       {/* Active Tab Content Area */}
       <div className="space-y-6">
-        {/* Banner for Mocked Tabs */}
-        {CATEGORIES.find((c) => c.id === activeCategory)?.isMocked && (
-          <div className="flex items-center justify-between bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 text-amber-200">
-            <div className="flex items-center gap-3">
-              <Info className="w-5 h-5 text-amber-400 shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-amber-300">
-                  Preview data — backend integration pending
-                </p>
-                <p className="text-xs text-amber-400/80">
-                  This category slice uses typed RTK Query mock resolvers pending deployment of the backend service.
-                </p>
-              </div>
-            </div>
-            <span className="text-xs font-mono bg-amber-500/20 text-amber-300 px-2.5 py-1 rounded border border-amber-500/40">
-              queryFn Mock
-            </span>
-          </div>
-        )}
-
         {/* 1. WORKFORCE & HEADCOUNT TAB */}
         {activeCategory === "workforce" && (
           <div className="space-y-6">
@@ -379,75 +398,79 @@ export const ReportsHub: React.FC = () => {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
-                <p className="text-xs text-slate-400">Total Workforce</p>
-                <p className="text-3xl font-bold text-white mt-1">
-                  {wfDashboardRes?.data?.totalEmployees ?? 450}
-                </p>
-                <p className="text-xs text-emerald-400 mt-2 flex items-center gap-1">
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                  {wfDashboardRes?.data?.newHiresThisMonth ?? 12} new hires this month
-                </p>
-              </div>
+            {wfLoading ? (
+              <div className="p-8 text-center text-slate-400 text-sm">Loading workforce metrics...</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
+                  <p className="text-xs text-slate-400">Total Workforce</p>
+                  <p className="text-3xl font-bold text-white mt-1">
+                    {wfDashboardRes?.data?.totalEmployees ?? 0}
+                  </p>
+                  <p className="text-xs text-emerald-400 mt-2 flex items-center gap-1">
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                    {wfDashboardRes?.data?.newHiresThisMonth ?? 0} new hires this month
+                  </p>
+                </div>
 
-              <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
-                <p className="text-xs text-slate-400">Annual Retention Rate</p>
-                <p className="text-3xl font-bold text-white mt-1">
-                  {wfDashboardRes?.data?.retentionRate ?? 94.2}%
-                </p>
-                <p className="text-xs text-slate-400 mt-2">
-                  Turnover rate: {wfDashboardRes?.data?.turnoverRate ?? 5.8}%
-                </p>
-              </div>
+                <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
+                  <p className="text-xs text-slate-400">Annual Retention Rate</p>
+                  <p className="text-3xl font-bold text-white mt-1">
+                    {wfDashboardRes?.data?.retentionRate ?? 0}%
+                  </p>
+                  <p className="text-xs text-slate-400 mt-2">
+                    Turnover rate: {wfDashboardRes?.data?.turnoverRate ?? 0}%
+                  </p>
+                </div>
 
-              <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
-                <p className="text-xs text-slate-400">Leave Conflict Alert Index</p>
-                <p className="text-3xl font-bold text-amber-400 mt-1">
-                  {wfLeavesRes?.data?.leaveConflicts ?? 3}
-                </p>
-                <p className="text-xs text-slate-400 mt-2">
-                  Peak month: {wfLeavesRes?.data?.peakLeaveMonth ?? "July"}
-                </p>
+                <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
+                  <p className="text-xs text-slate-400">Leave Conflict Alert Index</p>
+                  <p className="text-3xl font-bold text-amber-400 mt-1">
+                    {wfLeavesRes?.data?.leaveConflicts ?? 0}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-2">
+                    Peak month: {wfLeavesRes?.data?.peakLeaveMonth ?? "N/A"}
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Re-exported Core Analytics Data */}
+            {/* Core Analytics Data */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5 col-span-2">
                 <h3 className="text-sm font-semibold text-slate-200 mb-4">Headcount Growth Trend</h3>
-                <div className="grid grid-cols-6 gap-2 text-center">
-                  {(headcountRes?.data || [
-                    { m: "Jan", n: 410 },
-                    { m: "Feb", n: 420 },
-                    { m: "Mar", n: 432 },
-                    { m: "Apr", n: 438 },
-                    { m: "May", n: 445 },
-                    { m: "Jun", n: 450 },
-                  ]).map((item, idx) => (
-                    <div key={idx} className="bg-slate-900/60 p-3 rounded-lg border border-slate-800">
-                      <p className="text-xs text-slate-400">{item.m}</p>
-                      <p className="text-lg font-bold text-indigo-400 mt-1">{item.n}</p>
-                    </div>
-                  ))}
-                </div>
+                {headcountLoading ? (
+                  <p className="text-xs text-slate-400">Loading headcount trends...</p>
+                ) : (headcountRes?.data && headcountRes.data.length > 0) ? (
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 text-center">
+                    {headcountRes.data.map((item, idx) => (
+                      <div key={idx} className="bg-slate-900/60 p-3 rounded-lg border border-slate-800">
+                        <p className="text-xs text-slate-400">{item.m}</p>
+                        <p className="text-lg font-bold text-indigo-400 mt-1">{item.n}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500">No headcount trend data recorded</p>
+                )}
               </div>
 
               <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
                 <h3 className="text-sm font-semibold text-slate-200 mb-4">Department Share</h3>
-                <div className="space-y-3">
-                  {(deptRes?.data || [
-                    { name: "Engineering", value: 42 },
-                    { name: "Sales & Marketing", value: 28 },
-                    { name: "Product & Design", value: 18 },
-                    { name: "Operations & HR", value: 12 },
-                  ]).map((dept, idx) => (
-                    <div key={idx} className="flex justify-between items-center text-xs">
-                      <span className="text-slate-300">{dept.name}</span>
-                      <span className="font-semibold text-slate-100">{dept.value}%</span>
-                    </div>
-                  ))}
-                </div>
+                {deptLoading ? (
+                  <p className="text-xs text-slate-400">Loading department share...</p>
+                ) : (deptRes?.data && deptRes.data.length > 0) ? (
+                  <div className="space-y-3">
+                    {deptRes.data.map((dept, idx) => (
+                      <div key={idx} className="flex justify-between items-center text-xs">
+                        <span className="text-slate-300">{dept.name}</span>
+                        <span className="font-semibold text-slate-100">{dept.value}%</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500">No department share recorded</p>
+                )}
               </div>
             </div>
           </div>
@@ -461,87 +484,115 @@ export const ReportsHub: React.FC = () => {
               AI Performance & Appraisal Analytics
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
-                <p className="text-xs text-slate-400">Total AI Appraisals</p>
-                <p className="text-2xl font-bold text-white mt-1">
-                  {perfDashboardRes?.data?.totalEvaluations ?? 184}
-                </p>
+            {perfLoading ? (
+              <div className="p-8 text-center text-slate-400 text-sm">Loading performance analytics...</div>
+            ) : perfError ? (
+              <div className="p-6 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-300 text-xs">
+                Unable to load performance telemetry. Please check backend connection.
               </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
+                    <p className="text-xs text-slate-400">Total AI Appraisals</p>
+                    <p className="text-2xl font-bold text-white mt-1">
+                      {perfDashboardRes?.data?.totalEvaluations ?? 0}
+                    </p>
+                  </div>
 
-              <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
-                <p className="text-xs text-slate-400">Avg Performance Score</p>
-                <p className="text-2xl font-bold text-emerald-400 mt-1">
-                  {perfDashboardRes?.data?.avgPerformanceScore ?? 4.4} / 5.0
-                </p>
-              </div>
+                  <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
+                    <p className="text-xs text-slate-400">Avg Performance Score</p>
+                    <p className="text-2xl font-bold text-emerald-400 mt-1">
+                      {perfDashboardRes?.data?.avgPerformanceScore ? `${perfDashboardRes.data.avgPerformanceScore} / 5.0` : "N/A"}
+                    </p>
+                  </div>
 
-              <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
-                <p className="text-xs text-slate-400">Top Performers</p>
-                <p className="text-2xl font-bold text-purple-400 mt-1">
-                  {perfDashboardRes?.data?.topPerformersCount ?? 36}
-                </p>
-              </div>
+                  <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
+                    <p className="text-xs text-slate-400">Top Performers</p>
+                    <p className="text-2xl font-bold text-purple-400 mt-1">
+                      {perfDashboardRes?.data?.topPerformersCount ?? 0}
+                    </p>
+                  </div>
 
-              <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
-                <p className="text-xs text-slate-400">Skill Gap Alerts</p>
-                <p className="text-2xl font-bold text-amber-400 mt-1">
-                  {perfDashboardRes?.data?.skillGapsCount ?? 8}
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
-                <h3 className="text-sm font-semibold text-slate-200 mb-4">Top Performing Talent</h3>
-                <div className="space-y-3">
-                  {(perfTopRes?.data || [
-                    { employeeId: "EMP-101", name: "Sarah Jenkins", department: "Engineering", score: 4.9, rating: "Exceeds Expectations" },
-                    { employeeId: "EMP-104", name: "Michael Chen", department: "Product", score: 4.8, rating: "Exceeds Expectations" },
-                    { employeeId: "EMP-112", name: "Elena Rostova", department: "Sales", score: 4.7, rating: "Consistently High" },
-                  ]).map((item, idx) => (
-                    <div key={idx} className="flex justify-between items-center p-3 bg-slate-900/50 rounded-lg border border-slate-800">
-                      <div>
-                        <p className="text-sm font-medium text-white">{item.name}</p>
-                        <p className="text-xs text-slate-400">{item.department} • {item.employeeId}</p>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-sm font-bold text-emerald-400">{item.score} / 5.0</span>
-                        <p className="text-[10px] text-indigo-400">{item.rating}</p>
-                      </div>
-                    </div>
-                  ))}
+                  <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
+                    <p className="text-xs text-slate-400">Skill Gap Alerts</p>
+                    <p className="text-2xl font-bold text-amber-400 mt-1">
+                      {perfDashboardRes?.data?.skillGapsCount ?? 0}
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
-                <h3 className="text-sm font-semibold text-slate-200 mb-4">AI Skill Gap Analysis</h3>
-                <div className="space-y-3">
-                  {(perfSkillGapsRes?.data || [
-                    { skill: "Cloud Architecture (AWS/GCP)", currentLevel: 3.2, requiredLevel: 4.5, affectedEmployees: 14 },
-                    { skill: "AI Model Fine-tuning", currentLevel: 2.8, requiredLevel: 4.0, affectedEmployees: 9 },
-                    { skill: "Agile Leadership", currentLevel: 3.5, requiredLevel: 4.2, affectedEmployees: 6 },
-                  ]).map((gap, idx) => (
-                    <div key={idx} className="p-3 bg-slate-900/50 rounded-lg border border-slate-800 text-xs">
-                      <div className="flex justify-between font-medium text-slate-200 mb-1">
-                        <span>{gap.skill}</span>
-                        <span className="text-amber-400">{gap.affectedEmployees} employees affected</span>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
+                    <h3 className="text-sm font-semibold text-slate-200 mb-4">Top Performing Talent</h3>
+                    {perfTopRes?.data && perfTopRes.data.length > 0 ? (
+                      <div className="space-y-3">
+                        {perfTopRes.data.map((item, idx) => (
+                          <div key={idx} className="flex justify-between items-center p-3 bg-slate-900/50 rounded-lg border border-slate-800">
+                            <div>
+                              <p className="text-sm font-medium text-white">{item.name}</p>
+                              <p className="text-xs text-slate-400">{item.department} • {item.employeeId}</p>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-sm font-bold text-emerald-400">{item.score} / 5.0</span>
+                              <p className="text-[10px] text-indigo-400">{item.rating}</p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      <div className="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
-                        <div
-                          className="bg-indigo-500 h-full rounded-full"
-                          style={{ width: `${(gap.currentLevel / gap.requiredLevel) * 100}%` }}
-                        />
+                    ) : (
+                      <p className="text-xs text-slate-500">No top performers recorded</p>
+                    )}
+                  </div>
+
+                  <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
+                    <h3 className="text-sm font-semibold text-slate-200 mb-4">AI Skill Gap Analysis</h3>
+                    {perfSkillGapsRes?.data && perfSkillGapsRes.data.length > 0 ? (
+                      <div className="space-y-3">
+                        {perfSkillGapsRes.data.map((gap, idx) => (
+                          <div key={idx} className="p-3 bg-slate-900/50 rounded-lg border border-slate-800 text-xs">
+                            <div className="flex justify-between font-medium text-slate-200 mb-1">
+                              <span>{gap.skill}</span>
+                              <span className="text-amber-400">{gap.affectedEmployees} affected</span>
+                            </div>
+                            <div className="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
+                              <div
+                                className="bg-indigo-500 h-full rounded-full"
+                                style={{ width: `${Math.min(100, (gap.currentLevel / (gap.requiredLevel || 1)) * 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    </div>
-                  ))}
+                    ) : (
+                      <p className="text-xs text-slate-500">No skill gaps recorded</p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </div>
+
+                {/* KPI Attainment Breakdown */}
+                {perfKpiRes?.data && perfKpiRes.data.length > 0 && (
+                  <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
+                    <h3 className="text-sm font-semibold text-slate-200 mb-4">Department KPI Attainment</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {perfKpiRes.data.map((kpi, idx) => (
+                        <div key={idx} className="p-3 bg-slate-900/50 rounded-lg border border-slate-800 text-xs">
+                          <p className="text-slate-300 font-medium">{kpi.department}</p>
+                          <div className="flex justify-between mt-1 text-slate-400">
+                            <span>Attainment: <strong className="text-emerald-400">{kpi.attainmentRate}%</strong></span>
+                            <span>Target: {kpi.target}%</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
 
-        {/* 3. ENGAGEMENT & eNPS TAB (MOCKED) */}
+        {/* 3. ENGAGEMENT & eNPS TAB */}
         {activeCategory === "engagement" && (
           <div className="space-y-6">
             <h2 className="text-lg font-semibold text-white flex items-center gap-2">
@@ -549,53 +600,120 @@ export const ReportsHub: React.FC = () => {
               Employee Engagement & eNPS Telemetry
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
-                <p className="text-xs text-slate-400">eNPS Score</p>
-                <p className="text-3xl font-bold text-indigo-400 mt-1">
-                  +{engagementRes?.data?.enpsScore ?? 42}
-                </p>
-                <span className="text-xs text-emerald-400">+5 vs last quarter</span>
+            {engagementLoading ? (
+              <div className="p-8 text-center text-slate-400 text-sm">Loading engagement data...</div>
+            ) : engagementError ? (
+              <div className="p-6 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-300 text-xs">
+                Unable to load engagement metrics. Please check backend connection.
               </div>
-
-              <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
-                <p className="text-xs text-slate-400">Survey Response Rate</p>
-                <p className="text-3xl font-bold text-white mt-1">
-                  {engagementRes?.data?.responseRate ?? 88.5}%
-                </p>
-              </div>
-
-              <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
-                <p className="text-xs text-slate-400">Promoters</p>
-                <p className="text-3xl font-bold text-emerald-400 mt-1">
-                  {engagementRes?.data?.promoters ?? 58}%
-                </p>
-              </div>
-
-              <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
-                <p className="text-xs text-slate-400">Detractors</p>
-                <p className="text-3xl font-bold text-rose-400 mt-1">
-                  {engagementRes?.data?.detractors ?? 16}%
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
-              <h3 className="text-sm font-semibold text-slate-200 mb-4">Monthly eNPS Trend</h3>
-              <div className="grid grid-cols-5 gap-3">
-                {(enpsTrendRes?.data || []).map((t, idx) => (
-                  <div key={idx} className="bg-slate-900/60 p-4 rounded-lg border border-slate-800 text-center">
-                    <p className="text-xs text-slate-400">{t.month}</p>
-                    <p className="text-2xl font-bold text-indigo-400 mt-1">+{t.score}</p>
-                    <p className="text-[10px] text-slate-500 mt-1">{t.responses} responses</p>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
+                    <p className="text-xs text-slate-400">eNPS Score</p>
+                    <p className="text-3xl font-bold text-indigo-400 mt-1">
+                      {engagementRes?.data?.enpsScore !== undefined
+                        ? (engagementRes.data.enpsScore > 0 ? `+${engagementRes.data.enpsScore}` : `${engagementRes.data.enpsScore}`)
+                        : (engagementRes?.data?.enps !== undefined ? `${engagementRes.data.enps}` : "N/A")}
+                    </p>
+                    <span className="text-xs text-slate-400">Score range: -100 to +100</span>
                   </div>
-                ))}
-              </div>
-            </div>
+
+                  <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
+                    <p className="text-xs text-slate-400">Survey Response Rate</p>
+                    <p className="text-3xl font-bold text-white mt-1">
+                      {engagementRes?.data?.responseRate !== undefined ? `${engagementRes.data.responseRate}%` : "N/A"}
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
+                    <p className="text-xs text-slate-400">Promoters</p>
+                    <p className="text-3xl font-bold text-emerald-400 mt-1">
+                      {engagementRes?.data?.promoters !== undefined ? `${engagementRes.data.promoters}%` : "N/A"}
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
+                    <p className="text-xs text-slate-400">Detractors</p>
+                    <p className="text-3xl font-bold text-rose-400 mt-1">
+                      {engagementRes?.data?.detractors !== undefined ? `${engagementRes.data.detractors}%` : "N/A"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Monthly eNPS Trend */}
+                  <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
+                    <h3 className="text-sm font-semibold text-slate-200 mb-4">eNPS Sentiment Trend</h3>
+                    {enpsTrendRes?.data && enpsTrendRes.data.length > 0 ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        {enpsTrendRes.data.map((t, idx) => (
+                          <div key={idx} className="bg-slate-900/60 p-3.5 rounded-lg border border-slate-800 text-center">
+                            <p className="text-xs text-slate-400">{t.month}</p>
+                            <p className="text-xl font-bold text-indigo-400 mt-1">
+                              {t.score > 0 ? `+${t.score}` : t.score}
+                            </p>
+                            <p className="text-[10px] text-slate-500 mt-0.5">{t.responses} responses</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-500">No trend points available</p>
+                    )}
+                  </div>
+
+                  {/* Department Breakdown */}
+                  <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
+                    <h3 className="text-sm font-semibold text-slate-200 mb-4">Department Engagement Breakdown</h3>
+                    {engagementBreakdownRes?.data && engagementBreakdownRes.data.length > 0 ? (
+                      <div className="space-y-2.5">
+                        {engagementBreakdownRes.data.map((item, idx) => (
+                          <div key={idx} className="flex justify-between items-center p-3 bg-slate-900/50 rounded-lg border border-slate-800 text-xs">
+                            <span className="font-medium text-slate-200">{item.department || item.team || "Team"}</span>
+                            <div className="flex items-center gap-3">
+                              <span className="text-slate-400">Score: <strong className="text-indigo-400">{item.score}</strong></span>
+                              {item.participationRate !== undefined && (
+                                <span className="text-slate-500">({item.participationRate}% participation)</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-500">No department breakdown recorded</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Survey Register */}
+                {engagementSurveysRes?.data && engagementSurveysRes.data.length > 0 && (
+                  <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
+                    <h3 className="text-sm font-semibold text-slate-200 mb-4">Live & Completed Pulse Surveys</h3>
+                    <div className="space-y-2.5">
+                      {engagementSurveysRes.data.map((survey) => (
+                        <div key={survey.id} className="flex justify-between items-center p-3.5 bg-slate-900/50 rounded-lg border border-slate-800 text-xs">
+                          <div>
+                            <p className="font-semibold text-white">{survey.title}</p>
+                            <p className="text-[11px] text-slate-400 mt-0.5">
+                              Responses: {survey.responses} {survey.totalEligible ? `/ ${survey.totalEligible}` : ""}
+                            </p>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                            survey.status === "active" ? "bg-emerald-500/20 text-emerald-300" : "bg-slate-800 text-slate-400"
+                          }`}>
+                            {survey.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
 
-        {/* 4. CULTURE & D&I TAB (MOCKED) */}
+        {/* 4. CULTURE & D&I TAB */}
         {activeCategory === "culture" && (
           <div className="space-y-6">
             <h2 className="text-lg font-semibold text-white flex items-center gap-2">
@@ -603,29 +721,89 @@ export const ReportsHub: React.FC = () => {
               Culture & D&I Telemetry
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
-                <p className="text-xs text-slate-400">Inclusion Index Score</p>
-                <p className="text-3xl font-bold text-emerald-400 mt-1">
-                  {cultureRes?.data?.inclusionIndex ?? 84} / 100
-                </p>
-                <p className="text-xs text-slate-400 mt-2">
-                  D&I Hiring Ratio: {cultureRes?.data?.diHiringRatio ?? 51.5}%
-                </p>
+            {cultureLoading ? (
+              <div className="p-8 text-center text-slate-400 text-sm">Loading culture telemetry...</div>
+            ) : cultureError ? (
+              <div className="p-6 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-300 text-xs">
+                Unable to load culture telemetry. Please check backend connection.
               </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
+                    <p className="text-xs text-slate-400">Inclusion Index Score</p>
+                    <p className="text-3xl font-bold text-emerald-400 mt-1">
+                      {cultureRes?.data?.inclusionIndex !== undefined ? `${cultureRes.data.inclusionIndex} / 100` : "N/A"}
+                    </p>
+                    <p className="text-xs text-slate-400 mt-2">
+                      D&I Hiring Ratio: {cultureRes?.data?.diHiringRatio !== undefined ? `${cultureRes.data.diHiringRatio}%` : "N/A"}
+                    </p>
+                    {cultureRes?.data?.psychologicalSafetyScore !== undefined && (
+                      <p className="text-xs text-indigo-400 mt-1">
+                        Psychological Safety Score: {cultureRes.data.psychologicalSafetyScore} / 100
+                      </p>
+                    )}
+                  </div>
 
-              <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
-                <h3 className="text-sm font-semibold text-slate-200 mb-3">Gender Demographics</h3>
-                <div className="space-y-2">
-                  {(cultureRes?.data?.genderDistribution || []).map((g, idx) => (
-                    <div key={idx} className="flex justify-between items-center text-xs">
-                      <span className="text-slate-300">{g.label}</span>
-                      <span className="font-bold text-slate-100">{g.value}%</span>
-                    </div>
-                  ))}
+                  <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
+                    <h3 className="text-sm font-semibold text-slate-200 mb-3">Gender Demographics</h3>
+                    {cultureRes?.data?.genderDistribution && cultureRes.data.genderDistribution.length > 0 ? (
+                      <div className="space-y-2">
+                        {cultureRes.data.genderDistribution.map((g, idx) => (
+                          <div key={idx} className="flex justify-between items-center text-xs">
+                            <span className="text-slate-300">{g.label}</span>
+                            <span className="font-bold text-slate-100">{g.value}%</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-500">No gender demographics recorded</p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </div>
+
+                {/* Cultural Dimensions / Breakdown */}
+                {cultureBreakdownRes?.data && cultureBreakdownRes.data.length > 0 && (
+                  <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
+                    <h3 className="text-sm font-semibold text-slate-200 mb-4">Organizational Culture Dimensions</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      {cultureBreakdownRes.data.map((dim, idx) => (
+                        <div key={idx} className="p-3.5 bg-slate-900/50 rounded-lg border border-slate-800 text-xs">
+                          <p className="font-semibold text-white">{dim.category}</p>
+                          <div className="flex justify-between mt-1 text-slate-400">
+                            <span>Score: <strong className="text-indigo-400">{dim.score}/100</strong></span>
+                            {dim.benchmark !== undefined && <span>Benchmark: {dim.benchmark}</span>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Culture Feedback */}
+                {cultureFeedbackRes?.data && cultureFeedbackRes.data.length > 0 && (
+                  <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
+                    <h3 className="text-sm font-semibold text-slate-200 mb-4">Anonymous Culture Feedback Sentiment</h3>
+                    <div className="space-y-2.5">
+                      {cultureFeedbackRes.data.map((fb) => (
+                        <div key={fb.id} className="p-3 bg-slate-900/50 rounded-lg border border-slate-800 text-xs flex justify-between items-center">
+                          <div>
+                            <span className="font-semibold text-white">{fb.theme}</span>
+                            {fb.comment && <p className="text-slate-400 mt-0.5">{fb.comment}</p>}
+                          </div>
+                          <span className={`text-[10px] px-2 py-0.5 rounded font-bold capitalize ${
+                            fb.sentiment === "positive" ? "bg-emerald-500/20 text-emerald-300" :
+                            fb.sentiment === "negative" ? "bg-rose-500/20 text-rose-300" : "bg-amber-500/20 text-amber-300"
+                          }`}>
+                            {fb.sentiment}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
 
@@ -637,97 +815,111 @@ export const ReportsHub: React.FC = () => {
               AI Compliance Monitor & Risk Audit Register
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
-                <p className="text-xs text-slate-400">Compliance Health Score</p>
-                <p className="text-3xl font-bold text-emerald-400 mt-1">
-                  {compDashboardRes?.data?.complianceScore ?? 96.5}%
-                </p>
+            {compLoading ? (
+              <div className="p-8 text-center text-slate-400 text-sm">Loading compliance dashboard...</div>
+            ) : compError ? (
+              <div className="p-6 bg-rose-500/10 border border-rose-500/30 rounded-xl text-rose-300 text-xs">
+                Unable to load compliance data. Please check backend connection.
               </div>
-
-              <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
-                <p className="text-xs text-slate-400">Open Risk Violations</p>
-                <p className="text-3xl font-bold text-rose-400 mt-1">
-                  {compDashboardRes?.data?.openViolations ?? 2}
-                </p>
-              </div>
-
-              <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
-                <p className="text-xs text-slate-400">Audit Readiness Score</p>
-                <p className="text-3xl font-bold text-indigo-400 mt-1">
-                  {compReadinessRes?.data?.overallScore ?? 94} / 100
-                </p>
-              </div>
-
-              <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
-                <p className="text-xs text-slate-400">Missing Documents</p>
-                <p className="text-3xl font-bold text-amber-400 mt-1">
-                  {compDashboardRes?.data?.missingDocumentsCount ?? 5}
-                </p>
-              </div>
-            </div>
-
-            {/* Risk Audit Register */}
-            <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
-              <h3 className="text-sm font-semibold text-slate-200 mb-4 flex items-center gap-2">
-                <ShieldAlert className="w-4 h-4 text-rose-400" />
-                Compliance Risk Audit Register
-              </h3>
-              <div className="space-y-3">
-                {(compRisksRes?.data || [
-                  { id: "RSK-01", severity: "high", title: "Expired Visa Authorization", description: "Contractor work eligibility document requires updated filing", department: "Engineering", detectedAt: "2026-08-10" },
-                  { id: "RSK-02", severity: "medium", title: "Mandatory Safety Training Pending", description: "7 employees overdue for annual compliance module", department: "Operations", detectedAt: "2026-08-11" },
-                ]).map((risk, idx) => (
-                  <div key={idx} className="p-4 bg-slate-900/60 rounded-lg border border-slate-800 flex justify-between items-center">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono text-slate-400">{risk.id}</span>
-                        <span className="text-sm font-semibold text-white">{risk.title}</span>
-                        <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
-                          risk.severity === "high" ? "bg-rose-500/20 text-rose-300" : "bg-amber-500/20 text-amber-300"
-                        }`}>
-                          {risk.severity}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-400 mt-1">{risk.description}</p>
-                    </div>
-                    <span className="text-xs text-slate-500">{risk.department}</span>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
+                    <p className="text-xs text-slate-400">Compliance Health Score</p>
+                    <p className="text-3xl font-bold text-emerald-400 mt-1">
+                      {compDashboardRes?.data?.complianceScore !== undefined ? `${compDashboardRes.data.complianceScore}%` : "N/A"}
+                    </p>
                   </div>
-                ))}
-              </div>
-            </div>
 
-            {/* Security Audit Log (/v2/payroll/security/audit) */}
-            <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
-              <h3 className="text-sm font-semibold text-slate-200 mb-4">Security Audit Trail Log</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-slate-300">
-                  <thead className="bg-slate-900/80 text-slate-400">
-                    <tr>
-                      <th className="p-3">User</th>
-                      <th className="p-3">Action</th>
-                      <th className="p-3">Resource</th>
-                      <th className="p-3">IP Address</th>
-                      <th className="p-3">Timestamp</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800">
-                    {(securityAuditRes?.data || [
-                      { id: "1", user_email: "admin@company.com", action: "REPORT_EXPORT", resource: "Payroll Summary Q2", ip_address: "192.168.1.100", timestamp: "2026-08-13 11:20:00" },
-                      { id: "2", user_email: "hr@company.com", action: "SECURITY_POLICY_UPDATE", resource: "MFA Enforcement", ip_address: "192.168.1.105", timestamp: "2026-08-13 10:45:00" },
-                    ]).map((log, idx) => (
-                      <tr key={idx} className="hover:bg-slate-800/30">
-                        <td className="p-3 font-medium text-slate-200">{log.user_email}</td>
-                        <td className="p-3 font-mono text-indigo-400">{log.action}</td>
-                        <td className="p-3">{log.resource}</td>
-                        <td className="p-3 font-mono text-slate-400">{log.ip_address}</td>
-                        <td className="p-3 text-slate-500">{log.timestamp}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+                  <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
+                    <p className="text-xs text-slate-400">Open Risk Violations</p>
+                    <p className="text-3xl font-bold text-rose-400 mt-1">
+                      {compDashboardRes?.data?.openViolations ?? 0}
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
+                    <p className="text-xs text-slate-400">Audit Readiness Score</p>
+                    <p className="text-3xl font-bold text-indigo-400 mt-1">
+                      {compReadinessRes?.data?.overallScore !== undefined ? `${compReadinessRes.data.overallScore} / 100` : "N/A"}
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-4">
+                    <p className="text-xs text-slate-400">Missing Documents</p>
+                    <p className="text-3xl font-bold text-amber-400 mt-1">
+                      {compDashboardRes?.data?.missingDocumentsCount ?? 0}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Risk Audit Register */}
+                <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
+                  <h3 className="text-sm font-semibold text-slate-200 mb-4 flex items-center gap-2">
+                    <ShieldAlert className="w-4 h-4 text-rose-400" />
+                    Compliance Risk Audit Register
+                  </h3>
+                  {compRisksRes?.data && compRisksRes.data.length > 0 ? (
+                    <div className="space-y-3">
+                      {compRisksRes.data.map((risk, idx) => (
+                        <div key={idx} className="p-4 bg-slate-900/60 rounded-lg border border-slate-800 flex justify-between items-center">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-mono text-slate-400">{risk.id}</span>
+                              <span className="text-sm font-semibold text-white">{risk.title}</span>
+                              <span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
+                                risk.severity === "high" || risk.severity === "critical"
+                                  ? "bg-rose-500/20 text-rose-300"
+                                  : "bg-amber-500/20 text-amber-300"
+                              }`}>
+                                {risk.severity}
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-400 mt-1">{risk.description}</p>
+                          </div>
+                          <span className="text-xs text-slate-500">{risk.department}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-500">No active compliance risk violations recorded</p>
+                  )}
+                </div>
+
+                {/* Security Audit Log */}
+                <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
+                  <h3 className="text-sm font-semibold text-slate-200 mb-4">Security Audit Trail Log</h3>
+                  {securityAuditRes?.data && securityAuditRes.data.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs text-slate-300">
+                        <thead className="bg-slate-900/80 text-slate-400">
+                          <tr>
+                            <th className="p-3">User</th>
+                            <th className="p-3">Action</th>
+                            <th className="p-3">Resource</th>
+                            <th className="p-3">IP Address</th>
+                            <th className="p-3">Timestamp</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800">
+                          {securityAuditRes.data.map((log, idx) => (
+                            <tr key={idx} className="hover:bg-slate-800/30">
+                              <td className="p-3 font-medium text-slate-200">{log.user_email}</td>
+                              <td className="p-3 font-mono text-indigo-400">{log.action}</td>
+                              <td className="p-3">{log.resource}</td>
+                              <td className="p-3 font-mono text-slate-400">{log.ip_address}</td>
+                              <td className="p-3 text-slate-500">{log.timestamp}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-500">No security audit logs available</p>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -915,7 +1107,7 @@ export const ReportsHub: React.FC = () => {
                   <label className="block text-slate-300 font-medium mb-1">Export Format</label>
                   <select
                     value={newReportFormat}
-                    onChange={(e) => setNewReportFormat(e.target.value as any)}
+                    onChange={(e) => setNewReportFormat(e.target.value as "pdf" | "csv" | "excel")}
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
                   >
                     <option value="pdf">PDF Document</option>
@@ -929,7 +1121,7 @@ export const ReportsHub: React.FC = () => {
                 <label className="block text-slate-300 font-medium mb-1">Automation Schedule</label>
                 <select
                   value={newReportSchedule}
-                  onChange={(e) => setNewReportSchedule(e.target.value as any)}
+                  onChange={(e) => setNewReportSchedule(e.target.value as "none" | "daily" | "weekly" | "monthly")}
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white focus:outline-none focus:border-indigo-500"
                 >
                   <option value="none">One-time Execution (None)</option>

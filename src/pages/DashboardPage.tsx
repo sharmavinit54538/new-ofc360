@@ -33,6 +33,7 @@ import {
 } from "recharts";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { normalizeRole } from "@/features/auth/authTypes";
 import { useEmployeeStore } from "@/stores/employeeStore";
 import { useCandidateStore } from "@/stores/candidateStore";
 import { usePayrollStore } from "@/stores/payrollStore";
@@ -76,24 +77,29 @@ const container = {
 };
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const currentRole = role || normalizeRole(user?.role);
 
   // Role-aware dashboard dispatch
-  if (user?.role === "super_admin") {
-    return <SuperAdminDashboardPage />;
+  switch (currentRole) {
+    case "super_admin":
+      return <SuperAdminDashboardPage />;
+    case "employee":
+      return <EmployeeDashboardPage />;
+    case "manager":
+      return <ManagerDashboardPage />;
+    case "executive":
+      return <ExecutiveDashboardPage />;
+    case "it_admin":
+      return <ITAdminDashboardPage />;
+    case "hr_admin":
+    default:
+      return <HRAdminDashboard />;
   }
-  if (user?.role === "employee") {
-    return <EmployeeDashboardPage />;
-  }
-  if (user?.role === "manager") {
-    return <ManagerDashboardPage />;
-  }
-  if (user?.role === "executive") {
-    return <ExecutiveDashboardPage />;
-  }
-  if (user?.role === "it_admin") {
-    return <ITAdminDashboardPage />;
-  }
+}
+
+function HRAdminDashboard() {
+  const { user } = useAuth();
 
   // Live Queries & Stores
   const { data: rawEmployees = [] } = useGetEmployeesQuery();
@@ -504,7 +510,7 @@ export default function DashboardPage() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Sparkles className="w-4 h-4 text-primary" />
-              <h3 className="font-semibold text-base">Workforce Intelligence Signals</h3>
+              <h3 className="font-semibold text-base">Workforce Signals & Insights</h3>
             </div>
             <ul className="space-y-3 text-sm">
               {dynamicInsights.map((i, idx) => {
@@ -537,7 +543,7 @@ export default function DashboardPage() {
           <div className="pt-4 border-t border-border/40 mt-4">
             <Link to="/intelligence">
               <Button size="sm" variant="ghost" className="w-full text-xs text-primary justify-between h-8 px-2 hover:bg-primary/10">
-                <span>View Full Intelligence Hub</span>
+                <span>View Full AI Intelligence Hub</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Button>
             </Link>

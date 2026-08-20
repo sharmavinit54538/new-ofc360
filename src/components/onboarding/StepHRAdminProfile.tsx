@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { HRAdminProfile } from "@/types/hrAdminOnboarding";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,19 @@ interface StepHRAdminProfileProps {
 export function StepHRAdminProfile({ initialData, onSave, onBack, isLoading }: StepHRAdminProfileProps) {
   const [formData, setFormData] = useState<HRAdminProfile>(initialData);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData((prev) => ({
+        first_name: initialData.first_name || prev.first_name || "",
+        last_name: initialData.last_name || prev.last_name || "",
+        profile_photo: initialData.profile_photo !== undefined ? initialData.profile_photo : prev.profile_photo,
+        mobile_number: initialData.mobile_number || prev.mobile_number || "",
+        designation: initialData.designation || prev.designation || "HR Administrator",
+        preferred_language: initialData.preferred_language || prev.preferred_language || "English",
+      }));
+    }
+  }, [initialData]);
 
   const handleChange = (field: keyof HRAdminProfile, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));

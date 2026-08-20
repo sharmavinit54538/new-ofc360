@@ -27,7 +27,7 @@ const matrixModules: { key: SystemModule; label: string }[] = [
   { key: "compliance", label: "Compliance & Audit" },
   { key: "documents", label: "Documents & Files" },
   { key: "analytics", label: "Workforce Analytics" },
-  { key: "intelligence_hub", label: "Intelligence Hub" },
+  { key: "intelligence_hub", label: "Intelligence Hub & AI" },
   { key: "recruitment", label: "Recruitment & ATS" },
   { key: "system_settings", label: "System Settings" },
   { key: "audit_logs", label: "Audit Logs & Security" },

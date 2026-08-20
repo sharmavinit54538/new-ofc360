@@ -1,5 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useConnect } from "@/features/connect/hooks";
+import { useAppSelector } from "@/app/hooks";
+import { selectUserPresenceMap } from "@/features/connect/selectors";
 import {
   useGetConversationsQuery,
   usePinConversationMutation,
@@ -17,6 +19,8 @@ import {
 import { Search, Plus, Pin, BellOff, Bell, MoreVertical } from "lucide-react";
 import { PresenceIndicator } from "./PresenceIndicator";
 import { ConnectEmptyState } from "./ConnectEmptyState";
+import { ConnectErrorState } from "./ConnectErrorState";
+import { formatConversationTime } from "@/utils/formatTime";
 import { toast } from "sonner";
 
 interface ChatListProps {
@@ -29,26 +33,38 @@ export function ChatList({ onSelectConversation, className = "" }: ChatListProps
   const { activeConversationId, setActiveConversationId, setIsNewChatOpen } = useConnect();
 
   // RTK Query hooks
-  const { data: conversations = [], isLoading } = useGetConversationsQuery();
+  const {
+    data: conversations = [],
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useGetConversationsQuery();
   const [pinConversation] = usePinConversationMutation();
   const [muteConversation] = useMuteConversationMutation();
 
-  // Filter out any conversations with missing/undefined participant data to prevent runtime crashes
-  const safeConversations = useMemo(() => {
-    return conversations.filter((c) => c?.participant?.name);
-  }, [conversations]);
+  useEffect(() => {
+    console.log(`[CHAT_INIT] ChatList state updated. Total conversations: ${conversations.length}`);
+    if (isError) {
+      console.error("[CHAT_CONVERSATIONS] Error fetching conversations:", error);
+    }
+  }, [conversations.length, isError, error]);
 
+  const userPresenceMap = useAppSelector(selectUserPresenceMap);
+
+  // Filter conversations
   const filteredConversations = useMemo(() => {
-    if (!search.trim()) return safeConversations;
+    if (!search.trim()) return conversations;
     const q = search.toLowerCase();
-    return safeConversations.filter(
+    return conversations.filter(
       (c) =>
-        c.participant.name.toLowerCase().includes(q) ||
-        (c.participant.role && c.participant.role.toLowerCase().includes(q)) ||
-        (c.participant.department && c.participant.department.toLowerCase().includes(q)) ||
+        (c.participant?.name && c.participant.name.toLowerCase().includes(q)) ||
+        (c.participant?.email && c.participant.email.toLowerCase().includes(q)) ||
+        (c.participant?.role && c.participant.role.toLowerCase().includes(q)) ||
+        (c.participant?.department && c.participant.department.toLowerCase().includes(q)) ||
         (c.lastMessage && c.lastMessage.content?.toLowerCase().includes(q))
     );
-  }, [safeConversations, search]);
+  }, [conversations, search]);
 
   const handleSelect = (id: string) => {
     setActiveConversationId(id);
@@ -82,7 +98,7 @@ export function ChatList({ onSelectConversation, className = "" }: ChatListProps
         <div className="flex items-center gap-2">
           <span className="text-sm font-bold text-foreground tracking-tight">Direct Messages</span>
           <span className="text-[11px] font-semibold text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded-md">
-            {safeConversations.length}
+            {conversations.length}
           </span>
         </div>
         <Button
@@ -116,7 +132,16 @@ export function ChatList({ onSelectConversation, className = "" }: ChatListProps
               <div key={i} className="h-14 rounded-xl bg-card/60 animate-pulse border border-border/40" />
             ))}
           </div>
-        ) : safeConversations.length === 0 ? (
+        ) : isError ? (
+          <div className="p-4">
+            <ConnectErrorState
+              variant="connection_failed"
+              title="Failed to Load Conversations"
+              description="Could not connect to conversation service. Please check your connection."
+              onRetry={() => refetch()}
+            />
+          </div>
+        ) : conversations.length === 0 ? (
           <ConnectEmptyState
             variant="chats"
             actionLabel="Start a Conversation"
@@ -127,12 +152,14 @@ export function ChatList({ onSelectConversation, className = "" }: ChatListProps
         ) : (
           filteredConversations.map((conv) => {
             const isActive = activeConversationId === conv.id;
-            const initials = conv.participant.name
+            const participantName = conv.participant?.name || "Colleague";
+            const initials = participantName
               .split(" ")
+              .filter(Boolean)
               .map((n) => n[0])
               .join("")
               .slice(0, 2)
-              .toUpperCase();
+              .toUpperCase() || "U";
 
             return (
               <div
@@ -147,27 +174,42 @@ export function ChatList({ onSelectConversation, className = "" }: ChatListProps
                 {/* Avatar & Presence */}
                 <div className="relative shrink-0">
                   <Avatar className="w-9 h-9 border border-border/50">
-                    <AvatarImage src={conv.participant.avatar} alt={conv.participant.name} />
+                    <AvatarImage src={conv.participant?.avatar} alt={participantName} />
                     <AvatarFallback className="text-xs bg-primary/15 text-primary font-bold">
                       {initials}
                     </AvatarFallback>
                   </Avatar>
-                  <PresenceIndicator
-                    status={conv.participant.presence || "online"}
-                    size="sm"
-                    className="absolute -bottom-0.5 -right-0.5 ring-2 ring-background"
-                  />
+                  {(() => {
+                    const pId = conv.participant?.id;
+                    const pUserId = conv.participant?.userId;
+                    const pEmail = conv.participant?.email?.toLowerCase();
+                    const dynamicPresence =
+                      (pId && userPresenceMap[pId]) ||
+                      (pUserId && userPresenceMap[pUserId]) ||
+                      (pEmail && userPresenceMap[pEmail]) ||
+                      conv.participant?.presence ||
+                      "offline";
+
+                    return (
+                      <PresenceIndicator
+                        status={dynamicPresence}
+                        size="sm"
+                        withPulse={dynamicPresence === "online"}
+                        className="absolute -bottom-0.5 -right-0.5 ring-2 ring-background"
+                      />
+                    );
+                  })()}
                 </div>
 
                 {/* Details */}
                 <div className="flex-1 min-w-0 pr-1">
                   <div className="flex items-center justify-between mb-0.5">
                     <p className={`text-xs truncate ${isActive ? "font-bold text-foreground" : "font-semibold text-foreground"}`}>
-                      {conv.participant.name}
+                      {conv.participant?.name || "Colleague"}
                     </p>
-                    {conv.lastMessage && (
+                    {(conv.lastMessage?.timestamp || conv.updatedAt) && (
                       <span className="text-[10px] text-muted-foreground shrink-0 ml-1">
-                        {conv.lastMessage.timestamp}
+                        {formatConversationTime(conv.lastMessage?.timestamp || conv.updatedAt)}
                       </span>
                     )}
                   </div>

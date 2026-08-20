@@ -208,6 +208,26 @@ export default function AIATSPage() {
   const selectedJob = backendJobs.find((j) => j.id === selectedJobId) || backendJobs[0];
 
   // File Upload Handlers
+  const validateAndSetFile = (f: File) => {
+    const validTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/msword"];
+    const ext = f.name.slice(((f.name.lastIndexOf(".") - 1) >>> 0) + 2).toLowerCase();
+
+    if (!validTypes.includes(f.type) && !["pdf", "docx", "doc"].includes(ext)) {
+      setUploadError("Invalid file type. Please upload a PDF or DOCX resume document.");
+      toast.error("Only PDF and DOCX files are supported.");
+      return;
+    }
+
+    if (f.size > 10 * 1024 * 1024) {
+      setUploadError("File size exceeds 10MB limit.");
+      toast.error("Resume file must be under 10MB.");
+      return;
+    }
+
+    setFile(f);
+    toast.success(`Resume uploaded: ${f.name}`);
+  };
+
   const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
@@ -224,26 +244,6 @@ export default function AIATSPage() {
     if (e.target.files && e.target.files[0]) {
       validateAndSetFile(e.target.files[0]);
     }
-  };
-
-  const validateAndSetFile = (f: File) => {
-    const validTypes = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/msword"];
-    const ext = f.name.slice(((f.name.lastIndexOf(".") - 1) >>> 0) + 2).toLowerCase();
-
-    if (!validTypes.includes(f.type) && !["pdf", "docx", "doc"].includes(ext)) {
-      setUploadError("Invalid file type. Please upload a PDF or DOCX resume document.");
-      toast.error("Only PDF and DOCX files are supported.");
-      return;
-    }
-
-    if (f.size > 10 * 1024 * 1024) {
-      setUploadError("File size exceeds 10MB limit.");
-      toast.error("File size must be under 10MB.");
-      return;
-    }
-
-    setFile(f);
-    toast.success(`Resume uploaded: ${f.name}`);
   };
 
   // ── Run ATS Analysis via Backend API ──────────────────────────────────────

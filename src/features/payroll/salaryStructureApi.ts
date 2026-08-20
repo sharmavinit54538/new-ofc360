@@ -108,6 +108,17 @@ export const salaryStructureApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: [{ type: "SalaryStructure", id: "LIST" }],
     }),
+
+    deleteSalaryStructure: builder.mutation<APIResponse<void>, string>({
+      query: (structureId) => ({
+        url: `/v2/payroll/salary-structures/${structureId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: (_result, _error, structureId) => [
+        { type: "SalaryStructure", id: structureId },
+        { type: "SalaryStructure", id: "LIST" },
+      ],
+    }),
   }),
   overrideExisting: false,
 });
@@ -124,4 +135,6 @@ export const {
   useAssignSalaryStructureMutation,
   useApproveSalaryStructureMutation,
   useRollbackSalaryStructureMutation,
+  useDeleteSalaryStructureMutation,
 } = salaryStructureApi;
+

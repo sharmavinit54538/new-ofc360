@@ -103,6 +103,16 @@ export const API_TAGS = [
   "Presence",
   "Notifications",
   "SoundSettings",
+  "SuperAdminDashboard",
+  "SuperAdminOrganizations",
+  "SuperAdminUsers",
+  "SuperAdminSubscriptions",
+  "SuperAdminSecurity",
+  "SuperAdminAuditLogs",
+  "SuperAdminHealth",
+  "SuperAdminSettings",
+  "SuperAdminAnalytics",
+  "SuperAdminOnboarding",
 ] as const;
 
 export type ApiTagType = (typeof API_TAGS)[number];

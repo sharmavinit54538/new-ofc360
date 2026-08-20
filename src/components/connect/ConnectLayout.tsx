@@ -2,9 +2,6 @@ import { ReactNode, useEffect } from "react";
 import { ConnectHeader } from "./ConnectHeader";
 import { ThreadPanel } from "./ThreadPanel";
 import { MailArtifactPanel } from "./MailArtifactPanel";
-import { CallScreen } from "./CallScreen";
-import { IncomingCallModal } from "./IncomingCallModal";
-import { VideoCallModal } from "./VideoCallModal";
 import { NewChatDialog } from "./NewChatDialog";
 import { NewChannelDialog } from "./NewChannelDialog";
 import { NewMeetingDialog } from "./NewMeetingDialog";
@@ -65,11 +62,6 @@ export function ConnectLayout({ children }: ConnectLayoutProps) {
         {/* ChatGPT / Claude Style Mail Artifact Side Panel */}
         <MailArtifactPanel />
       </div>
-
-      {/* Real-time Call Modals */}
-      <CallScreen />
-      <IncomingCallModal />
-      <VideoCallModal />
 
       {/* Global Creation & Search Modals */}
       <NewChatDialog open={isNewChatOpen} onOpenChange={setIsNewChatOpen} />

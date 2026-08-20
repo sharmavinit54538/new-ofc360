@@ -7,12 +7,10 @@ import {
   Calendar,
   CreditCard,
   TrendingUp,
-  AlertTriangle,
-  FileText,
   Building2,
-  ArrowUpRight,
   MoreVertical,
-  Edit2
+  Edit2,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,7 +36,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
@@ -49,24 +46,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useSuperAdminStore, PlatformSubscription } from "@/stores/superAdminStore";
+import { SuperAdminSubscription } from "@/types/superAdmin.types";
+import {
+  useGetSuperAdminSubscriptionsQuery,
+  useUpdateSuperAdminSubscriptionMutation,
+} from "@/services/api/superAdminApi";
 import { toast } from "sonner";
 
 export default function SubscriptionsPage() {
-  const { subscriptions, updateSubscription } = useSuperAdminStore();
+  const { data: subscriptions = [], isLoading, isFetching, refetch } = useGetSuperAdminSubscriptionsQuery();
+  const [updateSubscription, { isLoading: isUpdating }] = useUpdateSuperAdminSubscriptionMutation();
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [planFilter, setPlanFilter] = useState("ALL");
 
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [selectedSub, setSelectedSub] = useState<PlatformSubscription | null>(null);
+  const [selectedSub, setSelectedSub] = useState<SuperAdminSubscription | null>(null);
 
   // Edit fields
-  const [plan, setPlan] = useState<PlatformSubscription["plan"]>("Growth");
-  const [billingCycle, setBillingCycle] = useState<PlatformSubscription["billingCycle"]>("Monthly");
-  const [amount, setAmount] = useState("1800");
-  const [status, setStatus] = useState<PlatformSubscription["status"]>("Active");
-  const [maxLicenses, setMaxLicenses] = useState("300");
+  const [plan, setPlan] = useState<string>("Growth");
+  const [billingCycle, setBillingCycle] = useState<string>("Monthly");
+  const [amount, setAmount] = useState("299");
+  const [status, setStatus] = useState<string>("Active");
+  const [maxLicenses, setMaxLicenses] = useState("100");
 
   const totalMRR = subscriptions
     .filter((s) => s.status === "Active")
@@ -77,7 +80,7 @@ export default function SubscriptionsPage() {
 
   const totalActiveLicenses = subscriptions.reduce((sum, s) => sum + s.activeLicenses, 0);
 
-  const handleOpenEdit = (sub: PlatformSubscription) => {
+  const handleOpenEdit = (sub: SuperAdminSubscription) => {
     setSelectedSub(sub);
     setPlan(sub.plan);
     setBillingCycle(sub.billingCycle);
@@ -87,20 +90,27 @@ export default function SubscriptionsPage() {
     setIsEditOpen(true);
   };
 
-  const handleSaveEdit = (e: React.FormEvent) => {
+  const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedSub) return;
 
-    updateSubscription(selectedSub.id, {
-      plan,
-      billingCycle,
-      amount: parseInt(amount) || 1000,
-      status,
-      maxLicenses: parseInt(maxLicenses) || 100,
-    });
+    try {
+      await updateSubscription({
+        id: selectedSub.id,
+        data: {
+          plan,
+          billingCycle,
+          amount: parseInt(amount) || 299,
+          status,
+          maxLicenses: parseInt(maxLicenses) || 100,
+        },
+      }).unwrap();
 
-    toast.success(`Subscription for "${selectedSub.companyName}" updated successfully.`);
-    setIsEditOpen(false);
+      toast.success(`Subscription terms for "${selectedSub.companyName}" updated in database.`);
+      setIsEditOpen(false);
+    } catch (err: any) {
+      toast.error(err?.data?.detail || "Failed to update subscription.");
+    }
   };
 
   const filteredSubs = subscriptions.filter((s) => {
@@ -121,29 +131,40 @@ export default function SubscriptionsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border/40">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Subscriptions & Billing
+            Platform Subscriptions & Billing
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Manage organization subscription tiers, billing renewal schedules, seat license limits, and contract values.
+            Cross-organization SaaS contracts, monthly recurring revenue metrics, license tiers, and renewal schedules.
           </p>
+        </div>
+
+        <div className="flex items-center gap-2.5">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            className="h-9 text-xs gap-1.5 border-border/60"
+            disabled={isFetching}
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? "animate-spin" : ""}`} />
+            <span>Refresh</span>
+          </Button>
         </div>
       </div>
 
-      {/* Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Financial KPIs */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <motion.div
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           className="glass-card rounded-xl p-5 border border-border/60 flex items-center justify-between"
         >
           <div className="space-y-1">
-            <p className="text-xs font-medium text-muted-foreground">Contracted ARR</p>
+            <p className="text-xs font-medium text-muted-foreground">Contracted Platform MRR</p>
             <div className="text-2xl font-bold text-foreground">
-              ${(totalMRR * 12).toLocaleString()}
+              ${totalMRR.toLocaleString()}<span className="text-xs font-normal text-muted-foreground">/mo</span>
             </div>
-            <p className="text-[11px] text-emerald-600 font-medium">
-              ${totalMRR.toLocaleString()}/mo MRR
-            </p>
+            <p className="text-[11px] text-emerald-600 font-medium">ARR: ${(totalMRR * 12).toLocaleString()}</p>
           </div>
           <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600">
             <DollarSign className="w-5 h-5" />
@@ -153,15 +174,33 @@ export default function SubscriptionsPage() {
         <motion.div
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
+          transition={{ delay: 0.04 }}
           className="glass-card rounded-xl p-5 border border-border/60 flex items-center justify-between"
         >
           <div className="space-y-1">
-            <p className="text-xs font-medium text-muted-foreground">Active User Seats</p>
-            <div className="text-2xl font-bold text-foreground">{totalActiveLicenses.toLocaleString()}</div>
-            <p className="text-[11px] text-muted-foreground">Across {subscriptions.length} active contracts</p>
+            <p className="text-xs font-medium text-muted-foreground">Active Subscriptions</p>
+            <div className="text-2xl font-bold text-foreground">
+              {subscriptions.filter((s) => s.status === "Active").length}
+            </div>
+            <p className="text-[11px] text-muted-foreground">Across {subscriptions.length} total tenants</p>
           </div>
           <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+            <Building2 className="w-5 h-5" />
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+          className="glass-card rounded-xl p-5 border border-border/60 flex items-center justify-between"
+        >
+          <div className="space-y-1">
+            <p className="text-xs font-medium text-muted-foreground">Provisioned Seats</p>
+            <div className="text-2xl font-bold text-foreground">{totalActiveLicenses.toLocaleString()}</div>
+            <p className="text-[11px] text-muted-foreground">Live employee accounts</p>
+          </div>
+          <div className="w-11 h-11 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
             <CreditCard className="w-5 h-5" />
           </div>
         </motion.div>
@@ -169,21 +208,21 @@ export default function SubscriptionsPage() {
         <motion.div
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+          transition={{ delay: 0.12 }}
           className="glass-card rounded-xl p-5 border border-border/60 flex items-center justify-between"
         >
           <div className="space-y-1">
-            <p className="text-xs font-medium text-muted-foreground">Payment Gateway Health</p>
-            <div className="text-lg font-bold text-emerald-600">Stripe & Wire 100%</div>
-            <p className="text-[11px] text-muted-foreground">Zero failed automatic retries</p>
+            <p className="text-xs font-medium text-muted-foreground">Automatic Renewals</p>
+            <div className="text-2xl font-bold text-foreground">100%</div>
+            <p className="text-[11px] text-emerald-600 font-medium">Zero billing lapses</p>
           </div>
-          <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600">
-            <CheckCircle2 className="w-5 h-5" />
+          <div className="w-11 h-11 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600">
+            <TrendingUp className="w-5 h-5" />
           </div>
         </motion.div>
       </div>
 
-      {/* Toolbar */}
+      {/* Filter Toolbar */}
       <div className="flex flex-col sm:flex-row items-center gap-3 justify-between">
         <div className="relative w-full sm:w-80">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -196,27 +235,27 @@ export default function SubscriptionsPage() {
         </div>
 
         <div className="flex items-center gap-2.5 w-full sm:w-auto">
-          <Select value={planFilter} onValueChange={setPlanFilter}>
-            <SelectTrigger className="h-9 text-xs w-[130px] bg-secondary/40">
-              <SelectValue placeholder="Plan" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Plans</SelectItem>
-              <SelectItem value="Starter">Starter</SelectItem>
-              <SelectItem value="Growth">Growth</SelectItem>
-              <SelectItem value="Enterprise">Enterprise</SelectItem>
-            </SelectContent>
-          </Select>
-
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="h-9 text-xs w-[130px] bg-secondary/40">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">All Statuses</SelectItem>
+              <SelectItem value="ALL">All Status</SelectItem>
               <SelectItem value="Active">Active</SelectItem>
               <SelectItem value="Past_Due">Past Due</SelectItem>
               <SelectItem value="Canceled">Canceled</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={planFilter} onValueChange={setPlanFilter}>
+            <SelectTrigger className="h-9 text-xs w-[130px] bg-secondary/40">
+              <SelectValue placeholder="Plan" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Tiers</SelectItem>
+              <SelectItem value="Starter">Starter</SelectItem>
+              <SelectItem value="Growth">Growth</SelectItem>
+              <SelectItem value="Enterprise">Enterprise</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -228,73 +267,99 @@ export default function SubscriptionsPage() {
           <Table>
             <TableHeader className="bg-secondary/40">
               <TableRow>
-                <TableHead className="text-xs font-semibold">Contract ID</TableHead>
-                <TableHead className="text-xs font-semibold">Workspace</TableHead>
-                <TableHead className="text-xs font-semibold">Plan Tier</TableHead>
-                <TableHead className="text-xs font-semibold">Billing Frequency</TableHead>
-                <TableHead className="text-xs font-semibold">License Usage</TableHead>
-                <TableHead className="text-xs font-semibold">Billing Amount</TableHead>
+                <TableHead className="text-xs font-semibold">Tenant Organization</TableHead>
+                <TableHead className="text-xs font-semibold">Tier & Interval</TableHead>
+                <TableHead className="text-xs font-semibold">Contract Amount</TableHead>
+                <TableHead className="text-xs font-semibold">License Capacity</TableHead>
                 <TableHead className="text-xs font-semibold">Next Invoice Date</TableHead>
                 <TableHead className="text-xs font-semibold">Status</TableHead>
                 <TableHead className="text-xs font-semibold text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredSubs.length === 0 ? (
+              {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-10 text-muted-foreground text-xs">
-                    No subscriptions found matching the filter criteria.
+                  <TableCell colSpan={7} className="text-center py-10 text-muted-foreground text-xs">
+                    <RefreshCw className="w-5 h-5 animate-spin mx-auto text-primary mb-2" />
+                    Loading subscriptions from PostgreSQL database...
+                  </TableCell>
+                </TableRow>
+              ) : filteredSubs.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-10 text-muted-foreground text-xs">
+                    No subscriptions matching your filter criteria.
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredSubs.map((s) => (
-                  <TableRow key={s.id} className="hover:bg-secondary/30 transition-colors">
-                    <TableCell className="text-xs font-mono text-muted-foreground">
-                      {s.id}
-                    </TableCell>
-                    <TableCell className="text-xs font-bold text-foreground">
-                      {s.companyName}
+                filteredSubs.map((sub) => (
+                  <TableRow key={sub.id} className="hover:bg-secondary/30 transition-colors">
+                    <TableCell>
+                      <div className="space-y-0.5">
+                        <p className="text-xs font-bold text-foreground">{sub.companyName}</p>
+                        <p className="text-[11px] text-muted-foreground font-mono">{sub.id}</p>
+                      </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="text-[10px] font-semibold bg-secondary/50">
-                        {s.plan}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {s.billingCycle}
-                    </TableCell>
-                    <TableCell className="text-xs text-foreground">
-                      <span className="font-semibold">{s.activeLicenses}</span> / {s.maxLicenses} seats
+                      <div className="flex items-center gap-1.5">
+                        <Badge variant="outline" className="text-[10px] font-semibold bg-secondary/50">
+                          {sub.plan}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground font-mono">({sub.billingCycle})</span>
+                      </div>
                     </TableCell>
                     <TableCell className="text-xs font-bold text-foreground">
-                      ${s.amount.toLocaleString()}
+                      ${sub.amount.toLocaleString()}{" "}
+                      <span className="text-[11px] text-muted-foreground font-normal">
+                        /{sub.billingCycle === "Annual" ? "yr" : "mo"}
+                      </span>
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground font-mono">
-                      {s.nextBillingDate}
+                    <TableCell>
+                      <div className="space-y-1">
+                        <p className="text-xs font-medium text-foreground">
+                          {sub.activeLicenses} / {sub.maxLicenses} seats
+                        </p>
+                        <div className="w-28 bg-secondary/60 h-1.5 rounded-full overflow-hidden">
+                          <div
+                            className="bg-primary h-full rounded-full"
+                            style={{
+                              width: `${Math.min(100, Math.round((sub.activeLicenses / (sub.maxLicenses || 1)) * 100))}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-mono">
+                        <Calendar className="w-3.5 h-3.5 text-primary" />
+                        <span>{sub.nextBillingDate}</span>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge
-                        className={`text-[10px] ${
-                          s.status === "Active"
+                        className={`text-[10px] font-semibold ${
+                          sub.status === "Active"
                             ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                            : s.status === "Past_Due"
-                            ? "bg-destructive/10 text-destructive border-destructive/20"
-                            : "bg-muted text-muted-foreground"
+                            : "bg-destructive/10 text-destructive border-destructive/20"
                         }`}
                       >
-                        {s.status.replace("_", " ")}
+                        {sub.status}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleOpenEdit(s)}
-                        className="h-7 px-2 text-xs text-primary gap-1"
-                      >
-                        <Edit2 className="w-3 h-3" />
-                        <span>Modify</span>
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-44 text-xs">
+                          <DropdownMenuLabel>Billing Actions</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => handleOpenEdit(sub)} className="gap-2 cursor-pointer">
+                            <Edit2 className="w-3.5 h-3.5 text-muted-foreground" />
+                            <span>Modify Terms</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))
@@ -304,25 +369,25 @@ export default function SubscriptionsPage() {
         </div>
       </div>
 
-      {/* Modify Subscription Modal Dialog */}
+      {/* Edit Modal */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-md bg-card border border-border/80">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-primary" />
-              <span>Modify Subscription Contract</span>
+              <DollarSign className="w-4 h-4 text-primary" />
+              <span>Modify Tenant Subscription Plan</span>
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Update billing amount, plan tier, license limits, and renewal status for {selectedSub?.companyName}.
+              Adjust licensing limits, pricing terms, and billing interval for {selectedSub?.companyName}.
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSaveEdit} className="space-y-3 py-2">
+          <form onSubmit={handleSaveEdit} className="space-y-3.5 py-2">
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Plan Tier</Label>
-                <Select value={plan} onValueChange={(val: any) => setPlan(val)}>
-                  <SelectTrigger className="h-8 text-xs">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Subscription Tier</Label>
+                <Select value={plan} onValueChange={setPlan}>
+                  <SelectTrigger className="text-xs h-8">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -333,10 +398,10 @@ export default function SubscriptionsPage() {
                 </Select>
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <Label className="text-xs font-semibold">Billing Frequency</Label>
-                <Select value={billingCycle} onValueChange={(val: any) => setBillingCycle(val)}>
-                  <SelectTrigger className="h-8 text-xs">
+                <Select value={billingCycle} onValueChange={setBillingCycle}>
+                  <SelectTrigger className="text-xs h-8">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -348,33 +413,31 @@ export default function SubscriptionsPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <Label className="text-xs font-semibold">Contract Amount ($)</Label>
                 <Input
-                  required
                   type="number"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="h-8 text-xs"
+                  className="text-xs h-8"
                 />
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Max Seat Licenses</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Max Licensed Seats</Label>
                 <Input
-                  required
                   type="number"
                   value={maxLicenses}
                   onChange={(e) => setMaxLicenses(e.target.value)}
-                  className="h-8 text-xs"
+                  className="text-xs h-8"
                 />
               </div>
             </div>
 
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold">Contract Status</Label>
-              <Select value={status} onValueChange={(val: any) => setStatus(val)}>
-                <SelectTrigger className="h-8 text-xs">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Subscription Status</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger className="text-xs h-8">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -385,12 +448,12 @@ export default function SubscriptionsPage() {
               </Select>
             </div>
 
-            <DialogFooter className="pt-3">
+            <DialogFooter className="pt-2">
               <Button type="button" variant="outline" size="sm" onClick={() => setIsEditOpen(false)} className="text-xs">
                 Cancel
               </Button>
-              <Button type="submit" size="sm" className="gradient-bg text-primary-foreground text-xs shadow-sm">
-                Save Changes
+              <Button type="submit" size="sm" disabled={isUpdating} className="gradient-bg text-primary-foreground text-xs font-medium">
+                {isUpdating ? "Saving..." : "Save Terms"}
               </Button>
             </DialogFooter>
           </form>

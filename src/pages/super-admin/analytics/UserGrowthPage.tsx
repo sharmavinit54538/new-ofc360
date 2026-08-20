@@ -5,9 +5,6 @@ import {
   Users,
   UserCheck,
   Building2,
-  Calendar,
-  Layers,
-  ArrowUpRight
 } from "lucide-react";
 import {
   AreaChart,
@@ -18,7 +15,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer
+  ResponsiveContainer,
 } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -29,7 +26,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useSuperAdminStore } from "@/stores/superAdminStore";
+import {
+  useGetSuperAdminUsersQuery,
+  useGetSuperAdminOrganizationsQuery,
+  useGetSuperAdminDashboardQuery,
+} from "@/services/api/superAdminApi";
 
 const customTooltipStyle = {
   backgroundColor: "hsl(var(--card))",
@@ -40,20 +41,17 @@ const customTooltipStyle = {
 };
 
 export default function UserGrowthPage() {
-  const { companies, users } = useSuperAdminStore();
+  const { data: users = [] } = useGetSuperAdminUsersQuery();
+  const { data: companies = [] } = useGetSuperAdminOrganizationsQuery();
+  const { data: dashboard } = useGetSuperAdminDashboardQuery();
 
-  const totalHeadcount = useMemo(() => {
-    return companies.reduce((sum, c) => sum + (c.employeeCount || 0), 0);
-  }, [companies]);
+  const kpis = dashboard?.kpis;
+  const totalHeadcount = kpis?.total_workforce_managed ?? kpis?.total_employees_count ?? 0;
+  const avgUsersPerOrg = companies.length > 0 ? Math.round(users.length / companies.length) : 0;
 
-  const avgUsersPerOrg = useMemo(() => {
-    return companies.length > 0 ? Math.round(users.length / companies.length) : 0;
-  }, [companies, users]);
-
-  // Compute live user growth trajectory
   const userGrowthMonthly = useMemo(() => {
     if (users.length === 0) return [];
-    
+
     const monthsMap: Record<string, number> = {};
     users.forEach((u) => {
       const month = u.createdAt ? new Date(u.createdAt).toLocaleString("en-US", { month: "short" }) : "Current";
@@ -72,7 +70,6 @@ export default function UserGrowthPage() {
     });
   }, [users]);
 
-  // Compute role breakdown
   const roleGrowthData = useMemo(() => {
     if (users.length === 0) return [];
 
@@ -134,7 +131,9 @@ export default function UserGrowthPage() {
           <div className="space-y-1">
             <p className="text-xs font-medium text-muted-foreground">Total Registered Users</p>
             <div className="text-2xl font-bold text-foreground">{users.length}</div>
-            <p className="text-[11px] text-emerald-600 font-medium">{users.filter((u) => u.status === "Active").length} active accounts</p>
+            <p className="text-[11px] text-emerald-600 font-medium">
+              {users.filter((u) => u.is_active || u.status === "Active").length} active accounts
+            </p>
           </div>
           <div className="w-11 h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600">
             <UserCheck className="w-5 h-5" />
@@ -168,27 +167,21 @@ export default function UserGrowthPage() {
           </div>
 
           <div className="h-64 w-full">
-            {userGrowthMonthly.length === 0 ? (
-              <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
-                No data available for this period.
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={userGrowthMonthly} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="userGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.4} />
-                  <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} />
-                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} />
-                  <Tooltip contentStyle={customTooltipStyle} />
-                  <Area type="monotone" dataKey="totalUsers" stroke="hsl(var(--primary))" strokeWidth={2.5} fillOpacity={1} fill="url(#userGrad)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={userGrowthMonthly} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="userGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.4} />
+                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} />
+                <Tooltip contentStyle={customTooltipStyle} />
+                <Area type="monotone" dataKey="totalUsers" stroke="hsl(var(--primary))" strokeWidth={2.5} fillOpacity={1} fill="url(#userGrad)" />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
@@ -202,7 +195,7 @@ export default function UserGrowthPage() {
           <div className="h-64 w-full">
             {roleGrowthData.length === 0 ? (
               <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
-                No data available for this period.
+                No role data recorded yet.
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
@@ -249,7 +242,7 @@ export default function UserGrowthPage() {
                 </TableRow>
               ) : (
                 companies.map((c) => {
-                  const companyUserCount = users.filter((u) => u.companyId === c.id || u.companyName === c.name).length;
+                  const companyUserCount = users.filter((u) => u.companyId === c.id || u.companyName === c.name || u.company_id === c.id).length;
                   return (
                     <TableRow key={c.id} className="hover:bg-secondary/30 transition-colors">
                       <TableCell className="text-xs font-bold text-foreground">
@@ -261,7 +254,7 @@ export default function UserGrowthPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {c.employeeCount} employees
+                        {c.employeeCount ?? c.employee_count ?? 0} employees
                       </TableCell>
                       <TableCell className="text-xs font-medium text-foreground">
                         {companyUserCount} accounts

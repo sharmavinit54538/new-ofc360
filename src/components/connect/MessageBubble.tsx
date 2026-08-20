@@ -29,11 +29,13 @@ import {
 import { FileCard } from "./FileCard";
 import { ImageModalPreview } from "./ImageModalPreview";
 import { VideoModalPreview } from "./VideoModalPreview";
+import { formatMessageTime } from "@/utils/formatTime";
 import { toast } from "sonner";
 
 interface MessageBubbleProps {
   message: ConnectMessage;
   isOutgoing: boolean;
+  isConsecutive?: boolean;
   currentUserId: string;
   onReplyInThread?: (message: ConnectMessage) => void;
   onToggleReaction?: (messageId: string, emoji: string) => void;
@@ -46,6 +48,7 @@ const COMMON_EMOJIS = ["👍", "❤️", "🔥", "🚀", "🎉", "👀", "👏",
 export function MessageBubble({
   message,
   isOutgoing,
+  isConsecutive = false,
   currentUserId,
   onReplyInThread,
   onToggleReaction,
@@ -55,6 +58,8 @@ export function MessageBubble({
   const [isPlayingVoice, setIsPlayingVoice] = useState(false);
   const [selectedImage, setSelectedImage] = useState<{ url: string; name: string } | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<{ url: string; name: string } | null>(null);
+
+  const displayTime = formatMessageTime(message.timestamp);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content);
@@ -77,6 +82,7 @@ export function MessageBubble({
   const senderInitials = message.senderName
     ? message.senderName
         .split(" ")
+        .filter(Boolean)
         .map((n) => n[0])
         .join("")
         .slice(0, 2)
@@ -89,14 +95,20 @@ export function MessageBubble({
         isOutgoing ? "flex-row-reverse" : "flex-row"
       }`}
     >
-      {/* Avatar (incoming messages only) */}
+      {/* Avatar (incoming messages only, hidden on consecutive) */}
       {!isOutgoing && (
-        <Avatar className="w-8 h-8 border border-border/50 shrink-0 mt-0.5">
-          <AvatarImage src={message.senderAvatar} alt={message.senderName} />
-          <AvatarFallback className="text-[11px] bg-primary/10 text-primary font-semibold">
-            {senderInitials}
-          </AvatarFallback>
-        </Avatar>
+        <div className="w-8 shrink-0">
+          {!isConsecutive ? (
+            <Avatar className="w-8 h-8 border border-border/50 mt-0.5">
+              <AvatarImage src={message.senderAvatar} alt={message.senderName} />
+              <AvatarFallback className="text-[11px] bg-primary/10 text-primary font-semibold">
+                {senderInitials}
+              </AvatarFallback>
+            </Avatar>
+          ) : (
+            <div className="w-8" />
+          )}
+        </div>
       )}
 
       {/* Bubble Container */}
@@ -105,11 +117,13 @@ export function MessageBubble({
           isOutgoing ? "items-end" : "items-start"
         }`}
       >
-        {/* Sender Name & Timestamp Header */}
-        {!isOutgoing && (
-          <div className="flex items-center gap-2 mb-1 px-1">
-            <span className="text-[11px] font-semibold text-foreground">{message.senderName}</span>
-            <span className="text-[10px] text-muted-foreground">{message.timestamp}</span>
+        {/* Header (Sender label & Timestamp) */}
+        {!isConsecutive && (
+          <div className={`flex items-center gap-2 mb-1 px-1 ${isOutgoing ? "justify-end" : "justify-start"}`}>
+            <span className={`text-[11px] font-semibold ${isOutgoing ? "text-primary" : "text-foreground"}`}>
+              {isOutgoing ? "You" : message.senderName || "Colleague"}
+            </span>
+            <span className="text-[10px] text-muted-foreground">{displayTime}</span>
             {message.isPinned && (
               <span className="inline-flex items-center gap-0.5 text-[10px] text-amber-500 font-medium">
                 <Pin className="w-2.5 h-2.5 fill-amber-500" /> Pinned
@@ -191,7 +205,7 @@ export function MessageBubble({
           {/* Time & Read Receipts (Outgoing) */}
           {isOutgoing && (
             <div className="flex items-center justify-end gap-1 mt-1 text-[10px] text-primary-foreground/75 font-medium">
-              <span>{message.timestamp}</span>
+              <span>{displayTime}</span>
               {message.status === "read" ? (
                 <CheckCheck className="w-3 h-3 text-primary-foreground" />
               ) : (

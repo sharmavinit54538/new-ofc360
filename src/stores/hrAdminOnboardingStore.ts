@@ -74,6 +74,48 @@ const initialStatus: OnboardingStatus = {
   is_completed: false,
 };
 
+export interface HRAdminOnboardingStoreState {
+  company: CompanyDetails;
+  hr_admin: HRAdminProfile;
+  branding: CompanyBranding;
+  preferences: OnboardingPreferences;
+  onboarding: OnboardingStatus;
+  workflows: OnboardingWorkflow[];
+  newHires: NewHireOnboardingRecord[];
+  documents: OnboardingDocumentItem[];
+  tasks: OnboardingTaskItem[];
+
+  loadForCompany: (companyId: string) => void;
+  saveStep: (
+    stepIndex: number,
+    data: {
+      company?: Partial<CompanyDetails>;
+      hr_admin?: Partial<HRAdminProfile>;
+      branding?: Partial<CompanyBranding>;
+      preferences?: Partial<OnboardingPreferences>;
+    },
+    companyId?: string
+  ) => { success: boolean; error?: string; status?: OnboardingStatus };
+  completeOnboarding: (companyId?: string) => {
+    success: boolean;
+    error?: string;
+    status?: OnboardingStatus;
+  };
+  addWorkflow: (wf: Omit<OnboardingWorkflow, "id">) => void;
+  deleteWorkflow: (id: string) => void;
+  addNewHire: (hire: Omit<NewHireOnboardingRecord, "id">) => void;
+  updateNewHire: (id: string, updates: Partial<NewHireOnboardingRecord>) => void;
+  deleteNewHire: (id: string) => void;
+  addDocument: (doc: Omit<OnboardingDocumentItem, "id">) => void;
+  updateDocument: (id: string, updates: Partial<OnboardingDocumentItem>) => void;
+  deleteDocument: (id: string) => void;
+  addTask: (task: Omit<OnboardingTaskItem, "id">) => void;
+  updateTask: (id: string, updates: Partial<OnboardingTaskItem>) => void;
+  deleteTask: (id: string) => void;
+  resetOnboardingData: (companyId?: string) => void;
+  syncFromBackend: (data: Partial<CompleteOnboardingData> | any) => void;
+}
+
 export const useHRAdminOnboardingStore = create<HRAdminOnboardingStoreState>((set, get) => ({
   company: initialCompany,
   hr_admin: initialHRAdmin,
@@ -84,7 +126,6 @@ export const useHRAdminOnboardingStore = create<HRAdminOnboardingStoreState>((se
   newHires: [],
   documents: [],
   tasks: [],
-
 
   loadForCompany: (companyId: string) => {
     const key = `${STORAGE_KEY_PREFIX}_${companyId || "default"}`;
@@ -300,33 +341,85 @@ export const useHRAdminOnboardingStore = create<HRAdminOnboardingStoreState>((se
     });
   },
 
-  syncFromBackend: (data) => {
+  syncFromBackend: (data: Partial<CompleteOnboardingData> | any) => {
+    if (!data) return;
     const current = get();
+
+    const incomingCompany = data.company || (data.company_name ? data : {});
+    const incomingHRAdmin = data.hr_admin || (data.first_name ? data : {});
+    const incomingBranding = data.branding || (data.company_stamp || data.authorized_signatory_name ? data : {});
+    const incomingPreferences = data.preferences || (data.work_days || data.work_hours ? data : {});
+    const incomingOnboarding = data.onboarding || {};
+
+    const updatedCompany: CompanyDetails = {
+      ...current.company,
+      ...(incomingCompany.company_name !== undefined && { company_name: incomingCompany.company_name }),
+      ...(incomingCompany.industry !== undefined && { industry: incomingCompany.industry }),
+      ...(incomingCompany.country !== undefined && { country: incomingCompany.country }),
+      ...(incomingCompany.city !== undefined && { city: incomingCompany.city }),
+      ...(incomingCompany.company_size !== undefined && { company_size: incomingCompany.company_size }),
+      ...(incomingCompany.timezone !== undefined && { timezone: incomingCompany.timezone }),
+      ...(incomingCompany.address !== undefined && { address: incomingCompany.address }),
+      ...(incomingCompany.cin_number !== undefined && { cin_number: incomingCompany.cin_number }),
+      ...(incomingCompany.gst_number !== undefined && { gst_number: incomingCompany.gst_number }),
+      ...(incomingCompany.pan_number !== undefined && { pan_number: incomingCompany.pan_number }),
+      ...(incomingCompany.tan_number !== undefined && { tan_number: incomingCompany.tan_number }),
+      ...(incomingCompany.msme_registration_number !== undefined && { msme_registration_number: incomingCompany.msme_registration_number }),
+      ...(incomingCompany.website !== undefined && { website: incomingCompany.website }),
+      ...(incomingCompany.official_email !== undefined && { official_email: incomingCompany.official_email }),
+      ...(incomingCompany.official_phone !== undefined && { official_phone: incomingCompany.official_phone }),
+    };
+
+    const updatedHRAdmin: HRAdminProfile = {
+      ...current.hr_admin,
+      ...(incomingHRAdmin.first_name !== undefined && { first_name: incomingHRAdmin.first_name }),
+      ...(incomingHRAdmin.last_name !== undefined && { last_name: incomingHRAdmin.last_name }),
+      ...(incomingHRAdmin.profile_photo !== undefined && { profile_photo: incomingHRAdmin.profile_photo }),
+      ...(incomingHRAdmin.mobile_number !== undefined && { mobile_number: incomingHRAdmin.mobile_number }),
+      ...(incomingHRAdmin.designation !== undefined && { designation: incomingHRAdmin.designation }),
+      ...(incomingHRAdmin.preferred_language !== undefined && { preferred_language: incomingHRAdmin.preferred_language }),
+    };
+
+    const updatedBranding: CompanyBranding = {
+      ...current.branding,
+      ...(incomingBranding.company_logo !== undefined && { company_logo: incomingBranding.company_logo }),
+      ...(incomingBranding.company_stamp !== undefined && { company_stamp: incomingBranding.company_stamp }),
+      ...(incomingBranding.authorized_signatory_name !== undefined && { authorized_signatory_name: incomingBranding.authorized_signatory_name }),
+      ...(incomingBranding.authorized_signatory_designation !== undefined && { authorized_signatory_designation: incomingBranding.authorized_signatory_designation }),
+      ...(incomingBranding.letterhead !== undefined && { letterhead: incomingBranding.letterhead }),
+    };
+
+    const updatedPreferences: OnboardingPreferences = {
+      ...current.preferences,
+      ...(incomingPreferences.work_days !== undefined && { work_days: incomingPreferences.work_days }),
+      ...(incomingPreferences.work_hours !== undefined && { work_hours: incomingPreferences.work_hours }),
+      ...(incomingPreferences.attendance_telemetry !== undefined && { attendance_telemetry: incomingPreferences.attendance_telemetry }),
+      ...(incomingPreferences.payroll_cycle_start !== undefined && { payroll_cycle_start: incomingPreferences.payroll_cycle_start }),
+      ...(incomingPreferences.notification_channels !== undefined && { notification_channels: incomingPreferences.notification_channels }),
+    };
+
+    const rawCompleted = data.completed ?? data.is_completed ?? incomingOnboarding.is_completed;
+    const rawCurrentStep = incomingOnboarding.current_step ?? data.current_step;
+    const rawCompletedSteps = incomingOnboarding.completed_steps ?? current.onboarding.completed_steps;
+    const rawRemainingSteps = incomingOnboarding.remaining_steps ?? current.onboarding.remaining_steps;
+    const rawCompletionPercentage = incomingOnboarding.completion_percentage ?? current.onboarding.completion_percentage;
+
+    const updatedStatus: OnboardingStatus = {
+      ...current.onboarding,
+      ...incomingOnboarding,
+      ...(rawCompleted !== undefined && { is_completed: Boolean(rawCompleted) }),
+      ...(rawCurrentStep !== undefined && { current_step: rawCurrentStep === 0 ? 1 : rawCurrentStep }),
+      ...(rawCompletedSteps !== undefined && { completed_steps: rawCompletedSteps }),
+      ...(rawRemainingSteps !== undefined && { remaining_steps: rawRemainingSteps }),
+      ...(rawCompletionPercentage !== undefined && { completion_percentage: rawCompletionPercentage }),
+    };
+
     set({
-      company: {
-        ...current.company,
-        ...(data.companyName !== undefined && { company_name: data.companyName }),
-        ...(data.industry !== undefined && { industry: data.industry }),
-        ...(data.country !== undefined && { country: data.country }),
-        ...(data.city !== undefined && { city: data.city }),
-        ...(data.companySize !== undefined && { company_size: data.companySize as any }),
-        ...(data.timezone !== undefined && { timezone: data.timezone }),
-        ...(data.address !== undefined && { address: data.address }),
-      },
-      hr_admin: {
-        ...current.hr_admin,
-        ...(data.fullName !== undefined && {
-          first_name: data.fullName.split(" ")[0] || "",
-          last_name: data.fullName.split(" ").slice(1).join(" ") || "",
-        }),
-        ...(data.phone !== undefined && { mobile_number: data.phone }),
-        ...(data.avatar !== undefined && { profile_photo: data.avatar }),
-      },
-      onboarding: {
-        ...current.onboarding,
-        ...(data.completed !== undefined && { is_completed: data.completed }),
-        ...(data.current_step !== undefined && { current_step: data.current_step }),
-      },
+      company: updatedCompany,
+      hr_admin: updatedHRAdmin,
+      branding: updatedBranding,
+      preferences: updatedPreferences,
+      onboarding: updatedStatus,
     });
   },
 }));
