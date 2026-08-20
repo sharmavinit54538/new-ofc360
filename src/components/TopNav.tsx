@@ -58,8 +58,8 @@ export function TopNav({ onMenuClick }: TopNavProps) {
   const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout, setRole } = useAuth();
-  const currentRole: SystemRole = user?.role || "hr_admin";
+  const { user, role, logout, setRole } = useAuth();
+  const currentRole: SystemRole = role || normalizeRole(user?.role);
   const isRootDashboard = ROOT_DASHBOARD_PATHS.includes(location.pathname);
 
   const userName =
@@ -88,13 +88,19 @@ export function TopNav({ onMenuClick }: TopNavProps) {
 
   const handleRoleChange = (r: SystemRole) => {
     setRole(r);
-    toast.success(`Role switched to: ${roleLabels[r]}`);
+    toast.success(`Role switched to: ${roleLabels[r] || r}`);
     if (r === "super_admin") {
       navigate("/super-admin");
     } else if (r === "employee") {
-      navigate("/employee/leave");
+      navigate("/employee");
+    } else if (r === "manager") {
+      navigate("/manager");
+    } else if (r === "executive") {
+      navigate("/executive");
+    } else if (r === "it_admin") {
+      navigate("/it-admin");
     } else {
-      navigate("/");
+      navigate("/dashboard");
     }
   };
 

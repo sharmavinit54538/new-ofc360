@@ -33,6 +33,7 @@ import {
 } from "recharts";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { normalizeRole } from "@/features/auth/authTypes";
 import { useEmployeeStore } from "@/stores/employeeStore";
 import { useCandidateStore } from "@/stores/candidateStore";
 import { usePayrollStore } from "@/stores/payrollStore";

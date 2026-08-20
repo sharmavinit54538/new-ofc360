@@ -1,8 +1,7 @@
 import { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { roleLabels, SystemRole } from "@/features/auth/authTypes";
-import { useAppSelector } from "@/app/hooks";
-import { selectCurrentUser, selectCurrentRole } from "@/features/auth/authSelectors";
+import { roleLabels, SystemRole, normalizeRole } from "@/features/auth/authTypes";
+import { useAuth } from "@/hooks/useAuth";
 import { hasModuleAccess, SystemModule } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
 import { ShieldAlert, ArrowLeft, Lock } from "lucide-react";
@@ -15,11 +14,14 @@ interface RoleGuardProps {
 }
 
 export function RoleGuard({ allowedRoles, module, children }: RoleGuardProps) {
-  const user = useAppSelector(selectCurrentUser);
-  const activeRole = useAppSelector(selectCurrentRole);
+  const { user, role, loading } = useAuth();
   const navigate = useNavigate();
 
-  const currentRole: SystemRole = user?.role || activeRole || "employee";
+  if (loading) {
+    return null;
+  }
+
+  const currentRole: SystemRole = normalizeRole(user?.role || role || "employee");
 
   // Check role eligibility
   const roleAllowed = !allowedRoles || allowedRoles.includes(currentRole);
@@ -53,7 +55,7 @@ export function RoleGuard({ allowedRoles, module, children }: RoleGuardProps) {
           <div className="p-3.5 rounded-xl bg-muted/60 border border-border/50 text-xs text-left space-y-1">
             <div className="flex justify-between text-muted-foreground">
               <span>Active System Role:</span>
-              <span className="font-semibold text-foreground">{roleLabels[currentRole]}</span>
+              <span className="font-semibold text-foreground">{roleLabels[currentRole] || currentRole}</span>
             </div>
             {module && (
               <div className="flex justify-between text-muted-foreground">
@@ -77,3 +79,4 @@ export function RoleGuard({ allowedRoles, module, children }: RoleGuardProps) {
 
   return <>{children}</>;
 }
+

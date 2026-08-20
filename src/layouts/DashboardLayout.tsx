@@ -25,12 +25,11 @@ export const useLayout = () => useContext(LayoutContext);
 export default function DashboardLayout() {
   const isMobile = useIsMobile();
   const location = useLocation();
-  const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const isHRAdmin = user?.role === "hr_admin";
+  const isHRAdmin = (user?.role || role) === "hr_admin";
   const {
     data: onboardingStatus,
     isLoading: isOnboardingLoading,

@@ -9,14 +9,14 @@ import {
   Activity, ShieldAlert, MessageSquare, Sparkles, BrainCircuit
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { SystemRole } from "@/features/auth/authTypes";
+import { SystemRole, normalizeRole } from "@/features/auth/authTypes";
 import { usePayrollStore } from "@/stores/payrollStore";
 import { getCurrencyIcon } from "@/utils/currency";
 
 export function AppSidebar({ open, onToggle }: { open: boolean; onToggle: () => void }) {
   const location = useLocation();
-  const { user } = useAuth();
-  const currentRole: SystemRole = user?.role || "hr_admin";
+  const { user, role } = useAuth();
+  const currentRole: SystemRole = role || normalizeRole(user?.role);
   const payrollSettings = usePayrollStore((state) => state.settings);
   const PayrollIcon = getCurrencyIcon(payrollSettings?.currency);
 
