@@ -535,9 +535,9 @@ export default function DashboardPage() {
           </div>
 
           <div className="pt-4 border-t border-border/40 mt-4">
-            <Link to="/reports">
+            <Link to="/intelligence">
               <Button size="sm" variant="ghost" className="w-full text-xs text-primary justify-between h-8 px-2 hover:bg-primary/10">
-                <span>View Full Reports & Analytics</span>
+                <span>View Full AI Intelligence Hub</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </Button>
             </Link>

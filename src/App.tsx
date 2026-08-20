@@ -29,6 +29,14 @@ import AIFaceAttendancePage from "@/pages/AIFaceAttendancePage";
 import AIRecruiterCopilotPage from "@/pages/AIRecruiterCopilotPage";
 import AIPredictivePage from "@/pages/AIPredictivePage";
 import AIDocumentIntelligencePage from "@/pages/AIDocumentIntelligencePage";
+import IntelligenceLandingPage from "@/pages/intelligence/IntelligenceLandingPage";
+import PerformanceIntelligencePage from "@/pages/intelligence/PerformanceIntelligencePage";
+import WorkforceAnalyticsPage from "@/pages/intelligence/WorkforceAnalyticsPage";
+import EngagementIntelligencePage from "@/pages/intelligence/EngagementIntelligencePage";
+import CultureIntelligencePage from "@/pages/intelligence/CultureIntelligencePage";
+import ComplianceIntelligencePage from "@/pages/intelligence/ComplianceIntelligencePage";
+import PredictiveWorkforcePage from "@/pages/intelligence/PredictiveWorkforcePage";
+import AIRecommendationsPage from "@/pages/intelligence/AIRecommendationsPage";
 
 import TalentIntelligenceLandingPage from "@/pages/talent-intelligence/TalentIntelligenceLandingPage";
 import DocumentIntelligencePage from "@/pages/talent-intelligence/DocumentIntelligencePage";
@@ -246,6 +254,16 @@ const App = () => (
             <Route path="/culture" element={<RoleGuard module="culture"><CulturePage /></RoleGuard>} />
             <Route path="/rbac" element={<RoleGuard module="rbac"><RolesAndPermissionsPage /></RoleGuard>} />
 
+            {/* Intelligence Hub & AI Routes */}
+            <Route path="/intelligence" element={<RoleGuard module="intelligence_hub"><IntelligenceLandingPage /></RoleGuard>} />
+            <Route path="/intelligence/performance" element={<RoleGuard module="intelligence_hub"><PerformanceIntelligencePage /></RoleGuard>} />
+            <Route path="/intelligence/workforce" element={<RoleGuard module="intelligence_hub"><WorkforceAnalyticsPage /></RoleGuard>} />
+            <Route path="/intelligence/engagement" element={<RoleGuard module="intelligence_hub"><EngagementIntelligencePage /></RoleGuard>} />
+            <Route path="/intelligence/culture" element={<RoleGuard module="intelligence_hub"><CultureIntelligencePage /></RoleGuard>} />
+            <Route path="/intelligence/compliance" element={<RoleGuard module="intelligence_hub"><ComplianceIntelligencePage /></RoleGuard>} />
+            <Route path="/intelligence/predictive" element={<RoleGuard module="intelligence_hub"><PredictiveWorkforcePage /></RoleGuard>} />
+            <Route path="/intelligence/recommendations" element={<RoleGuard module="intelligence_hub"><AIRecommendationsPage /></RoleGuard>} />
+
             {/* Talent Intelligence Routes */}
             <Route path="/talent-intelligence" element={<RoleGuard module="talent_intelligence"><TalentIntelligenceLandingPage /></RoleGuard>} />
             <Route path="/talent-intelligence/recruitment" element={<RoleGuard module="recruitment"><RecruitmentPage /></RoleGuard>} />
@@ -285,13 +303,16 @@ const App = () => (
             <Route path="/connect/files" element={<RoleGuard module="connect"><ConnectFilesPage /></RoleGuard>} />
             <Route path="/connect/contacts" element={<RoleGuard module="connect"><ConnectContactsPage /></RoleGuard>} />
 
-            {/* Legacy AI Routes */}
+            {/* AI Routes */}
+            <Route path="/ai" element={<RoleGuard module="intelligence_hub"><IntelligenceLandingPage /></RoleGuard>} />
             <Route path="/ai-chat" element={<AIChatPage />} />
             <Route path="/ai/ats" element={<AIATSPage />} />
+            <Route path="/ai/insights" element={<RoleGuard module="intelligence_hub"><IntelligenceLandingPage /></RoleGuard>} />
             <Route path="/ai/interview" element={<AIInterviewPage />} />
             <Route path="/ai/cctv" element={<AIFaceAttendancePage />} />
             <Route path="/ai/face-attendance" element={<AIFaceAttendancePage />} />
             <Route path="/ai/copilot" element={<AIRecruiterCopilotPage />} />
+            <Route path="/ai/predictive" element={<RoleGuard module="intelligence_hub"><PredictiveWorkforcePage /></RoleGuard>} />
             <Route path="/ai/documents" element={<AIDocumentIntelligencePage />} />
           </Route>
         </Route>
