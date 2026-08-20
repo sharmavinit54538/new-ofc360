@@ -5,7 +5,7 @@ export const recruitmentApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     createApplicationsIdOffer: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/applications/${data.id}/offer` : typeof data === 'object' && data?.id ? `/api/v1/applications/${data.id}/offer` : '/api/v1/applications/{id}/offer',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/applications/${data}/offer` : typeof data === 'object' && data?.id ? `/api/v1/applications/${data.id}/offer` : '/api/v1/applications/{id}/offer',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -13,7 +13,7 @@ export const recruitmentApi = baseApi.injectEndpoints({
     }),
     updateOffersIdAccept: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/offers/${data.id}/accept` : typeof data === 'object' && data?.id ? `/api/v1/offers/${data.id}/accept` : '/api/v1/offers/{id}/accept',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/offers/${data}/accept` : typeof data === 'object' && data?.id ? `/api/v1/offers/${data.id}/accept` : '/api/v1/offers/{id}/accept',
         method: 'PATCH',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -21,7 +21,7 @@ export const recruitmentApi = baseApi.injectEndpoints({
     }),
     updateOffersIdReject: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/offers/${data.id}/reject` : typeof data === 'object' && data?.id ? `/api/v1/offers/${data.id}/reject` : '/api/v1/offers/{id}/reject',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/offers/${data}/reject` : typeof data === 'object' && data?.id ? `/api/v1/offers/${data.id}/reject` : '/api/v1/offers/{id}/reject',
         method: 'PATCH',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -29,7 +29,7 @@ export const recruitmentApi = baseApi.injectEndpoints({
     }),
     createApplicationsIdConvert: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/applications/${data.id}/convert` : typeof data === 'object' && data?.id ? `/api/v1/applications/${data.id}/convert` : '/api/v1/applications/{id}/convert',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/applications/${data}/convert` : typeof data === 'object' && data?.id ? `/api/v1/applications/${data.id}/convert` : '/api/v1/applications/{id}/convert',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -59,14 +59,14 @@ export const recruitmentApi = baseApi.injectEndpoints({
     }),
     getRequisitionsId: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/requisitions/${params.id}` : typeof params === 'object' && params?.id ? `/api/v1/requisitions/${params.id}` : '/api/v1/requisitions/{id}',
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/requisitions/${params}` : typeof params === 'object' && params?.id ? `/api/v1/requisitions/${params.id}` : '/api/v1/requisitions/{id}',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Candidate'],
     }),
     createRequisitionsIdApprove: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/requisitions/${data.id}/approve` : typeof data === 'object' && data?.id ? `/api/v1/requisitions/${data.id}/approve` : '/api/v1/requisitions/{id}/approve',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/requisitions/${data}/approve` : typeof data === 'object' && data?.id ? `/api/v1/requisitions/${data.id}/approve` : '/api/v1/requisitions/{id}/approve',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -89,14 +89,14 @@ export const recruitmentApi = baseApi.injectEndpoints({
     }),
     getVendorsId: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/vendors/${params.id}` : typeof params === 'object' && params?.id ? `/api/v1/vendors/${params.id}` : '/api/v1/vendors/{id}',
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/vendors/${params}` : typeof params === 'object' && params?.id ? `/api/v1/vendors/${params.id}` : '/api/v1/vendors/{id}',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Candidate'],
     }),
     updateVendorsId: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/vendors/${data.id}` : typeof data === 'object' && data?.id ? `/api/v1/vendors/${data.id}` : '/api/v1/vendors/{id}',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/vendors/${data}` : typeof data === 'object' && data?.id ? `/api/v1/vendors/${data.id}` : '/api/v1/vendors/{id}',
         method: 'PUT',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -104,7 +104,7 @@ export const recruitmentApi = baseApi.injectEndpoints({
     }),
     deleteVendorsId: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/vendors/${data.id}` : typeof data === 'object' && data?.id ? `/api/v1/vendors/${data.id}` : '/api/v1/vendors/{id}',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/vendors/${data}` : typeof data === 'object' && data?.id ? `/api/v1/vendors/${data.id}` : '/api/v1/vendors/{id}',
         method: 'DELETE',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -120,7 +120,7 @@ export const recruitmentApi = baseApi.injectEndpoints({
     }),
     getCrmNotesCandidateId: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/crm/notes/${params.candidate_id}` : typeof params === 'object' && params?.id ? `/api/v1/crm/notes/{candidate_id}` : '/api/v1/crm/notes/{candidate_id}',
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/crm/notes/${params}` : typeof params === 'object' && params?.id ? `/api/v1/crm/notes/{candidate_id}` : '/api/v1/crm/notes/{candidate_id}',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Candidate'],
@@ -142,7 +142,7 @@ export const recruitmentApi = baseApi.injectEndpoints({
     }),
     updateReferralsIdStatus: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/referrals/${data.id}/status` : typeof data === 'object' && data?.id ? `/api/v1/referrals/${data.id}/status` : '/api/v1/referrals/{id}/status',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/referrals/${data}/status` : typeof data === 'object' && data?.id ? `/api/v1/referrals/${data.id}/status` : '/api/v1/referrals/{id}/status',
         method: 'PUT',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -179,7 +179,7 @@ export const recruitmentApi = baseApi.injectEndpoints({
     }),
     updateRecruitmentNotificationsIdRead: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/recruitment/notifications/${data.id}/read` : typeof data === 'object' && data?.id ? `/api/v1/recruitment/notifications/${data.id}/read` : '/api/v1/recruitment/notifications/{id}/read',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/recruitment/notifications/${data}/read` : typeof data === 'object' && data?.id ? `/api/v1/recruitment/notifications/${data.id}/read` : '/api/v1/recruitment/notifications/{id}/read',
         method: 'PUT',
         body: typeof data === 'object' ? data : undefined,
       }),

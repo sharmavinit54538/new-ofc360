@@ -21,7 +21,7 @@ export const workflowsApi = baseApi.injectEndpoints({
     }),
     updateV2WorkflowsStepsStepIdDecision: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/workflows/steps/${data.step_id}/decision` : typeof data === 'object' && data?.id ? `/api/v2/workflows/steps/{step_id}/decision` : '/api/v2/workflows/steps/{step_id}/decision',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/workflows/steps/${data}/decision` : typeof data === 'object' && data?.id ? `/api/v2/workflows/steps/{step_id}/decision` : '/api/v2/workflows/steps/{step_id}/decision',
         method: 'PATCH',
         body: typeof data === 'object' ? data : undefined,
       }),

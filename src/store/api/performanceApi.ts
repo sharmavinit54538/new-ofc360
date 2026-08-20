@@ -29,7 +29,7 @@ export const performanceApi = baseApi.injectEndpoints({
     }),
     createV2PerformanceReviewsReviewIdEvaluate: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/performance/reviews/${data.review_id}/evaluate` : typeof data === 'object' && data?.id ? `/api/v2/performance/reviews/{review_id}/evaluate` : '/api/v2/performance/reviews/{review_id}/evaluate',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/performance/reviews/${data}/evaluate` : typeof data === 'object' && data?.id ? `/api/v2/performance/reviews/{review_id}/evaluate` : '/api/v2/performance/reviews/{review_id}/evaluate',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),

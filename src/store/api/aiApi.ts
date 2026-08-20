@@ -61,14 +61,14 @@ export const aiApi = baseApi.injectEndpoints({
     }),
     getAiDashboardResumeDocumentId: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/ai/dashboard/${params.resume_document_id}` : typeof params === 'object' && params?.id ? `/api/v1/ai/dashboard/{resume_document_id}` : '/api/v1/ai/dashboard/{resume_document_id}',
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/ai/dashboard/${params}` : typeof params === 'object' && params?.id ? `/api/v1/ai/dashboard/{resume_document_id}` : '/api/v1/ai/dashboard/{resume_document_id}',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['AI'],
     }),
     getAiJobRankingJobId: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/ai/job-ranking/${params.job_id}` : typeof params === 'object' && params?.id ? `/api/v1/ai/job-ranking/{job_id}` : '/api/v1/ai/job-ranking/{job_id}',
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/ai/job-ranking/${params}` : typeof params === 'object' && params?.id ? `/api/v1/ai/job-ranking/{job_id}` : '/api/v1/ai/job-ranking/{job_id}',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['AI'],
@@ -98,14 +98,14 @@ export const aiApi = baseApi.injectEndpoints({
     }),
     getAiHistoryConversationId: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/ai/history/${params.conversation_id}` : typeof params === 'object' && params?.id ? `/api/v1/ai/history/{conversation_id}` : '/api/v1/ai/history/{conversation_id}',
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/ai/history/${params}` : typeof params === 'object' && params?.id ? `/api/v1/ai/history/{conversation_id}` : '/api/v1/ai/history/{conversation_id}',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['AI'],
     }),
     updateAiHistoryConversationId: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/ai/history/${data.conversation_id}` : typeof data === 'object' && data?.id ? `/api/v1/ai/history/{conversation_id}` : '/api/v1/ai/history/{conversation_id}',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/ai/history/${data}` : typeof data === 'object' && data?.id ? `/api/v1/ai/history/{conversation_id}` : '/api/v1/ai/history/{conversation_id}',
         method: 'PATCH',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -113,7 +113,7 @@ export const aiApi = baseApi.injectEndpoints({
     }),
     deleteAiHistoryConversationId: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/ai/history/${data.conversation_id}` : typeof data === 'object' && data?.id ? `/api/v1/ai/history/{conversation_id}` : '/api/v1/ai/history/{conversation_id}',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/ai/history/${data}` : typeof data === 'object' && data?.id ? `/api/v1/ai/history/{conversation_id}` : '/api/v1/ai/history/{conversation_id}',
         method: 'DELETE',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -152,7 +152,7 @@ export const aiApi = baseApi.injectEndpoints({
     }),
     createV2EmotionsSessionsSessionIdMessages: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/emotions/sessions/${data.session_id}/messages` : typeof data === 'object' && data?.id ? `/api/v2/emotions/sessions/{session_id}/messages` : '/api/v2/emotions/sessions/{session_id}/messages',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/emotions/sessions/${data}/messages` : typeof data === 'object' && data?.id ? `/api/v2/emotions/sessions/{session_id}/messages` : '/api/v2/emotions/sessions/{session_id}/messages',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),

@@ -20,14 +20,14 @@ export const jobsApi = baseApi.injectEndpoints({
     }),
     getJobsId: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/jobs/${params.id}` : typeof params === 'object' && params?.id ? `/api/v1/jobs/${params.id}` : '/api/v1/jobs/{id}',
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/jobs/${params}` : typeof params === 'object' && params?.id ? `/api/v1/jobs/${params.id}` : '/api/v1/jobs/{id}',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Job'],
     }),
     updateJobsId: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/jobs/${data.id}` : typeof data === 'object' && data?.id ? `/api/v1/jobs/${data.id}` : '/api/v1/jobs/{id}',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/jobs/${data}` : typeof data === 'object' && data?.id ? `/api/v1/jobs/${data.id}` : '/api/v1/jobs/{id}',
         method: 'PUT',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -35,7 +35,7 @@ export const jobsApi = baseApi.injectEndpoints({
     }),
     deleteJobsId: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/jobs/${data.id}` : typeof data === 'object' && data?.id ? `/api/v1/jobs/${data.id}` : '/api/v1/jobs/{id}',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/jobs/${data}` : typeof data === 'object' && data?.id ? `/api/v1/jobs/${data.id}` : '/api/v1/jobs/{id}',
         method: 'DELETE',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -43,7 +43,7 @@ export const jobsApi = baseApi.injectEndpoints({
     }),
     createJobsIdPublish: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/jobs/${data.id}/publish` : typeof data === 'object' && data?.id ? `/api/v1/jobs/${data.id}/publish` : '/api/v1/jobs/{id}/publish',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/jobs/${data}/publish` : typeof data === 'object' && data?.id ? `/api/v1/jobs/${data.id}/publish` : '/api/v1/jobs/{id}/publish',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -51,7 +51,7 @@ export const jobsApi = baseApi.injectEndpoints({
     }),
     createJobsIdClose: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/jobs/${data.id}/close` : typeof data === 'object' && data?.id ? `/api/v1/jobs/${data.id}/close` : '/api/v1/jobs/{id}/close',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/jobs/${data}/close` : typeof data === 'object' && data?.id ? `/api/v1/jobs/${data.id}/close` : '/api/v1/jobs/{id}/close',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -59,7 +59,7 @@ export const jobsApi = baseApi.injectEndpoints({
     }),
     createJobsIdDraft: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/jobs/${data.id}/draft` : typeof data === 'object' && data?.id ? `/api/v1/jobs/${data.id}/draft` : '/api/v1/jobs/{id}/draft',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/jobs/${data}/draft` : typeof data === 'object' && data?.id ? `/api/v1/jobs/${data.id}/draft` : '/api/v1/jobs/{id}/draft',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -67,7 +67,7 @@ export const jobsApi = baseApi.injectEndpoints({
     }),
     createJobsIdDuplicate: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/jobs/${data.id}/duplicate` : typeof data === 'object' && data?.id ? `/api/v1/jobs/${data.id}/duplicate` : '/api/v1/jobs/{id}/duplicate',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/jobs/${data}/duplicate` : typeof data === 'object' && data?.id ? `/api/v1/jobs/${data.id}/duplicate` : '/api/v1/jobs/{id}/duplicate',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -112,14 +112,14 @@ export const jobsApi = baseApi.injectEndpoints({
     }),
     getPublicCareersSlug: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/public/careers/${params.slug}` : typeof params === 'object' && params?.id ? `/api/public/careers/{slug}` : '/api/public/careers/{slug}',
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/public/careers/${params}` : typeof params === 'object' && params?.id ? `/api/public/careers/{slug}` : '/api/public/careers/{slug}',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Job'],
     }),
     createPublicCareersSlugApply: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/public/careers/${data.slug}/apply` : typeof data === 'object' && data?.id ? `/api/public/careers/{slug}/apply` : '/api/public/careers/{slug}/apply',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/public/careers/${data}/apply` : typeof data === 'object' && data?.id ? `/api/public/careers/{slug}/apply` : '/api/public/careers/{slug}/apply',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),

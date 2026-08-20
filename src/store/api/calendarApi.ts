@@ -20,14 +20,14 @@ export const calendarApi = baseApi.injectEndpoints({
     }),
     getCalendarEventsId: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/calendar/events/${params.id}` : typeof params === 'object' && params?.id ? `/api/v1/calendar/events/${params.id}` : '/api/v1/calendar/events/{id}',
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/calendar/events/${params}` : typeof params === 'object' && params?.id ? `/api/v1/calendar/events/${params.id}` : '/api/v1/calendar/events/{id}',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Calendar'],
     }),
     updateCalendarEventsId: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/calendar/events/${data.id}` : typeof data === 'object' && data?.id ? `/api/v1/calendar/events/${data.id}` : '/api/v1/calendar/events/{id}',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/calendar/events/${data}` : typeof data === 'object' && data?.id ? `/api/v1/calendar/events/${data.id}` : '/api/v1/calendar/events/{id}',
         method: 'PUT',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -35,7 +35,7 @@ export const calendarApi = baseApi.injectEndpoints({
     }),
     deleteCalendarEventsId: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/calendar/events/${data.id}` : typeof data === 'object' && data?.id ? `/api/v1/calendar/events/${data.id}` : '/api/v1/calendar/events/{id}',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/calendar/events/${data}` : typeof data === 'object' && data?.id ? `/api/v1/calendar/events/${data.id}` : '/api/v1/calendar/events/{id}',
         method: 'DELETE',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -58,7 +58,7 @@ export const calendarApi = baseApi.injectEndpoints({
     }),
     updateCalendarHolidaysId: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/calendar/holidays/${data.id}` : typeof data === 'object' && data?.id ? `/api/v1/calendar/holidays/${data.id}` : '/api/v1/calendar/holidays/{id}',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/calendar/holidays/${data}` : typeof data === 'object' && data?.id ? `/api/v1/calendar/holidays/${data.id}` : '/api/v1/calendar/holidays/{id}',
         method: 'PUT',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -66,7 +66,7 @@ export const calendarApi = baseApi.injectEndpoints({
     }),
     deleteCalendarHolidaysId: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/calendar/holidays/${data.id}` : typeof data === 'object' && data?.id ? `/api/v1/calendar/holidays/${data.id}` : '/api/v1/calendar/holidays/{id}',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/calendar/holidays/${data}` : typeof data === 'object' && data?.id ? `/api/v1/calendar/holidays/${data.id}` : '/api/v1/calendar/holidays/{id}',
         method: 'DELETE',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -89,14 +89,14 @@ export const calendarApi = baseApi.injectEndpoints({
     }),
     getCalendarMeetingsId: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/calendar/meetings/${params.id}` : typeof params === 'object' && params?.id ? `/api/v1/calendar/meetings/${params.id}` : '/api/v1/calendar/meetings/{id}',
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/calendar/meetings/${params}` : typeof params === 'object' && params?.id ? `/api/v1/calendar/meetings/${params.id}` : '/api/v1/calendar/meetings/{id}',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Calendar'],
     }),
     updateCalendarMeetingsId: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/calendar/meetings/${data.id}` : typeof data === 'object' && data?.id ? `/api/v1/calendar/meetings/${data.id}` : '/api/v1/calendar/meetings/{id}',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/calendar/meetings/${data}` : typeof data === 'object' && data?.id ? `/api/v1/calendar/meetings/${data.id}` : '/api/v1/calendar/meetings/{id}',
         method: 'PUT',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -104,7 +104,7 @@ export const calendarApi = baseApi.injectEndpoints({
     }),
     deleteCalendarMeetingsId: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/calendar/meetings/${data.id}` : typeof data === 'object' && data?.id ? `/api/v1/calendar/meetings/${data.id}` : '/api/v1/calendar/meetings/{id}',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/calendar/meetings/${data}` : typeof data === 'object' && data?.id ? `/api/v1/calendar/meetings/${data.id}` : '/api/v1/calendar/meetings/{id}',
         method: 'DELETE',
         body: typeof data === 'object' ? data : undefined,
       }),
