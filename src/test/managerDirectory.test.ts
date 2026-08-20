@@ -1,9 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { normalizeRole, roleLabels, ROLE_OPTIONS } from "@/features/auth/authTypes";
-import { employeeApi } from "@/services/api/employeeApi";
-
-// Extract normalizeEmployee by calling transformResponse on mock data
-const getEmployeesEndpoint = (employeeApi.endpoints as any).getEmployees;
+import { normalizeEmployee } from "@/services/api/employeeApi";
 
 describe("Employee Directory — Manager Integration & Workforce Representation", () => {
   const mockRawManagerBackendItem = {
@@ -49,15 +46,8 @@ describe("Employee Directory — Manager Integration & Workforce Representation"
   };
 
   it("should normalize Manager backend record preserving designation and role='manager'", () => {
-    const responseList = getEmployeesEndpoint.transformResponse({
-      success: true,
-      data: {
-        items: [mockRawManagerBackendItem, mockRawEmployeeBackendItem],
-        total: 2,
-        page: 1,
-        limit: 10,
-      },
-    });
+    const rawList = [mockRawManagerBackendItem, mockRawEmployeeBackendItem];
+    const responseList = rawList.map(normalizeEmployee);
 
     expect(responseList).toHaveLength(2);
 
@@ -74,10 +64,7 @@ describe("Employee Directory — Manager Integration & Workforce Representation"
   });
 
   it("should format table columns correctly for Manager (System Role = Manager, Designation = Cloud & DevOps Engineer)", () => {
-    const responseList = getEmployeesEndpoint.transformResponse({
-      data: [mockRawManagerBackendItem],
-    });
-    const manager = responseList[0];
+    const manager = normalizeEmployee(mockRawManagerBackendItem);
 
     // System Access Role column
     const systemRoleLabel = roleLabels[manager.systemRole as keyof typeof roleLabels];
@@ -91,9 +78,8 @@ describe("Employee Directory — Manager Integration & Workforce Representation"
   });
 
   it("should support role filtering in Employee Directory (Manager vs Employee)", () => {
-    const responseList = getEmployeesEndpoint.transformResponse({
-      data: [mockRawManagerBackendItem, mockRawEmployeeBackendItem],
-    });
+    const rawList = [mockRawManagerBackendItem, mockRawEmployeeBackendItem];
+    const responseList = rawList.map(normalizeEmployee);
 
     const managerList = responseList.filter((e: any) => e.systemRole === "manager");
     expect(managerList).toHaveLength(1);
@@ -105,9 +91,8 @@ describe("Employee Directory — Manager Integration & Workforce Representation"
   });
 
   it("should find managers when searching by name, designation, department, or role", () => {
-    const responseList = getEmployeesEndpoint.transformResponse({
-      data: [mockRawManagerBackendItem, mockRawEmployeeBackendItem],
-    });
+    const rawList = [mockRawManagerBackendItem, mockRawEmployeeBackendItem];
+    const responseList = rawList.map(normalizeEmployee);
 
     const searchByName = responseList.filter((e: any) =>
       e.name.toLowerCase().includes("mamraj")
