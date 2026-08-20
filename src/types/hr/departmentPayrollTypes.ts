@@ -1,0 +1,5 @@
+export interface Department { id: string; name: string; code: string; headOfDepartment: string; employeeCount: number; budget: number; }
+export interface DepartmentStats { totalEmployees: number; activeDepartments: number; avgTenureMonths: number; monthlyPayrollTotal: number; }
+export interface AttendanceRecord { id: string; employeeId: string; employeeName: string; date: string; checkIn: string; checkOut?: string; totalHours?: number; status: "present" | "absent" | "half_day" | "late" | "on_leave"; }
+export interface PayrollRow { id: string; employeeId: string; employeeName: string; department: string; month: string; baseSalary: number; deductions: number; bonuses: number; netSalary: number; status: "draft" | "approved" | "paid"; }
+export const stageColor = { applied: "bg-blue-100 text-blue-800", screening: "bg-purple-100 text-purple-800", interview: "bg-yellow-100 text-yellow-800", offer: "bg-orange-100 text-orange-800", hired: "bg-green-100 text-green-800", rejected: "bg-red-100 text-red-800" };
