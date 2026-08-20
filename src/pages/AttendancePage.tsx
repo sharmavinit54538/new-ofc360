@@ -200,6 +200,28 @@ export default function AttendancePage() {
     { skip: isManagerOrAbove }
   );
 
+  // Live attendance stream merged from backend query + local punches
+  const liveAttendanceList = useMemo(() => {
+    const rawItems: FaceAttendanceRecord[] =
+      (isHrOrAdmin ? companyFaceData?.items : isManagerOrAbove ? teamFaceData?.items : personalFaceData?.items) || [];
+    
+    if (rawItems.length > 0) {
+      return rawItems.map((item) => ({
+        id: item.id,
+        employeeName: item.employeeName || "Team Member",
+        department: item.department || "Engineering",
+        timestamp: item.checkIn || "09:15 AM",
+        date: item.date,
+        type: (item.checkOut ? "Check-Out" : "Check-In") as PunchRecord["type"],
+        method: "Selfie Camera" as PunchRecord["method"],
+        location: item.location || "Main HQ Office",
+        status: (item.status || "Present") as PunchRecord["status"],
+        workHours: item.workingHours ? String(item.workingHours) : undefined,
+      }));
+    }
+    return punches;
+  }, [companyFaceData, teamFaceData, personalFaceData, punches, isHrOrAdmin, isManagerOrAbove]);
+
   // 4. Punch Mutations
   const [faceCheckIn, { isLoading: isCheckingIn }] = useFaceCheckInMutation();
   const [faceCheckOut, { isLoading: isCheckingOut }] = useFaceCheckOutMutation();
@@ -865,28 +887,6 @@ export default function AttendancePage() {
   // ==========================================
   // NORMALIZED DISPLAY COLLECTIONS
   // ==========================================
-  // Live attendance stream merged from backend query + local punches
-  const liveAttendanceList = useMemo(() => {
-    const rawItems: FaceAttendanceRecord[] =
-      (isHrOrAdmin ? companyFaceData?.items : isManagerOrAbove ? teamFaceData?.items : personalFaceData?.items) || [];
-    
-    if (rawItems.length > 0) {
-      return rawItems.map((item) => ({
-        id: item.id,
-        employeeName: item.employeeName || "Team Member",
-        department: item.department || "Engineering",
-        timestamp: item.checkIn || "09:15 AM",
-        date: item.date,
-        type: (item.checkOut ? "Check-Out" : "Check-In") as PunchRecord["type"],
-        method: "Selfie Camera" as PunchRecord["method"],
-        location: item.location || "Main HQ Office",
-        status: (item.status || "Present") as PunchRecord["status"],
-        workHours: item.workingHours ? String(item.workingHours) : undefined,
-      }));
-    }
-    return punches;
-  }, [companyFaceData, teamFaceData, personalFaceData, punches, isHrOrAdmin, isManagerOrAbove]);
-
   // Normalized holidays
   const displayedHolidays: HolidayItem[] = useMemo(() => {
     const raw = (holidaysApiRes as any)?.data || holidaysApiRes;

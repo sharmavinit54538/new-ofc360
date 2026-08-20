@@ -15,6 +15,7 @@ import {
   ArrowRight,
   Database,
   Building2,
+  Lightbulb,
 } from "lucide-react";
 import { motion } from "framer-motion";
 

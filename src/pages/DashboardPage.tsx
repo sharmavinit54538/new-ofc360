@@ -97,6 +97,8 @@ export default function DashboardPage() {
 }
 
 function HRAdminDashboard() {
+  const { user } = useAuth();
+
   // Live Queries & Stores
   const { data: rawEmployees = [] } = useGetEmployeesQuery();
   const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
