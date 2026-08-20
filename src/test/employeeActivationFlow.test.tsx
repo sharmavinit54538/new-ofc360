@@ -549,4 +549,3 @@ describe("Employee Invitation & Password Activation Flow", () => {
     });
   });
 });
-

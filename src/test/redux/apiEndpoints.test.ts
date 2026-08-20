@@ -98,4 +98,3 @@ describe("RTK Query Feature API Endpoints", () => {
     expect(typeof useGetAuditLogsQuery).toBe("function");
   });
 });
-

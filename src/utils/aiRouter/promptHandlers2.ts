@@ -12,7 +12,7 @@ export function handleSpecialPrompts(prompt: string, title: string, id: string, 
     return { text: `Vector Search Result for '${prompt}':\n1. OFC360 Employee Handbook 2026 (98.7%)\n2. Corporate Benefits (94.2%)` };
   }
   if (cat === "Biometrics & Vision AI") {
-    return { text: `Vision AI Analysis (${title}):\n• Subject: Personnel Face Scan\n• Liveness: 99.8% Genuine\n• Anti-Spoofing: PASSED` };
+    return { text: `Vision AI Analysis (${title}):\n• Subject Detected: Personnel Face Scan\n• Biometric Liveness Verification: 99.8% Genuine\n• Anti-Spoofing: PASSED` };
   }
   return null;
 }

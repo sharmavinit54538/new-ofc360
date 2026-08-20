@@ -267,4 +267,3 @@ export const stageColor: Record<string, string> = {
   Hired: "bg-success/10 text-success border-success/20",
   Rejected: "bg-destructive/10 text-destructive border-destructive/20",
 };
-

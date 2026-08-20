@@ -127,4 +127,3 @@ describe("normalizeError", () => {
     expect(normalized.message).toBe("Custom client side exception");
   });
 });
-

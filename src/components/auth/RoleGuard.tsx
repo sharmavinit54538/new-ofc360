@@ -79,4 +79,3 @@ export function RoleGuard({ allowedRoles, module, children }: RoleGuardProps) {
 
   return <>{children}</>;
 }
-

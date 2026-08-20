@@ -1253,4 +1253,3 @@ export default function SettingsPage() {
     </motion.div>
   );
 }
-

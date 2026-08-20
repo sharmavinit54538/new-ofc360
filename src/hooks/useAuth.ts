@@ -67,4 +67,3 @@ export function useAuth() {
     setCredentials: (payload: Parameters<typeof setCredentials>[0]) => dispatch(setCredentials(payload)),
   };
 }
-

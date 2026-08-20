@@ -176,4 +176,3 @@ export function normalizeError(error: unknown): ApiError {
     message: "An unexpected error occurred.",
   };
 }
-

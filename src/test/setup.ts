@@ -36,7 +36,3 @@ if (typeof globalThis.Request !== "undefined") {
   globalThis.Request = SafeRequest as any;
   window.Request = SafeRequest as any;
 }
-
-
-
-

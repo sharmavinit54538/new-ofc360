@@ -151,6 +151,3 @@ describe("authSlice", () => {
     expect(localStorage.getItem("ofc360_refresh_token")).toBeNull();
   });
 });
-
-
-

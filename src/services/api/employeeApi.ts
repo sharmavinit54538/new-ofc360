@@ -834,5 +834,3 @@ export const {
   useValidateEmployeeInvitationQuery,
   useLazyValidateEmployeeInvitationQuery,
 } = employeeApi;
- 
-

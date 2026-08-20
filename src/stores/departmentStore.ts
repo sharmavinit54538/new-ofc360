@@ -65,4 +65,3 @@ export const useDepartmentStore = create<DepartmentState>((set) => ({
   openImportModal: () => set({ isImportOpen: true }),
   closeImportModal: () => set({ isImportOpen: false }),
 }));
-

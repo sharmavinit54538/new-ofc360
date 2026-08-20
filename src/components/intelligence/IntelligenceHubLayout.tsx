@@ -19,4 +19,3 @@ export function IntelligenceHubLayout({ children }: IntelligenceHubLayoutProps) 
     </div>
   );
 }
-

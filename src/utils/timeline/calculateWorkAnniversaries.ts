@@ -10,7 +10,7 @@ export function calculateWorkAnniversaries(empId: string, name: string, joinDate
     const anniv = new Date(joinDate);
     anniv.setFullYear(joinDate.getFullYear() + y);
     if (anniv <= now) {
-      events.push({ id: `ANNIV-${y}YR-${empId}`, employeeId: empId, employeeName: name, category: "Anniversaries", title: `${y} Year Anniversary`, date: anniv.toISOString().split("T")[0], badge: `${y} Yrs`, description: `${y} yrs service.`, details: { yearsCompleted: y } });
+      events.push({ id: `ANNIV-${y}YR-${empId}`, employeeId: empId, employeeName: name, category: "Anniversaries", title: `${y} Year Work Anniversary`, date: anniv.toISOString().split("T")[0], badge: `${y} Yrs`, description: `${y} yrs service.`, details: { yearsCompleted: y } });
     }
   });
   return events;

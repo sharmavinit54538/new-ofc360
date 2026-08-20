@@ -177,4 +177,3 @@ describe("baseQueryWithReauth Token Refresh Interceptor", () => {
     expect(store.getState().auth.refreshToken).toBeNull();
   });
 });
-

@@ -84,6 +84,3 @@ export const roleLabel = (r?: string | null): string => {
   const norm: SystemRole = normalizeRole(r);
   return roleLabels[norm] || "Employee";
 };
-
-
-

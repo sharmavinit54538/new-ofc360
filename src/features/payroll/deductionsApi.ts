@@ -68,4 +68,3 @@ export const {
   useUpdateDeductionMutation,
   useDeleteDeductionMutation,
 } = deductionsApi;
-

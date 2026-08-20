@@ -127,4 +127,3 @@ export interface DocumentTypeInfo {
   generatorType?: "exit" | "offer" | "upload";
   iconName: string;
 }
-

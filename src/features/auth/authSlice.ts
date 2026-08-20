@@ -159,5 +159,3 @@ export { normalizeRole } from "./authTypes";
 export type { AuthUser, AuthState, SystemRole } from "./authTypes";
 
 export default authSlice.reducer;
-
-

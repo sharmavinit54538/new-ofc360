@@ -31,4 +31,3 @@ export const useCreateAuthResetPasswordMutation = useResetPasswordMutation;
 export const useUpdateAuthChangePasswordMutation = useChangePasswordMutation;
 
 export default authApi;
-

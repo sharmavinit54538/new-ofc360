@@ -1222,4 +1222,3 @@ export const useShareMeetingFileMutation = connectApi.endpoints.uploadFile.useMu
 export const useStartScreenShareMutation = connectApi.endpoints.aiTransform.useMutation;
 export const useStopScreenShareMutation = connectApi.endpoints.aiTransform.useMutation;
 export const useGenerateAiMeetingSummaryMutation = connectApi.endpoints.aiTransform.useMutation;
-

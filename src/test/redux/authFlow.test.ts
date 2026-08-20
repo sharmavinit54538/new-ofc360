@@ -99,4 +99,3 @@ describe("authApi unwrapLoginResponse & contract parsing", () => {
     expect(unwrapped.token).toBe("");
   });
 });
-

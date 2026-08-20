@@ -132,4 +132,3 @@ export const API_TAGS = [
 ] as const;
 
 export type ApiTagType = (typeof API_TAGS)[number];
-
