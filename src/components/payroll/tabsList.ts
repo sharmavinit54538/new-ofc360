@@ -1,0 +1,17 @@
+export const TABS = [
+  { id: "salary-processing", label: "Salary Runs" },
+  { id: "salary-structure", label: "CTC Grades" },
+  { id: "payslips", label: "Payslips" },
+  { id: "reimbursements", label: "Claims" },
+  { id: "bonuses", label: "Bonuses" },
+  { id: "deductions", label: "Deductions" },
+  { id: "advances", label: "Advances" },
+  { id: "overtime", label: "Overtime" },
+  { id: "tax", label: "TDS / Tax" },
+  { id: "approvals", label: "Approvals" },
+  { id: "bank-transfers", label: "Bank Batches" },
+  { id: "compliance", label: "Compliance" },
+  { id: "reports", label: "Reports" },
+  { id: "settings", label: "Settings" },
+  { id: "copilot", label: "AI Copilot" },
+];
