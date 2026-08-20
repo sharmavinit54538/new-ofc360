@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { roleLabels, SystemRole } from "@/features/auth/authTypes";
+import { roleLabels, SystemRole, normalizeRole } from "@/features/auth/authTypes";
 import { Badge } from "@/components/ui/badge";
 import { BackButton } from "@/components/common/BackButton";
 import { NotificationPanel } from "@/components/connect/NotificationPanel";
