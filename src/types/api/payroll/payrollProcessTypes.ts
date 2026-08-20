@@ -1,0 +1,2 @@
+export interface ProcessPayrollRequest { month: string; year: number; employeeIds?: string[]; }
+export interface PayrollSummary { month: string; year: number; totalGross: number; totalDeductions: number; totalNet: number; employeeCount: number; status: 'pending' | 'processing' | 'completed'; }

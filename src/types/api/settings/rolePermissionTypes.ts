@@ -1,0 +1,5 @@
+export interface RolePermissionItem { id?: string; role: string; role_name?: string; permissions: string[]; modulePermissions?: Record<string, string[]>; module_permissions?: Record<string, string[]>; }
+export interface RolePermissionMatrix { roles: string[]; modules: string[]; matrix: Record<string, Record<string, boolean>>; }
+export interface UpdateRolePermissionsRequest { role: string; permissions?: string[]; modulePermissions?: Record<string, string[]>; module_permissions?: Record<string, string[]>; }
+export interface CompanyProfileSettings { companyName: string; legalEntityName?: string; businessRegistrationNumber?: string; taxIdGstPan?: string; industry?: string; companySize?: string; websiteUrl?: string; officialEmail: string; officialPhone: string; headquartersAddress?: any; logoUrl?: string; brandColorPrimary?: string; brandColorSecondary?: string; timezone?: string; currency?: string; fiscalYearStartMonth?: number; }
+export interface AuditLogQueryFilters { actor?: string; module?: string; action?: string; startDate?: string; endDate?: string; page?: number; limit?: number; }

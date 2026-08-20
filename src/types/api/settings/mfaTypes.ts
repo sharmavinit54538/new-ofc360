@@ -1,0 +1,4 @@
+export interface MFASettings { enabled: boolean; mfaEnabled?: boolean; mfa_enabled?: boolean; twoFactorEnabled?: boolean; two_factor_enabled?: boolean; type?: string; method?: "authenticator" | "sms" | "email"; }
+export interface EnableMFAResponse { enabled: boolean; requiresVerification?: boolean; requires_verification?: boolean; secret?: string; qrCodeUri?: string; qr_code_uri?: string; qrCode?: string; qr_code?: string; provisioningUri?: string; provisioning_uri?: string; recoveryCodes?: string[]; recovery_codes?: string[]; message?: string; }
+export interface VerifyMFARequest { code: string; otp?: string; secret?: string; }
+export interface DisableMFARequest { password?: string; code?: string; }

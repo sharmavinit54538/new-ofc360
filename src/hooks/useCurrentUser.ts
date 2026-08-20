@@ -6,18 +6,9 @@ export function useCurrentUser() {
   const localUser = useAppSelector(selectCurrentUser);
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const role = useAppSelector(selectCurrentRole);
-
-  const { data: serverUser, isLoading, isFetching, error, refetch } = useGetCurrentUserQuery(undefined, {
-    skip: !isAuthenticated,
-  });
-
+  const { data: serverUser, isLoading, isFetching, error, refetch } = useGetCurrentUserQuery(undefined, { skip: !isAuthenticated });
   return {
-    user: serverUser || localUser,
-    isAuthenticated,
-    role: serverUser?.role || role,
-    isLoading,
-    isFetching,
-    error,
-    refetch,
+    user: serverUser || localUser, isAuthenticated, role: serverUser?.role || role,
+    isLoading, isFetching, error, refetch,
   };
 }
