@@ -2,16 +2,19 @@ import { useCreateReimbursementMutation } from "@/features/payroll";
 import { toast } from "sonner";
 
 export function usePayrollCreateReimbursement(props: any) {
-  const [createReimbursement, { isLoading: isCreatingReimb }] = useCreateReimbursementMutation();
-  const handleCreateReimbursement = async () => {
-    if (!props.reimbAmount || !props.reimbDesc.trim()) return toast.error("Please enter amount and description.");
+  const [createReimbursement, { isLoading: isCreatingReimbursement }] = useCreateReimbursementMutation();
+  const handleCreateReimbursement = async (): Promise<void> => {
+    if (!props.reimbAmount || !props.reimbDesc.trim()) {
+      toast.error("Please enter amount and description.");
+      return;
+    }
     try {
-      await createReimbursement({ employee_id: props.user?.id || "EMP-CURRENT", employee_name: props.user?.name || "Alex Mercer", category: props.reimbCategory, amount: parseFloat(props.reimbAmount) || 0, remarks: props.reimbDesc.trim(), expense_date: new Date().toISOString().split("T")[0], status: "pending" }).unwrap();
-      toast.success("Expense reimbursement claim submitted!");
+      await createReimbursement({ employee_name: props.reimbEmp || "Current Employee", category: props.reimbCat, amount: parseFloat(props.reimbAmount) || 0, description: props.reimbDesc.trim() } as any).unwrap();
+      toast.success("Reimbursement claim submitted!");
       props.setReimbAmount(""); props.setReimbDesc(""); props.setIsReimbModalOpen(false);
     } catch (err: any) {
-      toast.error(err?.data?.message || "Failed to submit reimbursement claim.");
+      toast.error(err?.data?.message || "Failed to submit claim.");
     }
   };
-  return { handleCreateReimbursement, isCreatingReimb };
+  return { handleCreateReimbursement, isCreatingReimbursement };
 }

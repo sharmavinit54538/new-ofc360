@@ -59,7 +59,7 @@ export interface OvertimeEntry {
   employeeName: string;
   date: string;
   overtimeHours: number;
-  rateMultiplier?: number;
+  rateMultiplier?: string | number;
   reason?: string;
   status: "pending" | "approved" | "rejected" | string;
   [key: string]: any;

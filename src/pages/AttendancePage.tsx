@@ -397,7 +397,7 @@ export default function AttendancePage() {
   const [tsBillable, setTsBillable] = useState(true);
 
   const [otHours, setOtHours] = useState("2.5");
-  const [otMultiplier, setOtMultiplier] = useState<OvertimeEntry["rateMultiplier"]>("1.5x (Weekday)");
+  const [otMultiplier, setOtMultiplier] = useState<string>("1.5x (Weekday)");
   const [otReason, setOtReason] = useState("");
 
   const [leaveType, setLeaveType] = useState("Casual Leave (CL)");
