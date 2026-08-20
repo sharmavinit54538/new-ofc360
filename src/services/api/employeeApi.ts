@@ -6,7 +6,15 @@ import { RawEnvelope } from "./envelope";
 export interface GetEmployeesQueryParams {
   department?: string;
   status?: string;
+  role?: string;
   search?: string;
+  page?: number;
+  limit?: number;
+  employment_type?: string;
+  designation?: string;
+  shift?: string;
+  sort?: string;
+  order?: string;
 }
 
 export type GetEmployeesQueryArg = GetEmployeesQueryParams | void;
@@ -467,8 +475,23 @@ export const employeeApi = baseApi.injectEndpoints({
         if (p?.status && p.status !== "ALL") {
           queryParams.append("status", p.status);
         }
+        if (p?.role && p.role !== "ALL") {
+          queryParams.append("role", p.role);
+        }
         if (p?.search) {
           queryParams.append("search", p.search);
+        }
+        if (p?.page) {
+          queryParams.append("page", String(p.page));
+        }
+        if (p?.limit) {
+          queryParams.append("limit", String(p.limit));
+        }
+        if (p?.sort) {
+          queryParams.append("sort", p.sort);
+        }
+        if (p?.order) {
+          queryParams.append("order", p.order);
         }
         const queryString = queryParams.toString();
         return `/api/v1/employees${queryString ? `?${queryString}` : ""}`;
