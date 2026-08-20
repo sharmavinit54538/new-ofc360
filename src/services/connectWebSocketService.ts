@@ -33,6 +33,7 @@ import {
   WebSocketEvent,
   WebSocketEventType,
   PresenceStatus,
+  CallType,
 } from "@/types/connect";
 
 class ConnectWebSocketService {
@@ -350,7 +351,7 @@ class ConnectWebSocketService {
             const conv = draft.find((c) => c.id === targetId || String(c.participant?.id) === String(message.senderId));
             if (conv) {
               conv.lastMessage = message;
-              conv.updatedAt = message.timestamp || new Date().toISOString();
+              conv.updatedAt = String(message.timestamp || new Date().toISOString());
               if (message.senderId !== currentUserId) {
                 conv.unreadCount = (conv.unreadCount || 0) + 1;
               }
@@ -416,7 +417,7 @@ class ConnectWebSocketService {
                 type: isMention ? "mention" : isChannel ? "channel" : "message",
                 title,
                 description,
-                timestamp: message.timestamp || new Date().toISOString(),
+                timestamp: String(message.timestamp || new Date().toISOString()),
                 read: false,
                 link: isChannel
                   ? `/connect/channels/${channelId}`

@@ -142,8 +142,8 @@ export default function EmployeeFormDialog({
       setTeam(employee.team || "");
       setBranchOffice(employee.branchOffice || "Mumbai HQ");
       setWorkLocation(employee.workLocation || "Onsite");
-      setProbationPeriod(employee.probationPeriod ?? 3);
-      setCapacity(employee.capacity ?? 100);
+      setProbationPeriod(Number(employee.probationPeriod) || 3);
+      setCapacity(Number(employee.capacity) || 100);
       setCostCenterId(employee.costCenterId || "CC-ENG-01");
       const rawRole = (employee as any).role || (employee as any).systemRole || (employee as any).backendRole || (employee as any).portalRole;
       setRole(normalizeRole(rawRole));

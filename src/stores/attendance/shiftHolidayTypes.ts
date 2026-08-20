@@ -8,6 +8,7 @@ export interface ShiftTemplate {
   fullDayHours: number;
   breakDurationMins: number;
   department: string;
+  [key: string]: any;
 }
 
 export interface RosterItem {
@@ -19,6 +20,7 @@ export interface RosterItem {
   timing: string;
   dayOfWeek: string;
   date: string;
+  [key: string]: any;
 }
 
 export interface HolidayItem {
@@ -26,8 +28,9 @@ export interface HolidayItem {
   name: string;
   date: string;
   dayOfWeek: string;
-  type: "National" | "Regional" | "Optional";
+  type: "National" | "Regional" | "Optional" | "Optional Floating" | string;
   mandatory: boolean;
+  [key: string]: any;
 }
 
 export interface LeaveBalanceItem {
@@ -36,6 +39,7 @@ export interface LeaveBalanceItem {
   casualLeavesRemaining: number;
   sickLeavesRemaining: number;
   earnedLeavesRemaining: number;
+  [key: string]: any;
 }
 
 export interface TimesheetEntry {
@@ -45,7 +49,8 @@ export interface TimesheetEntry {
   date: string;
   hoursWorked: number;
   project?: string;
-  status: "draft" | "submitted" | "approved" | "rejected";
+  status: "draft" | "submitted" | "approved" | "rejected" | string;
+  [key: string]: any;
 }
 
 export interface OvertimeEntry {
@@ -54,6 +59,8 @@ export interface OvertimeEntry {
   employeeName: string;
   date: string;
   overtimeHours: number;
+  rateMultiplier?: number;
   reason?: string;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | string;
+  [key: string]: any;
 }
