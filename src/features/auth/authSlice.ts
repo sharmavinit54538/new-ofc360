@@ -28,7 +28,7 @@ export const authSlice = createSlice({
       const { user, token, refreshToken, companyId } = action.payload;
       const hasValidToken =
         typeof token === "string" &&
-        token.trim().length > 10 &&
+        token.trim().length > 0 &&
         token !== "undefined" &&
         token !== "null" &&
         token !== "[object Object]";
@@ -49,14 +49,20 @@ export const authSlice = createSlice({
         companyId: activeCompanyId || undefined,
       };
 
-      state.user = normalizedUser;
-      state.token = hasValidToken ? token.trim() : state.token || null;
-      if (refreshToken && typeof refreshToken === "string" && refreshToken.trim().length > 10) {
+      const isExplicitEmptyToken = token === "" || token === null;
+      const isSessionRestored = token === undefined && Boolean(normalizedUser?.id);
+      const isAuth = Boolean(normalizedUser) && (hasValidToken || isSessionRestored) && !isExplicitEmptyToken;
+
+      state.user = isExplicitEmptyToken ? null : normalizedUser;
+      state.token = hasValidToken ? token.trim() : null;
+      if (refreshToken && typeof refreshToken === "string" && refreshToken.trim().length > 0) {
         state.refreshToken = refreshToken.trim();
+      } else if (isExplicitEmptyToken) {
+        state.refreshToken = null;
       }
-      state.isAuthenticated = Boolean(normalizedUser && (hasValidToken || state.token || normalizedUser.id));
+      state.isAuthenticated = isAuth;
       state.isInitializing = false;
-      state.sessionStatus = state.isAuthenticated ? "authenticated" : "unauthenticated";
+      state.sessionStatus = isAuth ? "authenticated" : "unauthenticated";
       state.role = normalizedRole;
       state.companyId = activeCompanyId || null;
     },

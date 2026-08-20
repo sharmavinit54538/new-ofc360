@@ -110,7 +110,7 @@ export const baseQuery = fetchBaseQuery({
     if (input instanceof Request) {
       return fetch(input);
     }
-    return fetch(input, init);
+    return fetch(input, { ...init, credentials: init?.credentials || "include" });
   },
   prepareHeaders: (headers, { getState, endpoint }) => {
     const state = getState() as RootState;

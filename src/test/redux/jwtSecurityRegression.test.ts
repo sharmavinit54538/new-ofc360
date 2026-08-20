@@ -1,27 +1,32 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { configureStore } from "@reduxjs/toolkit";
-import { baseApi, baseQuery } from "@/services/api/baseApi";
+import { baseApi } from "@/services/api/baseApi";
 import { authApi } from "@/services/api/authApi";
 import authReducer, { setCredentials, logout } from "@/features/auth/authSlice";
 
+const createTestStore = () =>
+  configureStore({
+    reducer: {
+      auth: authReducer,
+      [baseApi.reducerPath]: baseApi.reducer,
+    },
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware({
+        serializableCheck: false,
+      }).concat(baseApi.middleware),
+  });
+
+type TestStore = ReturnType<typeof createTestStore>;
+
 describe("OFC360 JWT Security Hardening & Cookie Auth Flow", () => {
-  let store: any;
+  let store: TestStore;
 
   beforeEach(() => {
     localStorage.clear();
     sessionStorage.clear();
     vi.restoreAllMocks();
 
-    store = configureStore({
-      reducer: {
-        auth: authReducer,
-        [baseApi.reducerPath]: baseApi.reducer,
-      },
-      middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware({
-          serializableCheck: false,
-        }).concat(baseApi.middleware),
-    });
+    store = createTestStore();
   });
 
   afterEach(() => {
@@ -111,18 +116,24 @@ describe("OFC360 JWT Security Hardening & Cookie Auth Flow", () => {
   });
 
   it("3. [CORS & COOKIES] baseApi uses credentials: include on all requests", async () => {
-    let capturedInit: RequestInit | undefined;
-    vi.spyOn(global, "fetch").mockImplementationOnce(async (_input, init) => {
-      capturedInit = init;
-      return new Response(JSON.stringify({ success: true }), {
-        status: 200,
-        headers: { "content-type": "application/json" },
-      });
+    let capturedCredentials: RequestCredentials | undefined;
+    vi.spyOn(global, "fetch").mockImplementationOnce(async (input: RequestInfo | URL, init?: RequestInit) => {
+      capturedCredentials = init?.credentials || (input instanceof Request ? input.credentials : (input as any)?.credentials);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          data: { id: "usr_me_1", email: "me@ofc360.com", role: "employee" },
+        }),
+        {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }
+      );
     });
 
-    await baseQuery("/api/v1/auth/me", { getState: store.getState, dispatch: store.dispatch, endpoint: "getCurrentUser", type: "query" } as any, {});
+    await store.dispatch(authApi.endpoints.getCurrentUser.initiate());
 
-    expect(capturedInit?.credentials).toBe("include");
+    expect(capturedCredentials).toBe("include");
   });
 
   it("4. [CONCURRENT REFRESH MUTEX] Multiple simultaneous 401 requests trigger a SINGLE refresh call", async () => {
@@ -137,8 +148,8 @@ describe("OFC360 JWT Security Hardening & Cookie Auth Flow", () => {
 
     let refreshCallCount = 0;
 
-    vi.spyOn(global, "fetch").mockImplementation(async (input: any) => {
-      const url = typeof input === "string" ? input : input?.url || "";
+    vi.spyOn(global, "fetch").mockImplementation(async (input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input instanceof Request ? input.url : String(input);
 
       if (url.includes("/auth/refresh")) {
         refreshCallCount++;
@@ -158,7 +169,7 @@ describe("OFC360 JWT Security Hardening & Cookie Auth Flow", () => {
 
       // Initial protected endpoints return 401 on first call, 200 on retry
       if (url.includes("/api/v1/test-resource")) {
-        const authHeader = (input?.headers?.get && input.headers.get("authorization")) || "";
+        const authHeader = (input instanceof Request && input.headers.get("authorization")) || "";
         if (authHeader.includes("new_refreshed_access_token_99999")) {
           return new Response(JSON.stringify({ data: "success_after_refresh" }), {
             status: 200,
@@ -225,8 +236,8 @@ describe("OFC360 JWT Security Hardening & Cookie Auth Flow", () => {
 
     let refreshCallCount = 0;
 
-    vi.spyOn(global, "fetch").mockImplementation(async (input: any) => {
-      const url = typeof input === "string" ? input : input?.url || "";
+    vi.spyOn(global, "fetch").mockImplementation(async (input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input instanceof Request ? input.url : String(input);
 
       if (url.includes("/auth/refresh")) {
         refreshCallCount++;
