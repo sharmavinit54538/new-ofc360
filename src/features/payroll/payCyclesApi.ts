@@ -1,4 +1,4 @@
-import { payCyclesQueriesApi } from "./payCycles/payCyclesQueries";
+import { baseApi } from "@/services/api/baseApi";
 export * from "./payCycles/payCyclesQueries";
 export * from "./payCycles/payCyclesMutations";
-export const payCyclesApi = payCyclesQueriesApi;
+export const payCyclesApi = baseApi as any;

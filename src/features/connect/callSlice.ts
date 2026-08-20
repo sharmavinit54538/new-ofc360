@@ -106,7 +106,7 @@ export const callSlice = createSlice({
       state.type = null;
     },
 
-    setCallConnected: (state, action: PayloadAction<{ callId?: string } | undefined>) => {
+    setCallConnected: (state, action?: PayloadAction<{ callId?: string } | void | undefined>) => {
       if (state.activeCall) {
         state.activeCall.status = "connected";
         state.activeCall.startTime = state.activeCall.startTime || Date.now();

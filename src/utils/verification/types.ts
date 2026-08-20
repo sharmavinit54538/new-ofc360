@@ -5,4 +5,6 @@ export interface CameraCaptureResult {
   timestamp: string;
   faceHash: string;
   brightnessScore: number;
+  blob?: Blob;
+  base64?: string;
 }

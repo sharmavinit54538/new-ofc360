@@ -1,4 +1,4 @@
-import { bankQueriesApi } from "./bank/bankQueries";
+import { baseApi } from "@/services/api/baseApi";
 export * from "./bank/bankQueries";
 export * from "./bank/bankMutations";
-export const bankTransfersApi = bankQueriesApi;
+export const bankTransfersApi = baseApi as any;

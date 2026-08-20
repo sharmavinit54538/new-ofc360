@@ -5,15 +5,13 @@ export const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) 
   const colorConfig = Object.entries(config).filter(([_, c]) => c.theme || c.color);
   if (!colorConfig.length) return null;
   return (
-    <style dangerouslySetInnerHTML={{
-      __html: Object.entries(THEMES).map(([theme, prefix]) => (
-        prefix + " [data-chart=" + id + "] {
-" +
-        colorConfig.map(([k, c]) => { const col = c.theme?.[theme as keyof typeof c.theme] || c.color; return col ? "  --color-" + k + ": " + col + ";" : null; }).filter(Boolean).join("
-") + "
-}"
-      )).join("
-")
-    }} />
+    <style
+      dangerouslySetInnerHTML={{
+        __html: Object.entries(THEMES).map(([theme, prefix]) => {
+          const styles = colorConfig.map(([k, c]) => { const col = c.theme?.[theme as keyof typeof c.theme] || c.color; return col ? `  --color-${k}: ${col};` : null; }).filter(Boolean).join("\n");
+          return `${prefix} [data-chart=${id}] {\n${styles}\n}`;
+        }).join("\n"),
+      }}
+    />
   );
 };

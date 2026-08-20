@@ -231,7 +231,7 @@ export default function AttendancePage() {
     data: holidaysApiRes,
     isLoading: isHolidaysLoading,
     refetch: refetchHolidays,
-  } = useGetCalendarHolidaysQuery();
+  } = useGetCalendarHolidaysQuery(undefined);
   const [createHolidayApi, { isLoading: isCreatingHoliday }] = useCreateCalendarHolidaysMutation();
   const [deleteHolidayApi] = useDeleteCalendarHolidaysIdMutation();
 
@@ -240,7 +240,7 @@ export default function AttendancePage() {
     data: leavesApiRes,
     isLoading: isLeavesLoading,
     refetch: refetchLeaves,
-  } = useGetLeavesHistoryQuery();
+  } = useGetLeavesHistoryQuery(undefined);
   const [applyLeaveApi, { isLoading: isApplyingLeave }] = useCreateLeavesApplyMutation();
   const [reviewLeaveApi] = useCreateLeavesLeaveIdReviewMutation();
 
@@ -249,7 +249,7 @@ export default function AttendancePage() {
     data: timesheetsApiRes,
     isLoading: isTimesheetsLoading,
     refetch: refetchTimesheets,
-  } = useGetTimesheetsHistoryQuery();
+  } = useGetTimesheetsHistoryQuery(undefined);
   const [createTimesheetApi, { isLoading: isCreatingTimesheet }] = useCreateTimesheetsWeeklyMutation();
   const [reviewTimesheetApi] = useCreateTimesheetsTimesheetIdReviewMutation();
 
@@ -861,26 +861,43 @@ export default function AttendancePage() {
       days: 1,
       reason: leaveReason.trim(),
     };
+    const fullLeavePayload: any = {
+      id: `leave_${Date.now()}`,
+      employeeId: user?.id || "EMP-CURRENT",
+      employeeName: user?.name || "Alex Mercer",
+      leaveType,
+      type: leaveType,
+      from: leaveStart,
+      to: leaveEnd,
+      startDate: leaveStart,
+      endDate: leaveEnd,
+      days: 1,
+      totalDays: 1,
+      reason: leaveReason.trim(),
+      status: "pending",
+      appliedAt: new Date().toISOString(),
+    };
     try {
       await applyLeaveApi(payload).unwrap();
       refetchLeaves();
     } catch {
       // Local sync fallback
     }
-    addLocalLeave(payload);
+    addLocalLeave(fullLeavePayload);
     setLeaveReason("");
     setIsLeaveModalOpen(false);
     toast.success("Leave application submitted successfully!");
   };
 
   const handleReviewLeave = async (id: string, status: "Approved" | "Denied") => {
+    const normalizedStatus = status === "Approved" ? "approved" : "rejected";
     try {
-      await reviewLeaveApi({ leave_id: id, status: status === "Approved" ? "approved" : "rejected" }).unwrap();
+      await reviewLeaveApi({ leave_id: id, status: normalizedStatus }).unwrap();
       refetchLeaves();
     } catch {
       // Local fallback
     }
-    updateLocalLeaveStatus(id, status);
+    updateLocalLeaveStatus(id, normalizedStatus);
     toast.success(`Leave request ${status.toLowerCase()}!`);
   };
 

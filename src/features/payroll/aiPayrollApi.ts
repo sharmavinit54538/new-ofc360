@@ -1,4 +1,4 @@
-import { aiQueriesApi } from "./ai/aiQueries";
+import { baseApi } from "@/services/api/baseApi";
 export * from "./ai/aiQueries";
 export * from "./ai/aiMutations";
-export const aiPayrollApi = aiQueriesApi;
+export const aiPayrollApi = baseApi as any;
