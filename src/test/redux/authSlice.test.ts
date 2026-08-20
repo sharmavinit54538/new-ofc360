@@ -15,6 +15,7 @@ describe("authSlice", () => {
 
   beforeEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
     initialState = {
       user: {
         id: "usr_100",
@@ -32,15 +33,17 @@ describe("authSlice", () => {
     };
   });
 
-  it("should have unauthenticated default state when no storage present", () => {
+  it("should have unauthenticated initializing default state when no session present", () => {
     const state = authReducer(undefined, { type: "@@INIT" });
     expect(state.user).toBeNull();
     expect(state.token).toBeNull();
+    expect(state.refreshToken).toBeNull();
     expect(state.isAuthenticated).toBe(false);
-    expect(state.sessionStatus).toBe("unauthenticated");
+    expect(state.isInitializing).toBe(true);
+    expect(state.sessionStatus).toBe("loading");
   });
 
-  it("should handle setCredentials and persist to localStorage", () => {
+  it("should handle setCredentials in memory without persisting JWTs to localStorage or sessionStorage", () => {
     const newUser = {
       id: "usr_200",
       name: "Jane HR",
@@ -66,10 +69,11 @@ describe("authSlice", () => {
     expect(state.role).toBe("hr_admin");
     expect(state.sessionStatus).toBe("authenticated");
 
-    expect(localStorage.getItem("ofc360_access_token")).toBe("new_jwt_token");
-    expect(localStorage.getItem("ofc360_refresh_token")).toBe("new_refresh_token");
-    expect(localStorage.getItem("ofc360_company_id")).toBe("22222222-2222-2222-2222-222222222222");
-    expect(JSON.parse(localStorage.getItem("ofc360_user") || "{}").email).toBe("jane@ofc360.com");
+    // Security Verification: Zero JWT tokens in browser storage
+    expect(localStorage.getItem("ofc360_access_token")).toBeNull();
+    expect(localStorage.getItem("ofc360_refresh_token")).toBeNull();
+    expect(sessionStorage.getItem("ofc360_access_token")).toBeNull();
+    expect(sessionStorage.getItem("ofc360_refresh_token")).toBeNull();
   });
 
   it("should handle updateUser", () => {
@@ -84,10 +88,9 @@ describe("authSlice", () => {
     expect(state.user?.role).toBe("manager");
   });
 
-  it("should handle setCompanyContext and persist to storage", () => {
+  it("should handle setCompanyContext in memory", () => {
     const state = authReducer(initialState, setCompanyContext("99999999-9999-9999-9999-999999999999"));
     expect(state.companyId).toBe("99999999-9999-9999-9999-999999999999");
-    expect(localStorage.getItem("ofc360_company_id")).toBe("99999999-9999-9999-9999-999999999999");
   });
 
   it("should handle setInitializing", () => {
@@ -131,11 +134,9 @@ describe("authSlice", () => {
     expect(state.user?.role).toBe("hr_admin");
   });
 
-  it("should handle logout and clear all storage tokens", () => {
+  it("should handle logout and clear all in-memory and residual storage tokens", () => {
     localStorage.setItem("ofc360_access_token", "active_token");
     localStorage.setItem("ofc360_refresh_token", "active_refresh");
-    localStorage.setItem("ofc360_user", JSON.stringify({ id: "1", name: "Test" }));
-    localStorage.setItem("ofc360_company_id", "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
 
     const state = authReducer(initialState, logout());
     expect(state.user).toBeNull();
@@ -148,9 +149,8 @@ describe("authSlice", () => {
 
     expect(localStorage.getItem("ofc360_access_token")).toBeNull();
     expect(localStorage.getItem("ofc360_refresh_token")).toBeNull();
-    expect(localStorage.getItem("ofc360_user")).toBeNull();
-    expect(localStorage.getItem("ofc360_company_id")).toBeNull();
   });
 });
+
 
 

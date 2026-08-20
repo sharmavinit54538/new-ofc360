@@ -3,43 +3,41 @@ import { Provider } from "react-redux";
 import { store } from "./store";
 import { useAppDispatch, useAppSelector } from "./hooks";
 import { selectAuth } from "@/features/auth/authSelectors";
-import { updateUser, setInitializing, logout } from "@/features/auth/authSlice";
+import { setCredentials, updateUser, setInitializing, logout } from "@/features/auth/authSlice";
 import { useGetCurrentUserQuery } from "@/services/api/authApi";
 import { baseApi } from "@/services/api/baseApi";
 
 export function AuthBootstrap({ children }: { children: React.ReactNode }) {
   const dispatch = useAppDispatch();
-  const { token, isAuthenticated } = useAppSelector(selectAuth);
+  const { user } = useAppSelector(selectAuth);
 
-  const { data: currentUser, error, isLoading } = useGetCurrentUserQuery(undefined, {
-    skip: !token,
-  });
-
-  useEffect(() => {
-    // If no token exists at all, settle initializing immediately
-    if (!token) {
-      dispatch(setInitializing(false));
-    }
-  }, [token, dispatch]);
+  // Invoke /auth/me on startup with credentials: "include" to restore active session from cookie
+  const { data: currentUser, error, isLoading } = useGetCurrentUserQuery(undefined);
 
   useEffect(() => {
     if (currentUser) {
-      dispatch(updateUser(currentUser));
+      if (!user) {
+        dispatch(
+          setCredentials({
+            user: currentUser,
+            companyId: currentUser.companyId,
+          })
+        );
+      } else {
+        dispatch(updateUser(currentUser));
+      }
       dispatch(setInitializing(false));
     } else if (error) {
-      // Only log out if it's an authenticated 401 where refresh failed
       const status = (error as any)?.status;
       if (status === 401) {
         dispatch(logout());
         dispatch(baseApi.util.resetApiState());
       }
-      // For network errors (FETCH_ERROR) or 500 server errors, do NOT wipe user session.
-      // Settle initializing so cached user session continues.
       dispatch(setInitializing(false));
-    } else if (!isLoading && !token) {
+    } else if (!isLoading) {
       dispatch(setInitializing(false));
     }
-  }, [currentUser, error, isLoading, token, dispatch]);
+  }, [currentUser, error, isLoading, user, dispatch]);
 
   return <>{children}</>;
 }
@@ -51,4 +49,5 @@ export function ReduxProvider({ children }: { children: React.ReactNode }) {
     </Provider>
   );
 }
+
 

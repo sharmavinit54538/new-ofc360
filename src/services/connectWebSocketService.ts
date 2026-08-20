@@ -51,12 +51,9 @@ class ConnectWebSocketService {
       return;
     }
 
-    const token =
-      localStorage.getItem("accessToken") ||
-      localStorage.getItem("auth_token") ||
-      localStorage.getItem("token") ||
-      "";
-    if (!token) {
+    const token = store.getState().auth.token || "";
+    const isAuth = store.getState().auth.isAuthenticated;
+    if (!token && !isAuth) {
       return;
     }
 
@@ -67,11 +64,11 @@ class ConnectWebSocketService {
     try {
       const parsedUrl = new URL(rawBaseUrl);
       const protocol = parsedUrl.protocol === "https:" ? "wss:" : "ws:";
-      wsUrl = `${protocol}//${parsedUrl.host}/api/v1/connect/ws?token=${encodeURIComponent(token)}`;
+      wsUrl = `${protocol}//${parsedUrl.host}/api/v1/connect/ws${token ? `?token=${encodeURIComponent(token)}` : ""}`;
     } catch {
       const isSecure = window.location.protocol === "https:";
       const protocol = isSecure ? "wss:" : "ws:";
-      wsUrl = `${protocol}//api.ofc360.com/api/v1/connect/ws?token=${encodeURIComponent(token)}`;
+      wsUrl = `${protocol}//api.ofc360.com/api/v1/connect/ws${token ? `?token=${encodeURIComponent(token)}` : ""}`;
     }
 
     try {

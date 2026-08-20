@@ -285,8 +285,8 @@ describe("OFC360 HR Admin Authentication & Onboarding Flow", () => {
 
       expect(store.getState().auth.isAuthenticated).toBe(true);
       expect(store.getState().auth.token).toBe("jwt_token_valid_secure_token_12345");
-      expect(localStorage.getItem("ofc360_access_token")).toBe("jwt_token_valid_secure_token_12345");
-      expect(localStorage.getItem("ofc360_refresh_token")).toBe("refresh_token_valid_secure_67890");
+      expect(localStorage.getItem("ofc360_access_token")).toBeNull();
+      expect(localStorage.getItem("ofc360_refresh_token")).toBeNull();
     });
   });
 
@@ -386,11 +386,11 @@ describe("OFC360 HR Admin Authentication & Onboarding Flow", () => {
       const verifyOtpButton = screen.getByRole("button", { name: /verify & sign in/i });
       fireEvent.click(verifyOtpButton);
 
-      // 4. Verify successful login and token persistence
+      // 4. Verify successful login and token persistence in memory only
       await waitFor(() => {
         expect(store.getState().auth.isAuthenticated).toBe(true);
         expect(store.getState().auth.token).toBe("jwt_otp_verified_token_98765");
-        expect(localStorage.getItem("ofc360_access_token")).toBe("jwt_otp_verified_token_98765");
+        expect(localStorage.getItem("ofc360_access_token")).toBeNull();
       });
     });
   });

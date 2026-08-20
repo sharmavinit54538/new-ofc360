@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { store } from "@/app/store";
 
 interface ParsedProfile {
   candidate_id?: string;
@@ -152,9 +153,10 @@ export function AIResumeCopilot() {
         setCurrentStage((prev) => (prev < 4 ? prev + 1 : prev));
       }, 750);
 
-      const token = localStorage.getItem("token") || "";
+      const token = store.getState().auth.token || "";
       const response = await fetch("/api/v1/recruitment/resume/upload", {
         method: "POST",
+        credentials: "include",
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },

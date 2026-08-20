@@ -1,67 +1,15 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { AuthState, AuthUser, SystemRole, SessionStatus, normalizeRole } from "./authTypes";
 
-const TOKEN_KEY = "ofc360_access_token";
-const REFRESH_TOKEN_KEY = "ofc360_refresh_token";
-const USER_KEY = "ofc360_user";
-const COMPANY_KEY = "ofc360_company_id";
-
-const getStoredToken = (): string | null => {
-  try {
-    const t = localStorage.getItem(TOKEN_KEY);
-    return t && t.trim().length > 10 && t !== "undefined" && t !== "null" ? t.trim() : null;
-  } catch {
-    return null;
-  }
-};
-
-const getStoredRefreshToken = (): string | null => {
-  try {
-    const t = localStorage.getItem(REFRESH_TOKEN_KEY);
-    return t && t.trim().length > 10 && t !== "undefined" && t !== "null" ? t.trim() : null;
-  } catch {
-    return null;
-  }
-};
-
-const getStoredUser = (): AuthUser | null => {
-  try {
-    const data = localStorage.getItem(USER_KEY);
-    if (!data) return null;
-    const parsed = JSON.parse(data) as AuthUser;
-    return parsed && typeof parsed === "object" ? parsed : null;
-  } catch {
-    return null;
-  }
-};
-
-const getStoredCompanyId = (): string | null => {
-  try {
-    return localStorage.getItem(COMPANY_KEY);
-  } catch {
-    return null;
-  }
-};
-
-const initialUser = getStoredUser();
-const normalizedInitialUser: AuthUser | null = initialUser
-  ? { ...initialUser, role: normalizeRole(initialUser.role) }
-  : null;
-const initialToken = getStoredToken();
-const initialRefreshToken = getStoredRefreshToken();
-const initialCompanyId = normalizedInitialUser?.companyId || (normalizedInitialUser as any)?.company_id || getStoredCompanyId() || null;
-
-const hasTokens = Boolean(initialToken || initialRefreshToken);
-
 const initialState: AuthState = {
-  user: normalizedInitialUser,
-  token: initialToken,
-  refreshToken: initialRefreshToken,
-  isAuthenticated: Boolean(initialToken && normalizedInitialUser),
-  isInitializing: hasTokens,
-  role: normalizedInitialUser?.role || "employee",
-  companyId: initialCompanyId,
-  sessionStatus: hasTokens ? (normalizedInitialUser ? "authenticated" : "loading") : "unauthenticated",
+  user: null,
+  token: null,
+  refreshToken: null,
+  isAuthenticated: false,
+  isInitializing: true,
+  role: "employee",
+  companyId: null,
+  sessionStatus: "loading",
 };
 
 export const authSlice = createSlice({
@@ -72,9 +20,9 @@ export const authSlice = createSlice({
       state,
       action: PayloadAction<{
         user: AuthUser;
-        token: string;
-        refreshToken?: string;
-        companyId?: string;
+        token?: string | null;
+        refreshToken?: string | null;
+        companyId?: string | null;
       }>
     ) => {
       const { user, token, refreshToken, companyId } = action.payload;
@@ -102,30 +50,15 @@ export const authSlice = createSlice({
       };
 
       state.user = normalizedUser;
-      state.token = hasValidToken ? token.trim() : null;
+      state.token = hasValidToken ? token.trim() : state.token || null;
       if (refreshToken && typeof refreshToken === "string" && refreshToken.trim().length > 10) {
         state.refreshToken = refreshToken.trim();
       }
-      state.isAuthenticated = hasValidToken;
+      state.isAuthenticated = Boolean(normalizedUser && (hasValidToken || state.token || normalizedUser.id));
       state.isInitializing = false;
-      state.sessionStatus = hasValidToken ? "authenticated" : "unauthenticated";
+      state.sessionStatus = state.isAuthenticated ? "authenticated" : "unauthenticated";
       state.role = normalizedRole;
-      state.companyId = activeCompanyId;
-
-      if (hasValidToken) {
-        try {
-          localStorage.setItem(TOKEN_KEY, token.trim());
-          if (refreshToken && typeof refreshToken === "string" && refreshToken.trim().length > 10) {
-            localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken.trim());
-          }
-          if (activeCompanyId) {
-            localStorage.setItem(COMPANY_KEY, activeCompanyId);
-          }
-          localStorage.setItem(USER_KEY, JSON.stringify(normalizedUser));
-        } catch {
-          // ignore storage write error
-        }
-      }
+      state.companyId = activeCompanyId || null;
     },
 
     updateUser: (state, action: PayloadAction<Partial<AuthUser>>) => {
@@ -144,11 +77,6 @@ export const authSlice = createSlice({
         } else if ((action.payload as any).company_id) {
           state.companyId = (action.payload as any).company_id;
         }
-        try {
-          localStorage.setItem(USER_KEY, JSON.stringify(state.user));
-        } catch {
-          // ignore
-        }
       }
     },
 
@@ -157,11 +85,6 @@ export const authSlice = createSlice({
       state.role = role;
       if (state.user) {
         state.user.role = role;
-        try {
-          localStorage.setItem(USER_KEY, JSON.stringify(state.user));
-        } catch {
-          // ignore
-        }
       }
     },
 
@@ -169,15 +92,6 @@ export const authSlice = createSlice({
       state.companyId = action.payload;
       if (state.user) {
         state.user.companyId = action.payload || undefined;
-      }
-      try {
-        if (action.payload) {
-          localStorage.setItem(COMPANY_KEY, action.payload);
-        } else {
-          localStorage.removeItem(COMPANY_KEY);
-        }
-      } catch {
-        // ignore
       }
     },
 
@@ -213,13 +127,13 @@ export const authSlice = createSlice({
       state.role = "employee";
       state.companyId = null;
 
+      // Clean up any legacy tokens from older sessions if present
       try {
-        localStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem(REFRESH_TOKEN_KEY);
-        localStorage.removeItem(USER_KEY);
-        localStorage.removeItem(COMPANY_KEY);
+        localStorage.removeItem("ofc360_access_token");
+        localStorage.removeItem("ofc360_refresh_token");
+        localStorage.removeItem("ofc360_user");
       } catch {
-        // ignore storage error
+        // ignore
       }
     },
   },
@@ -239,4 +153,5 @@ export { normalizeRole } from "./authTypes";
 export type { AuthUser, AuthState, SystemRole } from "./authTypes";
 
 export default authSlice.reducer;
+
 

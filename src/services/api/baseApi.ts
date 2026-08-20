@@ -105,6 +105,7 @@ const waitFor = (fn: () => boolean, timeoutMs = 2000, intervalMs = 50): Promise<
 export const baseQuery = fetchBaseQuery({
   baseUrl: rawBaseUrl,
   timeout: 15000,
+  credentials: "include",
   fetchFn: async (input: RequestInfo | URL, init?: RequestInit) => {
     if (input instanceof Request) {
       return fetch(input);
@@ -113,8 +114,8 @@ export const baseQuery = fetchBaseQuery({
   },
   prepareHeaders: (headers, { getState, endpoint }) => {
     const state = getState() as RootState;
-    const token = state?.auth?.token || localStorage.getItem("ofc360_access_token");
-    const companyId = state?.auth?.companyId || state?.company?.activeCompany?.id || localStorage.getItem("ofc360_company_id");
+    const token = state?.auth?.token;
+    const companyId = state?.auth?.companyId || state?.company?.activeCompany?.id;
 
     const isPublic = isPublicRequest(undefined, endpoint);
 
@@ -130,8 +131,6 @@ export const baseQuery = fetchBaseQuery({
   },
 });
 
-
-
 // Mutex locking mechanism for concurrent 401 refresh requests
 let refreshPromise: Promise<boolean> | null = null;
 
@@ -145,12 +144,11 @@ export const baseQueryWithReauth: BaseQueryFn<
   const isRetry = Boolean((extraOptions as any)?.isRetry || (typeof args === "object" && (args as any)?._isRetry));
 
   const state = api.getState() as RootState;
-  const token = state?.auth?.token || localStorage.getItem("ofc360_access_token");
+  const token = state?.auth?.token;
 
   if (isValidToken(token) && needsCompanyId(requestUrl, api.endpoint)) {
     let companyId = (api.getState() as RootState)?.auth?.companyId ||
-                    (api.getState() as RootState)?.company?.activeCompany?.id ||
-                    localStorage.getItem("ofc360_company_id");
+                    (api.getState() as RootState)?.company?.activeCompany?.id;
 
     if (!isValidUUID(companyId) && (api.getState() as RootState)?.auth?.isInitializing) {
       // Wait for auth initialization to complete
@@ -163,8 +161,7 @@ export const baseQueryWithReauth: BaseQueryFn<
     // Re-check after potential wait
     const finalState = api.getState() as RootState;
     companyId = finalState?.auth?.companyId ||
-                finalState?.company?.activeCompany?.id ||
-                localStorage.getItem("ofc360_company_id");
+                finalState?.company?.activeCompany?.id;
 
     if (!isValidUUID(companyId)) {
       return {
@@ -192,26 +189,23 @@ export const baseQueryWithReauth: BaseQueryFn<
     }
 
     const state = api.getState() as RootState;
-    const refreshToken = state?.auth?.refreshToken || localStorage.getItem("ofc360_refresh_token");
-
-    if (!isValidToken(refreshToken)) {
-      api.dispatch(logout());
-      api.dispatch(baseApi.util.resetApiState());
-      return result;
-    }
+    const inMemoryRefreshToken = state?.auth?.refreshToken;
 
     // Handle concurrent 401 calls with a single-flight mutex promise
     if (!refreshPromise) {
       refreshPromise = (async () => {
         try {
+          const refreshBody: Record<string, string> = {};
+          if (isValidToken(inMemoryRefreshToken)) {
+            refreshBody.refreshToken = inMemoryRefreshToken.trim();
+            refreshBody.refresh_token = inMemoryRefreshToken.trim();
+          }
+
           const refreshResult = await baseQuery(
             {
               url: "/api/v1/auth/refresh",
               method: "POST",
-              body: {
-                refreshToken: refreshToken.trim(),
-                refresh_token: refreshToken.trim(),
-              },
+              body: Object.keys(refreshBody).length > 0 ? refreshBody : undefined,
             },
             api,
             { isRetry: true }
@@ -227,9 +221,9 @@ export const baseQueryWithReauth: BaseQueryFn<
               const currentUser = (api.getState() as RootState)?.auth?.user;
               api.dispatch(
                 setCredentials({
-                  user: resData.user || currentUser,
+                  user: resData.user || currentUser || { id: "usr_me", name: "User", email: "", role: "employee" },
                   token: newToken.trim(),
-                  refreshToken: isValidToken(newRefreshToken) ? newRefreshToken.trim() : refreshToken.trim(),
+                  refreshToken: isValidToken(newRefreshToken) ? newRefreshToken.trim() : inMemoryRefreshToken || null,
                 })
               );
               return true;
@@ -268,4 +262,5 @@ export const baseApi = createApi({
   tagTypes: API_TAGS,
   endpoints: () => ({}),
 });
+
 
