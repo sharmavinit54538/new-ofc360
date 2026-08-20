@@ -1,60 +1,18 @@
 import { create } from "zustand";
-import { type Employee } from "@/types/hr";
-import { getStoredData, setStoredData } from "@/utils/storage";
+import type { Employee } from "@/types/hr";
 
-const STORAGE_KEY = "ofc360_employees_v2";
-
-interface EmployeeState {
-  employees: Employee[];
-  searchQuery: string;
-  departmentFilter: string;
-  statusFilter: string;
-  setSearchQuery: (query: string) => void;
-  setDepartmentFilter: (dept: string) => void;
-  setStatusFilter: (status: string) => void;
-  addEmployee: (employee: Omit<Employee, "id">) => void;
-  updateEmployee: (id: string, updated: Partial<Employee>) => void;
-  deleteEmployee: (id: string) => void;
-  resetEmployees: () => void;
-}
-
-export const useEmployeeStore = create<EmployeeState>((set, get) => ({
-  employees: getStoredData<Employee[]>(STORAGE_KEY, []),
-  searchQuery: "",
-  departmentFilter: "ALL",
-  statusFilter: "ALL",
-
+export const useEmployeeStore = create<{
+  employees: Employee[]; selectedEmployee: Employee | null; searchQuery: string;
+  departmentFilter: string; setEmployees: (e: Employee[]) => void;
+  setSelectedEmployee: (e: Employee | null) => void; setSearchQuery: (q: string) => void;
+  setDepartmentFilter: (d: string) => void; addEmployee: (e: Employee) => void;
+  updateEmployee: (id: string, e: Partial<Employee>) => void;
+}>((set) => ({
+  employees: [], selectedEmployee: null, searchQuery: "", departmentFilter: "ALL",
+  setEmployees: (employees) => set({ employees }),
+  setSelectedEmployee: (selectedEmployee) => set({ selectedEmployee }),
   setSearchQuery: (searchQuery) => set({ searchQuery }),
   setDepartmentFilter: (departmentFilter) => set({ departmentFilter }),
-  setStatusFilter: (statusFilter) => set({ statusFilter }),
-
-  addEmployee: (newEmpData) => {
-    const nextId = `EMP-${String(get().employees.length + 1001)}`;
-    const newEmployee: Employee = {
-      id: nextId,
-      ...newEmpData,
-    };
-    const updated = [newEmployee, ...get().employees];
-    setStoredData(STORAGE_KEY, updated);
-    set({ employees: updated });
-  },
-
-  updateEmployee: (id, updatedFields) => {
-    const updated = get().employees.map((emp) =>
-      emp.id === id ? { ...emp, ...updatedFields } : emp
-    );
-    setStoredData(STORAGE_KEY, updated);
-    set({ employees: updated });
-  },
-
-  deleteEmployee: (id) => {
-    const updated = get().employees.filter((emp) => emp.id !== id);
-    setStoredData(STORAGE_KEY, updated);
-    set({ employees: updated });
-  },
-
-  resetEmployees: () => {
-    setStoredData(STORAGE_KEY, []);
-    set({ employees: [] });
-  },
+  addEmployee: (emp) => set((s) => ({ employees: [emp, ...s.employees] })),
+  updateEmployee: (id, e) => set((s) => ({ employees: s.employees.map((x) => x.id === id ? { ...x, ...e } : x) })),
 }));

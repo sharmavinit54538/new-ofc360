@@ -1,40 +1,16 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-interface UIState {
-  sidebarOpen: boolean;
-  themeMode: 'light' | 'dark' | 'system';
-  activeModal: string | null;
-  modalData: any;
-}
-
-const initialState: UIState = {
-  sidebarOpen: true,
-  themeMode: 'light',
-  activeModal: null,
-  modalData: null,
-};
+interface UIState { sidebarOpen: boolean; themeMode: 'light' | 'dark' | 'system'; activeModal: string | null; modalData: any; }
+const initialState: UIState = { sidebarOpen: true, themeMode: 'light', activeModal: null, modalData: null };
 
 export const uiSlice = createSlice({
-  name: 'ui',
-  initialState,
+  name: 'ui', initialState,
   reducers: {
-    toggleSidebar: (state) => {
-      state.sidebarOpen = !state.sidebarOpen;
-    },
-    setSidebarOpen: (state, action: PayloadAction<boolean>) => {
-      state.sidebarOpen = action.payload;
-    },
-    setThemeMode: (state, action: PayloadAction<'light' | 'dark' | 'system'>) => {
-      state.themeMode = action.payload;
-    },
-    openModal: (state, action: PayloadAction<{ modalId: string; data?: any }>) => {
-      state.activeModal = action.payload.modalId;
-      state.modalData = action.payload.data || null;
-    },
-    closeModal: (state) => {
-      state.activeModal = null;
-      state.modalData = null;
-    },
+    toggleSidebar: (s) => { s.sidebarOpen = !s.sidebarOpen; },
+    setSidebarOpen: (s, a: PayloadAction<boolean>) => { s.sidebarOpen = a.payload; },
+    setThemeMode: (s, a: PayloadAction<'light' | 'dark' | 'system'>) => { s.themeMode = a.payload; },
+    openModal: (s, a: PayloadAction<{ modalId: string; data?: any }>) => { s.activeModal = a.payload.modalId; s.modalData = a.payload.data || null; },
+    closeModal: (s) => { s.activeModal = null; s.modalData = null; },
   },
 });
 

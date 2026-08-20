@@ -1,33 +1,13 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-interface UserState {
-  profile: Record<string, any> | null;
-  preferences: {
-    language: string;
-    timezone: string;
-    emailNotifications: boolean;
-  };
-}
-
-const initialState: UserState = {
-  profile: null,
-  preferences: {
-    language: 'en',
-    timezone: 'UTC',
-    emailNotifications: true,
-  },
-};
+interface UserState { profile: Record<string, any> | null; preferences: { language: string; timezone: string; emailNotifications: boolean; }; }
+const initialState: UserState = { profile: null, preferences: { language: 'en', timezone: 'UTC', emailNotifications: true } };
 
 export const userSlice = createSlice({
-  name: 'user',
-  initialState,
+  name: 'user', initialState,
   reducers: {
-    setUserProfile: (state, action: PayloadAction<Record<string, any>>) => {
-      state.profile = action.payload;
-    },
-    updatePreferences: (state, action: PayloadAction<Partial<UserState['preferences']>>) => {
-      state.preferences = { ...state.preferences, ...action.payload };
-    },
+    setUserProfile: (s, a: PayloadAction<Record<string, any>>) => { s.profile = a.payload; },
+    updatePreferences: (s, a: PayloadAction<Partial<UserState['preferences']>>) => { s.preferences = { ...s.preferences, ...a.payload }; },
   },
 });
 
