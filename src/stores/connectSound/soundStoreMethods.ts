@@ -1,4 +1,3 @@
-import type { ConnectSoundSettings } from "./soundTypes";
 import { DEFAULT_SETTINGS } from "./soundDefaults";
 import { persistSettings } from "./soundActions";
 
@@ -9,13 +8,13 @@ export const createSoundStoreMethods = (set: any, get: any) => ({
   toggleMuteAll: () => { set((s: any) => ({ isMutedAll: !s.isMutedAll })); persistSettings(get()); },
   setAudioUnlocked: (isAudioUnlocked: boolean) => set({ isAudioUnlocked }),
   setIsSettingsOpen: (isSettingsOpen: boolean) => set({ isSettingsOpen }),
-  setIncomingCallsEnabled: (isIncomingCallsEnabled: boolean) => { set({ isIncomingCallsEnabled }); persistSettings(get()); },
-  setOutgoingCallsEnabled: (isOutgoingCallsEnabled: boolean) => { set({ isOutgoingCallsEnabled }); persistSettings(get()); },
-  setMessagesEnabled: (isMessagesEnabled: boolean) => { set({ isMessagesEnabled }); persistSettings(get()); },
-  setMentionsEnabled: (isMentionsEnabled: boolean) => { set({ isMentionsEnabled }); persistSettings(get()); },
-  setGroupMessagesEnabled: (isGroupMessagesEnabled: boolean) => { set({ isGroupMessagesEnabled }); persistSettings(get()); },
-  setChannelMessagesEnabled: (isChannelMessagesEnabled: boolean) => { set({ isChannelMessagesEnabled }); persistSettings(get()); },
-  setMeetingSoundsEnabled: (isMeetingSoundsEnabled: boolean) => { set({ isMeetingSoundsEnabled }); persistSettings(get()); },
-  setParticipantJoinLeaveEnabled: (isParticipantJoinLeaveEnabled: boolean) => { set({ isParticipantJoinLeaveEnabled }); persistSettings(get()); },
+  setIncomingCallsEnabled: (e: boolean) => { set({ isIncomingCallsEnabled: e }); persistSettings(get()); },
+  setOutgoingCallsEnabled: (e: boolean) => { set({ isOutgoingCallsEnabled: e }); persistSettings(get()); },
+  setMessagesEnabled: (e: boolean) => { set({ isMessagesEnabled: e }); persistSettings(get()); },
+  setMentionsEnabled: (e: boolean) => { set({ isMentionsEnabled: e }); persistSettings(get()); },
+  setGroupMessagesEnabled: (e: boolean) => { set({ isGroupMessagesEnabled: e }); persistSettings(get()); },
+  setChannelMessagesEnabled: (e: boolean) => { set({ isChannelMessagesEnabled: e }); persistSettings(get()); },
+  setMeetingSoundsEnabled: (e: boolean) => { set({ isMeetingSoundsEnabled: e }); persistSettings(get()); },
+  setParticipantJoinLeaveEnabled: (e: boolean) => { set({ isParticipantJoinLeaveEnabled: e }); persistSettings(get()); },
   resetToDefaults: () => { set({ ...DEFAULT_SETTINGS }); persistSettings(DEFAULT_SETTINGS); },
 });

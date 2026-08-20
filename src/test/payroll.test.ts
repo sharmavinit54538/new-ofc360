@@ -94,18 +94,13 @@ describe("OFC360 Payroll & Financial Calculation Engine", () => {
 });
 
 describe("Payroll Store Workflow & State Management", () => {
-  beforeEach(() => {
-    const store = usePayrollStore.getState();
-    // Reset state before each test
-    store.runs.forEach(() => {});
-  });
-
   it("records a new payroll run successfully", () => {
     const store = usePayrollStore.getState();
-    const initialLength = store.runs.length;
+    const initialLength = store.payrollRuns.length;
 
-    store.addRun({
-      month: "August 2026",
+    store.addPayrollRun({
+      id: "PAY-TEST-01",
+      month: "August",
       year: 2026,
       processedEmpCount: 15,
       grossTotal: 1250000,
@@ -113,15 +108,16 @@ describe("Payroll Store Workflow & State Management", () => {
       status: "Approved",
     });
 
-    expect(usePayrollStore.getState().runs.length).toBe(initialLength + 1);
-    const lastRun = usePayrollStore.getState().runs[0];
-    expect(lastRun.month).toBe("August 2026");
+    expect(usePayrollStore.getState().payrollRuns.length).toBe(initialLength + 1);
+    const lastRun = usePayrollStore.getState().payrollRuns[0];
+    expect(lastRun.month).toBe("August");
     expect(lastRun.grossTotal).toBe(1250000);
   });
 
   it("updates reimbursement claim status to Approved", () => {
     const store = usePayrollStore.getState();
-    store.addReimbursement({
+    store.addReimbursementClaim({
+      id: "REIMB-TEST-01",
       employeeId: "EMP-202",
       employeeName: "Jane Smith",
       category: "Fuel & Travel",
@@ -133,20 +129,22 @@ describe("Payroll Store Workflow & State Management", () => {
     const claim = usePayrollStore.getState().reimbursements[0];
     expect(claim.status).toBe("Pending");
 
-    usePayrollStore.getState().updateReimbursementStatus(claim.id, "Approved");
-    const updated = usePayrollStore.getState().reimbursements.find((r) => r.id === claim.id);
+    usePayrollStore.getState().approveReimbursement(claim.id);
+    const updated = usePayrollStore.getState().reimbursements.find((r: any) => r.id === claim.id);
     expect(updated?.status).toBe("Approved");
   });
 
-  it("updates multi-tier approval status to Approved", () => {
+  it("records a new salary advance successfully", () => {
     const store = usePayrollStore.getState();
-    const approval = store.approvals[0];
+    const initialLength = store.advances.length;
 
-    if (approval) {
-      store.updateApprovalStatus(approval.id, "Approved", "Verified by Finance");
-      const updated = usePayrollStore.getState().approvals.find((a) => a.id === approval.id);
-      expect(updated?.status).toBe("Approved");
-      expect(updated?.comments).toBe("Verified by Finance");
-    }
+    store.addSalaryAdvance({
+      id: "ADV-TEST-01",
+      employeeName: "John Doe",
+      amount: 50000,
+      status: "Pending",
+    });
+
+    expect(usePayrollStore.getState().advances.length).toBe(initialLength + 1);
   });
 });
