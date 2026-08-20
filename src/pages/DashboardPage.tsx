@@ -79,22 +79,24 @@ export default function DashboardPage() {
   const { user } = useAuth();
 
   // Role-aware dashboard dispatch
-  if (user?.role === "super_admin") {
-    return <SuperAdminDashboardPage />;
+  switch (user?.role) {
+    case "super_admin":
+      return <SuperAdminDashboardPage />;
+    case "employee":
+      return <EmployeeDashboardPage />;
+    case "manager":
+      return <ManagerDashboardPage />;
+    case "executive":
+      return <ExecutiveDashboardPage />;
+    case "it_admin":
+      return <ITAdminDashboardPage />;
+    case "hr_admin":
+    default:
+      return <HRAdminDashboard />;
   }
-  if (user?.role === "employee") {
-    return <EmployeeDashboardPage />;
-  }
-  if (user?.role === "manager") {
-    return <ManagerDashboardPage />;
-  }
-  if (user?.role === "executive") {
-    return <ExecutiveDashboardPage />;
-  }
-  if (user?.role === "it_admin") {
-    return <ITAdminDashboardPage />;
-  }
+}
 
+function HRAdminDashboard() {
   // Live Queries & Stores
   const { data: rawEmployees = [] } = useGetEmployeesQuery();
   const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
