@@ -56,7 +56,11 @@ describe("OFC360 HR Admin Authentication & Onboarding Flow", () => {
       });
 
       let capturedAuthHeader: string | null = null;
-      vi.spyOn(globalThis, "fetch").mockImplementationOnce(async (input, init) => {
+      vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+        const url = typeof input === "string" ? input : input instanceof Request ? input.url : "";
+        if (url.includes("/auth/refresh")) {
+          return new Response(JSON.stringify({ detail: "No session cookie" }), { status: 401, headers: { "Content-Type": "application/json" } });
+        }
         const headers = input instanceof Request ? input.headers : new Headers(init?.headers as any);
         capturedAuthHeader = headers.get("Authorization");
         return new Response(

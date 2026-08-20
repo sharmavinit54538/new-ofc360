@@ -23,6 +23,16 @@ class MockResizeObserver {
 global.ResizeObserver = MockResizeObserver as any;
 window.ResizeObserver = MockResizeObserver as any;
 
+if (typeof globalThis.requestAnimationFrame === "undefined") {
+  globalThis.requestAnimationFrame = ((callback: FrameRequestCallback) => setTimeout(callback, 0)) as any;
+  window.requestAnimationFrame = globalThis.requestAnimationFrame;
+}
+
+if (typeof globalThis.cancelAnimationFrame === "undefined") {
+  globalThis.cancelAnimationFrame = ((id: number) => clearTimeout(id)) as any;
+  window.cancelAnimationFrame = globalThis.cancelAnimationFrame;
+}
+
 if (typeof globalThis.Request !== "undefined") {
   const OriginalRequest = globalThis.Request;
   const SafeRequest = function (input: any, init?: any) {

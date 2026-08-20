@@ -67,8 +67,16 @@ export default function DashboardLayout() {
       connectWebSocketService.disconnect(false);
     };
 
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        console.log("[BFCACHE] Restored from Back-Forward cache. Re-synchronizing session...");
+        connectWebSocketService.connect();
+      }
+    };
+
     window.addEventListener("beforeunload", handleBeforeUnload);
     window.addEventListener("pagehide", handleBeforeUnload);
+    window.addEventListener("pageshow", handlePageShow);
 
     return () => {
       window.removeEventListener("pointerdown", handleGlobalInteraction);
@@ -76,6 +84,7 @@ export default function DashboardLayout() {
       window.removeEventListener("touchstart", handleGlobalInteraction);
       window.removeEventListener("beforeunload", handleBeforeUnload);
       window.removeEventListener("pagehide", handleBeforeUnload);
+      window.removeEventListener("pageshow", handlePageShow);
     };
   }, []);
 

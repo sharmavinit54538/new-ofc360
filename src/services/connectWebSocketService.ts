@@ -1,4 +1,5 @@
 import { store } from "@/app/store";
+import { registerTokenUpdateListener } from "@/services/auth/authInterceptor";
 import { baseApi } from "@/services/api/baseApi";
 import { connectApi, normalizeConnectMessage, isCurrentUser } from "@/services/api/connectApi";
 import {
@@ -37,11 +38,30 @@ import {
 class ConnectWebSocketService {
   private ws: WebSocket | null = null;
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 10;
+  private maxReconnectAttempts = 5;
   private reconnectTimer: any = null;
   private heartbeatTimer: any = null;
   private isExplicitlyClosed = false;
+  private currentToken: string = "";
   private signalListeners = new Set<(payload: any) => void>();
+
+  public updateToken(newToken: string) {
+    const trimmed = (newToken || "").trim();
+    if (trimmed && trimmed !== this.currentToken) {
+      this.currentToken = trimmed;
+      if (store.getState().auth.isAuthenticated) {
+        console.log("[WEBSOCKET] Updating connection with refreshed access token...");
+        if (this.ws) {
+          try {
+            this.ws.close(1000, "Token updated");
+          } catch {}
+          this.ws = null;
+        }
+        this.reconnectAttempts = 0;
+        this.connect();
+      }
+    }
+  }
 
   public connect() {
     if (typeof window === "undefined") return;
@@ -57,6 +77,7 @@ class ConnectWebSocketService {
       return;
     }
 
+    this.currentToken = token;
     this.isExplicitlyClosed = false;
     const rawBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://api.ofc360.com";
     let wsUrl: string;
@@ -129,30 +150,41 @@ class ConnectWebSocketService {
         store.dispatch(setConnected(false));
         this.stopHeartbeat();
 
-        if (!this.isExplicitlyClosed) {
+        // If closed due to authentication failure (4001, 4003, 1008), do not loop-reconnect with stale token
+        const isAuthError = event.code === 4001 || event.code === 4003 || event.code === 1008 || (event.reason && event.reason.toLowerCase().includes("unauthoriz"));
+        if (isAuthError) {
+          console.warn("[WEBSOCKET] Auth rejected WebSocket. Stopping reconnect loop until token refreshed.");
+          return;
+        }
+
+        if (!this.isExplicitlyClosed && store.getState().auth.isAuthenticated) {
           this.scheduleReconnect();
         }
       };
     } catch (err: any) {
       console.warn("WebSocket failed to initiate:", err);
-      this.scheduleReconnect();
+      if (store.getState().auth.isAuthenticated) {
+        this.scheduleReconnect();
+      }
     }
   }
 
   private scheduleReconnect() {
-    if (this.isExplicitlyClosed) return;
+    if (this.isExplicitlyClosed || !store.getState().auth.isAuthenticated) return;
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       store.dispatch(setConnectionError("Unable to establish real-time connection."));
       return;
     }
 
     this.reconnectAttempts += 1;
-    const delay = Math.min(1000 * Math.pow(1.5, this.reconnectAttempts), 20000);
+    const delay = Math.min(1000 * Math.pow(1.5, this.reconnectAttempts), 15000);
 
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     this.reconnectTimer = setTimeout(() => {
-      store.dispatch(setReconnecting(true));
-      this.connect();
+      if (store.getState().auth.isAuthenticated && !this.isExplicitlyClosed) {
+        store.dispatch(setReconnecting(true));
+        this.connect();
+      }
     }, delay);
   }
 
@@ -831,3 +863,8 @@ class ConnectWebSocketService {
 }
 
 export const connectWebSocketService = new ConnectWebSocketService();
+
+// Register listener to update WebSocket credentials whenever tokens are refreshed
+registerTokenUpdateListener((newToken) => {
+  connectWebSocketService.updateToken(newToken);
+});

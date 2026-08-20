@@ -9,11 +9,21 @@ import { connectWebSocketService } from "@/services/connectWebSocketService";
 export function useAuthLogout() {
   const dispatch = useAppDispatch();
   const [logoutSessionApi] = useLogoutSessionMutation();
-  return useCallback(async () => {
-    connectWebSocketService.disconnect();
+
+  const handleLogout = useCallback(async () => {
+    connectWebSocketService.disconnect(true);
     dispatch(resetPresenceState());
-    try { await Promise.race([logoutSessionApi().unwrap(), new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 4000))]); } catch {}
+    try {
+      await Promise.race([
+        logoutSessionApi().unwrap(),
+        new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 4000)),
+      ]);
+    } catch {
+      // Ignore network errors or timeouts during logout
+    }
     dispatch(logoutAction());
     dispatch(baseApi.util.resetApiState());
   }, [dispatch, logoutSessionApi]);
+
+  return handleLogout;
 }
