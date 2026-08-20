@@ -1,12 +1,9 @@
 import { create } from "zustand";
-import { getStoredData } from "@/utils/storage";
-import { initialCompany, initialHRAdmin, initialBranding, initialPreferences } from "./onboarding/onboardingDefaults";
-import { createStepActions } from "./onboarding/onboardingStepActions";
+import { initialOnboarding, initialCompany, initialHRAdmin, initialBranding, initialPreferences } from "./onboarding/onboardingDefaults";
+import { createOnboardingActions } from "./onboarding/onboardingStepActions";
 
 export const useHRAdminOnboardingStore = create<any>((set, get) => ({
-  company: initialCompany, hrAdmin: initialHRAdmin, branding: initialBranding,
-  preferences: initialPreferences,
-  status: { step: 1, isCompleted: false, completedSteps: [1] },
-  workflows: [], newHires: [],
-  ...createStepActions(set, get),
+  company: initialCompany, hr_admin: initialHRAdmin, branding: initialBranding,
+  preferences: initialPreferences, onboarding: initialOnboarding, tenantData: {},
+  ...createOnboardingActions(set, get),
 }));

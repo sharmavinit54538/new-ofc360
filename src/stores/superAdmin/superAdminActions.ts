@@ -7,6 +7,9 @@ export const createSuperAdminActions = (set: any) => ({
   deleteCompany: (id: string) => set((s: any) => ({
     companies: s.companies.filter((c: any) => c.id !== id)
   })),
+  toggleCompanyStatus: (id: string) => set((s: any) => ({
+    companies: s.companies.map((c: any) => c.id === id ? { ...c, status: c.status === "Active" ? "Suspended" : "Active" } : c)
+  })),
   setUsers: (users: any) => set({ users }),
   addUser: (user: any) => set((s: any) => ({ users: [user, ...s.users] })),
   setHRAdmins: (hrAdmins: any) => set({ hrAdmins }),

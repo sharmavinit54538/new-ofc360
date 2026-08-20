@@ -8,5 +8,5 @@ export function saveOnboardingStep(s: any, stepNum: number, data: any, cid: stri
   const completed = Array.from(new Set([...s.onboarding.completed_steps, stepNum]));
   const onboarding = { ...s.onboarding, completed_steps: completed, current_step: Math.max(s.onboarding.current_step, stepNum + 1), completion_percentage: Math.round((completed.length / 5) * 100) };
   const tenantData = { ...s.tenantData, [cid]: { company, hr_admin, branding, preferences, onboarding } };
-  return { success: true, stateUpdates: { company, hr_admin, branding, preferences, onboarding, tenantData } };
+  return { success: true, status: onboarding, stateUpdates: { company, hr_admin, branding, preferences, onboarding, tenantData } };
 }

@@ -4,5 +4,5 @@ export function completeOnboardingHelper(s: any, cid: string) {
   if (!ok) return { success: false, error: "Onboarding is incomplete: steps 1, 2, and 3 are required." };
   const onboarding = { ...s.onboarding, is_completed: true, completed_at: new Date().toISOString(), completion_percentage: 100 };
   const tenantData = { ...s.tenantData, [cid]: { ...s.tenantData[cid], onboarding } };
-  return { success: true, stateUpdates: { onboarding, tenantData } };
+  return { success: true, status: onboarding, stateUpdates: { onboarding, tenantData } };
 }
