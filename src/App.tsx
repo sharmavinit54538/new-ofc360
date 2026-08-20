@@ -22,6 +22,8 @@ import ExitManagementPage from "@/pages/ExitManagementPage";
 import CulturePage from "@/pages/CulturePage";
 import AIChatPage from "@/pages/AIChatPage";
 import AIATSPage from "@/pages/AIATSPage";
+import ResumeATSCheckerPage from "@/pages/tools/ResumeATSCheckerPage";
+
 import AIInsightsPage from "@/pages/AIInsightsPage";
 import AIInterviewPage from "@/pages/AIInterviewPage";
 import AICCTVPage from "@/pages/AICCTVPage";
@@ -307,6 +309,11 @@ const App = () => (
             <Route path="/ai" element={<RoleGuard module="intelligence_hub"><IntelligenceLandingPage /></RoleGuard>} />
             <Route path="/ai-chat" element={<AIChatPage />} />
             <Route path="/ai/ats" element={<AIATSPage />} />
+            {/* Resume ATS Checker Tool (All Authenticated Users) */}
+            <Route path="/tools/ats-checker" element={<ResumeATSCheckerPage />} />
+            <Route path="/tools/resume-ats-checker" element={<ResumeATSCheckerPage />} />
+            <Route path="/resume-ats-checker" element={<ResumeATSCheckerPage />} />
+
             <Route path="/ai/insights" element={<RoleGuard module="intelligence_hub"><IntelligenceLandingPage /></RoleGuard>} />
             <Route path="/ai/interview" element={<AIInterviewPage />} />
             <Route path="/ai/cctv" element={<AIFaceAttendancePage />} />
