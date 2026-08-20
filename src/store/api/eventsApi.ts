@@ -20,14 +20,14 @@ export const eventsApi = baseApi.injectEndpoints({
     }),
     getEventsId: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/events/${paramsid` : typeof params === 'object' && params?.id ? `/api/v1/events/${params.id}` : '/api/v1/events/{id}',
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/events/${params.id}` : typeof params === 'object' && params?.id ? `/api/v1/events/${params.id}` : '/api/v1/events/{id}',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Event'],
     }),
     updateEventsId: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/events/${data.id` : typeof data === 'object' && data?.id ? `/api/v1/events/${data.id}` : '/api/v1/events/{id}',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/events/${data.id}` : typeof data === 'object' && data?.id ? `/api/v1/events/${data.id}` : '/api/v1/events/{id}',
         method: 'PUT',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -35,7 +35,7 @@ export const eventsApi = baseApi.injectEndpoints({
     }),
     deleteEventsId: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/events/${data.id` : typeof data === 'object' && data?.id ? `/api/v1/events/${data.id}` : '/api/v1/events/{id}',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/events/${data.id}` : typeof data === 'object' && data?.id ? `/api/v1/events/${data.id}` : '/api/v1/events/{id}',
         method: 'DELETE',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -43,7 +43,7 @@ export const eventsApi = baseApi.injectEndpoints({
     }),
     updateEventsIdPublish: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/events/${data.id/publish` : typeof data === 'object' && data?.id ? `/api/v1/events/${data.id}/publish` : '/api/v1/events/{id}/publish',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/events/${data.id}/publish` : typeof data === 'object' && data?.id ? `/api/v1/events/${data.id}/publish` : '/api/v1/events/{id}/publish',
         method: 'PATCH',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -51,7 +51,7 @@ export const eventsApi = baseApi.injectEndpoints({
     }),
     updateEventsIdCancel: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/events/${data.id/cancel` : typeof data === 'object' && data?.id ? `/api/v1/events/${data.id}/cancel` : '/api/v1/events/{id}/cancel',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/events/${data.id}/cancel` : typeof data === 'object' && data?.id ? `/api/v1/events/${data.id}/cancel` : '/api/v1/events/{id}/cancel',
         method: 'PATCH',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -59,7 +59,7 @@ export const eventsApi = baseApi.injectEndpoints({
     }),
     createEventsIdRegister: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/events/${data.id/register` : typeof data === 'object' && data?.id ? `/api/v1/events/${data.id}/register` : '/api/v1/events/{id}/register',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/events/${data.id}/register` : typeof data === 'object' && data?.id ? `/api/v1/events/${data.id}/register` : '/api/v1/events/{id}/register',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),

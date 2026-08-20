@@ -34,7 +34,7 @@ export const leaveApi = baseApi.injectEndpoints({
     }),
     createLeavesLeaveIdReview: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/leaves/${data.leave_id/review` : typeof data === 'object' && data?.id ? `/api/v1/leaves/{leave_id}/review` : '/api/v1/leaves/{leave_id}/review',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/leaves/${data.leave_id}/review` : typeof data === 'object' && data?.id ? `/api/v1/leaves/{leave_id}/review` : '/api/v1/leaves/{leave_id}/review',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -42,7 +42,7 @@ export const leaveApi = baseApi.injectEndpoints({
     }),
     getLeavesBalancesEmployeeId: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/leaves/balances/${paramsemployee_id` : typeof params === 'object' && params?.id ? `/api/v1/leaves/balances/{employee_id}` : '/api/v1/leaves/balances/{employee_id}',
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/leaves/balances/${params.employee_id}` : typeof params === 'object' && params?.id ? `/api/v1/leaves/balances/{employee_id}` : '/api/v1/leaves/balances/{employee_id}',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Leave'],

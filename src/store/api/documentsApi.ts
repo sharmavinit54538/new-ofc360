@@ -20,14 +20,14 @@ export const documentsApi = baseApi.injectEndpoints({
     }),
     getDocumentsEmployeesId: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/documents/employees/${paramsid` : typeof params === 'object' && params?.id ? `/api/v1/documents/employees/${params.id}` : '/api/v1/documents/employees/{id}',
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/documents/employees/${params.id}` : typeof params === 'object' && params?.id ? `/api/v1/documents/employees/${params.id}` : '/api/v1/documents/employees/{id}',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Document'],
     }),
     updateDocumentsEmployeesId: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/documents/employees/${data.id` : typeof data === 'object' && data?.id ? `/api/v1/documents/employees/${data.id}` : '/api/v1/documents/employees/{id}',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/documents/employees/${data.id}` : typeof data === 'object' && data?.id ? `/api/v1/documents/employees/${data.id}` : '/api/v1/documents/employees/{id}',
         method: 'PUT',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -35,7 +35,7 @@ export const documentsApi = baseApi.injectEndpoints({
     }),
     deleteDocumentsEmployeesId: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/documents/employees/${data.id` : typeof data === 'object' && data?.id ? `/api/v1/documents/employees/${data.id}` : '/api/v1/documents/employees/{id}',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/documents/employees/${data.id}` : typeof data === 'object' && data?.id ? `/api/v1/documents/employees/${data.id}` : '/api/v1/documents/employees/{id}',
         method: 'DELETE',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -43,7 +43,7 @@ export const documentsApi = baseApi.injectEndpoints({
     }),
     getDocumentsEmployeesIdDownload: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/documents/employees/${paramsid/download` : typeof params === 'object' && params?.id ? `/api/v1/documents/employees/${params.id}/download` : '/api/v1/documents/employees/{id}/download',
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/documents/employees/${params.id}/download` : typeof params === 'object' && params?.id ? `/api/v1/documents/employees/${params.id}/download` : '/api/v1/documents/employees/{id}/download',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Document'],
@@ -65,14 +65,14 @@ export const documentsApi = baseApi.injectEndpoints({
     }),
     getDocumentsCompanyId: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/documents/company/${paramsid` : typeof params === 'object' && params?.id ? `/api/v1/documents/company/${params.id}` : '/api/v1/documents/company/{id}',
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/documents/company/${params.id}` : typeof params === 'object' && params?.id ? `/api/v1/documents/company/${params.id}` : '/api/v1/documents/company/{id}',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Document'],
     }),
     deleteDocumentsCompanyId: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/documents/company/${data.id` : typeof data === 'object' && data?.id ? `/api/v1/documents/company/${data.id}` : '/api/v1/documents/company/{id}',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/documents/company/${data.id}` : typeof data === 'object' && data?.id ? `/api/v1/documents/company/${data.id}` : '/api/v1/documents/company/{id}',
         method: 'DELETE',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -80,7 +80,7 @@ export const documentsApi = baseApi.injectEndpoints({
     }),
     createDocumentsIdRequestSignature: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/documents/${data.id/request-signature` : typeof data === 'object' && data?.id ? `/api/v1/documents/${data.id}/request-signature` : '/api/v1/documents/{id}/request-signature',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/documents/${data.id}/request-signature` : typeof data === 'object' && data?.id ? `/api/v1/documents/${data.id}/request-signature` : '/api/v1/documents/{id}/request-signature',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -88,7 +88,7 @@ export const documentsApi = baseApi.injectEndpoints({
     }),
     createDocumentsIdSign: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/documents/${data.id/sign` : typeof data === 'object' && data?.id ? `/api/v1/documents/${data.id}/sign` : '/api/v1/documents/{id}/sign',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/documents/${data.id}/sign` : typeof data === 'object' && data?.id ? `/api/v1/documents/${data.id}/sign` : '/api/v1/documents/{id}/sign',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -96,14 +96,14 @@ export const documentsApi = baseApi.injectEndpoints({
     }),
     getDocumentsIdSignatureStatus: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/documents/${paramsid/signature-status` : typeof params === 'object' && params?.id ? `/api/v1/documents/${params.id}/signature-status` : '/api/v1/documents/{id}/signature-status',
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/documents/${params.id}/signature-status` : typeof params === 'object' && params?.id ? `/api/v1/documents/${params.id}/signature-status` : '/api/v1/documents/{id}/signature-status',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Document'],
     }),
     updateDocumentsIdVerify: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/documents/${data.id/verify` : typeof data === 'object' && data?.id ? `/api/v1/documents/${data.id}/verify` : '/api/v1/documents/{id}/verify',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/documents/${data.id}/verify` : typeof data === 'object' && data?.id ? `/api/v1/documents/${data.id}/verify` : '/api/v1/documents/{id}/verify',
         method: 'PATCH',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -111,7 +111,7 @@ export const documentsApi = baseApi.injectEndpoints({
     }),
     updateDocumentsIdReject: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/documents/${data.id/reject` : typeof data === 'object' && data?.id ? `/api/v1/documents/${data.id}/reject` : '/api/v1/documents/{id}/reject',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/documents/${data.id}/reject` : typeof data === 'object' && data?.id ? `/api/v1/documents/${data.id}/reject` : '/api/v1/documents/{id}/reject',
         method: 'PATCH',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -148,7 +148,7 @@ export const documentsApi = baseApi.injectEndpoints({
     }),
     createDocumentTemplatesIdGenerate: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/document-templates/${data.id/generate` : typeof data === 'object' && data?.id ? `/api/v1/document-templates/${data.id}/generate` : '/api/v1/document-templates/{id}/generate',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/document-templates/${data.id}/generate` : typeof data === 'object' && data?.id ? `/api/v1/document-templates/${data.id}/generate` : '/api/v1/document-templates/{id}/generate',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),

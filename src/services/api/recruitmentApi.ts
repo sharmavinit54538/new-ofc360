@@ -1,6 +1,12 @@
-import { baseApi } from "./baseApi";
+﻿import { baseApi } from "./baseApi";
+import type {
+  RankingResult,
+  TopRankedResponse,
+  RankCandidatesRequest,
+  TopRankedQueryParams,
+} from "@/types/ranking";
 
-// ── Backend Response Types ─────────────────────────────────────────────────
+// â”€â”€ Backend Response Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface BackendJobSkill {
   id: string;
@@ -56,7 +62,7 @@ export interface BackendJobListResponse {
   pages: number;
 }
 
-// ── Resume / ATS Response Types ────────────────────────────────────────────
+// â”€â”€ Resume / ATS Response Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface BackendATSScoreBreakdown {
   overall_ats_score: number;
@@ -167,7 +173,7 @@ export interface BackendCandidateListItem {
   applied_at: string | null;
 }
 
-// ── Generic API Response Wrapper ───────────────────────────────────────────
+// â”€â”€ Generic API Response Wrapper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface APIResponse<T> {
   success: boolean;
@@ -176,12 +182,12 @@ interface APIResponse<T> {
   errors: string[] | null;
 }
 
-// ── RTK Query Endpoints ────────────────────────────────────────────────────
+// â”€â”€ RTK Query Endpoints â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const recruitmentApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
 
-    // ── Jobs ─────────────────────────────────────────────────────────────
+    // â”€â”€ Jobs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     getRecruitmentJobs: builder.query<BackendJobListResponse, { status?: string; search?: string; page?: number; limit?: number } | void>({
       query: (params) => {
         const p = params as { status?: string; search?: string; page?: number; limit?: number } | undefined;
@@ -203,7 +209,7 @@ export const recruitmentApi = baseApi.injectEndpoints({
       providesTags: (_res, _err, id) => [{ type: "Job", id }],
     }),
 
-    // ── Resume Upload & AI Screening ─────────────────────────────────────
+    // â”€â”€ Resume Upload & AI Screening â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     uploadResumeForScreening: builder.mutation<BackendCandidateScreeningResponse, FormData>({
       query: (formData) => ({
         url: "/api/v1/recruitment/resume/upload",
@@ -220,7 +226,7 @@ export const recruitmentApi = baseApi.injectEndpoints({
       invalidatesTags: ["Candidate", "Recruitment"],
     }),
 
-    // ── Candidates ───────────────────────────────────────────────────────
+    // â”€â”€ Candidates â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     getRecruitmentCandidates: builder.query<{ items: BackendCandidateListItem[]; total: number }, { search?: string; status?: string; page?: number; limit?: number } | void>({
       query: (params) => {
         const p = params as { search?: string; status?: string; page?: number; limit?: number } | undefined;
@@ -242,14 +248,14 @@ export const recruitmentApi = baseApi.injectEndpoints({
       providesTags: (_res, _err, id) => [{ type: "Candidate", id }],
     }),
 
-    // ── ATS Analysis ─────────────────────────────────────────────────────
+    // â”€â”€ ATS Analysis â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     getCandidateATSAnalysis: builder.query<BackendCandidateATSAnalysis, string>({
       query: (candidateId) => `/api/v1/recruitment/candidates/${candidateId}/ats`,
       transformResponse: (response: APIResponse<BackendCandidateATSAnalysis>) => response.data,
       providesTags: (_res, _err, id) => [{ type: "Candidate", id }],
     }),
 
-    // ── Job Matching ─────────────────────────────────────────────────────
+    // â”€â”€ Job Matching â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     getJobs: builder.query<BackendJobListResponse, { status?: string; search?: string; page?: number; limit?: number } | void>({
       query: (params) => {
         const p = params as { status?: string; search?: string; page?: number; limit?: number } | undefined;
@@ -279,6 +285,23 @@ export const recruitmentApi = baseApi.injectEndpoints({
       },
       invalidatesTags: ["Candidate", "Recruitment"],
     }),
+
+    // ── AI Candidate Ranking (v2) ────────────────────────────────────────
+    rankCandidates: builder.mutation<RankingResult, RankCandidatesRequest>({
+      query: (body) => ({
+        url: "/api/v2/ranking/rank",
+        method: "POST",
+        body,
+      }),
+      transformResponse: (response: APIResponse<RankingResult>) => response.data,
+      invalidatesTags: ["Candidate", "Recruitment"],
+    }),
+
+    getTopRankedCandidates: builder.query<TopRankedResponse, TopRankedQueryParams>({
+      query: ({ job_id, top_n }) => `/api/v2/ranking/top/${job_id}?top_n=${top_n ?? 10}`,
+      transformResponse: (response: APIResponse<TopRankedResponse>) => response.data,
+      providesTags: ["Candidate"],
+    }),
   }),
 });
 
@@ -291,6 +314,7 @@ export const {
   useGetRecruitmentCandidatesQuery,
   useGetRecruitmentCandidateByIdQuery,
   useGetCandidateATSAnalysisQuery,
-  useMatchCandidatesForJobMutation,
+  useRankCandidatesMutation,
+  useGetTopRankedCandidatesQuery,
 } = recruitmentApi;
 

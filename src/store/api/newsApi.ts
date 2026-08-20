@@ -20,14 +20,14 @@ export const newsApi = baseApi.injectEndpoints({
     }),
     getNewsId: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/news/${paramsid` : typeof params === 'object' && params?.id ? `/api/v1/news/${params.id}` : '/api/v1/news/{id}',
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/news/${params.id}` : typeof params === 'object' && params?.id ? `/api/v1/news/${params.id}` : '/api/v1/news/{id}',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Event'],
     }),
     updateNewsId: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/news/${data.id` : typeof data === 'object' && data?.id ? `/api/v1/news/${data.id}` : '/api/v1/news/{id}',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/news/${data.id}` : typeof data === 'object' && data?.id ? `/api/v1/news/${data.id}` : '/api/v1/news/{id}',
         method: 'PUT',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -35,7 +35,7 @@ export const newsApi = baseApi.injectEndpoints({
     }),
     deleteNewsId: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/news/${data.id` : typeof data === 'object' && data?.id ? `/api/v1/news/${data.id}` : '/api/v1/news/{id}',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/news/${data.id}` : typeof data === 'object' && data?.id ? `/api/v1/news/${data.id}` : '/api/v1/news/{id}',
         method: 'DELETE',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -43,7 +43,7 @@ export const newsApi = baseApi.injectEndpoints({
     }),
     updateNewsIdPublish: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/news/${data.id/publish` : typeof data === 'object' && data?.id ? `/api/v1/news/${data.id}/publish` : '/api/v1/news/{id}/publish',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/news/${data.id}/publish` : typeof data === 'object' && data?.id ? `/api/v1/news/${data.id}/publish` : '/api/v1/news/{id}/publish',
         method: 'PATCH',
         body: typeof data === 'object' ? data : undefined,
       }),

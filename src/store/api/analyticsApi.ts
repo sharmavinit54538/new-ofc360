@@ -27,7 +27,7 @@ export const analyticsApi = baseApi.injectEndpoints({
     }),
     createV2HrAnalyticsAttritionPredictionEmployeeId: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/hr-analytics/attrition-prediction/${data.employee_id` : typeof data === 'object' && data?.id ? `/api/v2/hr-analytics/attrition-prediction/{employee_id}` : '/api/v2/hr-analytics/attrition-prediction/{employee_id}',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/hr-analytics/attrition-prediction/${data.employee_id}` : typeof data === 'object' && data?.id ? `/api/v2/hr-analytics/attrition-prediction/{employee_id}` : '/api/v2/hr-analytics/attrition-prediction/{employee_id}',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),

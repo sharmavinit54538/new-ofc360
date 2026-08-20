@@ -5,7 +5,7 @@ export const interviewApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     createApplicationsIdSendInterview: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/applications/${data.id/send-interview` : typeof data === 'object' && data?.id ? `/api/v1/applications/${data.id}/send-interview` : '/api/v1/applications/{id}/send-interview',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/applications/${data.id}/send-interview` : typeof data === 'object' && data?.id ? `/api/v1/applications/${data.id}/send-interview` : '/api/v1/applications/{id}/send-interview',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -13,7 +13,7 @@ export const interviewApi = baseApi.injectEndpoints({
     }),
     createInterviewsIdSchedule: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/interviews/${data.id/schedule` : typeof data === 'object' && data?.id ? `/api/v1/interviews/${data.id}/schedule` : '/api/v1/interviews/{id}/schedule',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/interviews/${data.id}/schedule` : typeof data === 'object' && data?.id ? `/api/v1/interviews/${data.id}/schedule` : '/api/v1/interviews/{id}/schedule',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -28,14 +28,14 @@ export const interviewApi = baseApi.injectEndpoints({
     }),
     getInterviewsId: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/interviews/${paramsid` : typeof params === 'object' && params?.id ? `/api/v1/interviews/${params.id}` : '/api/v1/interviews/{id}',
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/interviews/${params.id}` : typeof params === 'object' && params?.id ? `/api/v1/interviews/${params.id}` : '/api/v1/interviews/{id}',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Interview'],
     }),
     updateInterviewsRoundsRoundIdPass: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/interviews/rounds/${data.round_id/pass` : typeof data === 'object' && data?.id ? `/api/v1/interviews/rounds/{round_id}/pass` : '/api/v1/interviews/rounds/{round_id}/pass',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/interviews/rounds/${data.round_id}/pass` : typeof data === 'object' && data?.id ? `/api/v1/interviews/rounds/{round_id}/pass` : '/api/v1/interviews/rounds/{round_id}/pass',
         method: 'PATCH',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -43,7 +43,7 @@ export const interviewApi = baseApi.injectEndpoints({
     }),
     updateInterviewsRoundsRoundIdReject: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/interviews/rounds/${data.round_id/reject` : typeof data === 'object' && data?.id ? `/api/v1/interviews/rounds/{round_id}/reject` : '/api/v1/interviews/rounds/{round_id}/reject',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/interviews/rounds/${data.round_id}/reject` : typeof data === 'object' && data?.id ? `/api/v1/interviews/rounds/{round_id}/reject` : '/api/v1/interviews/rounds/{round_id}/reject',
         method: 'PATCH',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -51,7 +51,7 @@ export const interviewApi = baseApi.injectEndpoints({
     }),
     updateInterviewsRoundsRoundIdHold: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/interviews/rounds/${data.round_id/hold` : typeof data === 'object' && data?.id ? `/api/v1/interviews/rounds/{round_id}/hold` : '/api/v1/interviews/rounds/{round_id}/hold',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/interviews/rounds/${data.round_id}/hold` : typeof data === 'object' && data?.id ? `/api/v1/interviews/rounds/{round_id}/hold` : '/api/v1/interviews/rounds/{round_id}/hold',
         method: 'PATCH',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -82,7 +82,7 @@ export const interviewApi = baseApi.injectEndpoints({
     }),
     getScorecardsSubmissionsRoundId: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/scorecards/submissions/${paramsround_id` : typeof params === 'object' && params?.id ? `/api/v1/scorecards/submissions/{round_id}` : '/api/v1/scorecards/submissions/{round_id}',
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/scorecards/submissions/${params.round_id}` : typeof params === 'object' && params?.id ? `/api/v1/scorecards/submissions/{round_id}` : '/api/v1/scorecards/submissions/{round_id}',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Interview'],
@@ -97,7 +97,7 @@ export const interviewApi = baseApi.injectEndpoints({
     }),
     createV2InterviewBotSessionsSessionIdStart: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/interview-bot/sessions/${data.session_id/start` : typeof data === 'object' && data?.id ? `/api/v2/interview-bot/sessions/{session_id}/start` : '/api/v2/interview-bot/sessions/{session_id}/start',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/interview-bot/sessions/${data.session_id}/start` : typeof data === 'object' && data?.id ? `/api/v2/interview-bot/sessions/{session_id}/start` : '/api/v2/interview-bot/sessions/{session_id}/start',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -105,7 +105,7 @@ export const interviewApi = baseApi.injectEndpoints({
     }),
     createV2InterviewBotSessionsSessionIdAnswer: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/interview-bot/sessions/${data.session_id/answer` : typeof data === 'object' && data?.id ? `/api/v2/interview-bot/sessions/{session_id}/answer` : '/api/v2/interview-bot/sessions/{session_id}/answer',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/interview-bot/sessions/${data.session_id}/answer` : typeof data === 'object' && data?.id ? `/api/v2/interview-bot/sessions/{session_id}/answer` : '/api/v2/interview-bot/sessions/{session_id}/answer',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -113,7 +113,7 @@ export const interviewApi = baseApi.injectEndpoints({
     }),
     createV2InterviewBotSessionsSessionIdProctorAlert: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/interview-bot/sessions/${data.session_id/proctor-alert` : typeof data === 'object' && data?.id ? `/api/v2/interview-bot/sessions/{session_id}/proctor-alert` : '/api/v2/interview-bot/sessions/{session_id}/proctor-alert',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/interview-bot/sessions/${data.session_id}/proctor-alert` : typeof data === 'object' && data?.id ? `/api/v2/interview-bot/sessions/{session_id}/proctor-alert` : '/api/v2/interview-bot/sessions/{session_id}/proctor-alert',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -121,7 +121,7 @@ export const interviewApi = baseApi.injectEndpoints({
     }),
     createV2InterviewBotSessionsSessionIdFinalize: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/interview-bot/sessions/${data.session_id/finalize` : typeof data === 'object' && data?.id ? `/api/v2/interview-bot/sessions/{session_id}/finalize` : '/api/v2/interview-bot/sessions/{session_id}/finalize',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/interview-bot/sessions/${data.session_id}/finalize` : typeof data === 'object' && data?.id ? `/api/v2/interview-bot/sessions/{session_id}/finalize` : '/api/v2/interview-bot/sessions/{session_id}/finalize',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -137,7 +137,7 @@ export const interviewApi = baseApi.injectEndpoints({
     }),
     createV2BehaviouralQuestionsQuestionIdRespond: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/behavioural/questions/${data.question_id/respond` : typeof data === 'object' && data?.id ? `/api/v2/behavioural/questions/{question_id}/respond` : '/api/v2/behavioural/questions/{question_id}/respond',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/behavioural/questions/${data.question_id}/respond` : typeof data === 'object' && data?.id ? `/api/v2/behavioural/questions/{question_id}/respond` : '/api/v2/behavioural/questions/{question_id}/respond',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),

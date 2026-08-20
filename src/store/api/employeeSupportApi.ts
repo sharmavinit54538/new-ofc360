@@ -28,7 +28,7 @@ export const employeeSupportApi = baseApi.injectEndpoints({
     }),
     updateV2EmployeeSupportTicketsTicketId: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/employee-support/tickets/${data.ticket_id` : typeof data === 'object' && data?.id ? `/api/v2/employee-support/tickets/{ticket_id}` : '/api/v2/employee-support/tickets/{ticket_id}',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/employee-support/tickets/${data.ticket_id}` : typeof data === 'object' && data?.id ? `/api/v2/employee-support/tickets/{ticket_id}` : '/api/v2/employee-support/tickets/{ticket_id}',
         method: 'PATCH',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -67,7 +67,7 @@ export const employeeSupportApi = baseApi.injectEndpoints({
     }),
     createV2WellnessAnonymousChatsSessionIdMessages: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/wellness/anonymous-chats/${data.session_id/messages` : typeof data === 'object' && data?.id ? `/api/v2/wellness/anonymous-chats/{session_id}/messages` : '/api/v2/wellness/anonymous-chats/{session_id}/messages',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v2/wellness/anonymous-chats/${data.session_id}/messages` : typeof data === 'object' && data?.id ? `/api/v2/wellness/anonymous-chats/{session_id}/messages` : '/api/v2/wellness/anonymous-chats/{session_id}/messages',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),

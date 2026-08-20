@@ -42,7 +42,7 @@ export const timesheetsApi = baseApi.injectEndpoints({
     }),
     createTimesheetsTimesheetIdReview: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/timesheets/${data.timesheet_id/review` : typeof data === 'object' && data?.id ? `/api/v1/timesheets/{timesheet_id}/review` : '/api/v1/timesheets/{timesheet_id}/review',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/timesheets/${data.timesheet_id}/review` : typeof data === 'object' && data?.id ? `/api/v1/timesheets/{timesheet_id}/review` : '/api/v1/timesheets/{timesheet_id}/review',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),

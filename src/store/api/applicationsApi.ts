@@ -19,14 +19,14 @@ export const applicationsApi = baseApi.injectEndpoints({
     }),
     getApplicationsId: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/applications/${paramsid` : typeof params === 'object' && params?.id ? `/api/v1/applications/${params.id}` : '/api/v1/applications/{id}',
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/applications/${params.id}` : typeof params === 'object' && params?.id ? `/api/v1/applications/${params.id}` : '/api/v1/applications/{id}',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Application'],
     }),
     updateApplicationsIdShortlist: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/applications/${data.id/shortlist` : typeof data === 'object' && data?.id ? `/api/v1/applications/${data.id}/shortlist` : '/api/v1/applications/{id}/shortlist',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/applications/${data.id}/shortlist` : typeof data === 'object' && data?.id ? `/api/v1/applications/${data.id}/shortlist` : '/api/v1/applications/{id}/shortlist',
         method: 'PATCH',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -34,7 +34,7 @@ export const applicationsApi = baseApi.injectEndpoints({
     }),
     updateApplicationsIdReject: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/applications/${data.id/reject` : typeof data === 'object' && data?.id ? `/api/v1/applications/${data.id}/reject` : '/api/v1/applications/{id}/reject',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/applications/${data.id}/reject` : typeof data === 'object' && data?.id ? `/api/v1/applications/${data.id}/reject` : '/api/v1/applications/{id}/reject',
         method: 'PATCH',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -42,7 +42,7 @@ export const applicationsApi = baseApi.injectEndpoints({
     }),
     updateApplicationsIdHold: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/applications/${data.id/hold` : typeof data === 'object' && data?.id ? `/api/v1/applications/${data.id}/hold` : '/api/v1/applications/{id}/hold',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/applications/${data.id}/hold` : typeof data === 'object' && data?.id ? `/api/v1/applications/${data.id}/hold` : '/api/v1/applications/{id}/hold',
         method: 'PATCH',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -50,7 +50,7 @@ export const applicationsApi = baseApi.injectEndpoints({
     }),
     updateApplicationsIdStage: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/applications/${data.id/stage` : typeof data === 'object' && data?.id ? `/api/v1/applications/${data.id}/stage` : '/api/v1/applications/{id}/stage',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/applications/${data.id}/stage` : typeof data === 'object' && data?.id ? `/api/v1/applications/${data.id}/stage` : '/api/v1/applications/{id}/stage',
         method: 'PATCH',
         body: typeof data === 'object' ? data : undefined,
       }),

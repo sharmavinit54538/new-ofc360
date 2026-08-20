@@ -50,14 +50,14 @@ export const managerApi = baseApi.injectEndpoints({
     }),
     getManagersId: builder.query<ApiResponse<any>, any>({
       query: (params) => ({
-        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/managers/${paramsid` : typeof params === 'object' && params?.id ? `/api/v1/managers/${params.id}` : '/api/v1/managers/{id}',
+        url: typeof params === 'string' || typeof params === 'number' ? `/api/v1/managers/${params.id}` : typeof params === 'object' && params?.id ? `/api/v1/managers/${params.id}` : '/api/v1/managers/{id}',
         params: typeof params === 'object' ? params : undefined,
       }),
       providesTags: ['Manager'],
     }),
     updateManagersId: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/managers/${data.id` : typeof data === 'object' && data?.id ? `/api/v1/managers/${data.id}` : '/api/v1/managers/{id}',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/managers/${data.id}` : typeof data === 'object' && data?.id ? `/api/v1/managers/${data.id}` : '/api/v1/managers/{id}',
         method: 'PUT',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -65,7 +65,7 @@ export const managerApi = baseApi.injectEndpoints({
     }),
     deleteManagersId: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/managers/${data.id` : typeof data === 'object' && data?.id ? `/api/v1/managers/${data.id}` : '/api/v1/managers/{id}',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/managers/${data.id}` : typeof data === 'object' && data?.id ? `/api/v1/managers/${data.id}` : '/api/v1/managers/{id}',
         method: 'DELETE',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -73,7 +73,7 @@ export const managerApi = baseApi.injectEndpoints({
     }),
     createManagersIdSendInvitation: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/managers/${data.id/send-invitation` : typeof data === 'object' && data?.id ? `/api/v1/managers/${data.id}/send-invitation` : '/api/v1/managers/{id}/send-invitation',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/managers/${data.id}/send-invitation` : typeof data === 'object' && data?.id ? `/api/v1/managers/${data.id}/send-invitation` : '/api/v1/managers/{id}/send-invitation',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -81,7 +81,7 @@ export const managerApi = baseApi.injectEndpoints({
     }),
     createManagersIdActivate: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/managers/${data.id/activate` : typeof data === 'object' && data?.id ? `/api/v1/managers/${data.id}/activate` : '/api/v1/managers/{id}/activate',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/managers/${data.id}/activate` : typeof data === 'object' && data?.id ? `/api/v1/managers/${data.id}/activate` : '/api/v1/managers/{id}/activate',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -89,7 +89,7 @@ export const managerApi = baseApi.injectEndpoints({
     }),
     createManagersIdResetPassword: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/managers/${data.id/reset-password` : typeof data === 'object' && data?.id ? `/api/v1/managers/${data.id}/reset-password` : '/api/v1/managers/{id}/reset-password',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/managers/${data.id}/reset-password` : typeof data === 'object' && data?.id ? `/api/v1/managers/${data.id}/reset-password` : '/api/v1/managers/{id}/reset-password',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -105,7 +105,7 @@ export const managerApi = baseApi.injectEndpoints({
     }),
     createManagersIdDeactivate: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/managers/${data.id/deactivate` : typeof data === 'object' && data?.id ? `/api/v1/managers/${data.id}/deactivate` : '/api/v1/managers/{id}/deactivate',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/managers/${data.id}/deactivate` : typeof data === 'object' && data?.id ? `/api/v1/managers/${data.id}/deactivate` : '/api/v1/managers/{id}/deactivate',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
@@ -113,7 +113,7 @@ export const managerApi = baseApi.injectEndpoints({
     }),
     createManagersIdActivateByAdmin: builder.mutation<ApiResponse<any>, any>({
       query: (data) => ({
-        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/managers/${data.id/activate-by-admin` : typeof data === 'object' && data?.id ? `/api/v1/managers/${data.id}/activate-by-admin` : '/api/v1/managers/{id}/activate-by-admin',
+        url: typeof data === 'string' || typeof data === 'number' ? `/api/v1/managers/${data.id}/activate-by-admin` : typeof data === 'object' && data?.id ? `/api/v1/managers/${data.id}/activate-by-admin` : '/api/v1/managers/{id}/activate-by-admin',
         method: 'POST',
         body: typeof data === 'object' ? data : undefined,
       }),
