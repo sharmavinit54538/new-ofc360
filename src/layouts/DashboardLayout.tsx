@@ -25,6 +25,7 @@ export const useLayout = () => useContext(LayoutContext);
 export default function DashboardLayout() {
   const isMobile = useIsMobile();
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, role } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);

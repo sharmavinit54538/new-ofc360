@@ -77,10 +77,11 @@ const container = {
 };
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
+  const currentRole = role || normalizeRole(user?.role);
 
   // Role-aware dashboard dispatch
-  switch (user?.role) {
+  switch (currentRole) {
     case "super_admin":
       return <SuperAdminDashboardPage />;
     case "employee":

@@ -46,7 +46,7 @@ export default function AccessPage() {
     return [
       {
         id: `sess_${user.id || "active"}`,
-        user: `${user.name} (${user.email})`,
+        user: `${user.name || "User"} (${user.email || "active"})`,
         role: user.role || "it_admin",
         ip: hostIp === "localhost" ? "127.0.0.1" : hostIp,
         device: deviceName,
