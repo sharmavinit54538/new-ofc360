@@ -50,6 +50,8 @@ const PUBLIC_AUTH_ENDPOINTS = [
   "activateAccount",
   "validateManagerInvitation",
   "activateManager",
+  "refreshSession",
+  "createAuthRefresh",
 ];
 
 const PUBLIC_AUTH_URL_PATTERNS = [
@@ -62,6 +64,7 @@ const PUBLIC_AUTH_URL_PATTERNS = [
   "/auth/verify-email-otp",
   "/auth/resend-otp",
   "/auth/resend-email-otp",
+  "/auth/refresh",
   "/onboarding/validate",
   "/onboarding/validate-token",
   "/onboarding/activate",
@@ -195,17 +198,16 @@ export const baseQueryWithReauth: BaseQueryFn<
     if (!refreshPromise) {
       refreshPromise = (async () => {
         try {
-          const refreshBody: Record<string, string> = {};
-          if (isValidToken(inMemoryRefreshToken)) {
-            refreshBody.refreshToken = inMemoryRefreshToken.trim();
-            refreshBody.refresh_token = inMemoryRefreshToken.trim();
-          }
+          const refreshBody: Record<string, string> = {
+            refreshToken: (inMemoryRefreshToken || "").trim(),
+            refresh_token: (inMemoryRefreshToken || "").trim(),
+          };
 
           const refreshResult = await baseQuery(
             {
               url: "/api/v1/auth/refresh",
               method: "POST",
-              body: Object.keys(refreshBody).length > 0 ? refreshBody : undefined,
+              body: refreshBody,
             },
             api,
             { isRetry: true }
