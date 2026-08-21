@@ -12,10 +12,10 @@ import {
 import { Link } from "react-router-dom";
 
 interface CandidateAtsTableProps {
-  candidates: any[];
+  candidates?: any[];
 }
 
-export function DashboardCandidateAtsTable({ candidates }: CandidateAtsTableProps) {
+export function DashboardCandidateAtsTable({ candidates = [] }: CandidateAtsTableProps) {
   // Sample candidates if none in live store for instant rich visualization
   const sampleCandidates = [
     {
@@ -52,8 +52,9 @@ export function DashboardCandidateAtsTable({ candidates }: CandidateAtsTableProp
     },
   ];
 
+  const safeCandidates = Array.isArray(candidates) ? candidates : [];
   const displayCandidates =
-    candidates.length > 0 ? candidates.slice(0, 5) : sampleCandidates;
+    safeCandidates.length > 0 ? safeCandidates.slice(0, 5) : sampleCandidates;
 
   const getStageColor = (stage: string) => {
     switch (stage?.toLowerCase()) {

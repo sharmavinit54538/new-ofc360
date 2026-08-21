@@ -71,37 +71,46 @@ function HRAdminDashboard() {
   const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
   const storeCandidates = useCandidateStore((s) => s.candidates);
   const { data: candidatesData } = useGetRecruitmentCandidatesQuery();
-  const apiCandidates = candidatesData?.items || [];
-  const candidates = apiCandidates.length > 0 ? apiCandidates : storeCandidates;
+  const apiCandidates = Array.isArray(candidatesData?.items) ? candidatesData.items : [];
+  const safeStoreCandidates = Array.isArray(storeCandidates) ? storeCandidates : [];
+  const candidates = apiCandidates.length > 0 ? apiCandidates : safeStoreCandidates;
 
   const { data: rawDepartments = [] } = useGetDepartmentsQuery();
   const departments = Array.isArray(rawDepartments) ? rawDepartments : [];
-  const { runs = [], payslips = [], settings } = usePayrollStore();
+  const payrollStore = usePayrollStore();
+  const runs = Array.isArray(payrollStore?.payrollRuns)
+    ? payrollStore.payrollRuns
+    : Array.isArray(payrollStore?.runs)
+    ? payrollStore.runs
+    : [];
+  const payslips = Array.isArray(payrollStore?.payslips) ? payrollStore.payslips : [];
+  const settings = payrollStore?.settings;
   const PayrollIcon = settings?.currency === "INR" ? IndianRupee : getCurrencyIcon(settings?.currency);
-  const leaveRequests = useLeaveStore((s) => s.leaveRequests);
+  const rawLeaveRequests = useLeaveStore((s) => s.leaveRequests);
+  const leaveRequests = Array.isArray(rawLeaveRequests) ? rawLeaveRequests : [];
 
   // Computed Real-Time Metrics
   const totalWorkforce = employees.length;
   const activeEmployees = employees.filter(
-    (e) => (e.status || "ACTIVE").toUpperCase() === "ACTIVE"
+    (e) => (e?.status || "ACTIVE").toUpperCase() === "ACTIVE"
   ).length;
   const onboardingEmployees = employees.filter((e) =>
-    (e.status || "").toUpperCase().includes("PENDING") ||
-    (e.status || "").toUpperCase().includes("ONBOARDING")
+    (e?.status || "").toUpperCase().includes("PENDING") ||
+    (e?.status || "").toUpperCase().includes("ONBOARDING")
   );
   const onboardingCount = onboardingEmployees.length;
 
   const openCandidates = candidates.length > 0 ? candidates.length : 4;
-  const pendingLeaves = leaveRequests.filter((r) => r.status === "Pending").length;
+  const pendingLeaves = leaveRequests.filter((r) => r?.status === "Pending").length;
   const totalPendingActions = pendingLeaves + onboardingCount;
 
   const monthlyPayroll = useMemo(() => {
-    if (runs.length > 0) return runs[0].netTotal;
+    if (runs.length > 0) return runs[0].netTotal || 0;
     if (payslips.length > 0) {
-      return payslips.reduce((sum, p) => sum + (p.netSalary || 0), 0);
+      return payslips.reduce((sum, p) => sum + (p?.netSalary || 0), 0);
     }
     const empSum = employees.reduce(
-      (sum, e) => sum + (typeof e.salary === "number" ? e.salary : 0),
+      (sum, e) => sum + (typeof e?.salary === "number" ? e.salary : 0),
       0
     );
     return empSum > 0 ? empSum : 5999988;
@@ -111,7 +120,7 @@ function HRAdminDashboard() {
   const departmentSplit = useMemo(() => {
     const counts: Record<string, number> = {};
     employees.forEach((e) => {
-      const deptName = e.department?.trim() || "Management";
+      const deptName = e?.department?.trim() || "Management";
       counts[deptName] = (counts[deptName] || 0) + 1;
     });
 
