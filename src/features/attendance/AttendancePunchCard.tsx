@@ -146,10 +146,11 @@ export const AttendancePunchCard: React.FC = () => {
       }
       dispatch(closeCameraModal());
       refetchStatus();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorObj = err as { data?: { message?: string }; message?: string };
       const errMsg =
-        err?.data?.message ||
-        err?.message ||
+        errorObj?.data?.message ||
+        errorObj?.message ||
         `Failed to perform ${activeAction}. Please try again.`;
       setSubmissionFeedback({
         type: "error",
