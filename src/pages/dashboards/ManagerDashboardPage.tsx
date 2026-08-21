@@ -22,16 +22,17 @@ import { toast } from "sonner";
 
 export default function ManagerDashboardPage() {
   const { user } = useAuth();
-  const { leaveRequests, approveLeaveRequest, rejectLeaveRequest } = useLeaveStore();
+  const { leaveRequests: rawLeaveRequests = [], approveLeaveRequest, rejectLeaveRequest } = useLeaveStore();
+  const leaveRequests = Array.isArray(rawLeaveRequests) ? rawLeaveRequests : [];
   const { data: rawEmployees = [] } = useGetEmployeesQuery();
   const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
 
   // Filter direct reports / team members
   const myTeam = employees.filter((emp) => {
     return (
-      emp.department === user?.department ||
-      emp.role?.toLowerCase().includes("engineer") ||
-      emp.role?.toLowerCase().includes("developer")
+      (user?.department && emp?.department === user?.department) ||
+      emp?.role?.toLowerCase().includes("engineer") ||
+      emp?.role?.toLowerCase().includes("developer")
     );
   });
 
@@ -45,7 +46,7 @@ export default function ManagerDashboardPage() {
     toast.error(`Leave request rejected for ${name}`);
   };
 
-  const pendingRequests = leaveRequests.filter((r) => r.status === "Pending");
+  const pendingRequests = leaveRequests.filter((r) => r?.status === "Pending");
 
   return (
     <RoleGuard allowedRoles={["manager", "hr_admin"]}>

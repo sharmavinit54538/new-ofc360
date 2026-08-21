@@ -23,19 +23,21 @@ import { useState } from "react";
 export default function EmployeeDashboardPage() {
   const { user } = useAuth();
   const [isCheckedIn, setIsCheckedIn] = useState(false);
-  const { payslips } = usePayrollStore();
-  const { leaveRequests } = useLeaveStore();
+  const rawPayslips = usePayrollStore((s) => s.payslips);
+  const payslips = Array.isArray(rawPayslips) ? rawPayslips : [];
+  const rawLeaveRequests = useLeaveStore((s) => s.leaveRequests);
+  const leaveRequests = Array.isArray(rawLeaveRequests) ? rawLeaveRequests : [];
 
   const myPayslips = payslips.filter(
     (p) =>
-      p.employeeId === user?.id ||
-      p.employeeName.toLowerCase() === (user?.name || "").toLowerCase()
+      p?.employeeId === user?.id ||
+      (p?.employeeName && (p.employeeName || "").toLowerCase() === (user?.name || "").toLowerCase())
   );
 
   const myLeaves = leaveRequests.filter(
     (l) =>
-      l.employeeId === user?.id ||
-      l.employeeName.toLowerCase() === (user?.name || "").toLowerCase()
+      l?.employeeId === user?.id ||
+      (l?.employeeName && (l.employeeName || "").toLowerCase() === (user?.name || "").toLowerCase())
   );
 
   const handleCheckInToggle = () => {
