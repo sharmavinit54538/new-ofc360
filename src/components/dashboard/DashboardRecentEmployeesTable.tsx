@@ -13,11 +13,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { fmtMoney } from "@/utils/currency";
 
 interface RecentEmployeesProps {
-  employees: any[];
+  employees?: any[];
 }
 
-export function DashboardRecentEmployeesTable({ employees }: RecentEmployeesProps) {
+export function DashboardRecentEmployeesTable({ employees = [] }: RecentEmployeesProps) {
   const navigate = useNavigate();
+  const safeEmployees = Array.isArray(employees) ? employees : [];
 
   const getStatusBadge = (status?: string) => {
     const s = (status || "ACTIVE").toUpperCase();
@@ -55,7 +56,7 @@ export function DashboardRecentEmployeesTable({ employees }: RecentEmployeesProp
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-xs font-semibold">
-              {employees.length} {employees.length === 1 ? "Employee" : "Employees"}
+              {safeEmployees.length} {safeEmployees.length === 1 ? "Employee" : "Employees"}
             </Badge>
             <Link to="/people">
               <Button size="sm" variant="ghost" className="h-7 text-xs px-2 gap-1 text-primary hover:bg-primary/10">
@@ -66,7 +67,7 @@ export function DashboardRecentEmployeesTable({ employees }: RecentEmployeesProp
           </div>
         </div>
 
-        {employees.length > 0 ? (
+        {safeEmployees.length > 0 ? (
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -78,10 +79,11 @@ export function DashboardRecentEmployeesTable({ employees }: RecentEmployeesProp
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {employees.slice(0, 6).map((e) => {
-                  const initials = e.name
+                {safeEmployees.slice(0, 6).map((e) => {
+                  const initials = e?.name
                     ? e.name
                         .split(" ")
+                        .filter(Boolean)
                         .map((n: string) => n[0])
                         .slice(0, 2)
                         .join("")

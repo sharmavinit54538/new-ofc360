@@ -14,10 +14,12 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 interface HiringFunnelChartProps {
-  candidates: any[];
+  candidates?: any[];
 }
 
-export function DashboardHiringFunnelChart({ candidates }: HiringFunnelChartProps) {
+export function DashboardHiringFunnelChart({ candidates = [] }: HiringFunnelChartProps) {
+  const safeCandidates = Array.isArray(candidates) ? candidates : [];
+
   // Compute stages from live candidates or fallback funnel
   const stagesCount: Record<string, number> = {
     Sourced: 0,
@@ -27,9 +29,9 @@ export function DashboardHiringFunnelChart({ candidates }: HiringFunnelChartProp
     Hired: 0,
   };
 
-  if (candidates.length > 0) {
-    candidates.forEach((c) => {
-      const stage = c.stage || c.status;
+  if (safeCandidates.length > 0) {
+    safeCandidates.forEach((c) => {
+      const stage = c?.stage || c?.status;
       if (stage && stagesCount[stage] !== undefined) {
         stagesCount[stage] += 1;
       } else if (stage === "Applied") {

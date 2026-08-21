@@ -7,12 +7,14 @@ import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 
 interface PendingApprovalsProps {
-  onboardingEmployees: any[];
+  onboardingEmployees?: any[];
 }
 
-export function DashboardPendingApprovals({ onboardingEmployees }: PendingApprovalsProps) {
+export function DashboardPendingApprovals({ onboardingEmployees = [] }: PendingApprovalsProps) {
   const { toast } = useToast();
-  const { leaveRequests, updateLeaveStatus } = useLeaveStore();
+  const { leaveRequests = [], updateLeaveStatus } = useLeaveStore();
+  const safeOnboarding = Array.isArray(onboardingEmployees) ? onboardingEmployees : [];
+  const safeLeaveRequests = Array.isArray(leaveRequests) ? leaveRequests : [];
 
   // Mock pending leaves if store is empty for instant demonstration
   const [sampleLeaves, setSampleLeaves] = useState([
@@ -37,8 +39,8 @@ export function DashboardPendingApprovals({ onboardingEmployees }: PendingApprov
   ]);
 
   const activeLeaves =
-    leaveRequests.length > 0
-      ? leaveRequests.filter((l) => l.status === "Pending")
+    safeLeaveRequests.length > 0
+      ? safeLeaveRequests.filter((l) => l?.status === "Pending")
       : sampleLeaves;
 
   const handleApproveLeave = (id: string, name: string) => {
@@ -103,9 +105,9 @@ export function DashboardPendingApprovals({ onboardingEmployees }: PendingApprov
               }`}
             >
               <span>Onboarding</span>
-              {onboardingEmployees.length > 0 && (
+              {safeOnboarding.length > 0 && (
                 <span className="w-4 h-4 rounded-full bg-blue-500 text-white text-[10px] flex items-center justify-center font-bold">
-                  {onboardingEmployees.length}
+                  {safeOnboarding.length}
                 </span>
               )}
             </button>
@@ -164,8 +166,8 @@ export function DashboardPendingApprovals({ onboardingEmployees }: PendingApprov
           </div>
         ) : (
           <div className="space-y-2.5">
-            {onboardingEmployees.length > 0 ? (
-              onboardingEmployees.slice(0, 3).map((emp) => (
+            {safeOnboarding.length > 0 ? (
+              safeOnboarding.slice(0, 3).map((emp) => (
                 <div
                   key={emp.id}
                   className="p-3 rounded-xl bg-secondary/30 border border-border/40 flex items-center justify-between gap-3"

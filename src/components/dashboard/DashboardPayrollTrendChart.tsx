@@ -14,14 +14,16 @@ import { Button } from "@/components/ui/button";
 import { fmtMoney } from "@/utils/currency";
 
 interface PayrollTrendChartProps {
-  monthlyPayroll: number;
-  runs: any[];
+  monthlyPayroll?: number;
+  runs?: any[];
 }
 
 export function DashboardPayrollTrendChart({
-  monthlyPayroll,
-  runs,
+  monthlyPayroll = 0,
+  runs = [],
 }: PayrollTrendChartProps) {
+  const safeRuns = Array.isArray(runs) ? runs : [];
+
   const defaultTrend = [
     { m: "Apr '26", v: 54, fullVal: 5400000 },
     { m: "May '26", v: 56, fullVal: 5600000 },
@@ -32,14 +34,14 @@ export function DashboardPayrollTrendChart({
   ];
 
   const trendData =
-    runs.length > 0
-      ? [...runs]
+    safeRuns.length > 0
+      ? [...safeRuns]
           .slice(0, 6)
           .reverse()
           .map((r) => ({
-            m: `${r.month.slice(0, 3)} '${String(r.year).slice(-2)}`,
-            v: Number((r.netTotal / 100000).toFixed(1)),
-            fullVal: r.netTotal,
+            m: `${(r?.month || "Month").slice(0, 3)} '${String(r?.year || 2026).slice(-2)}`,
+            v: Number(((r?.netTotal || 0) / 100000).toFixed(1)),
+            fullVal: r?.netTotal || 0,
           }))
       : defaultTrend;
 

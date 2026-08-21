@@ -14,10 +14,12 @@ const COLORS = [
 ];
 
 interface DepartmentChartProps {
-  departmentSplit: { name: string; value: number }[];
+  departmentSplit?: { name: string; value: number }[];
 }
 
-export function DashboardDepartmentChart({ departmentSplit }: DepartmentChartProps) {
+export function DashboardDepartmentChart({ departmentSplit = [] }: DepartmentChartProps) {
+  const safeSplit = Array.isArray(departmentSplit) ? departmentSplit : [];
+
   const tooltipStyle = {
     background: "hsl(var(--card))",
     border: "1px solid hsl(var(--border))",
@@ -25,7 +27,7 @@ export function DashboardDepartmentChart({ departmentSplit }: DepartmentChartPro
     fontSize: "12px",
   };
 
-  const total = departmentSplit.reduce((s, d) => s + d.value, 0);
+  const total = safeSplit.reduce((s, d) => s + (d?.value || 0), 0);
 
   return (
     <div className="glass-card rounded-xl p-5 border border-border/50 flex flex-col justify-between">
@@ -35,17 +37,17 @@ export function DashboardDepartmentChart({ departmentSplit }: DepartmentChartPro
           <h3 className="font-semibold text-base text-foreground">Department Allocation</h3>
         </div>
         <Badge variant="outline" className="text-xs font-normal">
-          {departmentSplit.length} Departments
+          {safeSplit.length} Departments
         </Badge>
       </div>
 
-      {departmentSplit.length > 0 ? (
+      {safeSplit.length > 0 ? (
         <>
           <div className="relative h-[200px] w-full flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={departmentSplit}
+                  data={safeSplit}
                   cx="50%"
                   cy="50%"
                   innerRadius={55}
@@ -53,7 +55,7 @@ export function DashboardDepartmentChart({ departmentSplit }: DepartmentChartPro
                   dataKey="value"
                   paddingAngle={4}
                 >
-                  {departmentSplit.map((_, i) => (
+                  {safeSplit.map((_, i) => (
                     <Cell
                       key={i}
                       fill={COLORS[i % COLORS.length]}
@@ -74,8 +76,8 @@ export function DashboardDepartmentChart({ departmentSplit }: DepartmentChartPro
           </div>
 
           <div className="flex flex-wrap gap-x-3 gap-y-2 mt-2 justify-center max-h-24 overflow-y-auto">
-            {departmentSplit.map((d, i) => {
-              const percent = total > 0 ? Math.round((d.value / total) * 100) : 0;
+            {safeSplit.map((d, i) => {
+              const percent = total > 0 ? Math.round(((d?.value || 0) / total) * 100) : 0;
               return (
                 <div
                   key={d.name}

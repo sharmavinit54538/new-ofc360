@@ -3,10 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
 interface AISignalsProps {
-  insights: { tone: "positive" | "warn" | "info" | "primary"; text: string }[];
+  insights?: { tone: "positive" | "warn" | "info" | "primary"; text: string }[];
 }
 
-export function DashboardAISignals({ insights }: AISignalsProps) {
+export function DashboardAISignals({ insights = [] }: AISignalsProps) {
   const iconMap = {
     positive: <TrendingUp className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />,
     warn: <CalendarCheck className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />,
