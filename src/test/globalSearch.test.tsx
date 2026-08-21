@@ -60,17 +60,11 @@ describe("Global Search & TopNav Search Integration", () => {
     });
   });
 
-  it("renders GlobalSearchDialog with category tabs and quick navigation items", () => {
+  it("renders GlobalSearchDialog with quick navigation and action items", () => {
     const handleOpenChange = vi.fn();
     renderWithProviders(
       <GlobalSearchDialog open={true} onOpenChange={handleOpenChange} />
     );
-
-    expect(screen.getByText("All")).toBeInTheDocument();
-    expect(screen.getAllByText("Workforce").length).toBeGreaterThan(0);
-    expect(screen.getByText("Candidates")).toBeInTheDocument();
-    expect(screen.getByText("Pages")).toBeInTheDocument();
-    expect(screen.getByText("Actions")).toBeInTheDocument();
 
     // Default items
     expect(screen.getByText("Add New Employee")).toBeInTheDocument();
@@ -93,20 +87,6 @@ describe("Global Search & TopNav Search Integration", () => {
     await waitFor(() => {
       expect(screen.getByText("Payroll & Compensation")).toBeInTheDocument();
       expect(screen.getByText("Process Payroll")).toBeInTheDocument();
-    });
-  });
-
-  it("switches categories when category filter tab is clicked", async () => {
-    const handleOpenChange = vi.fn();
-    renderWithProviders(
-      <GlobalSearchDialog open={true} onOpenChange={handleOpenChange} />
-    );
-
-    const actionsTab = screen.getByText("Actions");
-    fireEvent.click(actionsTab);
-
-    await waitFor(() => {
-      expect(screen.getByText("Quick Actions (7)")).toBeInTheDocument();
     });
   });
 });

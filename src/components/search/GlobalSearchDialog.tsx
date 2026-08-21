@@ -403,13 +403,6 @@ export function GlobalSearchDialog({
           )}
         </div>
 
-        {/* Category Tabs */}
-        <SearchCategoryTabs
-          activeCategory={activeCategory}
-          onSelectCategory={setActiveCategory}
-          counts={counts}
-        />
-
         {/* Results Container */}
         <div className="max-h-[400px] overflow-y-auto p-3 space-y-4 scrollbar-thin">
           {hasNoResults ? (
