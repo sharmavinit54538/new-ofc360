@@ -12,7 +12,7 @@ import { DashboardMainContent } from "./dashboard/DashboardMainContent";
 export { useLayout };
 export default function DashboardLayout() {
   const isMobile = useIsMobile();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isHRAdmin, isOnboardingLoading, onboardingStatus } = useDashboardOnboardingRedirect();
   useDashboardLifecycle();

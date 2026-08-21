@@ -116,7 +116,7 @@ export function FloatingAIAssistant() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.96 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
-            className="fixed bottom-16 left-4 sm:bottom-16 sm:left-20 w-[calc(100vw-2rem)] sm:w-[380px] md:w-[400px] h-[520px] max-h-[82vh] rounded-2xl bg-popover border border-border/70 shadow-2xl z-50 flex flex-col overflow-hidden backdrop-blur-xl"
+            className="fixed bottom-24 left-4 sm:bottom-24 sm:left-6 w-[calc(100vw-2rem)] sm:w-[380px] md:w-[400px] h-[520px] max-h-[82vh] rounded-2xl bg-popover border border-border/70 shadow-2xl z-50 flex flex-col overflow-hidden backdrop-blur-xl"
           >
             {/* Header */}
             <div className="p-4 border-b border-border/50 bg-gradient-to-r from-primary/15 via-popover to-ai/10 flex items-center justify-between">
@@ -236,30 +236,28 @@ export function FloatingAIAssistant() {
         )}
       </AnimatePresence>
 
-      {/* Mobile-Only Circular Floating Action Button (FAB) */}
-      <div className="md:hidden">
-        <Tooltip delayDuration={300}>
-          <TooltipTrigger asChild>
-            <motion.button
-              whileHover={{ scale: 1.06 }}
-              whileTap={{ scale: 0.94 }}
-              onClick={() => setOpen(!open)}
-              aria-label="Open OFC360 AI Assistant"
-              className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 w-12 h-12 rounded-full gradient-bg shadow-xl shadow-primary/25 border border-white/20 flex items-center justify-center z-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer transition-shadow"
-            >
-              <span className="absolute inset-0 rounded-full gradient-bg opacity-30 animate-ping pointer-events-none" />
-              {open ? (
-                <X className="w-5 h-5 text-primary-foreground relative z-10" />
-              ) : (
-                <Sparkles className="w-5 h-5 text-primary-foreground relative z-10" />
-              )}
-            </motion.button>
-          </TooltipTrigger>
-          <TooltipContent side="left" className="text-xs font-semibold px-2.5 py-1 shadow-md">
-            OFC360 AI Assistant
-          </TooltipContent>
-        </Tooltip>
-      </div>
+      {/* Global Circular Floating Action Button (FAB) */}
+      <Tooltip delayDuration={300}>
+        <TooltipTrigger asChild>
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
+            onClick={() => setOpen(!open)}
+            aria-label="Open OFC360 AI Assistant"
+            className="fixed bottom-6 left-6 w-14 h-14 rounded-full bg-gradient-to-tr from-indigo-600 via-purple-600 to-blue-500 shadow-xl shadow-purple-500/35 border-2 border-white/40 flex items-center justify-center z-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer transition-all hover:shadow-[0_0_25px_rgba(147,51,234,0.5)]"
+          >
+            <span className="absolute inset-0 rounded-full bg-purple-500/30 blur-md pointer-events-none animate-pulse" />
+            {open ? (
+              <X className="w-6 h-6 text-white relative z-10" />
+            ) : (
+              <Sparkles className="w-6 h-6 text-white relative z-10 drop-shadow-[0_0_8px_rgba(255,255,255,0.9)]" />
+            )}
+          </motion.button>
+        </TooltipTrigger>
+        <TooltipContent side="right" className="text-xs font-semibold px-2.5 py-1 shadow-md">
+          OFC360 AI Assistant
+        </TooltipContent>
+      </Tooltip>
     </>
   );
 }
