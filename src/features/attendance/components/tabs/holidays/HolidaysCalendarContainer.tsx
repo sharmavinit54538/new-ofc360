@@ -6,7 +6,7 @@ export function HolidaysCalendarContainer({ holidays, isHrOrAdmin, onDelete }: {
 }) {
   return (
     <HolidayCalendarView
-      holidays={holidays as any}
+      holidays={holidays as unknown as Parameters<typeof HolidayCalendarView>[0]["holidays"]}
       canManageHolidays={isHrOrAdmin}
       onDeleteHoliday={onDelete}
     />

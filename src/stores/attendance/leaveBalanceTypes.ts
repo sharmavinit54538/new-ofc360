@@ -4,5 +4,5 @@ export interface LeaveBalanceItem {
   casualLeavesRemaining: number;
   sickLeavesRemaining: number;
   earnedLeavesRemaining: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }

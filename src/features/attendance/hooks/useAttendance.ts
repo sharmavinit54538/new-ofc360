@@ -13,7 +13,7 @@ export function useAttendance() {
   const q = useAttendanceQueries(rr); const clk = useAttendanceClock(q.myFaceStatus);
   const cam = useAttendanceCamera(rr.activeTab); const mod = useAttendanceModals();
   const fil = useAttendanceFilters(st.regularizations);
-  const col = useAttendanceCollections({ ...rr, ...st, ...q, employeesCount: q.employees.length, pendingOvertimeCount: st.overtimes.length } as any);
-  const act = useAttendanceActions({ ...rr, ...st, ...clk, ...col, ...q, capturedSelfie: cam.capturedSelfie, modals: mod });
+  const col = useAttendanceCollections({ ...rr, ...st, ...q, employeesCount: q.employees.length, pendingOvertimeCount: st.overtimes.length } as unknown as Record<string, unknown>);
+  const act = useAttendanceActions({ ...rr, ...st, ...clk, ...col, ...q, capturedSelfie: cam.capturedSelfie, modals: mod } as unknown as Record<string, unknown>);
   return { ...rr, ...clk, ...st, ...col, ...q, camera: cam, modals: mod, filters: fil, actions: act };
 }

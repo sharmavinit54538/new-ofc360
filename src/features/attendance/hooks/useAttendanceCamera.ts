@@ -6,15 +6,14 @@ import type { AttendanceTabType } from "../types/attendance.types";
 export function useAttendanceCamera(activeTab?: AttendanceTabType) {
   const stream = useCameraStream();
   const capture = useCameraCapture(stream.videoRef);
+  const { isCameraActive, startLiveCamera } = stream;
+  const { capturedSelfie } = capture;
 
   useEffect(() => {
-    if (activeTab === "checkin" && !stream.isCameraActive && !capture.capturedSelfie) {
-      stream.startLiveCamera();
+    if (activeTab === "checkin" && !isCameraActive && !capturedSelfie) {
+      startLiveCamera();
     }
-  }, [activeTab, stream.isCameraActive, capture.capturedSelfie, stream.startLiveCamera]);
+  }, [activeTab, isCameraActive, capturedSelfie, startLiveCamera]);
 
-  return {
-    ...stream,
-    ...capture,
-  };
+  return { ...stream, ...capture };
 }

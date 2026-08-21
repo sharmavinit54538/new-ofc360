@@ -2,8 +2,9 @@ import { ApplyRegularizationDialog } from "./dialogs/ApplyRegularizationDialog";
 import { LogTimesheetDialog } from "./dialogs/LogTimesheetDialog";
 import { RequestOvertimeDialog } from "./dialogs/RequestOvertimeDialog";
 import { ApplyLeaveDialog } from "./dialogs/ApplyLeaveDialog";
+import type { AttendanceDialogProps } from "../../types/dialogPropTypes";
 
-export function AttendanceEmployeeDialogs({ modals, actions }: any) {
+export function AttendanceEmployeeDialogs({ modals, actions }: AttendanceDialogProps) {
   return (
     <>
       <ApplyRegularizationDialog isOpen={modals.isRegModalOpen} onOpenChange={modals.setIsRegModalOpen} regDate={modals.regDate} setRegDate={modals.setRegDate} regType={modals.regType} setRegType={modals.setRegType} regTime={modals.regTime} setRegTime={modals.setRegTime} regReason={modals.regReason} setRegReason={modals.setRegReason} onSubmit={actions.handleCreateRegularization} />

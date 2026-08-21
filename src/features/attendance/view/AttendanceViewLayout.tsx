@@ -2,8 +2,9 @@ import { Tabs } from "@/components/ui/tabs";
 import { AttendanceHeader } from "../components/AttendanceHeader";
 import { AttendanceTabPanes } from "./AttendanceTabPanes";
 import { AttendanceDialogs } from "../components/AttendanceDialogs";
+import type { AttendanceHookResult } from "../types/attendanceHookResult";
 
-export function AttendanceViewLayout({ att }: { att: any }) {
+export function AttendanceViewLayout({ att }: { att: AttendanceHookResult }) {
   return (
     <div className="space-y-5 p-4 md:p-6 max-w-7xl mx-auto">
       <AttendanceHeader activeTab={att.activeTab} onTabChange={att.setTab} />

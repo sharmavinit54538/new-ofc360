@@ -11,5 +11,5 @@ export interface TimesheetEntry {
   hoursWorked?: number;
   billable?: boolean;
   status: "draft" | "submitted" | "approved" | "rejected" | string;
-  [key: string]: any;
+  [key: string]: unknown;
 }

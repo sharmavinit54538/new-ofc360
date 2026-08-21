@@ -3,7 +3,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SHIFT_OPTIONS, DAY_OF_WEEK_OPTIONS } from "../../constants/attendance.constants";
 
-export function RosterDialogForm(p: any) {
+export function RosterDialogForm(p: {
+  rosterEmp: string; setRosterEmp: (v: string) => void;
+  rosterShift: string; setRosterShift: (v: string) => void;
+  rosterDay: string; setRosterDay: (v: string) => void;
+}) {
   return (
     <div className="space-y-3 py-2">
       <div><Label className="text-xs">Employee Name / ID</Label><Input value={p.rosterEmp} onChange={(e) => p.setRosterEmp(e.target.value)} placeholder="e.g. Alex Mercer" className="h-8 text-xs mt-1" /></div>

@@ -7,5 +7,5 @@ export interface HolidayItem {
   type: "National" | "Regional" | "Optional" | "Optional Floating" | string;
   mandatory?: boolean;
   branchLocation?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }

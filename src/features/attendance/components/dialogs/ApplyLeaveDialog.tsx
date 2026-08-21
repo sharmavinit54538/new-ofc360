@@ -2,13 +2,19 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { LeaveDialogForm } from "./leave/LeaveDialogForm";
 
-export function ApplyLeaveDialog({ isOpen, onOpenChange, leaveType, setLeaveType, leaveStart, setLeaveStart, leaveEnd, setLeaveEnd, leaveReason, setLeaveReason, onSubmit }: any) {
+export function ApplyLeaveDialog(p: {
+  isOpen: boolean; onOpenChange: (o: boolean) => void;
+  leaveType: string; setLeaveType: (v: string) => void;
+  leaveStart: string; setLeaveStart: (v: string) => void;
+  leaveEnd: string; setLeaveEnd: (v: string) => void;
+  leaveReason: string; setLeaveReason: (v: string) => void; onSubmit: () => void;
+}) {
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={p.isOpen} onOpenChange={p.onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader><DialogTitle className="text-sm font-semibold">Apply for Leave / Time-Off</DialogTitle></DialogHeader>
-        <LeaveDialogForm leaveType={leaveType} setLeaveType={setLeaveType} leaveStart={leaveStart} setLeaveStart={setLeaveStart} leaveEnd={leaveEnd} setLeaveEnd={setLeaveEnd} leaveReason={leaveReason} setLeaveReason={setLeaveReason} />
-        <DialogFooter><Button onClick={onSubmit} size="sm" className="text-xs">Submit Application</Button></DialogFooter>
+        <LeaveDialogForm leaveType={p.leaveType} setLeaveType={p.setLeaveType} leaveStart={p.leaveStart} setLeaveStart={p.setLeaveStart} leaveEnd={p.leaveEnd} setLeaveEnd={p.setLeaveEnd} leaveReason={p.leaveReason} setLeaveReason={p.setLeaveReason} />
+        <DialogFooter><Button onClick={p.onSubmit} size="sm" className="text-xs">Submit Application</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );

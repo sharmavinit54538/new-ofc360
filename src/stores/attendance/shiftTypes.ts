@@ -8,5 +8,5 @@ export interface ShiftTemplate {
   fullDayHours: number;
   breakDurationMins: number;
   department: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }

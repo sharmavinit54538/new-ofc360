@@ -7,5 +7,5 @@ export interface RosterItem {
   timing: string;
   dayOfWeek: string;
   date: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }

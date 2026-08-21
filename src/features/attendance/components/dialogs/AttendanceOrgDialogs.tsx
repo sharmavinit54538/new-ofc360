@@ -1,8 +1,9 @@
 import { AddShiftDialog } from "./dialogs/AddShiftDialog";
 import { AssignRosterDialog } from "./dialogs/AssignRosterDialog";
 import { AddHolidayDialog } from "./dialogs/AddHolidayDialog";
+import type { AttendanceDialogProps } from "../../types/dialogPropTypes";
 
-export function AttendanceOrgDialogs({ modals, actions }: any) {
+export function AttendanceOrgDialogs({ modals, actions }: AttendanceDialogProps) {
   return (
     <>
       <AddShiftDialog isOpen={modals.isShiftModalOpen} onOpenChange={modals.setIsShiftModalOpen} shiftName={modals.shiftName} setShiftName={modals.setShiftName} shiftStart={modals.shiftStart} setShiftStart={modals.setShiftStart} shiftEnd={modals.shiftEnd} setShiftEnd={modals.setShiftEnd} shiftGrace={modals.shiftGrace} setShiftGrace={modals.setShiftGrace} shiftDept={modals.shiftDept} setShiftDept={modals.setShiftDept} onSubmit={actions.handleCreateShift} />

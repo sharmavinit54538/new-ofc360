@@ -4,8 +4,9 @@ import { TimesheetsTab } from "../components/tabs/TimesheetsTab";
 import { LeavesTab } from "../components/tabs/LeavesTab";
 import { OvertimeTab } from "../components/tabs/OvertimeTab";
 import { AnalyticsTab } from "../components/tabs/AnalyticsTab";
+import type { AttendanceHookResult } from "../types/attendanceHookResult";
 
-export function AttendanceTabPanesPart2({ att }: { att: any }) {
+export function AttendanceTabPanesPart2({ att }: { att: AttendanceHookResult }) {
   return (
     <>
       <TabsContent value="regularization" className="m-0 focus-visible:outline-none"><RegularizationTab list={att.filters.filteredRegularizations} isManagerOrAbove={att.isManagerOrAbove} onApply={() => att.modals.setIsRegModalOpen(true)} onUpdate={att.actions.updateRegularizationStatus} searchQuery={att.filters.searchQuery} setSearchQuery={att.filters.setSearchQuery} statusFilter={att.filters.statusFilter} setStatusFilter={att.filters.setStatusFilter} /></TabsContent>

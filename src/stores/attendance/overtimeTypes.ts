@@ -9,5 +9,5 @@ export interface OvertimeEntry {
   rateMultiplier?: string | number;
   reason?: string;
   status: "pending" | "approved" | "rejected" | "Pending" | "Approved" | "Rejected" | string;
-  [key: string]: any;
+  [key: string]: unknown;
 }

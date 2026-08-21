@@ -4,7 +4,9 @@ import { ClockOutButton } from "./actions/ClockOutButton";
 
 export function AttendanceActions({
   isClockedIn, isOnBreak, onClockIn, onToggleBreak, onClockOut, isCheckingIn = false, isCheckingOut = false,
-}: any) {
+}: {
+  isClockedIn: boolean; isOnBreak: boolean; onClockIn: () => void; onToggleBreak: () => void; onClockOut: () => void; isCheckingIn?: boolean; isCheckingOut?: boolean;
+}) {
   if (!isClockedIn) {
     return <ClockInButton onClockIn={onClockIn} isCheckingIn={isCheckingIn} />;
   }

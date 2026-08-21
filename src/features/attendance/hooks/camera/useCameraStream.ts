@@ -9,7 +9,7 @@ export function useCameraStream() {
     if (!s.videoRef.current) return;
     s.setCameraLoading(true); s.setCameraError(null);
     try { s.streamRef.current = await initCamera(s.videoRef.current, s.streamRef.current); s.setIsCameraActive(true); }
-    catch (e: any) { s.setCameraError(e.message); toast.error(e.message); }
+    catch (e: unknown) { const msg = e instanceof Error ? e.message : "Camera failed"; s.setCameraError(msg); toast.error(msg); }
     finally { s.setCameraLoading(false); }
   }, [s]);
   const stopLiveCamera = useCallback(() => { releaseCamera(s.streamRef.current); s.streamRef.current = null; s.setIsCameraActive(false); }, [s]);

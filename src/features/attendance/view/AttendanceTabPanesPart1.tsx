@@ -4,8 +4,9 @@ import { CheckinTab } from "../components/tabs/CheckinTab";
 import { ShiftsTab } from "../components/tabs/ShiftsTab";
 import { RostersTab } from "../components/tabs/RostersTab";
 import { HolidaysTab } from "../components/tabs/HolidaysTab";
+import type { AttendanceHookResult } from "../types/attendanceHookResult";
 
-export function AttendanceTabPanesPart1({ att }: { att: any }) {
+export function AttendanceTabPanesPart1({ att }: { att: AttendanceHookResult }) {
   return (
     <>
       <TabsContent value="overview" className="m-0 focus-visible:outline-none"><OverviewTab list={att.liveAttendanceList} stats={att.stats} onExport={att.actions.handleExportMusterRoll} isExporting={att.isExporting} /></TabsContent>

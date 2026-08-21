@@ -1,12 +1,15 @@
-export const shiftStoreActions = (set: any) => ({
-  addShift: (st: any) => set((s: any) => ({ shifts: [...s.shifts, st] })),
-  deleteShift: (id: string) => set((s: any) => ({ shifts: s.shifts.filter((x: any) => x.id !== id) })),
-  addRoster: (r: any) => set((s: any) => ({ rosters: [...s.rosters, r] })),
-  deleteRoster: (id: string) => set((s: any) => ({ rosters: s.rosters.filter((x: any) => x.id !== id) })),
-  addHoliday: (h: any) => set((s: any) => ({ holidays: [...s.holidays, h] })),
-  deleteHoliday: (id: string) => set((s: any) => ({ holidays: s.holidays.filter((x: any) => x.id !== id) })),
-  addTimesheet: (t: any) => set((s: any) => ({ timesheets: [...s.timesheets, t] })),
-  updateTimesheetStatus: (id: string, status: string) => set((s: any) => ({ timesheets: s.timesheets.map((x: any) => x.id === id ? { ...x, status } : x) })),
-  addOvertime: (o: any) => set((s: any) => ({ overtimes: [...s.overtimes, o] })),
-  updateOvertimeStatus: (id: string, status: string) => set((s: any) => ({ overtimes: s.overtimes.map((x: any) => x.id === id ? { ...x, status } : x) })),
+import type { ShiftTemplate, RosterItem, HolidayItem, TimesheetEntry, OvertimeEntry } from "./shiftHolidayTypes";
+import type { StoreSet } from "./storeTypes";
+
+export const shiftStoreActions = (set: StoreSet) => ({
+  addShift: (st: ShiftTemplate) => set((s) => ({ shifts: [...s.shifts, st] })),
+  deleteShift: (id: string) => set((s) => ({ shifts: s.shifts.filter((x) => x.id !== id) })),
+  addRoster: (r: RosterItem) => set((s) => ({ rosters: [...s.rosters, r] })),
+  deleteRoster: (id: string) => set((s) => ({ rosters: s.rosters.filter((x) => x.id !== id) })),
+  addHoliday: (h: HolidayItem) => set((s) => ({ holidays: [...s.holidays, h] })),
+  deleteHoliday: (id: string) => set((s) => ({ holidays: s.holidays.filter((x) => x.id !== id) })),
+  addTimesheet: (t: TimesheetEntry) => set((s) => ({ timesheets: [...s.timesheets, t] })),
+  updateTimesheetStatus: (id: string, status: string) => set((s) => ({ timesheets: s.timesheets.map((x) => x.id === id ? { ...x, status } : x) })),
+  addOvertime: (o: OvertimeEntry) => set((s) => ({ overtimes: [...s.overtimes, o] })),
+  updateOvertimeStatus: (id: string, status: string) => set((s) => ({ overtimes: s.overtimes.map((x) => x.id === id ? { ...x, status } : x) })),
 });
