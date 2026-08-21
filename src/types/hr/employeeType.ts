@@ -1,62 +1,14 @@
-import type { AddressItem, KycDocumentItem, EducationItem, WorkExperienceItem, SkillItem, EmergencyContactItem, BankAccountItem } from "./employeeSubItems";
+import type { EmployeeBaseFields } from "./employee/employeeBaseFields";
+import type { EmployeeCompDetails } from "./employee/employeeCompDetails";
+import type { EmployeePersonalNested } from "./employee/employeePersonalNested";
 
-export interface Employee {
-  id: string;
-  employeeId?: string;
-  employeeCode?: string;
-  full_name?: string;
-  name?: string;
-  firstName?: string;
-  lastName?: string;
-  email: string;
-  phone?: string;
-  alternatePhone?: string;
-  personalEmail?: string;
-  companyWorkEmail?: string;
-  role: string;
-  systemRole?: string;
-  portalRole?: string;
-  department: string;
-  subDepartment?: string;
-  designation?: string;
-  team?: string;
-  managerId?: string;
-  managerName?: string;
-  manager?: string;
-  reportingManager?: string;
-  employmentType: "full-time" | "part-time" | "contract" | "intern" | "FULL_TIME" | string;
-  status: "active" | "inactive" | "on_leave" | "probation" | "Active" | string;
-  joiningDate?: string;
-  joinedAt?: string;
-  ctcAnnual?: number;
-  ctc?: number;
-  salary?: any;
-  basicSalary?: number;
-  hra?: number;
-  bonus?: number;
-  pfDeduction?: number;
-  esiDeduction?: number;
-  profTax?: number;
-  gender?: string;
-  dob?: string;
-  bloodGroup?: string;
-  maritalStatus?: string;
-  photoUrl?: string;
-  avatar?: string;
-  shift?: string;
-  branchOffice?: string;
-  workLocation?: string;
-  probationPeriod?: string | number;
-  capacity?: string | number;
-  costCenterId?: string;
-  leaveGroup?: string;
-  addresses?: AddressItem[];
-  kycDocuments?: KycDocumentItem[];
-  education?: EducationItem[];
-  workExperience?: WorkExperienceItem[];
-  skills?: SkillItem[];
-  emergencyContacts?: EmergencyContactItem[];
-  bankAccount?: BankAccountItem;
-  bankAccounts?: BankAccountItem[];
+export * from "./employee/employeeBaseFields";
+export * from "./employee/employeeCompDetails";
+export * from "./employee/employeePersonalNested";
+
+export interface Employee
+  extends EmployeeBaseFields,
+    EmployeeCompDetails,
+    EmployeePersonalNested {
   [key: string]: any;
 }

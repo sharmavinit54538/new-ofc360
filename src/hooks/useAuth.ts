@@ -1,53 +1,15 @@
-import { useCallback } from "react";
-import { useAppDispatch, useAppSelector } from "@/app/hooks";
-import {
-  selectCurrentUser,
-  selectIsAuthenticated,
-  selectCurrentRole,
-  selectCompanyId,
-  selectSessionStatus,
-  selectAuthInitializing,
-} from "@/features/auth/authSelectors";
-import { setRole as setRoleAction, setCredentials } from "@/features/auth/authSlice";
-import { SystemRole, normalizeRole } from "@/features/auth/authTypes";
 import { useAuthLogout } from "./auth/useAuthLogout";
-
-type SetCredentialsPayload = Parameters<typeof setCredentials>[0];
+import { useAuthSelectors } from "./auth/useAuthSelectors";
+import { useAuthActions } from "./auth/useAuthActions";
 
 export function useAuth() {
-  const dispatch = useAppDispatch();
   const logout = useAuthLogout();
-  const user = useAppSelector(selectCurrentUser);
-  const isAuthenticated = useAppSelector(selectIsAuthenticated);
-  const isInitializing = useAppSelector(selectAuthInitializing);
-  const currentRole = useAppSelector(selectCurrentRole);
-  const companyId = useAppSelector(selectCompanyId);
-  const sessionStatus = useAppSelector(selectSessionStatus);
-
-  const loading = isInitializing || sessionStatus === "loading";
-  const role = normalizeRole(user?.role || currentRole) as SystemRole;
-
-  const setRole = useCallback(
-    (r: SystemRole | "admin") => dispatch(setRoleAction(r)),
-    [dispatch]
-  );
-
-  const setCredentialsCallback = useCallback(
-    (p: SetCredentialsPayload) => dispatch(setCredentials(p)),
-    [dispatch]
-  );
-
+  const selectors = useAuthSelectors();
+  const actions = useAuthActions();
   return {
-    user,
-    isAuthenticated,
-    loading,
-    isLoading: loading,
-    isInitializing,
-    role,
-    companyId,
-    sessionStatus,
+    ...selectors,
+    isLoading: selectors.loading,
     logout,
-    setRole,
-    setCredentials: setCredentialsCallback,
+    ...actions,
   };
 }

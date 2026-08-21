@@ -1,0 +1,15 @@
+export type WebSocketEventType =
+  | "presence_update"
+  | "message_received"
+  | "reaction_toggled"
+  | "call_signal"
+  | "call_incoming"
+  | "call_accepted"
+  | "call_rejected"
+  | "call_ended"
+  | "channel_updated"
+  | "user_typing"
+  | "user_stopped_typing"
+  | "meeting_event"
+  | "notification"
+  | (string & {});

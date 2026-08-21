@@ -1,0 +1,15 @@
+@layer components {
+  .gradient-text { @apply bg-clip-text text-transparent; background-image: var(--gradient-brand); }
+  .gradient-text-ai { @apply bg-clip-text text-transparent; background-image: var(--gradient-ai); }
+  .gradient-bg { background-image: var(--gradient-brand); }
+  .gradient-border {
+    @apply border border-transparent bg-clip-padding;
+    background-image: linear-gradient(hsl(var(--card)), hsl(var(--card))), var(--gradient-brand);
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+  }
+  .stat-card { @apply glass-card rounded-xl p-5 space-y-2; }
+  .page-header { @apply text-2xl font-bold tracking-tight text-foreground; }
+  .page-subheader { @apply text-muted-foreground text-sm; }
+  .mono-text { font-family: 'JetBrains Mono', monospace; }
+}

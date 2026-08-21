@@ -1,0 +1,22 @@
+.dark {
+  --background: 223 53% 7%;
+  --foreground: 210 40% 98%;
+  --secondary: 222 47% 10%;
+  --secondary-foreground: 213 27% 84%;
+  --card: 219 43% 12%;
+  --card-foreground: 210 40% 98%;
+  --popover: 219 40% 14%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 239 84% 67%;
+  --primary-foreground: 0 0% 100%;
+  --accent: 258 90% 66%;
+  --accent-foreground: 0 0% 100%;
+  --ai-accent: 189 94% 43%;
+  --ai-accent-foreground: 0 0% 100%;
+  --muted: 222 47% 10%;
+  --muted-foreground: 215 16% 65%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 215 16% 65% / 0.14;
+  --input: 220 49% 10%;
+}

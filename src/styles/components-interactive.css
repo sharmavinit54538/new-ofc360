@@ -1,0 +1,21 @@
+@layer components {
+  @media (hover: hover) and (pointer: fine) {
+    .message-bubble-incoming:hover {
+      border-color: hsl(var(--primary) / 0.38);
+      background-color: hsl(var(--card) / 0.98);
+      box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.08), 0 0 12px -2px hsl(var(--primary) / 0.12);
+    }
+    .message-bubble-outgoing:hover {
+      filter: brightness(1.06);
+      box-shadow: 0 4px 18px -2px hsl(var(--primary) / 0.38);
+    }
+    .message-interactive-card:hover {
+      border-color: hsl(var(--primary) / 0.35);
+      box-shadow: 0 4px 20px -3px rgba(0, 0, 0, 0.1), 0 0 14px -2px hsl(var(--primary) / 0.12);
+    }
+    .message-text-subtle { transition: color 250ms cubic-bezier(0.4, 0, 0.2, 1), opacity 250ms cubic-bezier(0.4, 0, 0.2, 1); }
+    .message-text-subtle:hover { opacity: 1; }
+    .masked-secure-content { letter-spacing: 0.12em; transition: background-color 250ms cubic-bezier(0.4, 0, 0.2, 1), border-color 250ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 250ms cubic-bezier(0.4, 0, 0.2, 1); }
+    .masked-secure-content:hover { border-color: hsl(var(--primary) / 0.45); background-color: hsl(var(--secondary) / 0.55); box-shadow: 0 0 10px -2px hsl(var(--primary) / 0.15); }
+  }
+}
