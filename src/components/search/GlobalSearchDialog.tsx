@@ -77,14 +77,15 @@ export function GlobalSearchDialog({
   }, [query]);
 
   // Live queries
-  const { data: employees = [] } = useGetEmployeesQuery(undefined, {
+  const { data: rawEmployees = [] } = useGetEmployeesQuery(undefined, {
     skip: !open,
   });
+  const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
 
   const { data: candidatesData } = useGetRecruitmentCandidatesQuery(undefined, {
     skip: !open,
   });
-  const candidates = useMemo(() => candidatesData?.items || [], [candidatesData]);
+  const candidates = useMemo(() => Array.isArray(candidatesData?.items) ? candidatesData.items : [], [candidatesData]);
 
   // Action definitions
   const quickActions: ActionSearchItem[] = useMemo(() => [
@@ -269,16 +270,16 @@ export function GlobalSearchDialog({
 
   // Counts for category tabs
   const counts = useMemo(() => {
+    const empLen = filteredResults?.employees?.length ?? 0;
+    const candLen = filteredResults?.candidates?.length ?? 0;
+    const pageLen = filteredResults?.pages?.length ?? 0;
+    const actLen = filteredResults?.actions?.length ?? 0;
     return {
-      all:
-        filteredResults.employees.length +
-        filteredResults.candidates.length +
-        filteredResults.pages.length +
-        filteredResults.actions.length,
-      employees: filteredResults.employees.length,
-      candidates: filteredResults.candidates.length,
-      pages: filteredResults.pages.length,
-      actions: filteredResults.actions.length,
+      all: empLen + candLen + pageLen + actLen,
+      employees: empLen,
+      candidates: candLen,
+      pages: pageLen,
+      actions: actLen,
     };
   }, [filteredResults]);
 
