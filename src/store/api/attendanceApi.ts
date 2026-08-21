@@ -11,10 +11,6 @@ export const attendanceApi = baseApi.injectEndpoints({
   overrideExisting: false,
 });
 
-export const {
-  useGetAttendanceStatusQuery,
-} = attendanceApi;
-
-// Re-export hooks from faceAttendanceApi and feature attendanceApi
+export const { useGetAttendanceStatusQuery } = attendanceApi;
 export * from '@/services/api/faceAttendanceApi';
 export * from '@/features/attendance/attendanceApi';
