@@ -1,0 +1,16 @@
+export const ONBOARDING_TAGS = [
+  "Onboarding",
+  "EmployeeOnboarding",
+  "CompanyOnboarding",
+  "OnboardingAdmin",
+  "OnboardingWorkflow",
+  "NewHire",
+  "OnboardingTask",
+  "OnboardingDocument",
+  "HRAdminOnboarding",
+  "HRAdminWorkflow",
+  "HRAdminNewHire",
+  "HRAdminDocument",
+  "HRAdminTask",
+  "HrAdminOnboarding",
+] as const;

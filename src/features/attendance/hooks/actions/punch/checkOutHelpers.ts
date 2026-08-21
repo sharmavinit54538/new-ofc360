@@ -1,5 +1,5 @@
-import { formatSecs } from "../../../../utils/attendance.utils";
-import type { PunchRecord } from "../../../../types/attendance.types";
+import { formatSecs } from "../../../utils/formatSecs";
+import type { PunchRecord } from "../../../types/attendanceRecord";
 
 export function evaluateCheckOut(gross: number, brk: number) {
   const net = Math.max(0, gross - brk);

@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { SHIFT_OPTIONS, DAY_OF_WEEK_OPTIONS } from "../../constants/attendance.constants";
+import { SHIFT_OPTIONS, DAY_OF_WEEK_OPTIONS } from "../../../constants/attendance.constants";
 
 export function RosterDialogForm(p: {
   rosterEmp: string; setRosterEmp: (v: string) => void;

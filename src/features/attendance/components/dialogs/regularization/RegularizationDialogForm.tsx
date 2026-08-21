@@ -2,14 +2,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { REGULARIZATION_PUNCH_TYPES } from "../../constants/attendance.constants";
+import { REGULARIZATION_PUNCH_TYPES } from "../../../constants/attendance.constants";
 import type { RegularizationRequest } from "../../../types/attendance.types";
 
 export function RegularizationDialogForm(p: {
-  regDate: string; setRegDate: (v: string) => void;
-  regType: RegularizationRequest["missedPunchType"]; setRegType: (v: RegularizationRequest["missedPunchType"]) => void;
-  regTime: string; setRegTime: (v: string) => void;
-  regReason: string; setRegReason: (v: string) => void;
+  regDate: string; setRegDate: (v: string) => void; regType: RegularizationRequest["missedPunchType"];
+  setRegType: (v: RegularizationRequest["missedPunchType"]) => void; regTime: string; setRegTime: (v: string) => void; regReason: string; setRegReason: (v: string) => void;
 }) {
   return (
     <div className="space-y-3 py-2">

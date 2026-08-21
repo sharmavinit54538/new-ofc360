@@ -1,13 +1,8 @@
-export interface ConnectNotification {
-  id: string;
-  userId?: string;
-  title: string;
-  description?: string;
-  body?: string;
-  type?: "message" | "mention" | "channel" | "call" | "channel_invite" | "meeting_invite" | string;
-  entityId?: string;
-  read?: boolean;
-  isRead?: boolean;
+import type { NotificationBaseFields } from "./notificationBaseFields";
+
+export * from "./notificationBaseFields";
+
+export interface ConnectNotification extends NotificationBaseFields {
   createdAt?: string;
   timestamp?: string;
   link?: string;

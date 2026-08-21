@@ -1,38 +1,18 @@
 import { baseApi } from "./baseApi";
+import type { PerformanceReview } from "./performance/performanceTypes";
 
-export interface PerformanceReview {
-  id: string;
-  employeeId: string;
-  reviewerId: string;
-  cycle: string;
-  rating: number;
-  feedback: string;
-  status: "draft" | "submitted" | "approved";
-  createdAt: string;
-}
+export * from "./performance/performanceTypes";
 
 export const performanceApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getPerformanceReviews: builder.query<PerformanceReview[], { employeeId?: string }>({
-      query: (params) => {
-        const q = params?.employeeId ? `?employeeId=${params.employeeId}` : "";
-        return `/api/v1/performance/reviews${q}`;
-      },
+      query: (params) => `/api/v1/performance/reviews${params?.employeeId ? `?employeeId=${params.employeeId}` : ""}`,
       providesTags: ["Performance"],
     }),
-
     submitReview: builder.mutation<PerformanceReview, Partial<PerformanceReview>>({
-      query: (body) => ({
-        url: "/api/v1/performance/reviews",
-        method: "POST",
-        body,
-      }),
+      query: (body) => ({ url: "/api/v1/performance/reviews", method: "POST", body }),
       invalidatesTags: ["Performance"],
     }),
   }),
 });
-
-export const {
-  useGetPerformanceReviewsQuery,
-  useSubmitReviewMutation,
-} = performanceApi;
+export const { useGetPerformanceReviewsQuery, useSubmitReviewMutation } = performanceApi;

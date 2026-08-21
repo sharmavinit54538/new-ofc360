@@ -1,8 +1,8 @@
 export {
-  baseApi,
+  api as baseApi,
   baseQuery,
   baseQueryWithReauth,
-} from "@/services/api/baseApi";
-export { API_TAGS } from "@/services/api/apiTags";
-export type { ApiTagType } from "@/services/api/apiTags";
+} from "@/api/client";
+export * from "@/api/endpoints";
+export type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@/api/client";
 

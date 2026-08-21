@@ -1,7 +1,7 @@
-import { ApplyRegularizationDialog } from "./dialogs/ApplyRegularizationDialog";
-import { LogTimesheetDialog } from "./dialogs/LogTimesheetDialog";
-import { RequestOvertimeDialog } from "./dialogs/RequestOvertimeDialog";
-import { ApplyLeaveDialog } from "./dialogs/ApplyLeaveDialog";
+import { ApplyRegularizationDialog } from "./ApplyRegularizationDialog";
+import { LogTimesheetDialog } from "./LogTimesheetDialog";
+import { RequestOvertimeDialog } from "./RequestOvertimeDialog";
+import { ApplyLeaveDialog } from "./ApplyLeaveDialog";
 import type { AttendanceDialogProps } from "../../types/dialogPropTypes";
 
 export function AttendanceEmployeeDialogs({ modals, actions }: AttendanceDialogProps) {

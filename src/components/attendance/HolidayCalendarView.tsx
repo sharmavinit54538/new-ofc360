@@ -38,7 +38,7 @@ const MONTH_NAMES = [
 
 const DAYS_OF_WEEK = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export default function HolidayCalendarView({
+export function HolidayCalendarView({
   holidays,
   onAddHoliday,
   onDeleteHoliday,
@@ -576,3 +576,5 @@ export default function HolidayCalendarView({
     </div>
   );
 }
+
+export default HolidayCalendarView;

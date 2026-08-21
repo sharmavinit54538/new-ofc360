@@ -1,14 +1,12 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { HOLIDAY_TYPES, BRANCH_OPTIONS } from "../../constants/attendance.constants";
+import { HOLIDAY_TYPES, BRANCH_OPTIONS } from "../../../constants/attendance.constants";
 import type { HolidayItem } from "../../../types/attendance.types";
 
 export function HolidayDialogForm(p: {
-  holidayTitle: string; setHolidayTitle: (v: string) => void;
-  holidayDate: string; setHolidayDate: (v: string) => void;
-  holidayType: HolidayItem["type"]; setHolidayType: (v: HolidayItem["type"]) => void;
-  holidayBranch: string; setHolidayBranch: (v: string) => void;
+  holidayTitle: string; setHolidayTitle: (v: string) => void; holidayDate: string; setHolidayDate: (v: string) => void;
+  holidayType: HolidayItem["type"]; setHolidayType: (v: HolidayItem["type"]) => void; holidayBranch: string; setHolidayBranch: (v: string) => void;
 }) {
   return (
     <div className="space-y-3 py-2">

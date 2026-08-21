@@ -1,5 +1,5 @@
-export { default } from "./AttendanceView";
 export { AttendanceView } from "./AttendanceView";
+export { default } from "./AttendanceView";
 export { default as AttendancePunchCard } from "./AttendancePunchCard";
 export * from "./types";
 export * from "./constants";

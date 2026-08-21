@@ -1,0 +1,16 @@
+export const RECRUITMENT_TAGS = [
+  "Recruitment",
+  "Candidate",
+  "Job",
+  "Requisition",
+  "Interview",
+  "Scorecard",
+  "Offer",
+  "Referral",
+  "Vendor",
+  "AiRecruiter",
+  "RecruitmentAnalytics",
+  "TalentPool",
+  "WorkflowRule",
+  "RecruitmentCompliance",
+] as const;

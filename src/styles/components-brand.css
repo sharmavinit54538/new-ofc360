@@ -1,15 +1,19 @@
-@layer components {
-  .bg-gradient-brand { background-image: var(--gradient-brand); }
-  .bg-gradient-ai { background-image: var(--gradient-ai); }
-  .text-brand-foreground { color: #ffffff; }
-  .shadow-glow { box-shadow: var(--shadow-glow); }
-  .shadow-glow-ai { box-shadow: 0 0 25px rgba(6, 182, 212, 0.22); }
-  .glass-card { @apply bg-card/75 backdrop-blur-xl border border-border/60 shadow-lg; }
-  .glass-card-hover { @apply glass-card transition-all duration-300 hover:shadow-xl hover:border-primary/30 hover:-translate-y-0.5; }
-  .ai-card {
-    background-image: linear-gradient(135deg, rgba(99, 102, 241, 0.10) 0%, rgba(6, 182, 212, 0.06) 100%);
-    border: 1px solid rgba(99, 102, 241, 0.20);
-    @apply rounded-xl backdrop-blur-md;
-  }
-  .ai-card-hover { @apply ai-card transition-all duration-300 hover:border-primary/40 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)]; }
+.bg-gradient-brand { background-image: var(--gradient-brand); }
+.bg-gradient-ai { background-image: var(--gradient-ai); }
+.text-brand-foreground { color: #ffffff; }
+.shadow-glow { box-shadow: var(--shadow-glow); }
+.shadow-glow-ai { box-shadow: 0 0 25px rgba(6, 182, 212, 0.22); }
+.glass-card {
+  background-color: hsl(var(--card) / 0.75);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid hsl(var(--border) / 0.6);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+.ai-card {
+  background-image: linear-gradient(135deg, rgba(99, 102, 241, 0.10) 0%, rgba(6, 182, 212, 0.06) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.20);
+  border-radius: 0.75rem;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }

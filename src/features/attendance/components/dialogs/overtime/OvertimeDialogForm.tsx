@@ -2,12 +2,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { OVERTIME_MULTIPLIER_OPTIONS } from "../../constants/attendance.constants";
+import { OVERTIME_MULTIPLIER_OPTIONS } from "../../../constants/attendance.constants";
 
 export function OvertimeDialogForm(p: {
   otHours: string; setOtHours: (v: string) => void;
-  otMultiplier: string; setOtMultiplier: (v: string) => void;
-  otReason: string; setOtReason: (v: string) => void;
+  otMultiplier: string; setOtMultiplier: (v: string) => void; otReason: string; setOtReason: (v: string) => void;
 }) {
   return (
     <div className="space-y-3 py-2">

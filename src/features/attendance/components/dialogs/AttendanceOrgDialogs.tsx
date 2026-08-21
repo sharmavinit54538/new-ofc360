@@ -1,6 +1,6 @@
-import { AddShiftDialog } from "./dialogs/AddShiftDialog";
-import { AssignRosterDialog } from "./dialogs/AssignRosterDialog";
-import { AddHolidayDialog } from "./dialogs/AddHolidayDialog";
+import { AddShiftDialog } from "./AddShiftDialog";
+import { AssignRosterDialog } from "./AssignRosterDialog";
+import { AddHolidayDialog } from "./AddHolidayDialog";
 import type { AttendanceDialogProps } from "../../types/dialogPropTypes";
 
 export function AttendanceOrgDialogs({ modals, actions }: AttendanceDialogProps) {

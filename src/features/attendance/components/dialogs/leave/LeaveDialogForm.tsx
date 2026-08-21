@@ -2,13 +2,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LEAVE_TYPE_OPTIONS } from "../../constants/attendance.constants";
+import { LEAVE_TYPE_OPTIONS } from "../../../constants/attendance.constants";
 
 export function LeaveDialogForm(p: {
-  leaveType: string; setLeaveType: (v: string) => void;
-  leaveStart: string; setLeaveStart: (v: string) => void;
-  leaveEnd: string; setLeaveEnd: (v: string) => void;
-  leaveReason: string; setLeaveReason: (v: string) => void;
+  leaveType: string; setLeaveType: (v: string) => void; leaveStart: string; setLeaveStart: (v: string) => void;
+  leaveEnd: string; setLeaveEnd: (v: string) => void; leaveReason: string; setLeaveReason: (v: string) => void;
 }) {
   return (
     <div className="space-y-3 py-2">
