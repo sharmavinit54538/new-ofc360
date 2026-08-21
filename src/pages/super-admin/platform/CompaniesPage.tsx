@@ -65,7 +65,7 @@ export default function CompaniesPage() {
   const [planFilter, setPlanFilter] = useState("ALL");
 
   const {
-    data: companies = [],
+    data: rawCompanies = [],
     isLoading,
     isFetching,
     refetch,
@@ -74,6 +74,13 @@ export default function CompaniesPage() {
     status: statusFilter !== "ALL" ? statusFilter : undefined,
     plan: planFilter !== "ALL" ? planFilter : undefined,
   });
+  const companies = Array.isArray(rawCompanies)
+    ? rawCompanies
+    : Array.isArray((rawCompanies as any)?.items)
+    ? (rawCompanies as any).items
+    : Array.isArray((rawCompanies as any)?.data)
+    ? (rawCompanies as any).data
+    : [];
 
   const [createOrganization, { isLoading: isCreating }] = useCreateSuperAdminOrganizationMutation();
   const [updateOrganization, { isLoading: isUpdating }] = useUpdateSuperAdminOrganizationMutation();
@@ -375,7 +382,7 @@ export default function CompaniesPage() {
                           <p className="text-[11px] text-muted-foreground font-mono">
                             {c.hr_admin?.email || c.hrAdminEmail}
                           </p>
-                          {c.hr_admins && c.hr_admins.length > 1 && (
+                          {Array.isArray(c.hr_admins) && c.hr_admins.length > 1 && (
                             <span className="inline-block text-[10px] text-primary font-medium bg-primary/10 px-1.5 py-0.5 rounded-full">
                               +{c.hr_admins.length - 1} more
                             </span>

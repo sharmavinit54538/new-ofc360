@@ -54,7 +54,14 @@ import {
 import { toast } from "sonner";
 
 export default function SubscriptionsPage() {
-  const { data: subscriptions = [], isLoading, isFetching, refetch } = useGetSuperAdminSubscriptionsQuery();
+  const { data: rawSubscriptions = [], isLoading, isFetching, refetch } = useGetSuperAdminSubscriptionsQuery();
+  const subscriptions = Array.isArray(rawSubscriptions)
+    ? rawSubscriptions
+    : Array.isArray((rawSubscriptions as any)?.items)
+    ? (rawSubscriptions as any).items
+    : Array.isArray((rawSubscriptions as any)?.data)
+    ? (rawSubscriptions as any).data
+    : [];
   const [updateSubscription, { isLoading: isUpdating }] = useUpdateSuperAdminSubscriptionMutation();
 
   const [search, setSearch] = useState("");
@@ -72,13 +79,13 @@ export default function SubscriptionsPage() {
   const [maxLicenses, setMaxLicenses] = useState("100");
 
   const totalMRR = subscriptions
-    .filter((s) => s.status === "Active")
+    .filter((s) => s?.status === "Active")
     .reduce((sum, s) => {
-      const monthlyAmount = s.billingCycle === "Annual" ? s.amount / 12 : s.amount;
+      const monthlyAmount = s?.billingCycle === "Annual" ? (s.amount || 0) / 12 : (s?.amount || 0);
       return sum + monthlyAmount;
     }, 0);
 
-  const totalActiveLicenses = subscriptions.reduce((sum, s) => sum + s.activeLicenses, 0);
+  const totalActiveLicenses = subscriptions.reduce((sum, s) => sum + (s?.activeLicenses || 0), 0);
 
   const handleOpenEdit = (sub: SuperAdminSubscription) => {
     setSelectedSub(sub);

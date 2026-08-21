@@ -747,7 +747,7 @@ export const ReportsHub: React.FC = () => {
 
                   <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl p-5">
                     <h3 className="text-sm font-semibold text-slate-200 mb-3">Gender Demographics</h3>
-                    {cultureRes?.data?.genderDistribution && cultureRes.data.genderDistribution.length > 0 ? (
+                    {Array.isArray(cultureRes?.data?.genderDistribution) && cultureRes.data.genderDistribution.length > 0 ? (
                       <div className="space-y-2">
                         {cultureRes.data.genderDistribution.map((g, idx) => (
                           <div key={idx} className="flex justify-between items-center text-xs">

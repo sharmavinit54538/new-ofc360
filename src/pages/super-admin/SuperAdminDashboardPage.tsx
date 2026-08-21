@@ -65,10 +65,17 @@ export default function SuperAdminDashboardPage() {
   } = useGetSuperAdminDashboardQuery();
 
   const {
-    data: companies = [],
+    data: rawCompanies = [],
     isLoading: isCompaniesLoading,
     refetch: refetchCompanies,
   } = useGetSuperAdminOrganizationsQuery();
+  const companies = Array.isArray(rawCompanies)
+    ? rawCompanies
+    : Array.isArray((rawCompanies as any)?.items)
+    ? (rawCompanies as any).items
+    : Array.isArray((rawCompanies as any)?.data)
+    ? (rawCompanies as any).data
+    : [];
 
   const handleRefresh = () => {
     refetchDashboard();
@@ -87,16 +94,18 @@ export default function SuperAdminDashboardPage() {
 
   // Plan Distribution Pie Chart Data
   const planDistribution = useMemo(() => {
-    if (charts?.subscription_distribution && charts.subscription_distribution.length > 0) {
+    if (Array.isArray(charts?.subscription_distribution) && charts.subscription_distribution.length > 0) {
       return charts.subscription_distribution.map((item) => ({
-        name: item.plan,
-        value: item.count,
+        name: item?.plan || "Standard",
+        value: item?.count || 0,
       }));
     }
     // Fallback: derive from companies array
     const counts: Record<string, number> = {};
     companies.forEach((c) => {
-      counts[c.plan] = (counts[c.plan] || 0) + 1;
+      if (c?.plan) {
+        counts[c.plan] = (counts[c.plan] || 0) + 1;
+      }
     });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [charts?.subscription_distribution, companies]);
@@ -105,7 +114,7 @@ export default function SuperAdminDashboardPage() {
 
   // Revenue Growth Curve
   const revenueGrowthData = useMemo(() => {
-    if (charts?.revenue_trend && charts.revenue_trend.length > 0) {
+    if (Array.isArray(charts?.revenue_trend) && charts.revenue_trend.length > 0) {
       return charts.revenue_trend;
     }
     return [];

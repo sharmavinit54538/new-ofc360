@@ -41,8 +41,22 @@ const customTooltipStyle = {
 };
 
 export default function UserGrowthPage() {
-  const { data: users = [] } = useGetSuperAdminUsersQuery();
-  const { data: companies = [] } = useGetSuperAdminOrganizationsQuery();
+  const { data: rawUsers = [] } = useGetSuperAdminUsersQuery();
+  const users = Array.isArray(rawUsers)
+    ? rawUsers
+    : Array.isArray((rawUsers as any)?.items)
+    ? (rawUsers as any).items
+    : Array.isArray((rawUsers as any)?.data)
+    ? (rawUsers as any).data
+    : [];
+  const { data: rawCompanies = [] } = useGetSuperAdminOrganizationsQuery();
+  const companies = Array.isArray(rawCompanies)
+    ? rawCompanies
+    : Array.isArray((rawCompanies as any)?.items)
+    ? (rawCompanies as any).items
+    : Array.isArray((rawCompanies as any)?.data)
+    ? (rawCompanies as any).data
+    : [];
   const { data: dashboard } = useGetSuperAdminDashboardQuery();
 
   const kpis = dashboard?.kpis;
