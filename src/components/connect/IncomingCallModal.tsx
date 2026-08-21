@@ -32,13 +32,14 @@ export function IncomingCallModal() {
     await connectCallOrchestrator.rejectCall(incomingCall);
   };
 
-  const callerName = incomingCall.targetUser?.name || "Unknown";
+  const callerName = incomingCall?.targetUser?.name || "Unknown";
   const initials = callerName
     .split(" ")
+    .filter(Boolean)
     .map((n) => n[0])
     .join("")
     .slice(0, 2)
-    .toUpperCase();
+    .toUpperCase() || "U";
 
   return (
     <AnimatePresence>
@@ -52,7 +53,7 @@ export function IncomingCallModal() {
           <div className="relative">
             <span className="absolute inset-0 rounded-full bg-emerald-500/30 animate-ping" />
             <Avatar className="w-12 h-12 border-2 border-emerald-500 shadow-md">
-              <AvatarImage src={incomingCall.targetUser.avatar} alt={callerName} />
+              <AvatarImage src={incomingCall?.targetUser?.avatar} alt={callerName} />
               <AvatarFallback className="text-sm font-bold bg-primary/10 text-primary">
                 {initials}
               </AvatarFallback>
@@ -61,11 +62,11 @@ export function IncomingCallModal() {
 
           <div className="min-w-0 flex-1">
             <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">
-              Incoming {incomingCall.type === "video" ? "Video" : "Audio"} Call...
+              Incoming {incomingCall?.type === "video" ? "Video" : "Audio"} Call...
             </span>
             <h4 className="text-sm font-bold text-foreground truncate">{callerName}</h4>
             <p className="text-[11px] text-muted-foreground truncate">
-              {incomingCall.targetUser.role || "Colleague"} • {incomingCall.targetUser.department || "General"}
+              {incomingCall?.targetUser?.role || "Colleague"} • {incomingCall?.targetUser?.department || "General"}
             </p>
           </div>
         </div>
