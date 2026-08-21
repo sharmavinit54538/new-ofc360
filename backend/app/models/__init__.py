@@ -15,6 +15,21 @@ from app.models.misc import (  # noqa: F401
     CCTVCamera,
     AuditLog,
 )
+from app.models.hr import (  # noqa: F401
+    Employee,
+    AttendanceRecord,
+    LeaveRequest,
+    LeaveBalance,
+    PayrollPeriod,
+    Payslip,
+    JobPosting,
+    Candidate,
+    DocumentRecord,
+    PerformanceReview,
+    GoalOKR,
+    ExitCase,
+    EngagementKudos,
+)
 
 __all__ = [
     "Base",
@@ -32,4 +47,17 @@ __all__ = [
     "RecognitionLog",
     "CCTVCamera",
     "AuditLog",
+    "Employee",
+    "AttendanceRecord",
+    "LeaveRequest",
+    "LeaveBalance",
+    "PayrollPeriod",
+    "Payslip",
+    "JobPosting",
+    "Candidate",
+    "DocumentRecord",
+    "PerformanceReview",
+    "GoalOKR",
+    "ExitCase",
+    "EngagementKudos",
 ]

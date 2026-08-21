@@ -32,18 +32,45 @@ export default function AIChatPage() {
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-  const sendMessage = (text: string) => {
+  const sendMessage = async (text: string) => {
     if (!text.trim()) return;
     const userMsg: Message = { id: Date.now(), role: "user", content: text };
     setMessages(prev => [...prev, userMsg]);
     setInput("");
     setLoading(true);
 
-    setTimeout(() => {
+    try {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      const companyId = localStorage.getItem("companyId") || sessionStorage.getItem("companyId");
+      const res = await fetch("/api/v1/ai/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(companyId ? { "X-Company-ID": companyId } : {}),
+        },
+        body: JSON.stringify({ prompt: text, message: text }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const botMsg: Message = {
+          id: Date.now() + 1,
+          role: "assistant",
+          content: data.response || data.data?.response || fakeResponses.default,
+        };
+        setMessages(prev => [...prev, botMsg]);
+      } else {
+        const botMsg: Message = { id: Date.now() + 1, role: "assistant", content: fakeResponses.default };
+        setMessages(prev => [...prev, botMsg]);
+      }
+    } catch (err) {
+      console.warn("AI Chat request fallback:", err);
       const botMsg: Message = { id: Date.now() + 1, role: "assistant", content: fakeResponses.default };
       setMessages(prev => [...prev, botMsg]);
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   return (

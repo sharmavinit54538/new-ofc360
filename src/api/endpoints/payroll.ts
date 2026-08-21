@@ -1,7 +1,7 @@
 import { api } from "../client";
-import { PayrollPeriod, Payslip, PayrollAnalytics } from "@/services/api/payrollTypes";
+import type { PayrollPeriod, Payslip, PayrollAnalytics } from "@/services/api/payrollTypes";
 
-export { PayrollPeriod, Payslip, PayrollAnalytics } from "@/services/api/payrollTypes";
+export type { PayrollPeriod, Payslip, PayrollAnalytics } from "@/services/api/payrollTypes";
 
 export interface RunPayrollRequest {
   periodId: string;

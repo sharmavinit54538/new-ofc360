@@ -1,5 +1,5 @@
 import { api } from "../client";
-import {
+import type {
   OnboardingAPIResponse,
   EmployeeOnboardingStatus,
   EmployeeOnboardingProgressData,
@@ -15,7 +15,7 @@ import {
   EmployeeStep9Policies,
 } from "@/features/onboarding/types";
 
-export {
+export type {
   OnboardingAPIResponse,
   EmployeeOnboardingStatus,
   EmployeeOnboardingProgressData,

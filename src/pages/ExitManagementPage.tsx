@@ -10,8 +10,29 @@ import { useGetEmployeesQuery } from "@/services/api/employeeApi";
 export default function ExitManagementPage() {
   const { data: rawEmployees = [] } = useGetEmployeesQuery();
   const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
+  const [cases, setCases] = useState<any[]>([]);
 
-  const exitingEmployees = employees.filter(
+  useState(() => {
+    const fetchCases = async () => {
+      try {
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+        const companyId = localStorage.getItem("companyId") || sessionStorage.getItem("companyId");
+        const res = await fetch("/api/v1/exit-management/cases", {
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            ...(companyId ? { "X-Company-ID": companyId } : {}),
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) setCases(data);
+        }
+      } catch (e) {}
+    };
+    fetchCases();
+  });
+
+  const exitingEmployees = cases.length > 0 ? cases : employees.filter(
     (e) => (e?.status || "").toUpperCase() === "INACTIVE" || (e?.status || "").toUpperCase() === "EXITED"
   );
 

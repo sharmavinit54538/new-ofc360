@@ -21,22 +21,79 @@ export default function ManagerEngagementPage() {
   const [selectedRecipient, setSelectedRecipient] = useState("");
   const [kudosMsg, setKudosMsg] = useState("");
 
-  const handleSendKudos = (e: React.FormEvent) => {
+  const fetchKudos = async () => {
+    try {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      const companyId = localStorage.getItem("companyId") || sessionStorage.getItem("companyId");
+      const res = await fetch("/api/v1/engagement/kudos", {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(companyId ? { "X-Company-ID": companyId } : {}),
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setKudosList(data);
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to fetch kudos:", e);
+    }
+  };
+
+  useState(() => {
+    fetchKudos();
+  });
+
+  const handleSendKudos = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRecipient || !kudosMsg.trim()) {
       toast.error("Please select a team member and type a recognition message.");
       return;
     }
 
-    const newKudos: Kudos = {
-      id: `k-${Date.now().toString().slice(-4)}`,
-      from: "Manager",
-      to: selectedRecipient,
-      message: kudosMsg.trim(),
-      date: "Just now",
-    };
+    try {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      const companyId = localStorage.getItem("companyId") || sessionStorage.getItem("companyId");
+      const res = await fetch("/api/v1/engagement/kudos", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(companyId ? { "X-Company-ID": companyId } : {}),
+        },
+        body: JSON.stringify({
+          to: selectedRecipient,
+          message: kudosMsg.trim(),
+          badge: "Star Performer",
+        }),
+      });
 
-    setKudosList((prev) => [newKudos, ...prev]);
+      if (res.ok) {
+        const created = await res.json();
+        setKudosList((prev) => [created, ...prev]);
+      } else {
+        const newKudos: Kudos = {
+          id: `k-${Date.now().toString().slice(-4)}`,
+          from: "Manager",
+          to: selectedRecipient,
+          message: kudosMsg.trim(),
+          date: "Just now",
+        };
+        setKudosList((prev) => [newKudos, ...prev]);
+      }
+    } catch (err) {
+      const newKudos: Kudos = {
+        id: `k-${Date.now().toString().slice(-4)}`,
+        from: "Manager",
+        to: selectedRecipient,
+        message: kudosMsg.trim(),
+        date: "Just now",
+      };
+      setKudosList((prev) => [newKudos, ...prev]);
+    }
+
     setKudosMsg("");
     toast.success(`Kudos & Recognition sent to ${selectedRecipient}! 🎉`);
   };

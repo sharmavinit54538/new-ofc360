@@ -79,7 +79,7 @@ export function FloatingAIAssistant() {
     };
   }, []);
 
-  const handleSend = (textToSend?: string) => {
+  const handleSend = async (textToSend?: string) => {
     const query = (textToSend || input).trim();
     if (!query) return;
 
@@ -94,7 +94,40 @@ export function FloatingAIAssistant() {
     setInput("");
     setIsTyping(true);
 
-    setTimeout(() => {
+    try {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      const companyId = localStorage.getItem("companyId") || sessionStorage.getItem("companyId");
+      const res = await fetch("/api/v1/ai/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(companyId ? { "X-Company-ID": companyId } : {}),
+        },
+        body: JSON.stringify({ prompt: query, message: query }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const responseText = data.response || data.data?.response || data.message || intelligentResponses.default;
+        const botResponse: Message = {
+          id: String(Date.now() + 1),
+          role: "assistant",
+          text: responseText,
+          timestamp: data.timestamp || new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        };
+        setMessages((prev) => [...prev, botResponse]);
+      } else {
+        const botResponse: Message = {
+          id: String(Date.now() + 1),
+          role: "assistant",
+          text: intelligentResponses.default,
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        };
+        setMessages((prev) => [...prev, botResponse]);
+      }
+    } catch (err) {
+      console.warn("AI Chat request fallback:", err);
       const botResponse: Message = {
         id: String(Date.now() + 1),
         role: "assistant",
@@ -102,8 +135,9 @@ export function FloatingAIAssistant() {
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
       setMessages((prev) => [...prev, botResponse]);
+    } finally {
       setIsTyping(false);
-    }, 1200);
+    }
   };
 
   return (

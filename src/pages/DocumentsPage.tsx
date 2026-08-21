@@ -28,11 +28,45 @@ const offerTemplates = [
 ];
 
 export default function DocumentsPage() {
-  const { documents, searchQuery, categoryFilter, setSearchQuery, setCategoryFilter, deleteDocument } =
+  const { documents, searchQuery, categoryFilter, setSearchQuery, setCategoryFilter, addDocument, deleteDocument } =
     useDocumentStore();
+  const [loading, setLoading] = useState(false);
+
+  const fetchBackendDocs = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      const companyId = localStorage.getItem("companyId") || sessionStorage.getItem("companyId");
+      const res = await fetch("/api/v1/documents", {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(companyId ? { "X-Company-ID": companyId } : {}),
+        },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          // Sync with store
+          data.forEach((item: any) => {
+            if (!documents.some((d) => d.id === item.id || d.name === item.name)) {
+              addDocument(item);
+            }
+          });
+        }
+      }
+    } catch (e) {
+      console.warn("Could not fetch documents from backend:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBackendDocs();
+  }, []);
 
   const handleDownload = (doc: DocItem) => {
-    const textContent = `DOCUMENT PREVIEW STATEMENT\n=========================\nDocument Name: ${doc.name}\nCategory: ${doc.category}\nUpdated: ${doc.updatedAt}\nAuthor: ${doc.author}\nStatus: Verified\n=========================\nHR Nexus Local Document Vault`;
+    const textContent = `DOCUMENT PREVIEW STATEMENT\n=========================\nDocument Name: ${doc.name}\nCategory: ${doc.category}\nUpdated: ${doc.updatedAt}\nAuthor: ${doc.author}\nStatus: Verified\n=========================\nOFC360 Enterprise Document Vault`;
     const blob = new Blob([textContent], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -45,7 +79,16 @@ export default function DocumentsPage() {
     toast.success(`Downloaded "${doc.name}"`);
   };
 
-  const handleDelete = (id: string, name: string) => {
+  const handleDelete = async (id: string, name: string) => {
+    try {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      await fetch(`/api/v1/documents/${id}`, {
+        method: "DELETE",
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+    } catch (e) {}
     deleteDocument(id);
     toast.success(`Document "${name}" removed`);
   };
