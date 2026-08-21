@@ -1,5 +1,24 @@
 // Public API for the Attendance Feature module
 export * from "./types";
+export * from "./types/attendance.types";
 export * from "./attendanceSlice";
 export * from "./attendanceApi";
+export * from "./services/attendanceApi";
+export * from "./constants/attendance.constants";
+export * from "./utils/attendance.utils";
+export * from "./schemas/attendance.schema";
+export * from "./hooks/useAttendance";
+export * from "./hooks/useAttendanceCamera";
+export * from "./hooks/useAttendanceFilters";
+export * from "./hooks/useAttendanceModals";
+export * from "./hooks/useAttendanceActions";
+export * from "./components/AttendanceHeader";
+export * from "./components/AttendanceStats";
+export * from "./components/AttendanceFilters";
+export * from "./components/AttendanceTable";
+export * from "./components/AttendanceActions";
+export * from "./components/AttendanceEmptyState";
+export * from "./components/AttendanceDialogs";
 export { AttendancePunchCard } from "./AttendancePunchCard";
+export { AttendanceView, default as AttendanceViewDefault } from "./AttendanceView";
+export default AttendanceView;
