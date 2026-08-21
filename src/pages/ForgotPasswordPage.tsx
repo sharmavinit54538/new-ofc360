@@ -18,7 +18,7 @@ import {
   useForgotPasswordMutation,
   useResendOtpMutation,
   useResetPasswordMutation,
-} from "@/services/api/authApi";
+} from "@/api/endpoints/auth";
 import { normalizeError } from "@/services/api/normalizeError";
 import { toast } from "sonner";
 

@@ -22,7 +22,7 @@ import {
   useRegisterMutation,
   useVerifyEmailOtpMutation,
   useResendEmailOtpMutation,
-} from "@/services/api/authApi";
+} from "@/api/endpoints/auth";
 import { useAppDispatch } from "@/app/hooks";
 import { setCredentials } from "@/features/auth/authSlice";
 import { normalizeError } from "@/services/api/normalizeError";
@@ -170,7 +170,8 @@ export default function LoginPage() {
           `Email verified! Signed in as ${roleLabels[activeRole] || activeRole}.`
         );
 
-        const redirectParam = new URLSearchParams(location.search).get("redirect");
+        const searchParams = new URLSearchParams(location.search);
+        const redirectParam = searchParams.get("redirect") || searchParams.get("returnTo");
         const fromPath = (location.state as any)?.from?.pathname;
         const targetPath =
           redirectParam ||
@@ -317,7 +318,8 @@ export default function LoginPage() {
             `Welcome back to OFC360! Signed in as ${roleLabels[activeRole] || activeRole}.`
           );
 
-          const redirectParam = new URLSearchParams(location.search).get("redirect");
+          const loginSearchParams = new URLSearchParams(location.search);
+          const redirectParam = loginSearchParams.get("redirect") || loginSearchParams.get("returnTo");
           const fromPath = (location.state as any)?.from?.pathname;
           const targetPath =
             redirectParam ||

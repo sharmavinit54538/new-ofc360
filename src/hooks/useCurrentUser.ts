@@ -1,6 +1,6 @@
 import { useAppSelector } from "@/app/hooks";
 import { selectCurrentUser, selectIsAuthenticated, selectCurrentRole } from "@/features/auth/authSelectors";
-import { useGetCurrentUserQuery } from "@/services/api/authApi";
+import { useGetCurrentUserQuery } from "@/api/endpoints/auth";
 
 export function useCurrentUser() {
   const localUser = useAppSelector(selectCurrentUser);

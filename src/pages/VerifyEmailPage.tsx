@@ -9,7 +9,7 @@ import {
   useVerifyEmailOtpMutation,
   useResendOtpMutation,
   useResendEmailOtpMutation,
-} from "@/services/api/authApi";
+} from "@/api/endpoints/auth";
 import { useAppDispatch } from "@/app/hooks";
 import { setCredentials } from "@/features/auth/authSlice";
 import { normalizeError } from "@/services/api/normalizeError";

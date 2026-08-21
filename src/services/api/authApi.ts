@@ -1,18 +1,40 @@
-export * from "./auth/authApiTypes";
-export * from "./auth/authPasswordTypes";
-export * from "./auth/unwrapLoginResponse";
-export * from "./auth/authLoginEndpoints";
-export * from "./auth/authSessionEndpoints";
-export * from "./auth/authOtpEndpoints";
-export * from "./auth/authEmailOtpEndpoints";
-export * from "./auth/authPasswordEndpoints";
+/**
+ * Legacy barrel file — re-exports from the canonical auth API.
+ * All auth endpoints are defined in @/api/endpoints/auth.ts using
+ * the canonical createApi instance from @/api/client.ts.
+ *
+ * This file exists only for backward compatibility.
+ * New code should import directly from "@/api/endpoints/auth".
+ */
+export {
+  authApi,
+  unwrapLoginResponse,
+  useLoginMutation,
+  useRegisterMutation,
+  useGetCurrentUserQuery,
+  useLazyGetCurrentUserQuery,
+  useRefreshSessionMutation,
+  useLogoutSessionMutation,
+  useVerifyEmailMutation,
+  useResendOtpMutation,
+  useVerifyEmailOtpMutation,
+  useResendEmailOtpMutation,
+  useForgotPasswordMutation,
+  useVerifyResetOtpMutation,
+  useResetPasswordMutation,
+  useChangePasswordMutation,
+} from "@/api/endpoints/auth";
 
-import { authLoginApi } from "./auth/authLoginEndpoints";
-import { authSessionApi } from "./auth/authSessionEndpoints";
-import { authOtpApi } from "./auth/authOtpEndpoints";
-import { authEmailOtpApi } from "./auth/authEmailOtpEndpoints";
-import { authPasswordApi } from "./auth/authPasswordEndpoints";
-
-export const authApi = {
-  ...authLoginApi, ...authSessionApi, ...authOtpApi, ...authEmailOtpApi, ...authPasswordApi,
-};
+export type {
+  LoginRequest,
+  LoginResponse,
+  RawLoginData,
+  RegisterRequest,
+  VerifyEmailOtpRequest,
+  ResendEmailOtpRequest,
+  ResendEmailOtpResponse,
+  ForgotPasswordRequest,
+  VerifyResetOtpRequest,
+  ResetPasswordRequest,
+  ChangePasswordRequest,
+} from "@/api/endpoints/auth";

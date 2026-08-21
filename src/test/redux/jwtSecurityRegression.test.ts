@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { configureStore } from "@reduxjs/toolkit";
-import { baseApi } from "@/services/api/baseApi";
-import { authApi } from "@/services/api/authApi";
+import { api as baseApi } from "@/api/client";
+import { authApi } from "@/api/endpoints/auth";
 import authReducer, { setCredentials, logout } from "@/features/auth/authSlice";
 
 const createTestStore = () =>

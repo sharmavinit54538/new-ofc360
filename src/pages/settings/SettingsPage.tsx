@@ -55,7 +55,7 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { useChangePasswordMutation } from "@/services/api/authApi";
+import { useChangePasswordMutation } from "@/api/endpoints/auth";
 import {
   useGetHRSettingsQuery,
   useUpdateHRSettingsMutation,

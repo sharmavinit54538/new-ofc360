@@ -6,11 +6,11 @@ import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer, { setCredentials, logout } from "@/features/auth/authSlice";
 import uiReducer from "@/features/ui/uiSlice";
-import { baseApi } from "@/services/api/baseApi";
+import { api as baseApi } from "@/api/client";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import LoginPage from "@/pages/LoginPage";
 import { hrAdminOnboardingApi } from "@/services/api/hrAdminOnboardingApi";
-import { authApi } from "@/services/api/authApi";
+import { authApi } from "@/api/endpoints/auth";
 
 // Mock helper to create test store
 const createTestStore = (preloadedAuthState?: any) => {

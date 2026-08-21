@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { unwrapLoginResponse } from "@/services/api/authApi";
+import { unwrapLoginResponse } from "@/api/endpoints/auth";
 
 describe("authApi unwrapLoginResponse & contract parsing", () => {
   it("should correctly unwrap standard backend envelope with snake_case tokens and nested user", () => {

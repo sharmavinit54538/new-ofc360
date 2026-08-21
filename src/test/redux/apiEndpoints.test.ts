@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { authApi, useLoginMutation, useGetCurrentUserQuery } from "@/services/api/authApi";
+import { authApi, useLoginMutation, useGetCurrentUserQuery } from "@/api/endpoints/auth";
 import {
   employeeApi,
   useGetEmployeesQuery,

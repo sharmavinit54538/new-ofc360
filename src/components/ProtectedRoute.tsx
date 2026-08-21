@@ -37,7 +37,8 @@ export default function ProtectedRoute() {
       return <Navigate to={`/employee/activate${location.search}`} replace />;
     }
 
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    const returnTo = location.pathname !== "/" ? `?returnTo=${encodeURIComponent(location.pathname + location.search)}` : "";
+    return <Navigate to={`/login${returnTo}`} state={{ from: location }} replace />;
   }
 
   return <Outlet />;
