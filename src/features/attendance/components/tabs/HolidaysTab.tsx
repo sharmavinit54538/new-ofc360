@@ -1,32 +1,14 @@
-import { motion } from "framer-motion";
-import HolidayCalendarView from "@/components/attendance/HolidayCalendarView";
+import { HolidaysHeader } from "./holidays/HolidaysHeader";
+import { HolidaysCalendarContainer } from "./holidays/HolidaysCalendarContainer";
 import type { HolidayItem } from "../../types/attendance.types";
 
-interface HolidaysTabProps {
-  holidays: HolidayItem[];
-  onOpenAddHoliday: (dateStr?: string) => void;
-  onDeleteHoliday: (id: string) => void;
-}
-
-export function HolidaysTab({
-  holidays,
-  onOpenAddHoliday,
-  onDeleteHoliday,
-}: HolidaysTabProps) {
+export function HolidaysTab({ holidays, isHrOrAdmin, onAddHoliday, onDeleteHoliday }: {
+  holidays: HolidayItem[]; isHrOrAdmin: boolean; onAddHoliday: () => void; onDeleteHoliday: (id: string) => void;
+}) {
   return (
-    <motion.div
-      key="holidays"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="space-y-6"
-    >
-      <HolidayCalendarView
-        holidays={holidays}
-        onAddHoliday={(dateStr) => {
-          onOpenAddHoliday(dateStr);
-        }}
-        onDeleteHoliday={onDeleteHoliday}
-      />
-    </motion.div>
+    <div className="space-y-3">
+      <HolidaysHeader isHrOrAdmin={isHrOrAdmin} onAddHoliday={onAddHoliday} />
+      <HolidaysCalendarContainer holidays={holidays} isHrOrAdmin={isHrOrAdmin} onDelete={onDeleteHoliday} />
+    </div>
   );
 }

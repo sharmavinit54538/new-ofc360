@@ -8,12 +8,7 @@ export const myHistoryApi = baseApi.injectEndpoints({
       providesTags: [{ type: "Attendance", id: "TODAY" }],
     }),
     getMyHistory: builder.query<APIResponse<AttendanceHistoryResponse>, HistoryQueryParams | void>({
-      query: (params) => {
-        const qp = new URLSearchParams();
-        qp.append("page", String(params?.page ?? 1));
-        qp.append("limit", String(params?.limit ?? 20));
-        return `/api/v1/attendance/face/history?${qp.toString()}`;
-      },
+      query: (p) => `/api/v1/attendance/face/history?page=${p?.page ?? 1}&limit=${p?.limit ?? 20}`,
       providesTags: [{ type: "Attendance", id: "ME_HISTORY" }],
     }),
   }),

@@ -3,19 +3,11 @@ import type { AttendanceState, AttendanceHistoryFilters } from "./attendanceSlic
 import { initialAttendanceState } from "./attendanceSliceInitialState";
 
 export const attendanceReducers = {
-  openCameraModal: (state: AttendanceState, action: PayloadAction<"check-in" | "check-out">) => {
-    state.isCameraModalOpen = true; state.activeAction = action.payload;
-  },
-  closeCameraModal: (state: AttendanceState) => {
-    state.isCameraModalOpen = false; state.activeAction = null;
-  },
-  setActiveAction: (state: AttendanceState, action: PayloadAction<"check-in" | "check-out" | null>) => {
-    state.activeAction = action.payload;
-  },
-  setHistoryFilters: (state: AttendanceState, action: PayloadAction<Partial<AttendanceHistoryFilters>>) => {
-    state.historyFilters = { ...state.historyFilters, ...action.payload };
-  },
-  setPage: (state: AttendanceState, action: PayloadAction<number>) => { state.historyFilters.page = action.payload; },
-  setLimit: (state: AttendanceState, action: PayloadAction<number>) => { state.historyFilters.limit = action.payload; },
-  resetHistoryFilters: (state: AttendanceState) => { state.historyFilters = initialAttendanceState.historyFilters; },
+  openCameraModal: (s: AttendanceState, a: PayloadAction<"check-in" | "check-out">) => { s.isCameraModalOpen = true; s.activeAction = a.payload; },
+  closeCameraModal: (s: AttendanceState) => { s.isCameraModalOpen = false; s.activeAction = null; },
+  setActiveAction: (s: AttendanceState, a: PayloadAction<"check-in" | "check-out" | null>) => { s.activeAction = a.payload; },
+  setHistoryFilters: (s: AttendanceState, a: PayloadAction<Partial<AttendanceHistoryFilters>>) => { s.historyFilters = { ...s.historyFilters, ...a.payload }; },
+  setPage: (s: AttendanceState, a: PayloadAction<number>) => { s.historyFilters.page = a.payload; },
+  setLimit: (s: AttendanceState, a: PayloadAction<number>) => { s.historyFilters.limit = a.payload; },
+  resetHistoryFilters: (s: AttendanceState) => { s.historyFilters = initialAttendanceState.historyFilters; },
 };
