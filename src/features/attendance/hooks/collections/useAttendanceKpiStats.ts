@@ -5,9 +5,9 @@ export function useAttendanceKpiStats(p: {
   employeesCount: number; liveList: PunchRecord[]; leaves: DisplayedLeave[]; pendingOvertimeCount: number;
 }): AttendanceKPIStats {
   const tot = p.analyticsData?.totalEmployees || p.employeesCount || 0;
-  const pres = p.analyticsData?.presentToday ?? p.liveList.filter((x) => x.type === "Check-In" || x.status === "Present").length;
-  const late = p.analyticsData?.lateEmployees ?? p.liveList.filter((x) => x.status === "Late").length;
-  const onLeave = p.leaves.filter((l) => l.status.toLowerCase() === "approved").length;
+  const pres = p.analyticsData?.presentToday ?? (Array.isArray(p.liveList) ? p.liveList.filter((x) => x && (x.type === "Check-In" || x.status === "Present")).length : 0);
+  const late = p.analyticsData?.lateEmployees ?? (Array.isArray(p.liveList) ? p.liveList.filter((x) => x && x.status === "Late").length : 0);
+  const onLeave = Array.isArray(p.leaves) ? p.leaves.filter((l) => (l?.status || "").toLowerCase() === "approved").length : 0;
   const rate = p.analyticsData?.attendanceRate ? `${p.analyticsData.attendanceRate}%` : "97.4%";
   const absentRate = p.analyticsData?.absentToday && tot > 0 ? `${((p.analyticsData.absentToday / tot) * 100).toFixed(1)}%` : "1.8%";
 

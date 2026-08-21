@@ -286,24 +286,28 @@ export function GlobalSearchDialog({
   // Flattened visible items for keyboard navigation
   const flattenedItems: FlattenedSearchItem[] = useMemo(() => {
     const list: FlattenedSearchItem[] = [];
+    const empList = filteredResults?.employees || [];
+    const candList = filteredResults?.candidates || [];
+    const pageList = filteredResults?.pages || [];
+    const actList = filteredResults?.actions || [];
 
     if (activeCategory === "all" || activeCategory === "employees") {
-      const slice = activeCategory === "all" ? filteredResults.employees.slice(0, 5) : filteredResults.employees;
+      const slice = activeCategory === "all" ? empList.slice(0, 5) : empList;
       slice.forEach((emp) => list.push({ type: "employee", data: emp }));
     }
 
     if (activeCategory === "all" || activeCategory === "candidates") {
-      const slice = activeCategory === "all" ? filteredResults.candidates.slice(0, 4) : filteredResults.candidates;
+      const slice = activeCategory === "all" ? candList.slice(0, 4) : candList;
       slice.forEach((cand) => list.push({ type: "candidate", data: cand }));
     }
 
     if (activeCategory === "all" || activeCategory === "pages") {
-      const slice = activeCategory === "all" ? filteredResults.pages.slice(0, 5) : filteredResults.pages;
+      const slice = activeCategory === "all" ? pageList.slice(0, 5) : pageList;
       slice.forEach((page) => list.push({ type: "page", data: page }));
     }
 
     if (activeCategory === "all" || activeCategory === "actions") {
-      const slice = activeCategory === "all" ? filteredResults.actions.slice(0, 4) : filteredResults.actions;
+      const slice = activeCategory === "all" ? actList.slice(0, 4) : actList;
       slice.forEach((act) => list.push({ type: "action", data: act }));
     }
 
@@ -430,7 +434,7 @@ export function GlobalSearchDialog({
             <>
               {/* Workforce / Employees Section */}
               {(activeCategory === "all" || activeCategory === "employees") &&
-                filteredResults.employees.length > 0 && (
+                (filteredResults?.employees?.length || 0) > 0 && (
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between px-2 py-1">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
@@ -469,7 +473,7 @@ export function GlobalSearchDialog({
 
               {/* Candidates Section */}
               {(activeCategory === "all" || activeCategory === "candidates") &&
-                filteredResults.candidates.length > 0 && (
+                (filteredResults?.candidates?.length || 0) > 0 && (
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between px-2 py-1">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
@@ -508,7 +512,7 @@ export function GlobalSearchDialog({
 
               {/* Pages Section */}
               {(activeCategory === "all" || activeCategory === "pages") &&
-                filteredResults.pages.length > 0 && (
+                (filteredResults?.pages?.length || 0) > 0 && (
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between px-2 py-1">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
@@ -547,7 +551,7 @@ export function GlobalSearchDialog({
 
               {/* Quick Actions Section */}
               {(activeCategory === "all" || activeCategory === "actions") &&
-                filteredResults.actions.length > 0 && (
+                (filteredResults?.actions?.length || 0) > 0 && (
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between px-2 py-1">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">

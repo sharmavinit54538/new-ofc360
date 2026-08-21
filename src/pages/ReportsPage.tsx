@@ -94,10 +94,20 @@ export default function ReportsPage() {
   const [dateRange, setDateRange] = useState("Q2-2026");
 
   const { data: rawEmployees = [] } = useGetEmployeesQuery();
-  const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
-  const { punches } = useAttendanceStore();
-  const { runs, complianceFilings } = usePayrollStore();
-  const { leaveRequests } = useLeaveStore();
+  const employees = Array.isArray(rawEmployees)
+    ? rawEmployees
+    : Array.isArray((rawEmployees as any)?.items)
+    ? (rawEmployees as any).items
+    : Array.isArray((rawEmployees as any)?.data)
+    ? (rawEmployees as any).data
+    : [];
+  const attendanceStore = useAttendanceStore();
+  const punches = Array.isArray(attendanceStore.punches) ? attendanceStore.punches : [];
+  const payrollStore = usePayrollStore();
+  const runs = Array.isArray(payrollStore.payrollRuns) ? payrollStore.payrollRuns : Array.isArray((payrollStore as any).runs) ? (payrollStore as any).runs : [];
+  const complianceFilings = Array.isArray(payrollStore.complianceFilings) ? payrollStore.complianceFilings : [];
+  const leaveStore = useLeaveStore();
+  const leaveRequests = Array.isArray(leaveStore.leaveRequests) ? leaveStore.leaveRequests : [];
 
   // Core Analytics
   const { data: headcountRes } = useGetHeadcountAnalyticsQuery(undefined, {
@@ -178,14 +188,15 @@ export default function ReportsPage() {
   // Dynamic Department Allocation from real employees
   const deptMap: Record<string, number> = {};
   employees.forEach((emp) => {
-    const dept = emp.department || "General";
-    deptMap[dept] = (deptMap[dept] || 0) + 1;
+    if (emp?.department) {
+      deptMap[emp.department] = (deptMap[emp.department] || 0) + 1;
+    }
   });
 
-  const dynamicDeptData = Object.keys(deptMap).map((dept, index) => ({
-    name: dept,
-    count: deptMap[dept],
-    color: COLOR_PALETTE[index % COLOR_PALETTE.length],
+  const dynamicDeptData = Object.entries(deptMap).map(([name, count], idx) => ({
+    name,
+    count,
+    color: DEPT_COLORS[idx % DEPT_COLORS.length],
   }));
 
   // Has-data checkers for genuine empty state determination
@@ -194,9 +205,9 @@ export default function ReportsPage() {
     perfData &&
     ((perfData.totalEvaluations && perfData.totalEvaluations > 0) ||
       perfData.avgPerformanceScore ||
-      (perfTopRes?.data && perfTopRes.data.length > 0) ||
-      (perfSkillGapsRes?.data && perfSkillGapsRes.data.length > 0) ||
-      (perfKpiRes?.data && perfKpiRes.data.length > 0))
+      (Array.isArray(perfTopRes?.data) && perfTopRes.data.length > 0) ||
+      (Array.isArray(perfSkillGapsRes?.data) && perfSkillGapsRes.data.length > 0) ||
+      (Array.isArray(perfKpiRes?.data) && perfKpiRes.data.length > 0))
   );
 
   const engagementData = engagementRes?.data;
@@ -206,9 +217,9 @@ export default function ReportsPage() {
       engagementData.enpsScore !== undefined ||
       engagementData.enps !== undefined ||
       engagementData.responseRate !== undefined ||
-      (enpsTrendRes?.data && enpsTrendRes.data.length > 0) ||
-      (engagementBreakdownRes?.data && engagementBreakdownRes.data.length > 0) ||
-      (engagementSurveysRes?.data && engagementSurveysRes.data.length > 0))
+      (Array.isArray(enpsTrendRes?.data) && enpsTrendRes.data.length > 0) ||
+      (Array.isArray(engagementBreakdownRes?.data) && engagementBreakdownRes.data.length > 0) ||
+      (Array.isArray(engagementSurveysRes?.data) && engagementSurveysRes.data.length > 0))
   );
 
   const cultureData = cultureRes?.data;
@@ -216,16 +227,16 @@ export default function ReportsPage() {
     cultureData &&
     (cultureData.inclusionIndex !== undefined ||
       cultureData.diHiringRatio !== undefined ||
-      (cultureData.genderDistribution && cultureData.genderDistribution.length > 0) ||
-      (cultureBreakdownRes?.data && cultureBreakdownRes.data.length > 0) ||
-      (cultureFeedbackRes?.data && cultureFeedbackRes.data.length > 0))
+      (Array.isArray(cultureData.genderDistribution) && cultureData.genderDistribution.length > 0) ||
+      (Array.isArray(cultureBreakdownRes?.data) && cultureBreakdownRes.data.length > 0) ||
+      (Array.isArray(cultureFeedbackRes?.data) && cultureFeedbackRes.data.length > 0))
   );
 
   const compData = compDashboardRes?.data;
   const hasCompData = Boolean(
     (compData && (compData.complianceScore !== undefined || compData.openViolations !== undefined)) ||
-    (compRisksRes?.data && compRisksRes.data.length > 0) ||
-    (securityAuditRes?.data && securityAuditRes.data.length > 0) ||
+    (Array.isArray(compRisksRes?.data) && compRisksRes.data.length > 0) ||
+    (Array.isArray(securityAuditRes?.data) && securityAuditRes.data.length > 0) ||
     complianceFilings.length > 0
   );
 
@@ -311,12 +322,12 @@ export default function ReportsPage() {
               </div>
               <div className="glass-card rounded-2xl p-4 border border-border/60 bg-card">
                 <span className="text-xs text-muted-foreground">Present Today</span>
-                <p className="text-2xl font-extrabold text-emerald-500 font-mono mt-1">{punches.filter(p => p.type === "Check-In").length}</p>
+                <p className="text-2xl font-extrabold text-emerald-500 font-mono mt-1">{punches.filter(p => p?.type === "Check-In").length}</p>
                 <span className="text-[10px] text-emerald-500 font-semibold">Live punch count</span>
               </div>
               <div className="glass-card rounded-2xl p-4 border border-border/60 bg-card">
                 <span className="text-xs text-muted-foreground">On Leave</span>
-                <p className="text-2xl font-extrabold text-blue-500 font-mono mt-1">{leaveRequests.filter(l => l.status === "Approved").length}</p>
+                <p className="text-2xl font-extrabold text-blue-500 font-mono mt-1">{leaveRequests.filter(l => l?.status === "Approved").length}</p>
                 <span className="text-[11px] text-muted-foreground">Approved Time-Off</span>
               </div>
             </div>
@@ -343,7 +354,9 @@ export default function ReportsPage() {
                           <span className="w-3 h-3 rounded-full" style={{ background: d.color }} />
                           {d.name}
                         </span>
-                        <span className="font-mono font-bold text-primary">{d.count} Staff ({Math.round((d.count / employees.length) * 100)}%)</span>
+                        <span className="font-mono font-bold text-primary">
+                          {d.count} Staff ({employees.length > 0 ? Math.round((d.count / employees.length) * 100) : 0}%)
+                        </span>
                       </div>
                     ))}
                   </div>

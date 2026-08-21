@@ -8,9 +8,9 @@ export function useLiveAttendanceList(
   personalFaceData?: APIResponse<AttendanceHistoryResponse>, punches: PunchRecord[] = []
 ): PunchRecord[] {
   return useMemo(() => {
-    if (isHrOrAdmin && companyFaceData?.data?.length) return companyFaceData.data.map(mapLiveFaceRecord);
-    if (isManagerOrAbove && teamFaceData?.data?.length) return teamFaceData.data.map(mapLiveFaceRecord);
-    if (personalFaceData?.data?.records?.length) return personalFaceData.data.records.map(mapLiveFaceRecord);
-    return punches;
+    if (isHrOrAdmin && Array.isArray(companyFaceData?.data) && companyFaceData.data.length > 0) return companyFaceData.data.map(mapLiveFaceRecord);
+    if (isManagerOrAbove && Array.isArray(teamFaceData?.data) && teamFaceData.data.length > 0) return teamFaceData.data.map(mapLiveFaceRecord);
+    if (Array.isArray(personalFaceData?.data?.records) && personalFaceData.data.records.length > 0) return personalFaceData.data.records.map(mapLiveFaceRecord);
+    return Array.isArray(punches) ? punches : [];
   }, [isHrOrAdmin, isManagerOrAbove, companyFaceData, teamFaceData, personalFaceData, punches]);
 }

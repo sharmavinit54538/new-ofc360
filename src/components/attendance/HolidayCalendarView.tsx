@@ -341,7 +341,8 @@ export function HolidayCalendarView({
             <div className="grid grid-cols-7 gap-2">
               {calendarDays.map((cell, index) => {
                 const isSelected = activeDateStr === cell.dateStr;
-                const hasHolidays = cell.holidays.length > 0;
+                const cellHolidays = Array.isArray(cell?.holidays) ? cell.holidays : [];
+                const hasHolidays = cellHolidays.length > 0;
                 const isToday =
                   cell.dateStr === new Date().toISOString().split("T")[0];
 
@@ -382,7 +383,7 @@ export function HolidayCalendarView({
                     </div>
 
                     <div className="space-y-1 mt-1 overflow-hidden">
-                      {cell.holidays.slice(0, 2).map((h) => (
+                      {cellHolidays.slice(0, 2).map((h) => (
                         <div
                           key={h.id}
                           className={`text-[9px] sm:text-[10px] font-semibold px-1.5 py-0.5 rounded-md truncate border ${getHolidayBadgeStyle(
@@ -393,9 +394,9 @@ export function HolidayCalendarView({
                           {h.title}
                         </div>
                       ))}
-                      {cell.holidays.length > 2 && (
+                      {cellHolidays.length > 2 && (
                         <span className="text-[9px] text-muted-foreground font-semibold block text-right">
-                          +{cell.holidays.length - 2} more
+                          +{cellHolidays.length - 2} more
                         </span>
                       )}
                     </div>
@@ -437,9 +438,9 @@ export function HolidayCalendarView({
                 </span>
               </div>
 
-              {selectedDateHolidays.length > 0 ? (
+              {(selectedDateHolidays || []).length > 0 ? (
                 <div className="space-y-3">
-                  {selectedDateHolidays.map((h) => (
+                  {(selectedDateHolidays || []).map((h) => (
                     <div
                       key={h.id}
                       className="p-3 rounded-2xl bg-secondary/30 border border-border/50 space-y-2"
@@ -498,19 +499,19 @@ export function HolidayCalendarView({
               <div className="flex items-center justify-between pb-2 border-b border-border/40">
                 <span className="text-xs font-bold text-foreground">All Holidays in {MONTH_NAMES[month]}</span>
                 <Badge variant="outline" className="text-[10px] font-bold text-primary">
-                  {currentMonthHolidays.length} Total
+                  {(currentMonthHolidays || []).length} Total
                 </Badge>
               </div>
 
               <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 scrollbar-thin">
-                {currentMonthHolidays.length === 0 ? (
+                {(currentMonthHolidays || []).length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground text-xs space-y-1">
                     <Sparkles className="w-6 h-6 mx-auto text-muted-foreground/30" />
                     <p className="font-semibold text-foreground">No Holidays This Month</p>
                     <p className="text-[11px]">Use the navigation arrows to view other months.</p>
                   </div>
                 ) : (
-                  currentMonthHolidays.map((h) => (
+                  (currentMonthHolidays || []).map((h) => (
                     <div
                       key={h.id}
                       onClick={() => setActiveDateStr(h.date)}
@@ -539,7 +540,7 @@ export function HolidayCalendarView({
       {/* VIEW MODE 2: CARDS GRID VIEW */}
       {viewMode === "grid" && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredHolidays.map((h) => (
+          {(filteredHolidays || []).map((h) => (
             <div key={h.id} className="glass-card rounded-2xl p-5 border border-border/60 bg-card space-y-3 shadow-xs">
               <div className="flex items-center justify-between">
                 <Badge variant="outline" className={`text-[10px] font-bold ${getHolidayBadgeStyle(h.type)}`}>
@@ -564,7 +565,7 @@ export function HolidayCalendarView({
             </div>
           ))}
 
-          {filteredHolidays.length === 0 && (
+          {(filteredHolidays || []).length === 0 && (
             <div className="col-span-full p-12 text-center rounded-2xl bg-secondary/20 border border-dashed border-border/60 space-y-2">
               <CalendarIcon className="w-8 h-8 mx-auto text-muted-foreground/40" />
               <h4 className="font-bold text-sm text-foreground">No Holidays Found</h4>

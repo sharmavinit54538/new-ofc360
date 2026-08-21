@@ -477,6 +477,7 @@ Top Recommendation: ${report.recommendations[0] || "None"}`;
                 </div>
 
                 {/* Metric Badges */}
+                {/* Metric Badges */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div className="p-3 bg-secondary/30 rounded-xl border border-border/30">
                     <p className="text-[11px] text-muted-foreground font-medium">Formatting Quality</p>
@@ -492,23 +493,23 @@ Top Recommendation: ${report.recommendations[0] || "None"}`;
 
                   <div className="p-3 bg-secondary/30 rounded-xl border border-border/30">
                     <p className="text-[11px] text-muted-foreground font-medium">Skills Extracted</p>
-                    <p className="text-lg font-bold text-foreground mt-0.5">{report.parsed_resume.skills.length}</p>
+                    <p className="text-lg font-bold text-foreground mt-0.5">{(report.parsed_resume?.skills || []).length}</p>
                   </div>
 
                   <div className="p-3 bg-secondary/30 rounded-xl border border-border/30">
                     <p className="text-[11px] text-muted-foreground font-medium">Issues Detected</p>
-                    <p className={`text-lg font-bold mt-0.5 ${report.issues.length > 0 ? "text-amber-500" : "text-emerald-500"}`}>
-                      {report.issues.length}
+                    <p className={`text-lg font-bold mt-0.5 ${(report.issues || []).length > 0 ? "text-amber-500" : "text-emerald-500"}`}>
+                      {(report.issues || []).length}
                     </p>
                   </div>
                 </div>
 
                 {/* Meta details footer */}
                 <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground pt-1">
-                  <span>File: <strong className="text-foreground font-medium">{report.meta.file_name}</strong></span>
-                  <span>Size: <strong className="text-foreground font-medium">{(report.meta.file_size_bytes / 1024).toFixed(1)} KB</strong></span>
-                  <span>Text Length: <strong className="text-foreground font-medium">{report.meta.char_count} chars</strong></span>
-                  <span>Engine: <strong className="text-foreground font-medium">{report.meta.ocr_engine_used}</strong></span>
+                  <span>File: <strong className="text-foreground font-medium">{report.meta?.file_name || "Document"}</strong></span>
+                  <span>Size: <strong className="text-foreground font-medium">{((report.meta?.file_size_bytes || 0) / 1024).toFixed(1)} KB</strong></span>
+                  <span>Text Length: <strong className="text-foreground font-medium">{report.meta?.char_count || 0} chars</strong></span>
+                  <span>Engine: <strong className="text-foreground font-medium">{report.meta?.ocr_engine_used || "FastAPI OCR"}</strong></span>
                 </div>
               </div>
             </div>
@@ -524,7 +525,7 @@ Top Recommendation: ${report.recommendations[0] || "None"}`;
                 Skills Match Matrix
               </TabsTrigger>
               <TabsTrigger value="quality" className="rounded-lg text-xs font-semibold">
-                Quality & Issues ({report.issues.length})
+                Quality & Issues ({(report.issues || []).length})
               </TabsTrigger>
               <TabsTrigger value="parsed" className="rounded-lg text-xs font-semibold">
                 Parsed Content
@@ -547,13 +548,13 @@ Top Recommendation: ${report.recommendations[0] || "None"}`;
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {[
-                      { label: "Technical & Soft Skills Match", key: "skills", score: report.category_scores.skills, weight: "35%" },
-                      { label: "Experience Relevance & Timeline", key: "experience", score: report.category_scores.experience, weight: "20%" },
-                      { label: "NLP Keyword & Context Alignment", key: "keywords", score: report.category_scores.keywords, weight: "15%" },
-                      { label: "Education & Degree Verification", key: "education", score: report.category_scores.education, weight: "10%" },
-                      { label: "Projects & Technical Portfolio", key: "projects", score: report.category_scores.projects, weight: "10%" },
-                      { label: "Industry Certifications", key: "certifications", score: report.category_scores.certifications, weight: "5%" },
-                      { label: "Formatting & Document Integrity", key: "resume_quality", score: report.category_scores.resume_quality, weight: "5%" },
+                      { label: "Technical & Soft Skills Match", key: "skills", score: report.category_scores?.skills || 0, weight: "35%" },
+                      { label: "Experience Relevance & Timeline", key: "experience", score: report.category_scores?.experience || 0, weight: "20%" },
+                      { label: "NLP Keyword & Context Alignment", key: "keywords", score: report.category_scores?.keywords || 0, weight: "15%" },
+                      { label: "Education & Degree Verification", key: "education", score: report.category_scores?.education || 0, weight: "10%" },
+                      { label: "Projects & Technical Portfolio", key: "projects", score: report.category_scores?.projects || 0, weight: "10%" },
+                      { label: "Industry Certifications", key: "certifications", score: report.category_scores?.certifications || 0, weight: "5%" },
+                      { label: "Formatting & Document Integrity", key: "resume_quality", score: report.category_scores?.resume_quality || 0, weight: "5%" },
                     ].map((item) => (
                       <div key={item.key} className="space-y-1.5">
                         <div className="flex justify-between text-xs">
@@ -581,7 +582,7 @@ Top Recommendation: ${report.recommendations[0] || "None"}`;
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {report.recommendations.length > 0 ? (
+                    {Array.isArray(report.recommendations) && report.recommendations.length > 0 ? (
                       report.recommendations.map((rec, index) => (
                         <div
                           key={index}
@@ -611,14 +612,14 @@ Top Recommendation: ${report.recommendations[0] || "None"}`;
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4" />
-                      Matched Skills ({report.matched_skills.length})
+                      Matched Skills ({(report.matched_skills || []).length})
                     </CardTitle>
                     <CardDescription className="text-xs">
                       Skills found in both resume and target criteria
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {report.matched_skills.length > 0 ? (
+                    {Array.isArray(report.matched_skills) && report.matched_skills.length > 0 ? (
                       <div className="flex flex-wrap gap-1.5">
                         {report.matched_skills.map((skill, idx) => (
                           <Badge
@@ -641,14 +642,14 @@ Top Recommendation: ${report.recommendations[0] || "None"}`;
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
                       <XCircle className="w-4 h-4" />
-                      Missing Skills ({report.missing_skills.length})
+                      Missing Skills ({(report.missing_skills || []).length})
                     </CardTitle>
                     <CardDescription className="text-xs">
                       Required by JD but absent in your resume
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {report.missing_skills.length > 0 ? (
+                    {Array.isArray(report.missing_skills) && report.missing_skills.length > 0 ? (
                       <div className="flex flex-wrap gap-1.5">
                         {report.missing_skills.map((skill, idx) => (
                           <Badge
@@ -673,14 +674,14 @@ Top Recommendation: ${report.recommendations[0] || "None"}`;
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
                       <Layers className="w-4 h-4" />
-                      Extra / Discovered Skills ({report.extra_skills.length})
+                      Extra / Discovered Skills ({(report.extra_skills || []).length})
                     </CardTitle>
                     <CardDescription className="text-xs">
                       Additional competencies extracted from your resume
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {report.extra_skills.length > 0 ? (
+                    {Array.isArray(report.extra_skills) && report.extra_skills.length > 0 ? (
                       <div className="flex flex-wrap gap-1.5">
                         {report.extra_skills.map((skill, idx) => (
                           <Badge
@@ -708,14 +709,14 @@ Top Recommendation: ${report.recommendations[0] || "None"}`;
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base font-bold flex items-center gap-2">
                       <AlertCircle className="w-4 h-4 text-amber-500" />
-                      Detected Structural Issues ({report.issues.length})
+                      Detected Structural Issues ({(report.issues || []).length})
                     </CardTitle>
                     <CardDescription>
                       Formatting or clarity anomalies identified by the document scanner
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {report.issues.length > 0 ? (
+                    {Array.isArray(report.issues) && report.issues.length > 0 ? (
                       report.issues.map((issue, idx) => (
                         <div
                           key={idx}
@@ -739,14 +740,14 @@ Top Recommendation: ${report.recommendations[0] || "None"}`;
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base font-bold flex items-center gap-2">
                       <FileSearch className="w-4 h-4 text-rose-500" />
-                      Missing Standard Sections ({report.missing_fields.length})
+                      Missing Standard Sections ({(report.missing_fields || []).length})
                     </CardTitle>
                     <CardDescription>
                       Core resume sections expected by enterprise ATS parsers
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {report.missing_fields.length > 0 ? (
+                    {Array.isArray(report.missing_fields) && report.missing_fields.length > 0 ? (
                       report.missing_fields.map((field, idx) => (
                         <div
                           key={idx}
@@ -792,33 +793,33 @@ Top Recommendation: ${report.recommendations[0] || "None"}`;
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
                       <div>
                         <span className="text-muted-foreground block text-[11px]">Full Name</span>
-                        <strong className="text-foreground">{report.parsed_resume.name || "Not Found"}</strong>
+                        <strong className="text-foreground">{report.parsed_resume?.name || "Not Found"}</strong>
                       </div>
                       <div>
                         <span className="text-muted-foreground block text-[11px]">Email Address</span>
-                        <strong className="text-foreground">{report.parsed_resume.email || "Not Found"}</strong>
+                        <strong className="text-foreground">{report.parsed_resume?.email || "Not Found"}</strong>
                       </div>
                       <div>
                         <span className="text-muted-foreground block text-[11px]">Phone Number</span>
-                        <strong className="text-foreground">{report.parsed_resume.phone || "Not Found"}</strong>
+                        <strong className="text-foreground">{report.parsed_resume?.phone || "Not Found"}</strong>
                       </div>
                       <div>
                         <span className="text-muted-foreground block text-[11px]">Location</span>
-                        <strong className="text-foreground">{report.parsed_resume.address || "Not Specified"}</strong>
+                        <strong className="text-foreground">{report.parsed_resume?.address || "Not Specified"}</strong>
                       </div>
                       <div>
                         <span className="text-muted-foreground block text-[11px]">Current Designation</span>
-                        <strong className="text-foreground">{report.parsed_resume.current_designation || "Not Specified"}</strong>
+                        <strong className="text-foreground">{report.parsed_resume?.current_designation || "Not Specified"}</strong>
                       </div>
                       <div>
                         <span className="text-muted-foreground block text-[11px]">Current Company</span>
-                        <strong className="text-foreground">{report.parsed_resume.current_company || "Not Specified"}</strong>
+                        <strong className="text-foreground">{report.parsed_resume?.current_company || "Not Specified"}</strong>
                       </div>
                     </div>
                   </div>
 
                   {/* Summary */}
-                  {report.parsed_resume.summary && (
+                  {report.parsed_resume?.summary && (
                     <div className="space-y-1.5">
                       <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                         Professional Summary
@@ -830,7 +831,7 @@ Top Recommendation: ${report.recommendations[0] || "None"}`;
                   )}
 
                   {/* Education */}
-                  {report.parsed_resume.education && report.parsed_resume.education.length > 0 && (
+                  {Array.isArray(report.parsed_resume?.education) && report.parsed_resume.education.length > 0 && (
                     <div className="space-y-2">
                       <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                         <GraduationCap className="w-3.5 h-3.5 text-primary" /> Education History
@@ -838,9 +839,9 @@ Top Recommendation: ${report.recommendations[0] || "None"}`;
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {report.parsed_resume.education.map((edu, idx) => (
                           <div key={idx} className="p-3 bg-secondary/20 rounded-xl border border-border/30 text-xs space-y-1">
-                            <p className="font-semibold text-foreground">{edu.degree || edu.field_of_study || "Degree"}</p>
-                            <p className="text-muted-foreground">{edu.university || edu.college || "Institution"}</p>
-                            {edu.passing_year && <p className="text-[11px] text-muted-foreground">Year: {edu.passing_year}</p>}
+                            <p className="font-semibold text-foreground">{edu?.degree || edu?.field_of_study || "Degree"}</p>
+                            <p className="text-muted-foreground">{edu?.university || edu?.college || "Institution"}</p>
+                            {edu?.passing_year && <p className="text-[11px] text-muted-foreground">Year: {edu.passing_year}</p>}
                           </div>
                         ))}
                       </div>
@@ -848,7 +849,7 @@ Top Recommendation: ${report.recommendations[0] || "None"}`;
                   )}
 
                   {/* Projects */}
-                  {report.parsed_resume.projects && report.parsed_resume.projects.length > 0 && (
+                  {Array.isArray(report.parsed_resume?.projects) && report.parsed_resume.projects.length > 0 && (
                     <div className="space-y-2">
                       <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                         <Briefcase className="w-3.5 h-3.5 text-primary" /> Key Projects
@@ -856,9 +857,9 @@ Top Recommendation: ${report.recommendations[0] || "None"}`;
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {report.parsed_resume.projects.map((proj, idx) => (
                           <div key={idx} className="p-3 bg-secondary/20 rounded-xl border border-border/30 text-xs space-y-1.5">
-                            <p className="font-semibold text-foreground">{proj.title}</p>
-                            {proj.description && <p className="text-muted-foreground leading-relaxed">{proj.description}</p>}
-                            {proj.technologies && proj.technologies.length > 0 && (
+                            <p className="font-semibold text-foreground">{proj?.title}</p>
+                            {proj?.description && <p className="text-muted-foreground leading-relaxed">{proj.description}</p>}
+                            {Array.isArray(proj?.technologies) && proj.technologies.length > 0 && (
                               <div className="flex flex-wrap gap-1 pt-1">
                                 {proj.technologies.map((t, i) => (
                                   <span key={i} className="text-[10px] bg-secondary px-1.5 py-0.5 rounded font-mono text-muted-foreground">

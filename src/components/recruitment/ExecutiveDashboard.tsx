@@ -6,20 +6,24 @@ import { Progress } from "@/components/ui/progress";
 import { useATSStore } from "@/stores/atsStore";
 
 export function ExecutiveDashboard() {
-  const { jobs, candidates, interviews, setActiveTab } = useATSStore();
+  const store = useATSStore();
+  const jobs = Array.isArray(store.jobs) ? store.jobs : [];
+  const candidates = Array.isArray(store.candidates) ? store.candidates : [];
+  const interviews = Array.isArray(store.interviews) ? store.interviews : [];
+  const setActiveTab = store.setActiveTab;
 
-  const totalActiveJobs = jobs.filter((j) => j.status === "Published").length;
+  const totalActiveJobs = jobs.filter((j) => j?.status === "Published").length;
   const totalCandidates = candidates.length;
-  const scheduledInterviews = interviews.filter((i) => i.status === "Scheduled");
-  const offerAccepted = candidates.filter((c) => c.stage === "Offer Extended" || c.stage === "Hired").length;
+  const scheduledInterviews = interviews.filter((i) => i?.status === "Scheduled");
+  const offerAccepted = candidates.filter((c) => c?.stage === "Offer Extended" || c?.stage === "Hired").length;
 
   const stageCounts = {
-    Applied: candidates.filter((c) => c.stage === "Applied").length,
-    Screening: candidates.filter((c) => c.stage === "Screening").length,
-    "Tech Interview": candidates.filter((c) => c.stage === "Tech Interview").length,
-    "Culture Round": candidates.filter((c) => c.stage === "Culture Round").length,
-    "Offer Extended": candidates.filter((c) => c.stage === "Offer Extended").length,
-    Hired: candidates.filter((c) => c.stage === "Hired").length,
+    Applied: candidates.filter((c) => c?.stage === "Applied").length,
+    Screening: candidates.filter((c) => c?.stage === "Screening").length,
+    "Tech Interview": candidates.filter((c) => c?.stage === "Tech Interview").length,
+    "Culture Round": candidates.filter((c) => c?.stage === "Culture Round").length,
+    "Offer Extended": candidates.filter((c) => c?.stage === "Offer Extended").length,
+    Hired: candidates.filter((c) => c?.stage === "Hired").length,
   };
 
   return (

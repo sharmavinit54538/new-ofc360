@@ -69,11 +69,11 @@ function mapBackendToATSResult(
   jobDepartment: string,
   requiredExperienceYears: number
 ): ATSAnalysisResult {
-  const cd = backend.candidate_details;
-  const ab = backend.ats_breakdown;
-  const ai = backend.ai_insights;
+  const cd = backend?.candidate_details || ({} as any);
+  const ab = backend?.ats_breakdown || ({} as any);
+  const ai = backend?.ai_insights || ({} as any);
 
-  const overallScore = Math.round(ab.overall_ats_score);
+  const overallScore = Math.round(ab.overall_ats_score || 0);
 
   let recruiterRecommendation: ATSAnalysisResult["recruiterRecommendation"] = "Strong Match";
   if (overallScore >= 85) recruiterRecommendation = "Strong Match";
@@ -90,8 +90,8 @@ function mapBackendToATSResult(
   else expMatchLevel = "Needs Experience";
 
   return {
-    id: `ATS-${backend.candidate_id.slice(-6)}`,
-    analyzedAt: new Date(backend.created_at).toLocaleString(),
+    id: `ATS-${(backend?.candidate_id || String(Math.random())).slice(-6)}`,
+    analyzedAt: backend?.created_at ? new Date(backend.created_at).toLocaleString() : new Date().toLocaleString(),
     candidate: {
       candidateName: cd.candidate_name || "Unknown Candidate",
       email: cd.email || "",
@@ -102,26 +102,26 @@ function mapBackendToATSResult(
       technicalSkills: cd.technical_skills || [],
       softSkills: cd.soft_skills || [],
       totalExperienceYears: candidateYears,
-      workExperience: (cd.work_history || []).map((w) => ({
-        title: w.designation || "Role",
-        company: w.company,
-        duration: w.duration_months ? `${Math.round(w.duration_months / 12 * 10) / 10} Yrs` : (w.start_date && w.end_date ? `${w.start_date} - ${w.end_date}` : ""),
-        highlights: w.description ? [w.description] : [],
+      workExperience: (cd.work_history || []).map((w: any) => ({
+        title: w?.designation || "Role",
+        company: w?.company || "",
+        duration: w?.duration_months ? `${Math.round(w.duration_months / 12 * 10) / 10} Yrs` : (w?.start_date && w?.end_date ? `${w.start_date} - ${w.end_date}` : ""),
+        highlights: w?.description ? [w.description] : [],
       })),
-      education: (cd.education || []).map((e) => ({
-        degree: e.degree || "",
-        institution: e.university || e.college || "",
-        year: e.passing_year ? String(e.passing_year) : "",
+      education: (cd.education || []).map((e: any) => ({
+        degree: e?.degree || "",
+        institution: e?.university || e?.college || "",
+        year: e?.passing_year ? String(e.passing_year) : "",
       })),
       certifications: cd.certifications || [],
-      projects: (cd.projects || []).map((p) => p.title),
+      projects: (cd.projects || []).map((p: any) => p?.title || ""),
       formatHealth: {
         contactInfoComplete: !!(cd.email && cd.phone),
-        hasSummary: !!(cd.summary && cd.summary.length > 50),
+        hasSummary: !!(cd.summary && (typeof cd.summary === "string" ? cd.summary.length > 50 : false)),
         hasClearHeadings: true,
         fontReadabilityScore: Math.round(ab.formatting_quality || 90),
-        atsParsingHealth: backend.quality_analysis.is_valid ? "Good" : "Warning",
-        formattingFlags: backend.quality_analysis.issues || [],
+        atsParsingHealth: backend?.quality_analysis?.is_valid ? "Good" : "Warning",
+        formattingFlags: backend?.quality_analysis?.issues || [],
       },
     },
     jobTitle,
@@ -129,29 +129,29 @@ function mapBackendToATSResult(
     requiredExperienceYears,
     overallScore,
     scoreBreakdown: {
-      skillsMatchPct: Math.round(ab.skill_match_score),
-      experienceMatchPct: Math.round(ab.experience_match_score),
-      keywordMatchPct: Math.round(ab.keyword_match_score),
-      educationMatchPct: Math.round(ab.education_match_score),
-      responsibilitiesMatchPct: Math.round(ab.role_match_score),
-      jobTitleMatchPct: Math.round(ab.role_match_score),
-      certificationsMatchPct: Math.round(ab.certification_match_score),
+      skillsMatchPct: Math.round(ab.skill_match_score || 0),
+      experienceMatchPct: Math.round(ab.experience_match_score || 0),
+      keywordMatchPct: Math.round(ab.keyword_match_score || 0),
+      educationMatchPct: Math.round(ab.education_match_score || 0),
+      responsibilitiesMatchPct: Math.round(ab.role_match_score || 0),
+      jobTitleMatchPct: Math.round(ab.role_match_score || 0),
+      certificationsMatchPct: Math.round(ab.certification_match_score || 0),
     },
     matchedSkills: ab.matched_skills || [],
     missingSkills: ab.missing_skills || [],
     matchedKeywords: ab.matched_skills || [],
     missingKeywords: ab.missing_skills || [],
-    keywordCoveragePct: Math.round(ab.keyword_match_score),
+    keywordCoveragePct: Math.round(ab.keyword_match_score || 0),
     experienceComparison: {
       requiredYears: requiredExperienceYears,
       candidateYears,
       matchLevel: expMatchLevel,
-      relevantRoles: (cd.work_history || []).map((w) => `${w.designation || "Role"} at ${w.company}`),
+      relevantRoles: (cd.work_history || []).map((w: any) => `${w?.designation || "Role"} at ${w?.company || ""}`),
     },
     educationComparison: {
       requiredDegree: "Bachelor's or equivalent",
       candidateDegree: cd.education?.[0]?.degree || "Not specified",
-      status: ab.education_match_score >= 70 ? "Match" : ab.education_match_score >= 40 ? "Partial Match" : "Not Found",
+      status: (ab.education_match_score || 0) >= 70 ? "Match" : (ab.education_match_score || 0) >= 40 ? "Partial Match" : "Not Found",
     },
     responsibilityComparison: {
       matched: ai.strengths || [],
@@ -159,16 +159,16 @@ function mapBackendToATSResult(
       missing: ai.weaknesses || [],
     },
     recommendations: [
-      ...(ai.missing_skills.length > 0 ? [`Highlight experience with missing skills: ${ai.missing_skills.slice(0, 3).join(", ")}.`] : []),
-      ...ai.recommended_interview_questions.slice(0, 2).map((q) => `Interview Question: ${q}`),
+      ...((ai?.missing_skills || []).length > 0 ? [`Highlight experience with missing skills: ${(ai.missing_skills || []).slice(0, 3).join(", ")}.`] : []),
+      ...(ai?.recommended_interview_questions || []).slice(0, 2).map((q: string) => `Interview Question: ${q}`),
       "Ensure section headings use standard ATS keywords.",
     ],
     recruiterRecommendation,
     recruiterSummary: {
       verdict: ai.candidate_summary || `${cd.candidate_name || "Candidate"} is a ${recruiterRecommendation} (${overallScore}/100) for the ${jobTitle} role.`,
-      topStrengths: ai.strengths.length > 0 ? ai.strengths.slice(0, 3) : ["Analysis completed successfully."],
-      keyGaps: ai.weaknesses.length > 0 ? ai.weaknesses.slice(0, 3) : ["No critical gaps identified."],
-      improvementOpportunities: ai.risk_factors.length > 0 ? ai.risk_factors.slice(0, 3) : [
+      topStrengths: (ai?.strengths || []).length > 0 ? (ai.strengths || []).slice(0, 3) : ["Analysis completed successfully."],
+      keyGaps: (ai?.weaknesses || []).length > 0 ? (ai.weaknesses || []).slice(0, 3) : ["No critical gaps identified."],
+      improvementOpportunities: (ai?.risk_factors || []).length > 0 ? (ai.risk_factors || []).slice(0, 3) : [
         "Include metric-driven achievement metrics.",
         "Add cloud deployment keywords.",
       ],
@@ -182,7 +182,7 @@ export default function AIATSPage() {
   // ── Backend Data ──────────────────────────────────────────────────────────
   const { data: jobsData, isLoading: jobsLoading } = useGetRecruitmentJobsQuery({ status: "PUBLISHED", limit: 50 });
   const [uploadResume] = useUploadResumeForScreeningMutation();
-  const backendJobs = jobsData?.items || [];
+  const backendJobs = Array.isArray(jobsData?.items) ? jobsData.items : Array.isArray(jobsData) ? (jobsData as any) : [];
 
   const [activeTab, setActiveTab] = useState<"analyzer" | "history">("analyzer");
   const [jobInputMode, setJobInputMode] = useState<"select" | "custom">(backendJobs.length > 0 ? "select" : "custom");
@@ -342,11 +342,12 @@ RECOMMENDATIONS:
     toast.success("ATS Analysis Report exported!");
   };
 
-  const filteredHistory = history.filter(
+  const safeHistory = Array.isArray(history) ? history : [];
+  const filteredHistory = safeHistory.filter(
     (h) =>
-      h.candidate.candidateName.toLowerCase().includes(historySearch.toLowerCase()) ||
-      h.jobTitle.toLowerCase().includes(historySearch.toLowerCase()) ||
-      h.recruiterRecommendation.toLowerCase().includes(historySearch.toLowerCase())
+      h?.candidate?.candidateName?.toLowerCase().includes(historySearch.toLowerCase()) ||
+      h?.jobTitle?.toLowerCase().includes(historySearch.toLowerCase()) ||
+      h?.recruiterRecommendation?.toLowerCase().includes(historySearch.toLowerCase())
   );
 
   return (
@@ -378,7 +379,7 @@ RECOMMENDATIONS:
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            Previous Analyses ({history.length})
+            Previous Analyses ({safeHistory.length})
           </button>
         </div>
       </div>
