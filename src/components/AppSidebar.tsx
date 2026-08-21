@@ -5,7 +5,7 @@ import {
   ChevronLeft, Briefcase, UserPlus, GraduationCap,
   FileText, Monitor, UserMinus, Building2, ShieldCheck,
   Heart, BarChart3, PieChart, TrendingUp, Lightbulb, Target, PanelLeft,
-  Boxes, Settings, Globe, Award, Key, Zap, FileCode2, FileCheck2, Server, Cpu, Lock,
+  Boxes, Settings, Globe, Award, Key, Zap, FileCode2, Server, Cpu, Lock,
   Activity, ShieldAlert, MessageSquare, Sparkles, BrainCircuit
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,7 +34,6 @@ export function AppSidebar({ open, onToggle }: { open: boolean; onToggle: () => 
               { label: "Analytics", icon: BarChart3, path: "/super-admin/analytics" },
               { label: "System", icon: Server, path: "/super-admin/system" },
               { label: "Security", icon: Lock, path: "/super-admin/security" },
-              { label: "Resume ATS", icon: FileCheck2, path: "/tools/resume-ats-checker" },
             ],
           },
         ];
@@ -50,7 +49,6 @@ export function AppSidebar({ open, onToggle }: { open: boolean; onToggle: () => 
               { label: "My Documents", icon: FileText, path: "/employee/documents" },
               { label: "Onboarding", icon: UserPlus, path: "/employee/onboarding" },
               { label: "Helpdesk", icon: GraduationCap, path: "/employee/helpdesk" },
-              { label: "Resume ATS", icon: FileCheck2, path: "/tools/resume-ats-checker" },
             ],
           },
         ];
@@ -67,7 +65,6 @@ export function AppSidebar({ open, onToggle }: { open: boolean; onToggle: () => 
               { label: "Goals", icon: Target, path: "/manager/goals" },
               { label: "Engagement", icon: Heart, path: "/manager/engagement" },
               { label: "Helpdesk", icon: GraduationCap, path: "/manager/helpdesk" },
-              { label: "Resume ATS", icon: FileCheck2, path: "/tools/resume-ats-checker" },
             ],
           },
         ];
@@ -85,7 +82,6 @@ export function AppSidebar({ open, onToggle }: { open: boolean; onToggle: () => 
               { label: "Workforce", icon: Users, path: "/executive/workforce" },
               { label: "Insights", icon: Sparkles, path: "/executive/insights" },
               { label: "Reports", icon: BarChart3, path: "/executive/reports" },
-              { label: "Resume ATS", icon: FileCheck2, path: "/tools/resume-ats-checker" },
             ],
           },
         ];
@@ -104,7 +100,6 @@ export function AppSidebar({ open, onToggle }: { open: boolean; onToggle: () => 
               { label: "Audit Logs", icon: FileCode2, path: "/it-admin/audit-logs" },
               { label: "System Health", icon: Server, path: "/it-admin/system-health" },
               { label: "Deployments", icon: Cpu, path: "/it-admin/deployments" },
-              { label: "Resume ATS", icon: FileCheck2, path: "/tools/resume-ats-checker" },
             ],
           },
         ];
@@ -126,7 +121,6 @@ export function AppSidebar({ open, onToggle }: { open: boolean; onToggle: () => 
               { label: "Resources", icon: Boxes, path: "/resource-intelligence" },
               { label: "Experience", icon: Globe, path: "/employee-experience" },
               { label: "Settings", icon: Settings, path: "/settings" },
-              { label: "Resume ATS", icon: FileCheck2, path: "/tools/resume-ats-checker" },
             ],
           },
         ];
