@@ -129,6 +129,8 @@ describe("REACT #310 & AUTH LIFECYCLE REGRESSION SUITE", () => {
   });
 
   it("Test 2: /auth/me 401 -> refresh 401 terminates cleanly with ZERO extra requests or loops", async () => {
+    localStorage.setItem("ofc360_access_token", "expired_test_access_jwt");
+    localStorage.setItem("ofc360_refresh_token", "expired_test_refresh_jwt");
     let meCount = 0;
     let refreshCount = 0;
 
@@ -178,6 +180,8 @@ describe("REACT #310 & AUTH LIFECYCLE REGRESSION SUITE", () => {
   });
 
   it("Test 3: /auth/me 401 -> refresh 200 -> retry /auth/me 200 successfully authenticates session", async () => {
+    localStorage.setItem("ofc360_access_token", "expired_test_access_jwt");
+    localStorage.setItem("ofc360_refresh_token", "valid_test_refresh_jwt");
     let meCount = 0;
     let refreshCount = 0;
 

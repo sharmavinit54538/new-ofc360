@@ -39,8 +39,43 @@ describe("AUTH + 429 + REACT #185 + WEBSOCKET COMPLETE FIX REGRESSION TESTS", ()
     connectWebSocketService.disconnect(true);
   });
 
-  // TEST 1: Fresh Login Flow & Single /auth/me invocation
-  it("Test 1 & 2: Fresh start / reload calls /auth/me exactly ONCE and sets authenticated state without React #185", async () => {
+  // TEST 0: Token Pre-Check on Fresh Start / Login page (Zero network calls when unauthenticated)
+  it("Test 0: Fresh start / Login page with NO tokens immediately resolves unauthenticated with ZERO network calls", async () => {
+    let authMeCallCount = 0;
+    let refreshCallCount = 0;
+
+    vi.spyOn(global, "fetch").mockImplementation(async (input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input instanceof Request ? input.url : String(input);
+      if (url.includes("/api/v1/auth/me")) authMeCallCount++;
+      if (url.includes("/api/v1/auth/refresh")) refreshCallCount++;
+      return new Response(JSON.stringify({ status: "ok" }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    });
+
+    render(
+      <Provider store={store}>
+        <AuthBootstrap>
+          <div data-testid="app-content">OFC360 Login / Guest</div>
+        </AuthBootstrap>
+      </Provider>
+    );
+
+    await waitFor(() => {
+      expect(store.getState().auth.isInitializing).toBe(false);
+    });
+
+    // CRITICAL: 0 network calls when user is unauthenticated
+    expect(authMeCallCount).toBe(0);
+    expect(refreshCallCount).toBe(0);
+    expect(store.getState().auth.isAuthenticated).toBe(false);
+    expect(store.getState().auth.sessionStatus).toBe("unauthenticated");
+  });
+
+  // TEST 1: Stored Token Session Restore & Single /auth/me invocation
+  it("Test 1 & 2: Stored token reload calls /auth/me exactly ONCE and sets authenticated state without React #185", async () => {
+    localStorage.setItem("ofc360_access_token", "valid_stored_jwt_token_12345");
     let authMeCallCount = 0;
 
     vi.spyOn(global, "fetch").mockImplementation(async (input: RequestInfo | URL) => {
@@ -89,7 +124,9 @@ describe("AUTH + 429 + REACT #185 + WEBSOCKET COMPLETE FIX REGRESSION TESTS", ()
   });
 
   // TEST 3 & 4: 401 on /auth/me triggers refresh ONCE, and cleanly terminates on refresh failure
-  it("Test 4: Invalid refresh token -> 401 on /auth/me triggers refresh ONCE -> fails cleanly without loop", async () => {
+  it("Test 4: Expired stored token + invalid refresh token -> 401 on /auth/me triggers refresh ONCE -> fails cleanly without loop", async () => {
+    localStorage.setItem("ofc360_access_token", "expired_stored_jwt_token_12345");
+    localStorage.setItem("ofc360_refresh_token", "invalid_refresh_token_12345");
     let authMeCallCount = 0;
     let refreshCallCount = 0;
 

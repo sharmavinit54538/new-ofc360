@@ -55,7 +55,7 @@ describe("baseQueryWithReauth Token Refresh Interceptor", () => {
     expect(store.getState().auth.isAuthenticated).toBe(false);
   });
 
-  it("should cleanly logout when refresh token / cookie is missing or invalid on 401", async () => {
+  it("should cleanly logout when refresh token is missing on 401 without making refresh request", async () => {
     store.dispatch(
       setCredentials({
         user: { id: "usr_1", name: "Alex", email: "alex@ofc360.com", role: "hr_admin" },
@@ -64,26 +64,28 @@ describe("baseQueryWithReauth Token Refresh Interceptor", () => {
       })
     );
 
-    vi.spyOn(global, "fetch")
-      // 1. Initial request -> 401
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ detail: "Token expired" }), {
+    let refreshCallCount = 0;
+    vi.spyOn(global, "fetch").mockImplementation(async (input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input instanceof Request ? input.url : String(input);
+      if (url.includes("/auth/refresh")) {
+        refreshCallCount++;
+        return new Response(JSON.stringify({ detail: "Should not be called" }), {
           status: 401,
           headers: { "content-type": "application/json" },
-        })
-      )
-      // 2. Refresh endpoint -> 401 (no valid cookie/token)
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ detail: "No session cookie" }), {
-          status: 401,
-          headers: { "content-type": "application/json" },
-        })
-      );
+        });
+      }
+      return new Response(JSON.stringify({ detail: "Token expired" }), {
+        status: 401,
+        headers: { "content-type": "application/json" },
+      });
+    });
 
     await store.dispatch(
       testAuthApi.endpoints.getTestDepartments.initiate(undefined, { forceRefetch: true })
     );
 
+    // Refresh interceptor was guarded: zero refresh calls made!
+    expect(refreshCallCount).toBe(0);
     expect(store.getState().auth.isAuthenticated).toBe(false);
     expect(store.getState().auth.token).toBeNull();
     expect(store.getState().auth.refreshToken).toBeNull();

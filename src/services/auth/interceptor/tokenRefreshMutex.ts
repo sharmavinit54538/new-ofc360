@@ -1,6 +1,6 @@
 import type { RootState } from "@/app/store";
 import { logout, setCredentials } from "@/features/auth/authSlice";
-import { isValidToken } from "../authStorage";
+import { isValidToken, getStoredRefreshToken } from "../authStorage";
 import { notifyTokenUpdated } from "./tokenListeners";
 
 let refreshPromise: Promise<boolean> | null = null;
@@ -8,6 +8,13 @@ let refreshPromise: Promise<boolean> | null = null;
 export async function handleTokenRefreshMutex(rawBaseQuery: any, api: any): Promise<boolean> {
   if (refreshPromise) return refreshPromise;
   const inMemory = (api.getState() as RootState)?.auth?.refreshToken;
+  const refreshToken = isValidToken(inMemory) ? inMemory : getStoredRefreshToken();
+
+  if (!isValidToken(refreshToken)) {
+    api.dispatch(logout());
+    return false;
+  }
+
   refreshPromise = (async () => {
     try {
       const res = await rawBaseQuery(
@@ -15,8 +22,8 @@ export async function handleTokenRefreshMutex(rawBaseQuery: any, api: any): Prom
           url: "/api/v1/auth/refresh",
           method: "POST",
           body: {
-            refreshToken: (inMemory || "").trim(),
-            refresh_token: (inMemory || "").trim(),
+            refreshToken: refreshToken.trim(),
+            refresh_token: refreshToken.trim(),
           },
         },
         api,
@@ -33,7 +40,7 @@ export async function handleTokenRefreshMutex(rawBaseQuery: any, api: any): Prom
           setCredentials({
             user: d?.user || u || { id: "u1", name: "User", email: "", role: "employee" },
             token: tok.trim(),
-            refreshToken: isValidToken(refTok) ? refTok.trim() : inMemory || null,
+            refreshToken: isValidToken(refTok) ? refTok.trim() : refreshToken.trim(),
             companyId: activeCompanyId || null,
           })
         );

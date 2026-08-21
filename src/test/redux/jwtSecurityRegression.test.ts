@@ -230,6 +230,7 @@ describe("OFC360 JWT Security Hardening & Cookie Auth Flow", () => {
       setCredentials({
         user: { id: "usr_fail", name: "Fail Tester", email: "fail@ofc360.com", role: "employee" },
         token: "expired_token_fail",
+        refreshToken: "refresh_token_to_fail",
         companyId: "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
       })
     );
