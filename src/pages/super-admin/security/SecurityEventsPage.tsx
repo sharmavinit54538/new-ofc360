@@ -34,7 +34,14 @@ import {
 import { toast } from "sonner";
 
 export default function SecurityEventsPage() {
-  const { data: securityEvents = [], isLoading, isFetching, refetch } = useGetSuperAdminSecurityEventsQuery();
+  const { data: rawSecurityEvents = [], isLoading, isFetching, refetch } = useGetSuperAdminSecurityEventsQuery();
+  const securityEvents = Array.isArray(rawSecurityEvents)
+    ? rawSecurityEvents
+    : Array.isArray((rawSecurityEvents as any)?.items)
+    ? (rawSecurityEvents as any).items
+    : Array.isArray((rawSecurityEvents as any)?.data)
+    ? (rawSecurityEvents as any).data
+    : [];
   const [resolveEvent] = useResolveSecurityEventMutation();
 
   const [search, setSearch] = useState("");
@@ -57,18 +64,18 @@ export default function SecurityEventsPage() {
   const filteredEvents = securityEvents.filter((e) => {
     const matchesSearch =
       !search ||
-      e.type.toLowerCase().includes(search.toLowerCase()) ||
-      e.sourceIp.includes(search) ||
-      e.details.toLowerCase().includes(search.toLowerCase());
+      (e?.type || "").toLowerCase().includes(search.toLowerCase()) ||
+      (e?.sourceIp || "").includes(search) ||
+      (e?.details || "").toLowerCase().includes(search.toLowerCase());
 
-    const matchesSeverity = severityFilter === "ALL" || e.severity === severityFilter;
-    const matchesStatus = statusFilter === "ALL" || e.status === statusFilter;
+    const matchesSeverity = severityFilter === "ALL" || e?.severity === severityFilter;
+    const matchesStatus = statusFilter === "ALL" || e?.status === statusFilter;
 
     return matchesSearch && matchesSeverity && matchesStatus;
   });
 
-  const criticalCount = securityEvents.filter((e) => e.severity === "CRITICAL" || e.severity === "HIGH").length;
-  const pendingCount = securityEvents.filter((e) => e.status !== "Resolved").length;
+  const criticalCount = securityEvents.filter((e) => e?.severity === "CRITICAL" || e?.severity === "HIGH").length;
+  const pendingCount = securityEvents.filter((e) => e?.status !== "Resolved").length;
 
   return (
     <div className="space-y-6">

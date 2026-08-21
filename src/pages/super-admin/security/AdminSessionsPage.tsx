@@ -21,7 +21,14 @@ import {
 import { toast } from "sonner";
 
 export default function AdminSessionsPage() {
-  const { data: sessions = [], isLoading, isFetching, refetch } = useGetSuperAdminSessionsQuery();
+  const { data: rawSessions = [], isLoading, isFetching, refetch } = useGetSuperAdminSessionsQuery();
+  const sessions = Array.isArray(rawSessions)
+    ? rawSessions
+    : Array.isArray((rawSessions as any)?.items)
+    ? (rawSessions as any).items
+    : Array.isArray((rawSessions as any)?.data)
+    ? (rawSessions as any).data
+    : [];
   const [terminateSession] = useTerminateSuperAdminSessionMutation();
 
   const handleTerminate = async (id: string) => {
@@ -36,7 +43,7 @@ export default function AdminSessionsPage() {
   const handleTerminateOthers = async () => {
     try {
       for (const s of sessions) {
-        if (!s.ipAddress.includes("Current") && s.id !== "sess_active_primary") {
+        if (!s?.ipAddress?.includes("Current") && s?.id !== "sess_active_primary") {
           await terminateSession(s.id).unwrap();
         }
       }

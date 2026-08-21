@@ -35,7 +35,9 @@ const statusColors: Record<string, string> = {
 };
 
 export default function CompliancePage() {
-  const compliantCount = complianceItems.filter(c => c.status === "compliant").length;
+  const safeComplianceItems = Array.isArray(complianceItems) ? complianceItems : [];
+  const safePolicies = Array.isArray(policies) ? policies : [];
+  const compliantCount = safeComplianceItems.filter(c => c?.status === "compliant").length;
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
@@ -46,8 +48,16 @@ export default function CompliancePage() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Overall Compliance", value: `${Math.round((compliantCount / complianceItems.length) * 100)}%`, icon: Shield },
-          { label: "Active Policies", value: policies.filter(p => p.status === "active").length.toString(), icon: FileText },
+          {
+            label: "Overall Compliance",
+            value: `${safeComplianceItems.length > 0 ? Math.round((compliantCount / safeComplianceItems.length) * 100) : 100}%`,
+            icon: Shield,
+          },
+          {
+            label: "Active Policies",
+            value: safePolicies.filter(p => p?.status === "active").length.toString(),
+            icon: FileText,
+          },
           { label: "Open Findings", value: "11", icon: AlertTriangle },
           { label: "Next Audit", value: "Apr 1", icon: Clock },
         ].map((s) => (

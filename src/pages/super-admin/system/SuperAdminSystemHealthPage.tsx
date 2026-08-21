@@ -31,14 +31,14 @@ export default function SuperAdminSystemHealthPage() {
     toast.success("Initiating active database ping and service probe...");
   };
 
-  const services = healthData?.services || [
+  const services = Array.isArray(healthData?.services) ? healthData.services : [
     { name: "FastAPI Application Server", status: "ONLINE", response_time: "18ms", is_healthy: true },
     { name: "PostgreSQL Primary Database", status: "ONLINE", response_time: "1.2ms", is_healthy: true },
     { name: "Redis Session & Event Cache", status: "ONLINE", response_time: "0.6ms", is_healthy: true },
     { name: "AI Copilot & OCR Engine", status: "ONLINE", response_time: "120ms", is_healthy: true },
   ];
 
-  const operationalCount = services.filter((s) => s.is_healthy || s.status === "ONLINE").length;
+  const operationalCount = services.filter((s) => s?.is_healthy || s?.status === "ONLINE").length;
 
   return (
     <div className="space-y-6">

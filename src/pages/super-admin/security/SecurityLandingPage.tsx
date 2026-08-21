@@ -26,11 +26,25 @@ const securityModules = [
 ];
 
 export default function SecurityLandingPage() {
-  const { data: sessions = [] } = useGetSuperAdminSessionsQuery();
-  const { data: securityEvents = [] } = useGetSuperAdminSecurityEventsQuery();
+  const { data: rawSessions = [] } = useGetSuperAdminSessionsQuery();
+  const sessions = Array.isArray(rawSessions)
+    ? rawSessions
+    : Array.isArray((rawSessions as any)?.items)
+    ? (rawSessions as any).items
+    : Array.isArray((rawSessions as any)?.data)
+    ? (rawSessions as any).data
+    : [];
+  const { data: rawSecurityEvents = [] } = useGetSuperAdminSecurityEventsQuery();
+  const securityEvents = Array.isArray(rawSecurityEvents)
+    ? rawSecurityEvents
+    : Array.isArray((rawSecurityEvents as any)?.items)
+    ? (rawSecurityEvents as any).items
+    : Array.isArray((rawSecurityEvents as any)?.data)
+    ? (rawSecurityEvents as any).data
+    : [];
 
-  const activeSessions = sessions.filter((s) => s.status === "Active").length || sessions.length;
-  const pendingThreats = securityEvents.filter((e) => e.status !== "Resolved").length;
+  const activeSessions = sessions.filter((s) => s?.status === "Active").length || sessions.length;
+  const pendingThreats = securityEvents.filter((e) => e?.status !== "Resolved").length;
 
   return (
     <div className="space-y-6">

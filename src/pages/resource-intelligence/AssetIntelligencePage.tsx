@@ -49,7 +49,12 @@ import { useGetEmployeesQuery } from "@/services/api/employeeApi";
 import { toast } from "sonner";
 
 export default function AssetIntelligencePage() {
-  const { assets, addAsset, updateAssetStatus, deleteAsset } = useAssetStore();
+  const assetStore = useAssetStore();
+  const rawAssets = assetStore.assets;
+  const assets = Array.isArray(rawAssets) ? rawAssets : [];
+  const addAsset = assetStore.addAsset;
+  const updateAssetStatus = assetStore.updateAssetStatus;
+  const deleteAsset = assetStore.deleteAsset;
   const { data: rawEmployees = [] } = useGetEmployeesQuery();
   const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
 
@@ -82,11 +87,11 @@ export default function AssetIntelligencePage() {
 
   // Stats Calculations
   const totalAssets = assets.length;
-  const availableAssets = assets.filter((a) => a.status === "Available").length;
-  const assignedAssets = assets.filter((a) => a.status === "Assigned").length;
-  const inRepairAssets = assets.filter((a) => a.status === "In Repair").length;
-  const lostAssets = assets.filter((a) => a.status === "Lost").length;
-  const decommissionedAssets = assets.filter((a) => a.status === "Decommissioned").length;
+  const availableAssets = assets.filter((a) => a?.status === "Available").length;
+  const assignedAssets = assets.filter((a) => a?.status === "Assigned").length;
+  const inRepairAssets = assets.filter((a) => a?.status === "In Repair").length;
+  const lostAssets = assets.filter((a) => a?.status === "Lost").length;
+  const decommissionedAssets = assets.filter((a) => a?.status === "Decommissioned").length;
 
   const handleCreateAsset = () => {
     if (!name.trim() || !brandModel.trim() || !serialNumber.trim()) {
