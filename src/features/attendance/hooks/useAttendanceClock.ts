@@ -14,8 +14,5 @@ export function useAttendanceClock(myFaceStatus?: { status?: string }) {
     else if (myFaceStatus?.status === "checked_out") setIsClockedIn(false);
   }, [myFaceStatus]);
 
-  return {
-    currentTime, isClockedIn, setIsClockedIn, isOnBreak, setIsOnBreak,
-    taskNotes, setTaskNotes, ...stopwatch,
-  };
+  return { currentTime, isClockedIn, setIsClockedIn, isOnBreak, setIsOnBreak, taskNotes, setTaskNotes, ...stopwatch };
 }

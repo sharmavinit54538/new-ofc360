@@ -9,14 +9,11 @@ import { useAttendanceCollections } from "./useAttendanceCollections";
 import { useAttendanceActions } from "./useAttendanceActions";
 
 export function useAttendance() {
-  const rr = useAttendanceRouteAndRole();
-  const st = useAttendanceStoreSync();
-  const q = useAttendanceQueries(rr);
-  const clk = useAttendanceClock(q.myFaceStatus);
-  const cam = useAttendanceCamera(rr.activeTab);
-  const mod = useAttendanceModals();
+  const rr = useAttendanceRouteAndRole(); const st = useAttendanceStoreSync();
+  const q = useAttendanceQueries(rr); const clk = useAttendanceClock(q.myFaceStatus);
+  const cam = useAttendanceCamera(rr.activeTab); const mod = useAttendanceModals();
   const fil = useAttendanceFilters(st.regularizations);
-  const col = useAttendanceCollections({ ...rr, ...st, ...q, holidaysApiRes: q.holidaysApiRes, leavesApiRes: q.leavesApiRes, timesheetsApiRes: q.timesheetsApiRes, employeesCount: q.employees.length, pendingOvertimeCount: st.overtimes.length } as any);
+  const col = useAttendanceCollections({ ...rr, ...st, ...q, employeesCount: q.employees.length, pendingOvertimeCount: st.overtimes.length } as any);
   const act = useAttendanceActions({ ...rr, ...st, ...clk, ...col, ...q, capturedSelfie: cam.capturedSelfie, modals: mod });
   return { ...rr, ...clk, ...st, ...col, ...q, camera: cam, modals: mod, filters: fil, actions: act };
 }
