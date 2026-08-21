@@ -93,7 +93,7 @@ export default function SubscriptionsPage() {
     setBillingCycle(sub.billingCycle);
     setAmount(String(sub.amount));
     setStatus(sub.status);
-    setMaxLicenses(String(sub.maxLicenses));
+    setMaxLicenses(String(sub.maxLicenses || sub.maxSeats || 100));
     setIsEditOpen(true);
   };
 
@@ -113,7 +113,7 @@ export default function SubscriptionsPage() {
         },
       }).unwrap();
 
-      toast.success(`Subscription terms for "${selectedSub.companyName}" updated in database.`);
+      toast.success(`Subscription terms for "${selectedSub.companyName || selectedSub.organizationName || "tenant"}" updated in database.`);
       setIsEditOpen(false);
     } catch (err: any) {
       toast.error(err?.data?.detail || "Failed to update subscription.");
@@ -121,9 +121,10 @@ export default function SubscriptionsPage() {
   };
 
   const filteredSubs = subscriptions.filter((s) => {
+    const company = s.companyName || s.organizationName || "";
     const matchesSearch =
       !search ||
-      s.companyName.toLowerCase().includes(search.toLowerCase()) ||
+      company.toLowerCase().includes(search.toLowerCase()) ||
       s.id.toLowerCase().includes(search.toLowerCase());
 
     const matchesStatus = statusFilter === "ALL" || s.status === statusFilter;
@@ -385,7 +386,7 @@ export default function SubscriptionsPage() {
               <span>Modify Tenant Subscription Plan</span>
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Adjust licensing limits, pricing terms, and billing interval for {selectedSub?.companyName}.
+              Adjust licensing limits, pricing terms, and billing interval for {selectedSub?.companyName || selectedSub?.organizationName || "tenant"}.
             </DialogDescription>
           </DialogHeader>
 
