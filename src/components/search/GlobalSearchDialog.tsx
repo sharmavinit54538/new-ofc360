@@ -388,7 +388,7 @@ export function GlobalSearchDialog({
             placeholder="Search workforce, employees, candidates, pages, actions..."
             className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-0 text-sm md:text-base placeholder:text-muted-foreground/60 h-auto"
           />
-          {query ? (
+          {query && (
             <button
               type="button"
               onClick={() => {
@@ -400,10 +400,6 @@ export function GlobalSearchDialog({
             >
               <X className="w-4 h-4" />
             </button>
-          ) : (
-            <kbd className="hidden sm:inline-flex items-center px-2 py-0.5 text-[11px] font-mono font-medium text-muted-foreground bg-muted border border-border/50 rounded shadow-xs ml-2">
-              ESC
-            </kbd>
           )}
         </div>
 
@@ -596,12 +592,6 @@ export function GlobalSearchDialog({
                 ↵
               </kbd>
               <span>to select</span>
-            </span>
-            <span className="flex items-center gap-1">
-              <kbd className="px-1.5 py-0.5 bg-muted border border-border/60 rounded text-[10px] font-mono">
-                ESC
-              </kbd>
-              <span>to close</span>
             </span>
           </div>
 

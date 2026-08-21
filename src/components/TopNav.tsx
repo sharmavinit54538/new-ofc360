@@ -156,9 +156,6 @@ export function TopNav({ onMenuClick }: TopNavProps) {
             <span className="truncate pr-2 select-none">
               Search workforce, employees, candidates...
             </span>
-            <kbd className="hidden md:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-semibold text-muted-foreground bg-background/80 border border-border/60 rounded shadow-2xs shrink-0 select-none group-hover:border-primary/30 group-hover:text-foreground">
-              Ctrl K
-            </kbd>
           </button>
         </div>
 

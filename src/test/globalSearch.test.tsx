@@ -43,7 +43,6 @@ describe("Global Search & TopNav Search Integration", () => {
     expect(
       screen.getByText(/Search workforce, employees, candidates.../i)
     ).toBeInTheDocument();
-    expect(screen.getByText("Ctrl K")).toBeInTheDocument();
   });
 
   it("opens GlobalSearchDialog when search trigger button is clicked in TopNav", async () => {
