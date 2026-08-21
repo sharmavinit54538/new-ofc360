@@ -1,23 +1,18 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { toast } from "sonner";
 import { initCamera, releaseCamera } from "./cameraStreamHelpers";
+import { useCameraStreamState } from "./useCameraStreamState";
 
 export function useCameraStream() {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const [isCameraActive, setIsCameraActive] = useState(false);
-  const [cameraLoading, setCameraLoading] = useState(false);
-  const [cameraError, setCameraError] = useState<string | null>(null);
-
+  const s = useCameraStreamState();
   const startLiveCamera = useCallback(async () => {
-    if (!videoRef.current) return;
-    setCameraLoading(true); setCameraError(null);
-    try { streamRef.current = await initCamera(videoRef.current, streamRef.current); setIsCameraActive(true); }
-    catch (e: any) { setCameraError(e.message); toast.error(e.message); }
-    finally { setCameraLoading(false); }
-  }, []);
-
-  const stopLiveCamera = useCallback(() => { releaseCamera(streamRef.current); streamRef.current = null; setIsCameraActive(false); }, []);
+    if (!s.videoRef.current) return;
+    s.setCameraLoading(true); s.setCameraError(null);
+    try { s.streamRef.current = await initCamera(s.videoRef.current, s.streamRef.current); s.setIsCameraActive(true); }
+    catch (e: any) { s.setCameraError(e.message); toast.error(e.message); }
+    finally { s.setCameraLoading(false); }
+  }, [s]);
+  const stopLiveCamera = useCallback(() => { releaseCamera(s.streamRef.current); s.streamRef.current = null; s.setIsCameraActive(false); }, [s]);
   useEffect(() => () => stopLiveCamera(), [stopLiveCamera]);
-  return { videoRef, isCameraActive, cameraLoading, cameraError, startLiveCamera, stopLiveCamera };
+  return { videoRef: s.videoRef, isCameraActive: s.isCameraActive, cameraLoading: s.cameraLoading, cameraError: s.cameraError, startLiveCamera, stopLiveCamera };
 }

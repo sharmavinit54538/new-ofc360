@@ -1,47 +1,18 @@
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { NAV_MODULES } from "../constants/attendance.constants";
+import { AttendanceHeaderSelect } from "./header/AttendanceHeaderSelect";
+import { AttendanceHeaderBadge } from "./header/AttendanceHeaderBadge";
 import type { AttendanceTabType } from "../types/attendance.types";
 
-interface AttendanceHeaderProps {
-  activeTab: AttendanceTabType;
-  onTabChange: (tab: AttendanceTabType) => void;
-}
-
-export function AttendanceHeader({ activeTab, onTabChange }: AttendanceHeaderProps) {
+export function AttendanceHeader({ activeTab, onTabChange }: { activeTab: AttendanceTabType; onTabChange: (t: string) => void }) {
   return (
-    <div className="flex items-center justify-between gap-4 pb-2 border-b border-border/40">
-      <div className="flex items-center gap-2">
-        <Select value={activeTab} onValueChange={(val) => onTabChange(val as AttendanceTabType)}>
-          <SelectTrigger className="w-64 text-xs h-9 bg-card border-border/70 font-semibold shadow-xs">
-            <SelectValue placeholder="Select Attendance Module" />
-          </SelectTrigger>
-          <SelectContent>
-            {NAV_MODULES.map((m) => (
-              <SelectItem key={m.id} value={m.id} className="text-xs font-medium">
-                {m.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-2 border-b border-border/40">
+      <div>
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-bold tracking-tight text-foreground">Attendance & Time Hub</h1>
+          <AttendanceHeaderBadge />
+        </div>
+        <p className="text-xs text-muted-foreground mt-0.5">Enterprise biometric tracking, shifts, regularization & leaves.</p>
       </div>
-
-      {/* Global Live Pulse & Active Connection Indicator */}
-      <div className="flex items-center gap-2">
-        <Badge
-          variant="outline"
-          className="text-[11px] gap-1.5 font-mono py-1 px-2.5 bg-emerald-500/10 border-emerald-500/30 text-emerald-500"
-        >
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          Backend API Connected
-        </Badge>
-      </div>
+      <AttendanceHeaderSelect activeTab={activeTab} onTabChange={onTabChange} />
     </div>
   );
 }
