@@ -64,6 +64,21 @@ export function FloatingAIAssistant() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open]);
 
+  // Listen to custom sidebar AI events
+  useEffect(() => {
+    const handleToggle = () => setOpen((prev) => !prev);
+    const handleOpen = () => setOpen(true);
+    const handleClose = () => setOpen(false);
+    window.addEventListener("ofc360-toggle-ai", handleToggle);
+    window.addEventListener("ofc360-open-ai", handleOpen);
+    window.addEventListener("ofc360-close-ai", handleClose);
+    return () => {
+      window.removeEventListener("ofc360-toggle-ai", handleToggle);
+      window.removeEventListener("ofc360-open-ai", handleOpen);
+      window.removeEventListener("ofc360-close-ai", handleClose);
+    };
+  }, []);
+
   const handleSend = (textToSend?: string) => {
     const query = (textToSend || input).trim();
     if (!query) return;
@@ -101,7 +116,7 @@ export function FloatingAIAssistant() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 16, scale: 0.96 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
-            className="fixed bottom-20 left-4 sm:bottom-24 sm:left-6 w-[calc(100vw-2rem)] sm:w-[380px] md:w-[400px] h-[520px] max-h-[82vh] rounded-2xl bg-popover border border-border/70 shadow-2xl z-40 flex flex-col overflow-hidden backdrop-blur-xl"
+            className="fixed bottom-16 left-4 sm:bottom-16 sm:left-20 w-[calc(100vw-2rem)] sm:w-[380px] md:w-[400px] h-[520px] max-h-[82vh] rounded-2xl bg-popover border border-border/70 shadow-2xl z-50 flex flex-col overflow-hidden backdrop-blur-xl"
           >
             {/* Header */}
             <div className="p-4 border-b border-border/50 bg-gradient-to-r from-primary/15 via-popover to-ai/10 flex items-center justify-between">
@@ -122,80 +137,76 @@ export function FloatingAIAssistant() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setOpen(false)}
-                className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary/60"
-                aria-label="Close OFC360 AI Assistant"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg"
               >
                 <X className="w-4 h-4" />
               </Button>
             </div>
 
-            {/* Quick Prompts */}
-            <div className="px-3 py-2 bg-secondary/30 border-b border-border/30 overflow-x-auto scrollbar-none flex gap-1.5 shrink-0">
-              {quickPrompts.map((prompt) => (
-                <button
-                  key={prompt}
-                  onClick={() => handleSend(prompt)}
-                  className="whitespace-nowrap px-2.5 py-1 rounded-full text-[11px] bg-secondary/60 hover:bg-primary/15 hover:text-primary border border-border/60 text-muted-foreground transition-colors shrink-0 font-medium cursor-pointer"
-                >
-                  {prompt}
-                </button>
-              ))}
-            </div>
-
-            {/* Message Feed */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3.5 scrollbar-thin">
-              {messages.map((m) => (
+            {/* Chat Body */}
+            <div className="flex-1 p-4 overflow-y-auto space-y-4 scrollbar-thin">
+              {messages.map((msg) => (
                 <div
-                  key={m.id}
-                  className={`flex gap-2.5 ${m.role === "user" ? "justify-end" : "justify-start"}`}
+                  key={msg.id}
+                  className={`flex gap-2.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                 >
-                  {m.role === "assistant" && (
-                    <div className="w-7 h-7 rounded-lg bg-gradient-brand flex items-center justify-center text-brand-foreground shrink-0 mt-0.5 shadow-xs">
-                      <Bot className="w-3.5 h-3.5" />
+                  {msg.role === "assistant" && (
+                    <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0 mt-0.5">
+                      <Bot className="w-4 h-4" />
                     </div>
                   )}
 
-                  <div className="space-y-1 max-w-[82%]">
-                    <div
-                      className={`text-xs leading-relaxed px-3.5 py-2.5 rounded-2xl shadow-xs transition-all duration-250 ease-in-out cursor-default select-text ${
-                        m.role === "user"
-                          ? "bg-gradient-brand text-brand-foreground font-medium rounded-br-xs message-bubble-outgoing"
-                          : "bg-secondary/80 text-foreground border border-border/50 rounded-bl-xs message-bubble-incoming"
-                      }`}
-                    >
-                      {m.text}
-                    </div>
-                    <span
-                      className={`block text-[10px] text-muted-foreground px-1 ${
-                        m.role === "user" ? "text-right" : "text-left"
-                      }`}
-                    >
-                      {m.timestamp}
+                  <div
+                    className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed ${
+                      msg.role === "user"
+                        ? "gradient-bg text-primary-foreground font-medium rounded-tr-sm shadow-xs"
+                        : "bg-secondary/60 text-foreground border border-border/40 rounded-tl-sm shadow-xs"
+                    }`}
+                  >
+                    <p>{msg.text}</p>
+                    <span className="block text-[10px] text-right mt-1 opacity-60">
+                      {msg.timestamp}
                     </span>
                   </div>
 
-                  {m.role === "user" && (
-                    <div className="w-7 h-7 rounded-lg bg-primary/15 text-primary border border-primary/25 flex items-center justify-center shrink-0 mt-0.5">
-                      <User className="w-3.5 h-3.5" />
+                  {msg.role === "user" && (
+                    <div className="w-7 h-7 rounded-lg bg-secondary border border-border/40 flex items-center justify-center text-muted-foreground shrink-0 mt-0.5">
+                      <User className="w-4 h-4" />
                     </div>
                   )}
                 </div>
               ))}
 
               {isTyping && (
-                <div className="flex gap-2.5 items-center text-xs text-muted-foreground pt-1">
-                  <div className="w-7 h-7 rounded-lg gradient-bg flex items-center justify-center text-primary-foreground shrink-0">
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  </div>
-                  <span className="italic text-[11px]">OFC360 AI is analyzing...</span>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-secondary/30 w-fit px-3 py-2 rounded-xl border border-border/30 animate-pulse">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                  <span>OFC360 AI is analyzing...</span>
                 </div>
               )}
 
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Bar */}
-            <div className="p-3 border-t border-border/50 bg-card/60">
+            {/* Quick Prompts Suggestions */}
+            {messages.length === 1 && (
+              <div className="px-4 py-2 border-t border-border/30 bg-muted/20 space-y-1.5">
+                <p className="text-[11px] font-medium text-muted-foreground">Suggested inquiries:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {quickPrompts.map((prompt) => (
+                    <button
+                      key={prompt}
+                      onClick={() => handleSend(prompt)}
+                      className="text-[11px] px-2.5 py-1 rounded-lg bg-secondary/70 hover:bg-secondary border border-border/50 text-foreground/80 hover:text-foreground transition-colors cursor-pointer"
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Footer Input */}
+            <div className="p-3 border-t border-border/40 bg-secondary/20">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -225,28 +236,30 @@ export function FloatingAIAssistant() {
         )}
       </AnimatePresence>
 
-      {/* Global Circular Floating Action Button (FAB) */}
-      <Tooltip delayDuration={300}>
-        <TooltipTrigger asChild>
-          <motion.button
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.94 }}
-            onClick={() => setOpen(!open)}
-            aria-label="Open OFC360 AI Assistant"
-            className="fixed bottom-4 left-4 sm:bottom-5 sm:left-5 md:bottom-6 md:left-6 w-14 h-14 rounded-full gradient-bg shadow-xl shadow-primary/25 border border-white/20 flex items-center justify-center z-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer transition-shadow"
-          >
-            <span className="absolute inset-0 rounded-full gradient-bg opacity-30 animate-ping pointer-events-none" />
-            {open ? (
-              <X className="w-6 h-6 text-primary-foreground relative z-10" />
-            ) : (
-              <Sparkles className="w-6 h-6 text-primary-foreground relative z-10" />
-            )}
-          </motion.button>
-        </TooltipTrigger>
-        <TooltipContent side="right" className="text-xs font-semibold px-2.5 py-1 shadow-md">
-          OFC360 AI Assistant
-        </TooltipContent>
-      </Tooltip>
+      {/* Mobile-Only Circular Floating Action Button (FAB) */}
+      <div className="md:hidden">
+        <Tooltip delayDuration={300}>
+          <TooltipTrigger asChild>
+            <motion.button
+              whileHover={{ scale: 1.06 }}
+              whileTap={{ scale: 0.94 }}
+              onClick={() => setOpen(!open)}
+              aria-label="Open OFC360 AI Assistant"
+              className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 w-12 h-12 rounded-full gradient-bg shadow-xl shadow-primary/25 border border-white/20 flex items-center justify-center z-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer transition-shadow"
+            >
+              <span className="absolute inset-0 rounded-full gradient-bg opacity-30 animate-ping pointer-events-none" />
+              {open ? (
+                <X className="w-5 h-5 text-primary-foreground relative z-10" />
+              ) : (
+                <Sparkles className="w-5 h-5 text-primary-foreground relative z-10" />
+              )}
+            </motion.button>
+          </TooltipTrigger>
+          <TooltipContent side="left" className="text-xs font-semibold px-2.5 py-1 shadow-md">
+            OFC360 AI Assistant
+          </TooltipContent>
+        </Tooltip>
+      </div>
     </>
   );
 }
