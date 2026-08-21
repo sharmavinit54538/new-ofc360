@@ -51,11 +51,12 @@ function formatRelativeTime(timestamp?: string): string {
 export function NotificationPanel() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const { data: notifications = [] } = useGetConnectNotificationsQuery();
+  const { data: rawNotifications = [] } = useGetConnectNotificationsQuery();
+  const notifications = Array.isArray(rawNotifications) ? rawNotifications : [];
   const [markAsRead] = useMarkNotificationReadMutation();
   const [clearAll] = useClearAllNotificationsMutation();
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n?.read).length;
 
   const handleNotificationClick = (notif: ConnectNotification) => {
     if (!notif.read) {
