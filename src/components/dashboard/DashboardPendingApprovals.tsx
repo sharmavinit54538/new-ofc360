@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, X, CalendarCheck, UserCheck, Clock, ArrowRight } from "lucide-react";
+import { Check, X, CalendarCheck, UserCheck, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useLeaveStore } from "@/stores/leaveStore";
@@ -16,39 +16,10 @@ export function DashboardPendingApprovals({ onboardingEmployees = [] }: PendingA
   const safeOnboarding = Array.isArray(onboardingEmployees) ? onboardingEmployees : [];
   const safeLeaveRequests = Array.isArray(leaveRequests) ? leaveRequests : [];
 
-  // Mock pending leaves if store is empty for instant demonstration
-  const [sampleLeaves, setSampleLeaves] = useState([
-    {
-      id: "leave_demo_1",
-      employeeName: "Mamraj Yadav",
-      role: "Engineering Manager",
-      type: "Casual Leave",
-      dates: "24 Aug - 26 Aug (3 days)",
-      reason: "Family function",
-      status: "Pending",
-    },
-    {
-      id: "leave_demo_2",
-      employeeName: "Sunaina Mehra",
-      role: "Software Engineer",
-      type: "Sick Leave",
-      dates: "25 Aug (1 day)",
-      reason: "Medical checkup",
-      status: "Pending",
-    },
-  ]);
-
-  const activeLeaves =
-    safeLeaveRequests.length > 0
-      ? safeLeaveRequests.filter((l) => l?.status === "Pending")
-      : sampleLeaves;
+  const activeLeaves = safeLeaveRequests.filter((l) => (l?.status || "").toLowerCase() === "pending");
 
   const handleApproveLeave = (id: string, name: string) => {
-    if (leaveRequests.some((l) => l.id === id)) {
-      updateLeaveStatus(id, "Approved");
-    } else {
-      setSampleLeaves((prev) => prev.filter((l) => l.id !== id));
-    }
+    updateLeaveStatus(id, "approved");
     toast({
       title: "Leave Request Approved",
       description: `Leave request for ${name} has been approved.`,
@@ -56,11 +27,7 @@ export function DashboardPendingApprovals({ onboardingEmployees = [] }: PendingA
   };
 
   const handleRejectLeave = (id: string, name: string) => {
-    if (leaveRequests.some((l) => l.id === id)) {
-      updateLeaveStatus(id, "Rejected");
-    } else {
-      setSampleLeaves((prev) => prev.filter((l) => l.id !== id));
-    }
+    updateLeaveStatus(id, "rejected");
     toast({
       title: "Leave Request Rejected",
       description: `Leave request for ${name} was rejected.`,
@@ -128,11 +95,11 @@ export function DashboardPendingApprovals({ onboardingEmployees = [] }: PendingA
                         {(item as any).employeeName || (item as any).userName || "Employee"}
                       </span>
                       <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-primary/10 text-primary border-primary/20">
-                        {item.type}
+                        {(item as any).type || (item as any).leaveType || "Leave"}
                       </Badge>
                     </div>
                     <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
-                      {(item as any).dates || `${(item as any).startDate} - ${(item as any).endDate}`} • {(item as any).reason || "Personal"}
+                      {(item as any).dates || `${(item as any).startDate || ""} - ${(item as any).endDate || ""}`} • {(item as any).reason || "Leave request"}
                     </p>
                   </div>
 
@@ -174,7 +141,7 @@ export function DashboardPendingApprovals({ onboardingEmployees = [] }: PendingA
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-600 flex items-center justify-center font-bold text-xs shrink-0">
-                      {emp.name?.slice(0, 2).toUpperCase()}
+                      {(emp.name || "E").slice(0, 2).toUpperCase()}
                     </div>
                     <div className="min-w-0">
                       <div className="font-semibold text-xs text-foreground truncate">{emp.name}</div>
@@ -202,7 +169,7 @@ export function DashboardPendingApprovals({ onboardingEmployees = [] }: PendingA
       </div>
 
       <div className="pt-3 border-t border-border/40 mt-3 flex items-center justify-between text-xs">
-        <span className="text-muted-foreground">SLA Target: &lt; 24 hrs response</span>
+        <span className="text-muted-foreground">Live Approval Queue</span>
         <Link to="/attendance">
           <Button size="sm" variant="ghost" className="h-7 text-xs px-2 gap-1 text-primary hover:bg-primary/10">
             <span>Manage All Requests</span>

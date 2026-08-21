@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   AreaChart,
   Area,
@@ -8,7 +9,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Badge } from "@/components/ui/badge";
-import { IndianRupee, TrendingUp, ArrowRight } from "lucide-react";
+import { IndianRupee, ArrowRight, DollarSign } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { fmtMoney } from "@/utils/currency";
@@ -24,26 +25,28 @@ export function DashboardPayrollTrendChart({
 }: PayrollTrendChartProps) {
   const safeRuns = Array.isArray(runs) ? runs : [];
 
-  const defaultTrend = [
-    { m: "Apr '26", v: 54, fullVal: 5400000 },
-    { m: "May '26", v: 56, fullVal: 5600000 },
-    { m: "Jun '26", v: 57.5, fullVal: 5750000 },
-    { m: "Jul '26", v: 58.8, fullVal: 5880000 },
-    { m: "Aug '26 (Current)", v: monthlyPayroll > 0 ? Number((monthlyPayroll / 100000).toFixed(1)) : 60.0, fullVal: monthlyPayroll || 6000000 },
-    { m: "Sep '26 (Est.)", v: monthlyPayroll > 0 ? Number(((monthlyPayroll * 1.05) / 100000).toFixed(1)) : 63.0, fullVal: (monthlyPayroll || 6000000) * 1.05 },
-  ];
-
-  const trendData =
-    safeRuns.length > 0
-      ? [...safeRuns]
-          .slice(0, 6)
-          .reverse()
-          .map((r) => ({
-            m: `${(r?.month || "Month").slice(0, 3)} '${String(r?.year || 2026).slice(-2)}`,
-            v: Number(((r?.netTotal || 0) / 100000).toFixed(1)),
-            fullVal: r?.netTotal || 0,
-          }))
-      : defaultTrend;
+  const trendData = useMemo(() => {
+    if (safeRuns.length > 0) {
+      return [...safeRuns]
+        .slice(0, 6)
+        .reverse()
+        .map((r) => ({
+          m: `${(r?.month || "Month").slice(0, 3)} '${String(r?.year || 2026).slice(-2)}`,
+          v: Number(((r?.netTotal || r?.grossTotal || 0) / 100000).toFixed(1)),
+          fullVal: r?.netTotal || r?.grossTotal || 0,
+        }));
+    }
+    if (monthlyPayroll > 0) {
+      return [
+        {
+          m: "Current Run",
+          v: Number((monthlyPayroll / 100000).toFixed(1)),
+          fullVal: monthlyPayroll,
+        },
+      ];
+    }
+    return [];
+  }, [safeRuns, monthlyPayroll]);
 
   const tooltipStyle = {
     background: "hsl(var(--card))",
@@ -63,7 +66,7 @@ export function DashboardPayrollTrendChart({
             </h3>
           </div>
           <p className="text-xs text-muted-foreground">
-            Monthly gross compensation, deductions & disbursement curve
+            Monthly compensation disbursement curve from live payroll runs
           </p>
         </div>
 
@@ -81,51 +84,63 @@ export function DashboardPayrollTrendChart({
       </div>
 
       <div className="h-[230px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-            <defs>
-              <linearGradient id="payrollGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.4} />
-                <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
-            <XAxis dataKey="m" stroke="hsl(var(--muted-foreground))" fontSize={11} />
-            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} unit="L" />
-            <Tooltip
-              contentStyle={tooltipStyle}
-              formatter={(val: any) => [`₹${val} Lakhs`, "Disbursement"]}
-            />
-            <Area
-              type="monotone"
-              dataKey="v"
-              stroke="#8B5CF6"
-              strokeWidth={2.5}
-              fill="url(#payrollGrad)"
-              name="Payroll Total"
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        {trendData.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-center p-4 rounded-xl bg-secondary/10 border border-dashed border-border/50">
+            <DollarSign className="w-8 h-8 text-muted-foreground/40 mb-2" />
+            <p className="text-sm font-semibold text-foreground">No payroll runs recorded</p>
+            <p className="text-xs text-muted-foreground">Process monthly payroll runs to view compensation analytics and curves.</p>
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+              <defs>
+                <linearGradient id="payrollGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.4} />
+                  <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+              <XAxis dataKey="m" stroke="hsl(var(--muted-foreground))" fontSize={11} />
+              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} unit="L" />
+              <Tooltip
+                contentStyle={tooltipStyle}
+                formatter={(val: any) => [`₹${val} Lakhs`, "Disbursement"]}
+              />
+              <Area
+                type="monotone"
+                dataKey="v"
+                stroke="#8B5CF6"
+                strokeWidth={2.5}
+                fill="url(#payrollGrad)"
+                name="Payroll Total"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
       </div>
 
       <div className="grid grid-cols-3 gap-2 pt-3 border-t border-border/40 mt-2 text-center">
         <div className="p-2 rounded-lg bg-secondary/30">
           <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-            Net Salaries
+            Processed Runs
           </div>
-          <div className="text-xs font-bold text-foreground mt-0.5">85.4%</div>
+          <div className="text-xs font-bold text-foreground mt-0.5">{safeRuns.length}</div>
         </div>
         <div className="p-2 rounded-lg bg-secondary/30">
           <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-            PF & ESI
+            Total Disbursed
           </div>
-          <div className="text-xs font-bold text-foreground mt-0.5">10.2%</div>
+          <div className="text-xs font-bold text-foreground mt-0.5">
+            {monthlyPayroll > 0 ? fmtMoney(monthlyPayroll) : "—"}
+          </div>
         </div>
         <div className="p-2 rounded-lg bg-secondary/30">
           <div className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-            TDS / Tax
+            Disbursement Status
           </div>
-          <div className="text-xs font-bold text-foreground mt-0.5">4.4%</div>
+          <div className="text-xs font-bold text-foreground mt-0.5">
+            {safeRuns.length > 0 ? safeRuns[0].status || "Active" : monthlyPayroll > 0 ? "Configured" : "Inactive"}
+          </div>
         </div>
       </div>
     </div>

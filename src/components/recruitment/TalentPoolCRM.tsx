@@ -32,36 +32,42 @@ export function TalentPoolCRM() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filtered.map((tp) => (
-          <div key={tp.id} className="glass-card rounded-xl p-5 border border-border/50 space-y-3">
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="font-bold text-base">{tp.name}</h3>
-                <p className="text-xs text-muted-foreground">{tp.role}</p>
-              </div>
-              <Badge className="bg-purple-500/10 text-purple-400 border-purple-500/20 text-xs font-mono">
-                {tp.aiFitScore}% Fit
-              </Badge>
-            </div>
-
-            <div className="flex flex-wrap gap-1">
-              {tp.tags.map((t) => (
-                <Badge key={t} variant="secondary" className="text-[10px]">
-                  {t}
+      {filtered.length === 0 ? (
+        <div className="p-8 text-center rounded-xl bg-secondary/20 border border-dashed border-border/60 text-xs text-muted-foreground">
+          No candidates in talent pool. Archive silver-medalists from candidate interviews to build a passive talent pipeline.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map((tp) => (
+            <div key={tp.id} className="glass-card rounded-xl p-5 border border-border/50 space-y-3">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-bold text-base">{tp.name}</h3>
+                  <p className="text-xs text-muted-foreground">{tp.role}</p>
+                </div>
+                <Badge className="bg-purple-500/10 text-purple-400 border-purple-500/20 text-xs font-mono">
+                  {tp.aiFitScore}% Fit
                 </Badge>
-              ))}
-            </div>
+              </div>
 
-            <div className="flex justify-between items-center text-xs text-muted-foreground pt-2 border-t border-border/30">
-              <span>Nurture: {tp.nurtureSequence}</span>
-              <Button size="sm" variant="ghost" onClick={() => toast.success(`Nurture email triggered to ${tp.email}`)} className="text-xs text-primary gap-1">
-                <Mail className="w-3.5 h-3.5" /> Nurture
-              </Button>
+              <div className="flex flex-wrap gap-1">
+                {tp.tags.map((t) => (
+                  <Badge key={t} variant="secondary" className="text-[10px]">
+                    {t}
+                  </Badge>
+                ))}
+              </div>
+
+              <div className="flex justify-between items-center text-xs text-muted-foreground pt-2 border-t border-border/30">
+                <span>Nurture: {tp.nurtureSequence}</span>
+                <Button size="sm" variant="ghost" onClick={() => toast.success(`Nurture email triggered to ${tp.email}`)} className="text-xs text-primary gap-1">
+                  <Mail className="w-3.5 h-3.5" /> Nurture
+                </Button>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

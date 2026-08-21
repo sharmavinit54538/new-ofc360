@@ -8,8 +8,8 @@ export type { ReimbursementClaim, BonusPayout } from "./payroll/reimbursementBon
 export type { SalaryAdvanceLoan, TaxDeclaration, ComplianceFiling } from "./payroll/taxAdvanceTypes";
 
 export const usePayrollStore = create<any>((set, get) => ({
-  payrollRuns: getStoredData("ofc360_payroll_runs_v1", DEFAULT_PAYROLL_RUNS),
-  salaryStructures: DEFAULT_SALARY_STRUCTURES, payslips: [],
+  payrollRuns: getStoredData("ofc360_payroll_runs_v1", []),
+  salaryStructures: [], payslips: [],
   reimbursements: [], bonuses: [], advances: [], taxDeclarations: [], complianceFilings: [],
   ...createPayrollActions(set, get),
 }));

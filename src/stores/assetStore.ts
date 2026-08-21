@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import type { Asset, AssetState } from "./assets/assetTypes";
-import { INITIAL_MOCK_ASSETS } from "./assets/mockAssets";
 
 export type { Asset };
 export type AssetItem = Asset;
@@ -14,7 +13,7 @@ export const useAssetStore = create<AssetState & {
   updateAssetStatus: (id: string, status: Asset["status"], assignedToName?: string, assignedToId?: string) => void;
   deleteAsset: (id: string) => void;
 }>((set) => ({
-  assets: INITIAL_MOCK_ASSETS,
+  assets: [],
   searchQuery: "",
   statusFilter: "ALL",
   categoryFilter: "ALL",

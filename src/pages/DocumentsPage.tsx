@@ -72,9 +72,9 @@ export default function DocumentsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Total Documents", value: String(documents.length), icon: FolderOpen },
-          { label: "Templates", value: "24", icon: FileCheck },
-          { label: "Pending Reviews", value: "2", icon: FileText },
-          { label: "ID Cards Issued", value: "158", icon: CreditCard },
+          { label: "Contracts", value: String(documents.filter((d) => d.category === "Contract").length), icon: FileCheck },
+          { label: "Policies", value: String(documents.filter((d) => d.category === "Policy").length), icon: FileText },
+          { label: "Reports & Logs", value: String(documents.filter((d) => d.category === "Report").length), icon: CreditCard },
         ].map((s) => (
           <Card key={s.label} className="glass-card">
             <CardContent className="p-4">
@@ -251,12 +251,12 @@ export default function DocumentsPage() {
                     PHOTO
                   </div>
                   <div className="flex-1 space-y-1.5">
-                    <p className="font-bold text-sm gradient-text">HR NEXUS AI</p>
-                    <p className="font-semibold text-sm">Alex Mercer</p>
-                    <p className="text-xs text-muted-foreground">VP of HR Analytics</p>
-                    <p className="text-xs text-muted-foreground font-mono">EMP-001</p>
+                    <p className="font-bold text-sm gradient-text">OFC360 WORKFORCE</p>
+                    <p className="font-semibold text-sm">Staff Identity Badge</p>
+                    <p className="text-xs text-muted-foreground">Authorized Personnel</p>
+                    <p className="text-xs text-muted-foreground font-mono">ID: OFC-VERIFIED</p>
                     <div className="w-16 h-7 bg-muted/30 rounded mt-2 flex items-center justify-center text-[8px] text-muted-foreground font-mono border border-border">
-                      QR CODE
+                      SECURE QR
                     </div>
                   </div>
                 </div>
@@ -289,6 +289,7 @@ function UploadDocumentDialog() {
     reader.onload = () => {
       const sizeFormatted = (file.size / (1024 * 1024)).toFixed(1) + " MB";
       addDocument({
+        id: `doc-${Date.now()}`,
         name: file.name,
         category,
         size: sizeFormatted,

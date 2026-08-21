@@ -1,10 +1,7 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Heart, Sparkles, Award, MessageSquare, ThumbsUp, Send } from "lucide-react";
+import { Heart, Award, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useGetEmployeesQuery } from "@/services/api/employeeApi";
 import { toast } from "sonner";
 
@@ -20,23 +17,7 @@ export default function ManagerEngagementPage() {
   const { data: rawEmployees = [] } = useGetEmployeesQuery();
   const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
 
-  const [kudosList, setKudosList] = useState<Kudos[]>([
-    {
-      id: "k-1",
-      from: "Alex Vance (Manager)",
-      to: "Sarah Jenkins",
-      message: "Outstanding work on resolving the production database migration latency!",
-      date: "Today",
-    },
-    {
-      id: "k-2",
-      from: "Alex Vance (Manager)",
-      to: "David Chen",
-      message: "Great effort spearheading the sprint deployment demo smoothly.",
-      date: "Yesterday",
-    },
-  ]);
-
+  const [kudosList, setKudosList] = useState<Kudos[]>([]);
   const [selectedRecipient, setSelectedRecipient] = useState("");
   const [kudosMsg, setKudosMsg] = useState("");
 
@@ -49,7 +30,7 @@ export default function ManagerEngagementPage() {
 
     const newKudos: Kudos = {
       id: `k-${Date.now().toString().slice(-4)}`,
-      from: "Alex Vance (Manager)",
+      from: "Manager",
       to: selectedRecipient,
       message: kudosMsg.trim(),
       date: "Just now",
@@ -61,7 +42,7 @@ export default function ManagerEngagementPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border/40">
         <div>
@@ -70,7 +51,7 @@ export default function ManagerEngagementPage() {
             <span>Team Engagement & Morale Hub</span>
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Monitor team pulse metrics, send peer recognition kudos, and review engagement feedback.
+            Send peer recognition kudos and review engagement feedback.
           </p>
         </div>
       </div>
@@ -78,21 +59,21 @@ export default function ManagerEngagementPage() {
       {/* Engagement Pulse Score Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="glass-card rounded-2xl p-5 border border-border/60 bg-card space-y-1">
-          <span className="text-xs text-muted-foreground font-semibold">Team Pulse Score</span>
-          <p className="text-2xl font-extrabold text-emerald-500 font-mono">8.6 / 10</p>
-          <span className="text-[11px] text-muted-foreground">Very High Morale</span>
+          <span className="text-xs text-muted-foreground font-semibold">Total Team Members</span>
+          <p className="text-2xl font-extrabold text-foreground font-mono">{employees.length}</p>
+          <span className="text-[11px] text-muted-foreground">Active Staff</span>
         </div>
 
         <div className="glass-card rounded-2xl p-5 border border-border/60 bg-card space-y-1">
-          <span className="text-xs text-muted-foreground font-semibold">Kudos Sent This Month</span>
+          <span className="text-xs text-muted-foreground font-semibold">Kudos Sent</span>
           <p className="text-2xl font-extrabold text-primary font-mono">{kudosList.length}</p>
           <span className="text-[11px] text-muted-foreground">Team Recognitions</span>
         </div>
 
         <div className="glass-card rounded-2xl p-5 border border-border/60 bg-card space-y-1">
-          <span className="text-xs text-muted-foreground font-semibold">Survey Participation</span>
-          <p className="text-2xl font-extrabold text-purple-500 font-mono">92%</p>
-          <span className="text-[11px] text-muted-foreground">Team Response Rate</span>
+          <span className="text-xs text-muted-foreground font-semibold">Engagement Status</span>
+          <p className="text-2xl font-extrabold text-emerald-500 font-mono">Active</p>
+          <span className="text-[11px] text-muted-foreground">Pulse Tracking</span>
         </div>
       </div>
 
@@ -136,7 +117,7 @@ export default function ManagerEngagementPage() {
               />
             </div>
 
-            <Button type="submit" className="gradient-bg text-primary-foreground font-bold text-xs h-9 w-full gap-1.5">
+            <Button type="submit" className="gradient-bg text-primary-foreground font-bold text-xs h-9 w-full gap-1.5 cursor-pointer">
               <Send className="w-3.5 h-3.5" /> Send Recognition
             </Button>
           </form>
@@ -146,22 +127,28 @@ export default function ManagerEngagementPage() {
         <div className="lg:col-span-7 glass-card rounded-2xl p-5 border border-border/60 bg-card space-y-4 shadow-sm">
           <h3 className="font-bold text-sm text-foreground">Recent Team Recognition Feed</h3>
 
-          <div className="space-y-3">
-            {kudosList.map((k) => (
-              <div key={k.id} className="p-4 rounded-xl border border-border/60 bg-secondary/20 space-y-2">
-                <div className="flex justify-between items-center text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-primary">🎉 {k.to}</span>
-                    <span className="text-[11px] text-muted-foreground">from {k.from}</span>
+          {kudosList.length === 0 ? (
+            <div className="p-8 text-center rounded-xl bg-secondary/20 border border-dashed border-border/60 text-xs text-muted-foreground">
+              No kudos or recognitions sent yet. Select a team member to send the first recognition!
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {kudosList.map((k) => (
+                <div key={k.id} className="p-4 rounded-xl border border-border/60 bg-secondary/20 space-y-2">
+                  <div className="flex justify-between items-center text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-primary">🎉 {k.to}</span>
+                      <span className="text-[11px] text-muted-foreground">from {k.from}</span>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground font-mono">{k.date}</span>
                   </div>
-                  <span className="text-[10px] text-muted-foreground font-mono">{k.date}</span>
+                  <p className="text-xs text-foreground/90 italic leading-relaxed bg-background/50 p-2.5 rounded-lg border border-border/40">
+                    "{k.message}"
+                  </p>
                 </div>
-                <p className="text-xs text-foreground/90 italic leading-relaxed bg-background/50 p-2.5 rounded-lg border border-border/40">
-                  "{k.message}"
-                </p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

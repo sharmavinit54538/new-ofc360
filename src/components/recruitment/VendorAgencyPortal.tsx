@@ -80,33 +80,39 @@ export function VendorAgencyPortal() {
       </div>
 
       {/* Submissions List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {vendorSubmissions.map((sub) => (
-          <div key={sub.id} className="glass-card rounded-xl p-5 border border-border/50 space-y-3">
-            <div className="flex justify-between items-start">
-              <div>
-                <Badge variant="outline" className="text-[10px] font-mono mb-1">{sub.id}</Badge>
-                <h3 className="font-bold text-base">{sub.candidateName}</h3>
-                <p className="text-xs text-muted-foreground">Agency: {sub.agencyName}</p>
+      {vendorSubmissions.length === 0 ? (
+        <div className="p-8 text-center rounded-xl bg-secondary/20 border border-dashed border-border/60 text-xs text-muted-foreground">
+          No external agency candidate submissions found. External headhunter candidate profiles will appear here with automated duplicate detection.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {vendorSubmissions.map((sub) => (
+            <div key={sub.id} className="glass-card rounded-xl p-5 border border-border/50 space-y-3">
+              <div className="flex justify-between items-start">
+                <div>
+                  <Badge variant="outline" className="text-[10px] font-mono mb-1">{sub.id}</Badge>
+                  <h3 className="font-bold text-base">{sub.candidateName}</h3>
+                  <p className="text-xs text-muted-foreground">Agency: {sub.agencyName}</p>
+                </div>
+                {sub.duplicateFlag ? (
+                  <Badge className="bg-destructive/10 text-destructive border-destructive/20 text-xs gap-1">
+                    <ShieldAlert className="w-3.5 h-3.5" /> Duplicate Auto-Flagged
+                  </Badge>
+                ) : (
+                  <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-xs">
+                    Unique Candidate
+                  </Badge>
+                )}
               </div>
-              {sub.duplicateFlag ? (
-                <Badge className="bg-destructive/10 text-destructive border-destructive/20 text-xs gap-1">
-                  <ShieldAlert className="w-3.5 h-3.5" /> Duplicate Auto-Flagged
-                </Badge>
-              ) : (
-                <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-xs">
-                  Unique Candidate
-                </Badge>
-              )}
-            </div>
 
-            <div className="flex justify-between items-center text-xs pt-2 border-t border-border/30">
-              <span className="text-muted-foreground">{sub.jobTitle}</span>
-              <span className="text-muted-foreground font-mono">{sub.candidateEmail}</span>
+              <div className="flex justify-between items-center text-xs pt-2 border-t border-border/30">
+                <span className="text-muted-foreground">{sub.jobTitle}</span>
+                <span className="text-muted-foreground font-mono">{sub.candidateEmail}</span>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

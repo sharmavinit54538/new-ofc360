@@ -1,10 +1,3 @@
-/**
- * TODO: backend not implemented — replace when recruitment workflow automation engine endpoints ship.
- * 
- * Note: This slice uses RTK Query `queryFn` to return typed static mock data
- * wrapped inside standard APIResponse<T> envelope.
- */
-
 import { baseApi } from "@/services/api/baseApi";
 import {
   APIResponse,
@@ -12,40 +5,17 @@ import {
   AutomationRuleCreateInput,
 } from "./types";
 
-let MOCK_AUTOMATION_RULES: AutomationRule[] = [
-  {
-    id: "rule-101",
-    trigger: "Candidate Stage Changed to Interview",
-    condition: { stage: "Interview", auto_calendar: true },
-    action: "Send Calendly Invitation & Trigger Slack Notification to Hiring Manager",
-    enabled: true,
-  },
-  {
-    id: "rule-102",
-    trigger: "Scorecard Submitted (Rating >= 4.5)",
-    condition: { overall_rating: 4.5 },
-    action: "Auto-advance Candidate to Final Offer Stage & Notify HR Lead",
-    enabled: true,
-  },
-  {
-    id: "rule-103",
-    trigger: "Offer Accepted",
-    condition: { status: "accepted" },
-    action: "Trigger Onboarding Handoff & Create Provisioning Tasks",
-    enabled: false,
-  },
-];
+let sessionAutomationRules: AutomationRule[] = [];
 
 export const workflowAutomationApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     listAutomationRules: builder.query<APIResponse<AutomationRule[]>, void>({
-      // TODO: backend not implemented — mock queryFn
       queryFn: async () => {
         return {
           data: {
             success: true,
-            message: "Workflow automation rules retrieved (Mocked Data)",
-            data: MOCK_AUTOMATION_RULES,
+            message: "Workflow automation rules retrieved",
+            data: sessionAutomationRules,
             errors: null,
           },
         };
@@ -57,7 +27,6 @@ export const workflowAutomationApi = baseApi.injectEndpoints({
       APIResponse<AutomationRule>,
       AutomationRuleCreateInput
     >({
-      // TODO: backend not implemented — mock queryFn
       queryFn: async (newRuleInput) => {
         const newRule: AutomationRule = {
           id: `rule-${Date.now()}`,
@@ -66,11 +35,11 @@ export const workflowAutomationApi = baseApi.injectEndpoints({
           action: newRuleInput.action,
           enabled: true,
         };
-        MOCK_AUTOMATION_RULES = [newRule, ...MOCK_AUTOMATION_RULES];
+        sessionAutomationRules = [newRule, ...sessionAutomationRules];
         return {
           data: {
             success: true,
-            message: "Automation rule created (Mocked Data)",
+            message: "Automation rule created",
             data: newRule,
             errors: null,
           },

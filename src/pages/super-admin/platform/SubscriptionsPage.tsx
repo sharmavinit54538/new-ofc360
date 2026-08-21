@@ -93,7 +93,7 @@ export default function SubscriptionsPage() {
     setBillingCycle(sub.billingCycle);
     setAmount(String(sub.amount));
     setStatus(sub.status);
-    setMaxLicenses(String(sub.maxLicenses || sub.maxSeats || 100));
+    setMaxLicenses(String(sub.maxLicenses ?? sub.maxSeats ?? 0));
     setIsEditOpen(true);
   };
 
@@ -107,9 +107,9 @@ export default function SubscriptionsPage() {
         data: {
           plan,
           billingCycle,
-          amount: parseInt(amount) || 299,
+          amount: parseFloat(amount) || 0,
           status,
-          maxLicenses: parseInt(maxLicenses) || 100,
+          maxLicenses: parseInt(maxLicenses) || 0,
         },
       }).unwrap();
 

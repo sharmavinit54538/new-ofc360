@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Target, Plus, CheckCircle2, Clock, Sparkles } from "lucide-react";
+import { Target, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -36,32 +35,7 @@ export default function ManagerGoalsPage() {
   const { data: rawEmployees = [] } = useGetEmployeesQuery();
   const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
 
-  const [goals, setGoals] = useState<Goal[]>([
-    {
-      id: "g-1",
-      title: "Deliver OFC360 High Availability Microservices Cluster",
-      assignee: "Sarah Jenkins",
-      targetDate: "Q3 2026",
-      progress: 85,
-      category: "Engineering",
-    },
-    {
-      id: "g-2",
-      title: "Reduce API P99 Latency below 50ms",
-      assignee: "David Chen",
-      targetDate: "Q3 2026",
-      progress: 60,
-      category: "Performance",
-    },
-    {
-      id: "g-3",
-      title: "Complete Enterprise Security Audit Remediation",
-      assignee: "Alex Mercer",
-      targetDate: "Q4 2026",
-      progress: 40,
-      category: "Security",
-    },
-  ]);
+  const [goals, setGoals] = useState<Goal[]>([]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [goalTitle, setGoalTitle] = useState("");
@@ -91,7 +65,7 @@ export default function ManagerGoalsPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto pb-12">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border/40">
         <div>
@@ -106,38 +80,44 @@ export default function ManagerGoalsPage() {
 
         <Button
           onClick={() => setIsModalOpen(true)}
-          className="gradient-bg text-primary-foreground font-bold text-xs h-9 gap-1.5 shadow-md"
+          className="gradient-bg text-primary-foreground font-bold text-xs h-9 gap-1.5 shadow-md cursor-pointer"
         >
           <Plus className="w-4 h-4" /> Create Team Goal
         </Button>
       </div>
 
       {/* Goals Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {goals.map((g) => (
-          <div key={g.id} className="glass-card rounded-2xl p-5 border border-border/60 bg-card space-y-4 shadow-sm">
-            <div className="flex justify-between items-start">
-              <Badge variant="outline" className="text-[10px] border-primary/20 text-primary">
-                {g.category}
-              </Badge>
-              <span className="text-xs font-mono text-muted-foreground">{g.targetDate}</span>
-            </div>
-
-            <div className="space-y-1">
-              <h4 className="font-bold text-sm text-foreground leading-snug">{g.title}</h4>
-              <p className="text-xs text-muted-foreground">Assigned to: <span className="font-semibold text-foreground">{g.assignee}</span></p>
-            </div>
-
-            <div className="space-y-1.5 pt-2 border-t border-border/40">
-              <div className="flex justify-between text-xs font-bold">
-                <span className="text-muted-foreground">Completion Progress</span>
-                <span className="text-primary font-mono">{g.progress}%</span>
+      {goals.length === 0 ? (
+        <div className="p-8 text-center rounded-2xl bg-secondary/20 border border-dashed border-border/60 text-xs text-muted-foreground">
+          No team goals assigned for the current cycle. Click "Create Team Goal" to assign key results to team members.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {goals.map((g) => (
+            <div key={g.id} className="glass-card rounded-2xl p-5 border border-border/60 bg-card space-y-4 shadow-sm">
+              <div className="flex justify-between items-start">
+                <Badge variant="outline" className="text-[10px] border-primary/20 text-primary">
+                  {g.category}
+                </Badge>
+                <span className="text-xs font-mono text-muted-foreground">{g.targetDate}</span>
               </div>
-              <Progress value={g.progress} className="h-2 bg-secondary" />
+
+              <div className="space-y-1">
+                <h4 className="font-bold text-sm text-foreground leading-snug">{g.title}</h4>
+                <p className="text-xs text-muted-foreground">Assigned to: <span className="font-semibold text-foreground">{g.assignee}</span></p>
+              </div>
+
+              <div className="space-y-1.5 pt-2 border-t border-border/40">
+                <div className="flex justify-between text-xs font-bold">
+                  <span className="text-muted-foreground">Completion Progress</span>
+                  <span className="text-primary font-mono">{g.progress}%</span>
+                </div>
+                <Progress value={g.progress} className="h-2 bg-secondary" />
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Create Goal Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -177,7 +157,7 @@ export default function ManagerGoalsPage() {
             </div>
 
             <DialogFooter className="pt-2">
-              <Button type="submit" className="gradient-bg text-primary-foreground font-bold text-xs h-9">
+              <Button type="submit" className="gradient-bg text-primary-foreground font-bold text-xs h-9 cursor-pointer">
                 Assign Goal
               </Button>
             </DialogFooter>

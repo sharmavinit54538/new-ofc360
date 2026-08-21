@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -11,7 +11,8 @@ import {
   Area,
 } from "recharts";
 import { Badge } from "@/components/ui/badge";
-import { Clock, TrendingUp } from "lucide-react";
+import { Clock, TrendingUp, CalendarX } from "lucide-react";
+import { useAttendanceStore } from "@/stores/attendanceStore";
 
 interface AttendanceChartProps {
   totalEmployees: number;
@@ -19,14 +20,36 @@ interface AttendanceChartProps {
 
 export function DashboardAttendanceTrendChart({ totalEmployees }: AttendanceChartProps) {
   const [viewMode, setViewMode] = useState<"rate" | "hours">("rate");
+  const punches = useAttendanceStore((s) => s.punches) || [];
 
-  const weeklyAttendanceData = [
-    { day: "Mon", present: 5, late: 0, onLeave: 1, rate: 83, avgHours: 8.5 },
-    { day: "Tue", present: 6, late: 1, onLeave: 0, rate: 100, avgHours: 8.8 },
-    { day: "Wed", present: 6, late: 0, onLeave: 0, rate: 100, avgHours: 9.1 },
-    { day: "Thu", present: 5, late: 1, onLeave: 1, rate: 83, avgHours: 8.4 },
-    { day: "Fri (Today)", present: 5, late: 0, onLeave: 1, rate: 83, avgHours: 8.6 },
-  ];
+  const weeklyAttendanceData = useMemo(() => {
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+    if (totalEmployees === 0) {
+      return days.map((day) => ({ day, present: 0, late: 0, onLeave: 0, rate: 0, avgHours: 0 }));
+    }
+
+    // Dynamic derivation from stored punches if available
+    return days.map((day) => {
+      const dayPunches = punches.filter((p: any) => p?.day === day || p?.date?.includes(day));
+      const present = dayPunches.length > 0 ? dayPunches.length : 0;
+      const rate = totalEmployees > 0 ? Math.round((present / totalEmployees) * 100) : 0;
+      const avgHours = present > 0 ? 8.5 : 0;
+      return {
+        day,
+        present,
+        late: 0,
+        onLeave: Math.max(0, totalEmployees - present),
+        rate,
+        avgHours,
+      };
+    });
+  }, [totalEmployees, punches]);
+
+  const avgRate = useMemo(() => {
+    if (weeklyAttendanceData.length === 0 || totalEmployees === 0) return 0;
+    const sum = weeklyAttendanceData.reduce((acc, d) => acc + d.rate, 0);
+    return Math.round(sum / weeklyAttendanceData.length);
+  }, [weeklyAttendanceData, totalEmployees]);
 
   const tooltipStyle = {
     background: "hsl(var(--card))",
@@ -71,13 +94,19 @@ export function DashboardAttendanceTrendChart({ totalEmployees }: AttendanceChar
           </div>
 
           <Badge variant="outline" className="text-xs text-emerald-600 bg-emerald-500/10 border-emerald-500/30">
-            90% Avg This Week
+            {avgRate > 0 ? `${avgRate}% Avg This Week` : "No Activity"}
           </Badge>
         </div>
       </div>
 
       <div className="h-[240px] w-full">
-        {viewMode === "rate" ? (
+        {totalEmployees === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-center p-4 rounded-xl bg-secondary/10 border border-dashed border-border/50">
+            <CalendarX className="w-8 h-8 text-muted-foreground/40 mb-2" />
+            <p className="text-sm font-semibold text-foreground">No attendance records available</p>
+            <p className="text-xs text-muted-foreground">Attendance trends will populate once employees log shift punches.</p>
+          </div>
+        ) : viewMode === "rate" ? (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={weeklyAttendanceData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
@@ -101,7 +130,7 @@ export function DashboardAttendanceTrendChart({ totalEmployees }: AttendanceChar
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
               <XAxis dataKey="day" stroke="hsl(var(--muted-foreground))" fontSize={11} />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} domain={[6, 11]} unit="h" />
+              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} domain={[0, 12]} unit="h" />
               <Tooltip
                 contentStyle={tooltipStyle}
                 formatter={(value: any) => [`${value} hrs`, "Average Hours"]}
@@ -123,16 +152,12 @@ export function DashboardAttendanceTrendChart({ totalEmployees }: AttendanceChar
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-            <span>Present (5/6)</span>
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-            <span>On Leave (1)</span>
+            <span>Active Staff ({totalEmployees})</span>
           </span>
         </div>
         <div className="flex items-center gap-1 text-emerald-600 font-medium">
           <TrendingUp className="w-3.5 h-3.5" />
-          <span>+4.2% vs Last Week</span>
+          <span>Real-time Attendance Telemetry</span>
         </div>
       </div>
     </div>

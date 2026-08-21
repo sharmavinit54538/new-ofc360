@@ -1,90 +1,61 @@
+import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { Target, TrendingUp, Award, Star } from "lucide-react";
+import { Target, TrendingUp, Award, Star, Users, Brain } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { Progress } from "@/components/ui/progress";
-import { RadarChart, PolarGrid, PolarAngleAxis, Radar, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
-
-const radarData = [
-  { skill: "Leadership", score: 85 },
-  { skill: "Communication", score: 92 },
-  { skill: "Technical", score: 78 },
-  { skill: "Teamwork", score: 95 },
-  { skill: "Problem Solving", score: 88 },
-  { skill: "Creativity", score: 72 },
-];
-
-const trendData = [
-  { month: "Oct", score: 7.8 },
-  { month: "Nov", score: 8.0 },
-  { month: "Dec", score: 7.9 },
-  { month: "Jan", score: 8.2 },
-  { month: "Feb", score: 8.5 },
-  { month: "Mar", score: 8.4 },
-];
-
-const kpis = [
-  { label: "Tasks Completed", value: 94, target: 100 },
-  { label: "Code Quality", value: 87, target: 90 },
-  { label: "Collaboration", value: 96, target: 95 },
-  { label: "On-time Delivery", value: 82, target: 90 },
-];
+import { useGetEmployeesQuery } from "@/services/api/employeeApi";
 
 export default function PerformancePage() {
+  const { data: rawEmployees = [] } = useGetEmployeesQuery();
+  const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
+
+  const totalEmployees = employees.length;
+
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 pb-12">
       <div>
-        <h1 className="page-header">Performance</h1>
-        <p className="page-subheader">AI-driven performance analytics and KPI tracking</p>
+        <h1 className="page-header">Performance & OKRs</h1>
+        <p className="page-subheader">Workforce performance tracking, KPI attainment & goal management</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <StatCard title="Overall Score" value="8.4/10" change="+0.3 vs Q4" changeType="up" icon={Star} />
-        <StatCard title="Productivity" value="94%" change="Above average" changeType="up" icon={Target} />
-        <StatCard title="Growth Rate" value="+12%" change="YoY improvement" changeType="up" icon={TrendingUp} />
-        <StatCard title="Awards" value="3" change="This quarter" icon={Award} />
+        <StatCard title="Tracked Workforce" value={String(totalEmployees)} change="Registered staff" changeType="up" icon={Users} />
+        <StatCard title="Active Appraisal Cycle" value={totalEmployees > 0 ? "Q3 2026" : "None"} change={totalEmployees > 0 ? "Cycle in progress" : "No active reviews"} changeType="up" icon={Target} />
+        <StatCard title="Goal Completion" value={totalEmployees > 0 ? "—" : "0%"} change="Target tracking" changeType="neutral" icon={TrendingUp} />
+        <StatCard title="Recognitions" value="0" change="This quarter" icon={Award} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Radar */}
-        <div className="glass-card rounded-xl p-5">
-          <h3 className="font-semibold mb-4">Skill Assessment</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <RadarChart data={radarData}>
-              <PolarGrid stroke="hsl(var(--border))" />
-              <PolarAngleAxis dataKey="skill" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-              <Radar dataKey="score" stroke="#6366F1" fill="#6366F1" fillOpacity={0.25} strokeWidth={2} />
-            </RadarChart>
-          </ResponsiveContainer>
+        {/* Skill Assessment */}
+        <div className="glass-card rounded-xl p-5 border border-border/50">
+          <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
+            <Brain className="w-4 h-4 text-primary" /> Skill Competency Radar
+          </h3>
+          <div className="h-[240px] flex flex-col items-center justify-center text-center p-4 rounded-xl bg-secondary/10 border border-dashed border-border/50">
+            <Brain className="w-8 h-8 text-muted-foreground/40 mb-2" />
+            <p className="text-sm font-semibold text-foreground">No competency evaluations recorded</p>
+            <p className="text-xs text-muted-foreground">Competency radar will render once 360-degree appraisals are submitted.</p>
+          </div>
         </div>
 
-        {/* Trend */}
-        <div className="glass-card rounded-xl p-5">
-          <h3 className="font-semibold mb-4">Performance Trend</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={trendData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-              <YAxis domain={[7, 9]} stroke="hsl(var(--muted-foreground))" fontSize={12} />
-              <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
-              <Line type="monotone" dataKey="score" stroke="#8B5CF6" strokeWidth={2} dot={{ fill: "#8B5CF6" }} />
-            </LineChart>
-          </ResponsiveContainer>
+        {/* Performance Trend */}
+        <div className="glass-card rounded-xl p-5 border border-border/50">
+          <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-emerald-500" /> Quarterly Performance Trends
+          </h3>
+          <div className="h-[240px] flex flex-col items-center justify-center text-center p-4 rounded-xl bg-secondary/10 border border-dashed border-border/50">
+            <Target className="w-8 h-8 text-muted-foreground/40 mb-2" />
+            <p className="text-sm font-semibold text-foreground">No historical review trends</p>
+            <p className="text-xs text-muted-foreground">Quarterly score history will be logged after appraisal cycle completion.</p>
+          </div>
         </div>
       </div>
 
       {/* KPIs */}
-      <div className="glass-card rounded-xl p-5">
-        <h3 className="font-semibold mb-4">Key Performance Indicators</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {kpis.map(kpi => (
-            <div key={kpi.label} className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>{kpi.label}</span>
-                <span className="mono-text font-semibold">{kpi.value}%<span className="text-muted-foreground font-normal"> / {kpi.target}%</span></span>
-              </div>
-              <Progress value={(kpi.value / kpi.target) * 100} className="h-2" />
-            </div>
-          ))}
+      <div className="glass-card rounded-xl p-5 border border-border/50">
+        <h3 className="font-semibold text-sm mb-4">Key Performance Indicators</h3>
+        <div className="p-8 text-center rounded-xl bg-secondary/20 border border-dashed border-border/60 text-xs text-muted-foreground">
+          No organizational KPIs defined for the current cycle. Configure company OKRs and key results to track attainment percentages.
         </div>
       </div>
     </motion.div>

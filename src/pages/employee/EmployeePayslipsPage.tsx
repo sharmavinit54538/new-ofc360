@@ -121,13 +121,13 @@ export default function EmployeePayslipsPage() {
                       {p.pay_period_start ? `${p.pay_period_start} to ${p.pay_period_end}` : `${p.month || "June"} ${p.year || 2026}`}
                     </TableCell>
                     <TableCell className="text-xs font-mono">
-                      {fmt(p.gross_pay || (p.basic || 0) + (p.hra || 0) || 75000)}
+                      {fmt(p.gross_pay || (p.basic || 0) + (p.hra || 0) || 0)}
                     </TableCell>
                     <TableCell className="text-xs font-mono text-destructive">
-                      -{fmt(p.total_deductions || (p.pfDeduction || 0) + (p.tdsDeduction || 0) || 8500)}
+                      -{fmt(p.total_deductions || (p.pfDeduction || 0) + (p.tdsDeduction || 0) || 0)}
                     </TableCell>
                     <TableCell className="text-xs font-mono font-bold text-emerald-500">
-                      {fmt(p.net_pay || p.netSalary || 66500)}
+                      {fmt(p.net_pay || p.netSalary || 0)}
                     </TableCell>
                     <TableCell>
                       <Badge className="bg-emerald-500/15 text-emerald-500 text-[10px] font-bold">

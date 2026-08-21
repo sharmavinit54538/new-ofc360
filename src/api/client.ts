@@ -77,6 +77,9 @@ export const api = createApi({
     "EmployeeOnboarding",
     "Document",
     "HRAdminOnboarding",
+    "TalentPool",
+    "RecruitmentCompliance",
+    "WorkflowRule",
   ],
   endpoints: () => ({}),
 });

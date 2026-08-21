@@ -133,7 +133,7 @@ export default function CompaniesPage() {
     setStatus(company.status || "Active");
     setHrAdminName(company.hr_admin?.name || company.hrAdminName || "");
     setHrAdminEmail(company.hr_admin?.email || company.hrAdminEmail || "");
-    setEmployeeCount(String(company.employeeCount || company.employee_count || 10));
+    setEmployeeCount(String(company.employeeCount ?? company.employee_count ?? 1));
     setMrr(String(company.mrr || 0));
     setIndustry(company.industry || "Technology");
     setLocation(company.location || "Global");
@@ -155,7 +155,7 @@ export default function CompaniesPage() {
         status,
         hrAdminName: hrAdminName.trim() || "HR Administrator",
         hrAdminEmail: hrAdminEmail.trim().toLowerCase(),
-        employeeCount: parseInt(employeeCount) || 10,
+        employeeCount: parseInt(employeeCount) || 1,
         mrr: parseFloat(mrr) || 0,
         industry,
         location,

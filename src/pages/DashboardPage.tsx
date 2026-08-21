@@ -92,7 +92,7 @@ function HRAdminDashboard() {
   // Computed Real-Time Metrics
   const totalWorkforce = employees.length;
   const activeEmployees = employees.filter(
-    (e) => (e?.status || "ACTIVE").toUpperCase() === "ACTIVE"
+    (e) => (e?.status || "").toUpperCase() === "ACTIVE"
   ).length;
   const onboardingEmployees = employees.filter((e) =>
     (e?.status || "").toUpperCase().includes("PENDING") ||
@@ -100,37 +100,31 @@ function HRAdminDashboard() {
   );
   const onboardingCount = onboardingEmployees.length;
 
-  const openCandidates = candidates.length > 0 ? candidates.length : 4;
-  const pendingLeaves = leaveRequests.filter((r) => r?.status === "Pending").length;
+  const openCandidates = candidates.length;
+  const pendingLeaves = leaveRequests.filter((r) => r?.status === "pending").length;
   const totalPendingActions = pendingLeaves + onboardingCount;
 
   const monthlyPayroll = useMemo(() => {
-    if (runs.length > 0) return runs[0].netTotal || 0;
+    if (runs.length > 0) return runs[0].netTotal || runs[0].grossTotal || 0;
     if (payslips.length > 0) {
-      return payslips.reduce((sum, p) => sum + (p?.netSalary || 0), 0);
+      return payslips.reduce((sum, p) => sum + (p?.netSalary || p?.grossSalary || 0), 0);
     }
     const empSum = employees.reduce(
       (sum, e) => sum + (typeof e?.salary === "number" ? e.salary : 0),
       0
     );
-    return empSum > 0 ? empSum : 5999988;
+    return empSum;
   }, [runs, payslips, employees]);
 
   // Department Distribution from Live Employees
   const departmentSplit = useMemo(() => {
     const counts: Record<string, number> = {};
     employees.forEach((e) => {
-      const deptName = e?.department?.trim() || "Management";
+      const deptName = e?.department?.trim() || "Unassigned";
       counts[deptName] = (counts[deptName] || 0) + 1;
     });
 
-    const list = Object.entries(counts).map(([name, value]) => ({ name, value }));
-    return list.length > 0
-      ? list
-      : [
-          { name: "Engineering", value: 5 },
-          { name: "Management", value: 1 },
-        ];
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [employees]);
 
   // Dynamic Live System Insights
@@ -144,8 +138,8 @@ function HRAdminDashboard() {
       list.push({
         tone: "positive",
         text: `${totalWorkforce} registered staff (${activeEmployees} active, ${onboardingCount} onboarding) across ${
-          departmentSplit.length || departments.length || 2
-        } departments.`,
+          departmentSplit.length || departments.length || 0
+        } department(s).`,
       });
     } else {
       list.push({
@@ -166,10 +160,12 @@ function HRAdminDashboard() {
       });
     }
 
-    list.push({
-      tone: "info",
-      text: `${openCandidates} active candidate(s) moving through the recruitment ATS pipeline.`,
-    });
+    if (openCandidates > 0) {
+      list.push({
+        tone: "info",
+        text: `${openCandidates} active candidate(s) moving through the recruitment ATS pipeline.`,
+      });
+    }
 
     return list;
   }, [
@@ -208,39 +204,45 @@ function HRAdminDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Workforce"
-          value={totalWorkforce > 0 ? String(totalWorkforce) : "6"}
+          value={String(totalWorkforce)}
           change={
             totalWorkforce > 0
               ? `${activeEmployees} Active • ${onboardingCount} Onboarding`
-              : "4 Active • 2 Onboarding"
+              : "No employees registered yet"
           }
-          changeType="up"
+          changeType={totalWorkforce > 0 ? "up" : "neutral"}
           icon={Users}
         />
         <StatCard
           title="Today's Presence Pulse"
-          value="5 / 6"
-          change="83% Present • 1 On Leave"
-          changeType="up"
+          value={totalWorkforce > 0 ? `${activeEmployees} / ${totalWorkforce}` : "0 / 0"}
+          change={
+            totalWorkforce > 0
+              ? `${Math.round((activeEmployees / totalWorkforce) * 100)}% Active Workforce`
+              : "No active records"
+          }
+          changeType={totalWorkforce > 0 ? "up" : "neutral"}
           icon={Clock}
         />
         <StatCard
           title="Monthly Payroll"
-          value={fmtMoney(monthlyPayroll)}
+          value={monthlyPayroll > 0 ? fmtMoney(monthlyPayroll) : "₹0"}
           change={
             runs.length > 0
               ? `Latest run: ${runs[0].month} ${runs[0].year}`
-              : "Estimated base payroll"
+              : monthlyPayroll > 0
+              ? "Estimated base payroll"
+              : "No payroll processed"
           }
-          changeType="up"
+          changeType={monthlyPayroll > 0 ? "up" : "neutral"}
           icon={PayrollIcon || IndianRupee}
         />
         <StatCard
           title="Pending Approvals"
-          value={String(totalPendingActions > 0 ? totalPendingActions : 2)}
+          value={String(totalPendingActions)}
           change={
             totalPendingActions > 0
-              ? `${pendingLeaves || 2} leave & KYC items`
+              ? `${pendingLeaves} leave & ${onboardingCount} onboarding items`
               : "All approvals up-to-date"
           }
           changeType={totalPendingActions > 0 ? "neutral" : "up"}
@@ -251,7 +253,7 @@ function HRAdminDashboard() {
       {/* 4. Visual Graphs Row 1: Attendance & Department Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
-          <DashboardAttendanceTrendChart totalEmployees={totalWorkforce || 6} />
+          <DashboardAttendanceTrendChart totalEmployees={totalWorkforce} />
         </div>
         <div>
           <DashboardDepartmentChart departmentSplit={departmentSplit} />

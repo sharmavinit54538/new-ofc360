@@ -25,29 +25,35 @@ export function WorkflowAutomation() {
       </div>
 
       <div className="space-y-4">
-        {automations.map((auto) => (
-          <div key={auto.id} className="glass-card rounded-xl p-5 border border-border/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-lg bg-amber-500/10 text-amber-500">
-                <Zap className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-[10px] font-mono">{auto.id}</Badge>
-                  <h3 className="font-bold text-base">{auto.name}</h3>
-                </div>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  IF <span className="text-primary font-mono">{auto.trigger}</span> THEN <span className="text-emerald-400 font-mono">{auto.action}</span>
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-muted-foreground">{auto.isActive ? "Active Rule" : "Paused"}</span>
-              <Switch checked={auto.isActive} onCheckedChange={() => toggleAutomation(auto.id)} />
-            </div>
+        {automations.length === 0 ? (
+          <div className="p-8 text-center rounded-xl bg-secondary/20 border border-dashed border-border/60 text-xs text-muted-foreground">
+            No trigger-action automation rules configured. Click "Add Trigger Rule" to automate stage movement notifications.
           </div>
-        ))}
+        ) : (
+          automations.map((auto) => (
+            <div key={auto.id} className="glass-card rounded-xl p-5 border border-border/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-lg bg-amber-500/10 text-amber-500">
+                  <Zap className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-[10px] font-mono">{auto.id}</Badge>
+                    <h3 className="font-bold text-base">{auto.name}</h3>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    IF <span className="text-primary font-mono">{auto.trigger}</span> THEN <span className="text-emerald-400 font-mono">{auto.action}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-muted-foreground">{auto.isActive ? "Active Rule" : "Paused"}</span>
+                <Switch checked={auto.isActive} onCheckedChange={() => toggleAutomation(auto.id)} />
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

@@ -109,7 +109,7 @@ export default function AssetIntelligencePage() {
       status: assignedEmp ? "Assigned" : "Available",
       assignedToId: assignedEmp?.id,
       assignedToName: assignedEmp?.name,
-      purchaseValue: parseFloat(purchaseValue) || 65000,
+      purchaseValue: parseFloat(purchaseValue) || 0,
       warrantyExpiry,
     });
 

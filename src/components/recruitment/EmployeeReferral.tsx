@@ -104,27 +104,33 @@ export function EmployeeReferral() {
       </div>
 
       {/* Referrals List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {referrals.map((ref) => (
-          <div key={ref.id} className="glass-card rounded-xl p-5 border border-border/50 space-y-3">
-            <div className="flex justify-between items-start">
-              <div>
-                <Badge variant="outline" className="text-[10px] font-mono mb-1">{ref.id}</Badge>
-                <h3 className="font-bold text-base">{ref.candidateName}</h3>
-                <p className="text-xs text-muted-foreground">Referred by: {ref.referrerName}</p>
+      {referrals.length === 0 ? (
+        <div className="p-8 text-center rounded-xl bg-secondary/20 border border-dashed border-border/60 text-xs text-muted-foreground">
+          No employee referrals submitted yet. Click "Submit Referral" or share your referral link to earn referral bonuses.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {referrals.map((ref) => (
+            <div key={ref.id} className="glass-card rounded-xl p-5 border border-border/50 space-y-3">
+              <div className="flex justify-between items-start">
+                <div>
+                  <Badge variant="outline" className="text-[10px] font-mono mb-1">{ref.id}</Badge>
+                  <h3 className="font-bold text-base">{ref.candidateName}</h3>
+                  <p className="text-xs text-muted-foreground">Referred by: {ref.referrerName}</p>
+                </div>
+                <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-xs">
+                  ${ref.bonusAmount.toLocaleString()} Bonus
+                </Badge>
               </div>
-              <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-xs">
-                ${ref.bonusAmount.toLocaleString()} Bonus
-              </Badge>
-            </div>
 
-            <div className="flex justify-between items-center text-xs pt-2 border-t border-border/30">
-              <span className="text-muted-foreground">{ref.role}</span>
-              <Badge variant="secondary" className="text-[10px]">{ref.status}</Badge>
+              <div className="flex justify-between items-center text-xs pt-2 border-t border-border/30">
+                <span className="text-muted-foreground">{ref.role}</span>
+                <Badge variant="secondary" className="text-[10px]">{ref.status}</Badge>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -104,12 +104,12 @@ export function DashboardRecentEmployeesTable({ employees = [] }: RecentEmployee
                       </TableCell>
                       <TableCell className="text-xs">
                         <span className="px-2 py-0.5 rounded-md bg-secondary/60 text-foreground/90 font-medium text-[11px]">
-                          {e.department || "Engineering"}
+                          {e.department || "General"}
                         </span>
                       </TableCell>
                       <TableCell>{getStatusBadge(e.status)}</TableCell>
                       <TableCell className="text-right text-xs font-mono font-semibold text-foreground">
-                        {fmtMoney(e.salary || 1200000)}
+                        {typeof e.salary === "number" && e.salary > 0 ? fmtMoney(e.salary) : "—"}
                       </TableCell>
                     </TableRow>
                   );

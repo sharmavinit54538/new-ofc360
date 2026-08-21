@@ -236,33 +236,18 @@ export default function AIFaceAttendancePage() {
     return <Badge variant="outline">{status || "Recorded"}</Badge>;
   };
 
-  // Sample analytics fallback if backend analytics arrays are empty
   const chartDailyTrend = useMemo(() => {
     if (analyticsData?.dailyTrend && analyticsData.dailyTrend.length > 0) {
       return analyticsData.dailyTrend;
     }
-    return [
-      { date: "Mon", present: 42, absent: 3, late: 2 },
-      { date: "Tue", present: 44, absent: 1, late: 3 },
-      { date: "Wed", present: 45, absent: 2, late: 1 },
-      { date: "Thu", present: 43, absent: 4, late: 2 },
-      { date: "Fri", present: 46, absent: 1, late: 0 },
-      { date: "Sat", present: 20, absent: 2, late: 1 },
-      { date: "Today", present: analyticsData?.presentToday || 45, absent: analyticsData?.absentToday || 2, late: analyticsData?.lateEmployees || 1 },
-    ];
+    return [];
   }, [analyticsData]);
 
   const chartDepartmentStats = useMemo(() => {
     if (analyticsData?.departmentStats && analyticsData.departmentStats.length > 0) {
       return analyticsData.departmentStats;
     }
-    return [
-      { department: "Engineering", present: 22, total: 24, rate: 92 },
-      { department: "Product", present: 10, total: 10, rate: 100 },
-      { department: "Design", present: 6, total: 7, rate: 86 },
-      { department: "Marketing", present: 5, total: 6, rate: 83 },
-      { department: "HR & Admin", present: 4, total: 4, rate: 100 },
-    ];
+    return [];
   }, [analyticsData]);
 
   return (
@@ -856,7 +841,7 @@ export default function AIFaceAttendancePage() {
                 <span className="text-xs text-muted-foreground flex items-center gap-1.5">
                   <Users className="w-3.5 h-3.5 text-primary" /> Total Staff
                 </span>
-                <p className="text-xl font-bold text-foreground">{analyticsData?.totalEmployees || 48}</p>
+                <p className="text-xl font-bold text-foreground">{analyticsData?.totalEmployees ?? 0}</p>
               </div>
 
               <div className="p-4 rounded-xl bg-card border border-border/60 space-y-1">
@@ -864,7 +849,7 @@ export default function AIFaceAttendancePage() {
                   <UserCheck className="w-3.5 h-3.5 text-emerald-500" /> Present Today
                 </span>
                 <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-                  {analyticsData?.presentToday || 45}
+                  {analyticsData?.presentToday ?? 0}
                 </p>
               </div>
 
@@ -872,14 +857,14 @@ export default function AIFaceAttendancePage() {
                 <span className="text-xs text-muted-foreground flex items-center gap-1.5">
                   <LogIn className="w-3.5 h-3.5 text-teal-500" /> On Floor (In)
                 </span>
-                <p className="text-xl font-bold text-foreground">{analyticsData?.checkedIn || 38}</p>
+                <p className="text-xl font-bold text-foreground">{analyticsData?.checkedIn ?? 0}</p>
               </div>
 
               <div className="p-4 rounded-xl bg-card border border-border/60 space-y-1">
                 <span className="text-xs text-muted-foreground flex items-center gap-1.5">
                   <LogOut className="w-3.5 h-3.5 text-blue-500" /> Completed (Out)
                 </span>
-                <p className="text-xl font-bold text-foreground">{analyticsData?.checkedOut || 7}</p>
+                <p className="text-xl font-bold text-foreground">{analyticsData?.checkedOut ?? 0}</p>
               </div>
 
               <div className="p-4 rounded-xl bg-card border border-border/60 space-y-1">
@@ -887,7 +872,7 @@ export default function AIFaceAttendancePage() {
                   <Flame className="w-3.5 h-3.5 text-amber-500" /> Late Arrivals
                 </span>
                 <p className="text-xl font-bold text-amber-600 dark:text-amber-400">
-                  {analyticsData?.lateEmployees || 2}
+                  {analyticsData?.lateEmployees ?? 0}
                 </p>
               </div>
 
@@ -896,7 +881,7 @@ export default function AIFaceAttendancePage() {
                   <TrendingUp className="w-3.5 h-3.5 text-primary" /> Attendance Rate
                 </span>
                 <p className="text-xl font-bold text-primary">
-                  {analyticsData?.attendanceRate ? `${analyticsData.attendanceRate}%` : "94.2%"}
+                  {analyticsData?.attendanceRate ? `${analyticsData.attendanceRate}%` : (analyticsData?.totalEmployees ? `${Math.round(((analyticsData?.presentToday || 0) / analyticsData.totalEmployees) * 100)}%` : "0%")}
                 </p>
               </div>
             </div>

@@ -32,32 +32,38 @@ export function ComplianceAuditLogs() {
           <Lock className="w-4 h-4 text-primary" /> Immutable Security Audit Logs
         </h3>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead className="bg-secondary/40 border-b border-border/40 text-muted-foreground">
-              <tr>
-                <th className="p-3">Log ID</th>
-                <th className="p-3">Action Details</th>
-                <th className="p-3">User</th>
-                <th className="p-3">Module</th>
-                <th className="p-3">IP Address</th>
-                <th className="p-3">Timestamp</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/30">
-              {auditLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-secondary/20 transition-colors">
-                  <td className="p-3 font-mono">{log.id}</td>
-                  <td className="p-3 font-semibold text-foreground">{log.action}</td>
-                  <td className="p-3 text-muted-foreground">{log.user}</td>
-                  <td className="p-3"><Badge variant="outline" className="text-[10px]">{log.module}</Badge></td>
-                  <td className="p-3 font-mono text-[10px] text-muted-foreground">{log.ipAddress}</td>
-                  <td className="p-3 text-muted-foreground font-mono">{log.timestamp}</td>
+        {auditLogs.length === 0 ? (
+          <div className="p-8 text-center rounded-xl bg-secondary/20 border border-dashed border-border/60 text-xs text-muted-foreground">
+            No compliance audit logs recorded. Security and candidate data processing actions will be logged here.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-secondary/40 border-b border-border/40 text-muted-foreground">
+                <tr>
+                  <th className="p-3">Log ID</th>
+                  <th className="p-3">Action Details</th>
+                  <th className="p-3">User</th>
+                  <th className="p-3">Module</th>
+                  <th className="p-3">IP Address</th>
+                  <th className="p-3">Timestamp</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-border/30">
+                {auditLogs.map((log) => (
+                  <tr key={log.id} className="hover:bg-secondary/20 transition-colors">
+                    <td className="p-3 font-mono">{log.id}</td>
+                    <td className="p-3 font-semibold text-foreground">{log.action}</td>
+                    <td className="p-3 text-muted-foreground">{log.user}</td>
+                    <td className="p-3"><Badge variant="outline" className="text-[10px]">{log.module}</Badge></td>
+                    <td className="p-3 font-mono text-[10px] text-muted-foreground">{log.ipAddress}</td>
+                    <td className="p-3 text-muted-foreground font-mono">{log.timestamp}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

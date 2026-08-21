@@ -1,63 +1,92 @@
+import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, TrendingDown, Users, Briefcase, Clock, BarChart3 } from "lucide-react";
+import { TrendingUp, Users, Briefcase, Clock, UserCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
-  BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area,
+  BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
 } from "recharts";
-
-const attritionData = [
-  { month: "Oct", rate: 4.2 }, { month: "Nov", rate: 3.8 }, { month: "Dec", rate: 5.1 },
-  { month: "Jan", rate: 4.5 }, { month: "Feb", rate: 3.9 }, { month: "Mar", rate: 3.2 },
-];
-
-const hiringFunnel = [
-  { stage: "Applied", count: 450 },
-  { stage: "Screened", count: 280 },
-  { stage: "Interviewed", count: 120 },
-  { stage: "Offered", count: 45 },
-  { stage: "Joined", count: 32 },
-];
-
-const departmentDistribution = [
-  { name: "Engineering", value: 45, color: "hsl(var(--primary))" },
-  { name: "Sales", value: 25, color: "hsl(var(--accent))" },
-  { name: "Marketing", value: 15, color: "hsl(var(--warning))" },
-  { name: "Design", value: 10, color: "hsl(var(--info))" },
-  { name: "HR", value: 5, color: "hsl(var(--success))" },
-];
-
-const performanceTrend = [
-  { month: "Oct", avg: 3.6, top: 4.5, low: 2.8 },
-  { month: "Nov", avg: 3.7, top: 4.6, low: 2.9 },
-  { month: "Dec", avg: 3.5, top: 4.4, low: 2.7 },
-  { month: "Jan", avg: 3.8, top: 4.7, low: 3.0 },
-  { month: "Feb", avg: 3.9, top: 4.8, low: 3.1 },
-  { month: "Mar", avg: 4.0, top: 4.9, low: 3.2 },
-];
-
-const headcountTrend = [
-  { month: "Oct", count: 142 }, { month: "Nov", count: 148 }, { month: "Dec", count: 145 },
-  { month: "Jan", count: 152 }, { month: "Feb", count: 158 }, { month: "Mar", count: 165 },
-];
+import { useGetEmployeesQuery } from "@/services/api/employeeApi";
+import { useATSStore } from "@/stores/atsStore";
 
 const chartStyle = { background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 };
 
 export default function AnalyticsPage() {
+  const { data: rawEmployees = [] } = useGetEmployeesQuery();
+  const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
+  const { jobs = [], candidates = [] } = useATSStore();
+
+  const totalEmployees = employees.length;
+  const activeEmployees = employees.filter(
+    (e) => (e?.status || "").toUpperCase() === "ACTIVE"
+  ).length;
+  const openPositions = jobs.filter((j) => j?.status === "Published").length;
+
+  // Real Department Distribution
+  const departmentDistribution = useMemo(() => {
+    const counts: Record<string, number> = {};
+    employees.forEach((e) => {
+      const deptName = e?.department?.trim() || "General";
+      counts[deptName] = (counts[deptName] || 0) + 1;
+    });
+
+    const colors = ["#6366F1", "#8B5CF6", "#06B6D4", "#10B981", "#F59E0B", "#EC4899"];
+    return Object.entries(counts).map(([name, value], i) => ({
+      name,
+      value,
+      color: colors[i % colors.length],
+    }));
+  }, [employees]);
+
+  // Real Hiring Funnel from live ATS
+  const hiringFunnel = useMemo(() => {
+    const stagesCount: Record<string, number> = {
+      Applied: 0,
+      Screening: 0,
+      Interview: 0,
+      Offer: 0,
+      Hired: 0,
+    };
+
+    candidates.forEach((c: any) => {
+      const stage = c?.stage || c?.status;
+      if (stage && stagesCount[stage] !== undefined) {
+        stagesCount[stage] += 1;
+      } else if (stage === "New" || stage === "Sourced") {
+        stagesCount.Applied += 1;
+      } else if (stage === "Technical Round" || stage === "Culture Round") {
+        stagesCount.Interview += 1;
+      }
+    });
+
+    return Object.entries(stagesCount).map(([stage, count]) => ({
+      stage,
+      count,
+    }));
+  }, [candidates]);
+
+  // Real Headcount Trend
+  const headcountTrend = useMemo(() => {
+    if (totalEmployees === 0) return [];
+    return [
+      { month: "Registered", count: totalEmployees },
+      { month: "Active", count: activeEmployees },
+    ];
+  }, [totalEmployees, activeEmployees]);
+
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 pb-12">
       <div>
         <h1 className="page-header">Analytics & Reports</h1>
-        <p className="page-subheader">Comprehensive workforce analytics, hiring reports & performance insights</p>
+        <p className="page-subheader">Comprehensive workforce analytics, hiring reports & performance telemetry</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Employees", value: "165", icon: Users, change: "+7 this month", up: true },
-          { label: "Attrition Rate", value: "3.2%", icon: TrendingDown, change: "-0.7% vs last month", up: false },
-          { label: "Open Positions", value: "23", icon: Briefcase, change: "5 critical", up: true },
-          { label: "Avg Tenure", value: "2.8 yrs", icon: Clock, change: "+0.3 vs last year", up: true },
+          { label: "Total Workforce", value: String(totalEmployees), icon: Users, change: `${activeEmployees} active personnel`, up: true },
+          { label: "Active Status Rate", value: totalEmployees > 0 ? `${Math.round((activeEmployees / totalEmployees) * 100)}%` : "0%", icon: UserCheck, change: "Active workforce ratio", up: true },
+          { label: "Open Requisitions", value: String(openPositions), icon: Briefcase, change: `${jobs.length} total roles`, up: true },
+          { label: "Candidate Pipeline", value: String(candidates.length), icon: Clock, change: "Active applications", up: true },
         ].map((s) => (
           <Card key={s.label} className="glass-card">
             <CardContent className="p-4">
@@ -67,7 +96,7 @@ export default function AnalyticsPage() {
               </div>
               <p className="text-xl font-bold">{s.value}</p>
               <div className="flex items-center gap-1 mt-1">
-                {s.up ? <TrendingUp className="w-3 h-3 text-success" /> : <TrendingDown className="w-3 h-3 text-success" />}
+                <TrendingUp className="w-3 h-3 text-emerald-500" />
                 <span className="text-xs text-muted-foreground">{s.change}</span>
               </div>
             </CardContent>
@@ -76,86 +105,70 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Attrition Trend */}
+        {/* Department Distribution */}
         <Card className="glass-card">
-          <CardHeader className="pb-2"><CardTitle className="text-base">Attrition Rate Trend</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-base">Department Distribution</CardTitle></CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={240}>
-              <AreaChart data={attritionData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-                <YAxis tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-                <Tooltip contentStyle={chartStyle} />
-                <Area type="monotone" dataKey="rate" stroke="hsl(var(--destructive))" fill="hsl(var(--destructive))" fillOpacity={0.15} name="Attrition %" />
-              </AreaChart>
-            </ResponsiveContainer>
+            {departmentDistribution.length === 0 ? (
+              <div className="h-[240px] flex items-center justify-center text-xs text-muted-foreground border border-dashed border-border/50 rounded-lg">
+                No department distribution data available.
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={240}>
+                <PieChart>
+                  <Pie data={departmentDistribution} cx="50%" cy="50%" innerRadius={50} outerRadius={85} paddingAngle={3} dataKey="value">
+                    {departmentDistribution.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
         {/* Hiring Funnel */}
         <Card className="glass-card">
-          <CardHeader className="pb-2"><CardTitle className="text-base">Hiring Funnel</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-base">Hiring Funnel Progression</CardTitle></CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={hiringFunnel} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis type="number" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-                <YAxis type="category" dataKey="stage" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} width={80} />
-                <Tooltip contentStyle={chartStyle} />
-                <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Department Distribution */}
-        <Card className="glass-card">
-          <CardHeader className="pb-2"><CardTitle className="text-base">Department Distribution</CardTitle></CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={240}>
-              <PieChart>
-                <Pie data={departmentDistribution} cx="50%" cy="50%" innerRadius={50} outerRadius={85} paddingAngle={3} dataKey="value">
-                  {departmentDistribution.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Performance Trend */}
-        <Card className="glass-card">
-          <CardHeader className="pb-2"><CardTitle className="text-base">Performance Score Trends</CardTitle></CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={240}>
-              <LineChart data={performanceTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-                <YAxis domain={[2, 5]} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-                <Tooltip contentStyle={chartStyle} />
-                <Line type="monotone" dataKey="top" stroke="hsl(var(--success))" strokeWidth={2} name="Top Performers" />
-                <Line type="monotone" dataKey="avg" stroke="hsl(var(--primary))" strokeWidth={2} name="Average" />
-                <Line type="monotone" dataKey="low" stroke="hsl(var(--warning))" strokeWidth={2} name="Needs Improvement" />
-              </LineChart>
-            </ResponsiveContainer>
+            {candidates.length === 0 ? (
+              <div className="h-[240px] flex items-center justify-center text-xs text-muted-foreground border border-dashed border-border/50 rounded-lg">
+                No candidate applications in ATS funnel.
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={hiringFunnel} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+                  <XAxis type="number" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
+                  <YAxis type="category" dataKey="stage" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} width={80} />
+                  <Tooltip contentStyle={chartStyle} />
+                  <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* Headcount Trend */}
+      {/* Headcount Breakdown */}
       <Card className="glass-card">
-        <CardHeader className="pb-2"><CardTitle className="text-base">Headcount Growth</CardTitle></CardHeader>
+        <CardHeader className="pb-2"><CardTitle className="text-base">Workforce Headcount Overview</CardTitle></CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={200}>
-            <AreaChart data={headcountTrend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="month" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-              <YAxis tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-              <Tooltip contentStyle={chartStyle} />
-              <Area type="monotone" dataKey="count" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.15} name="Headcount" />
-            </AreaChart>
-          </ResponsiveContainer>
+          {headcountTrend.length === 0 ? (
+            <div className="h-[200px] flex items-center justify-center text-xs text-muted-foreground border border-dashed border-border/50 rounded-lg">
+              No employee headcount recorded.
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={headcountTrend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
+                <XAxis dataKey="month" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
+                <YAxis tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
+                <Tooltip contentStyle={chartStyle} />
+                <Area type="monotone" dataKey="count" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.15} name="Personnel" />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
         </CardContent>
       </Card>
     </motion.div>
