@@ -5,7 +5,7 @@ export function useAttendanceKpiStats(p: {
   employeesCount: number; liveList: PunchRecord[]; leaves: DisplayedLeave[]; pendingOvertimeCount: number;
 }): AttendanceKPIStats {
   const tot = p.analyticsData?.totalEmployees || p.employeesCount || 0;
-  const pres = p.analyticsData?.presentToday ?? (Array.isArray(p.liveList) ? p.liveList.filter((x) => x && (x.type === "Check-In" || x.status === "Present")).length : 0);
+  const pres = p.analyticsData?.presentToday ?? (Array.isArray(p.liveList) ? p.liveList.filter((x) => x && (x.type === "Check-In" || x.status === "On Time" || x.status === "Late" || x.status === "Overtime" || (x.status as any) === "Present")).length : 0);
   const late = p.analyticsData?.lateEmployees ?? (Array.isArray(p.liveList) ? p.liveList.filter((x) => x && x.status === "Late").length : 0);
   const onLeave = Array.isArray(p.leaves) ? p.leaves.filter((l) => (l?.status || "").toLowerCase() === "approved").length : 0;
   const rate = p.analyticsData?.attendanceRate ? `${p.analyticsData.attendanceRate}%` : "97.4%";

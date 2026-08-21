@@ -5,4 +5,5 @@ export interface AttendanceHistoryResponse {
   limit: number;
   total: number;
   items: AttendanceRecord[];
+  records?: AttendanceRecord[];
 }

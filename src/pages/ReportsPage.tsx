@@ -86,6 +86,7 @@ const chartStyle = {
 };
 
 const COLOR_PALETTE = ["#14b8a6", "#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981", "#6366f1"];
+const DEPT_COLORS = COLOR_PALETTE;
 
 export default function ReportsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -327,7 +328,7 @@ export default function ReportsPage() {
               </div>
               <div className="glass-card rounded-2xl p-4 border border-border/60 bg-card">
                 <span className="text-xs text-muted-foreground">On Leave</span>
-                <p className="text-2xl font-extrabold text-blue-500 font-mono mt-1">{leaveRequests.filter(l => l?.status === "Approved").length}</p>
+                <p className="text-2xl font-extrabold text-blue-500 font-mono mt-1">{leaveRequests.filter(l => l?.status === "approved" || (l?.status as string) === "Approved").length}</p>
                 <span className="text-[11px] text-muted-foreground">Approved Time-Off</span>
               </div>
             </div>

@@ -10,7 +10,8 @@ export function useLiveAttendanceList(
   return useMemo(() => {
     if (isHrOrAdmin && Array.isArray(companyFaceData?.data) && companyFaceData.data.length > 0) return companyFaceData.data.map(mapLiveFaceRecord);
     if (isManagerOrAbove && Array.isArray(teamFaceData?.data) && teamFaceData.data.length > 0) return teamFaceData.data.map(mapLiveFaceRecord);
-    if (Array.isArray(personalFaceData?.data?.records) && personalFaceData.data.records.length > 0) return personalFaceData.data.records.map(mapLiveFaceRecord);
+    const personalRecords = personalFaceData?.data?.items || personalFaceData?.data?.records;
+    if (Array.isArray(personalRecords) && personalRecords.length > 0) return personalRecords.map(mapLiveFaceRecord);
     return Array.isArray(punches) ? punches : [];
   }, [isHrOrAdmin, isManagerOrAbove, companyFaceData, teamFaceData, personalFaceData, punches]);
 }

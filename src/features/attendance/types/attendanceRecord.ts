@@ -13,6 +13,12 @@ export interface AttendanceRecord {
   device_info?: string;
   ip_address?: string;
   working_hours?: number;
+  is_late?: boolean;
+  location?: string;
+  employee?: { name?: string; department?: string };
+  records?: AttendanceRecord[];
   created_at: string;
   updated_at: string;
 }
+
+export type FaceAttendanceRecord = AttendanceRecord;
