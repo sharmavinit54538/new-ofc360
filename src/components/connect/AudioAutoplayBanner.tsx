@@ -20,7 +20,8 @@ export function AudioAutoplayBanner() {
 
   useEffect(() => {
     // Check if audio context is locked or already running
-    if (connectAudioManager.isUnlocked() || isAudioUnlocked) {
+    const isUnlocked = typeof connectAudioManager?.isUnlocked === "function" ? connectAudioManager.isUnlocked() : false;
+    if (isUnlocked || isAudioUnlocked) {
       setShowPrompt(false);
       return;
     }

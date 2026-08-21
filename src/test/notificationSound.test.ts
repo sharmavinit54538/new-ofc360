@@ -173,4 +173,10 @@ describe("OFC360 Notification Sound System & ConnectAudioManager", () => {
 
     consoleSpy.mockRestore();
   });
+
+  it("10. should report audio unlock status via isUnlocked()", async () => {
+    expect(typeof connectAudioManager.isUnlocked).toBe("function");
+    await connectAudioManager.unlockAudio();
+    expect(connectAudioManager.isUnlocked()).toBe(true);
+  });
 });

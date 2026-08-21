@@ -1,5 +1,5 @@
 import { store } from "@/app/store";
-import { unlockAudioContext } from "./connectAudioContext";
+import { unlockAudioContext, getAudioContext } from "./connectAudioContext";
 import { setAudioUnlocked } from "@/features/connect/soundSettingsSlice";
 import { checkAndLogEvent } from "./connectAudioEvents";
 import { ConnectAudioCallManager } from "./connectAudioCalls";
@@ -8,6 +8,12 @@ export class ConnectAudioManager {
   private calls = new ConnectAudioCallManager();
 
   public getSoundSettings() { return store.getState().connectSound; }
+  public isUnlocked(): boolean {
+    const isStateUnlocked = store.getState().connectSound?.isAudioUnlocked;
+    if (isStateUnlocked) return true;
+    const ctx = getAudioContext();
+    return ctx !== null && ctx.state === "running";
+  }
   public async unlockAudio() { console.log("[NOTIFICATION_AUDIO] Unlocking audio context"); const ok = await unlockAudioContext(); store.dispatch(setAudioUnlocked(true)); return ok; }
   public playIncomingCall() { this.calls.playIncomingCall(); }
   public stopIncomingCall() { this.calls.stopIncomingCall(); }
