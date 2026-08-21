@@ -1,14 +1,8 @@
-import {
-  useCreateV2ShiftsPlansMutation,
-  useLazyGetExportsAttendanceQuery,
-  useGetEmployeesQuery,
-} from "../services/attendanceApi";
+import { useGetShiftsQuery, useGetRostersQuery, useLazyExportMusterRollQuery } from "../../attendanceApi";
 
-export function useShiftExportQueries() {
-  const { data: rawEmployees = [] } = useGetEmployeesQuery();
-  const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
-  const [createShiftPlanApi] = useCreateV2ShiftsPlansMutation();
-  const [triggerAttendanceExport, { isFetching: isExporting }] = useLazyGetExportsAttendanceQuery();
-
-  return { employees, createShiftPlanApi, triggerAttendanceExport, isExporting };
+export function useShiftExportQueries(isHrOrAdmin: boolean) {
+  const { data: shiftsApiRes, refetch: refetchShifts } = useGetShiftsQuery();
+  const { data: rostersApiRes, refetch: refetchRosters } = useGetRostersQuery();
+  const [triggerExportMusterRoll, { isLoading: isExporting }] = useLazyExportMusterRollQuery();
+  return { shiftsApiRes, rostersApiRes, isExporting, triggerExportMusterRoll, refetchShifts, refetchRosters, isHrOrAdmin };
 }

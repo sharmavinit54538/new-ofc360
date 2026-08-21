@@ -1,13 +1,8 @@
-import {
-  useGetTimesheetsHistoryQuery,
-  useCreateTimesheetsWeeklyMutation,
-  useCreateTimesheetsTimesheetIdReviewMutation,
-} from "../services/attendanceApi";
+import { useGetTimesheetsQuery, useCreateTimesheetMutation, useApproveTimesheetMutation } from "../../attendanceApi";
 
 export function useTimesheetQueries() {
-  const { data: timesheetsApiRes, isLoading: isTimesheetsLoading, refetch: refetchTimesheets } = useGetTimesheetsHistoryQuery(undefined);
-  const [createTimesheetApi, { isLoading: isCreatingTimesheet }] = useCreateTimesheetsWeeklyMutation();
-  const [reviewTimesheetApi] = useCreateTimesheetsTimesheetIdReviewMutation();
-
-  return { timesheetsApiRes, isTimesheetsLoading, refetchTimesheets, createTimesheetApi, isCreatingTimesheet, reviewTimesheetApi };
+  const { data: timesheetsApiRes, refetch: refetchTimesheets } = useGetTimesheetsQuery();
+  const [createTimesheetApi] = useCreateTimesheetMutation();
+  const [approveTimesheetApi] = useApproveTimesheetMutation();
+  return { timesheetsApiRes, refetchTimesheets, createTimesheetApi, approveTimesheetApi };
 }

@@ -1,18 +1,15 @@
 import {
-  useGetMyFaceAttendanceQuery,
-  useGetPersonalFaceHistoryQuery,
-  useGetTeamFaceAttendanceQuery,
-  useGetCompanyFaceAttendanceQuery,
-  useGetFaceAttendanceAnalyticsQuery,
-} from "../services/attendanceApi";
+  useGetTodayStatusQuery, useGetMyHistoryQuery, useGetTeamAttendanceQuery,
+  useGetCompanyAttendanceQuery, useGetAttendanceAnalyticsSummaryQuery,
+} from "../../attendanceApi";
 
-export function useFaceAttendanceQueries(isHrOrAdmin: boolean, isManagerOrAbove: boolean) {
-  const { data: myFaceStatus, isLoading: isMyStatusLoading, refetch: refetchMyStatus } = useGetMyFaceAttendanceQuery();
-  const { data: analyticsData, isLoading: isAnalyticsLoading, refetch: refetchAnalytics } = useGetFaceAttendanceAnalyticsQuery();
-  const { data: companyFaceData, isLoading: isCompanyLoading, refetch: refetchCompany } = useGetCompanyFaceAttendanceQuery({ page: 1, limit: 20 }, { skip: !isHrOrAdmin });
-  const { data: teamFaceData, isLoading: isTeamLoading, refetch: refetchTeam } = useGetTeamFaceAttendanceQuery({ page: 1, limit: 20 }, { skip: !isManagerOrAbove || isHrOrAdmin });
-  const { data: personalFaceData, isLoading: isPersonalLoading, refetch: refetchPersonal } = useGetPersonalFaceHistoryQuery({ page: 1, limit: 20 }, { skip: isManagerOrAbove });
-  const isLiveStreamLoading = isCompanyLoading || isTeamLoading || isPersonalLoading;
+export function useFaceAttendanceQueries(rr: { isHrOrAdmin: boolean; isManagerOrAbove: boolean }) {
+  const { data: myFaceStatus, refetch: refetchToday } = useGetTodayStatusQuery();
+  const { data: myFaceHistory, refetch: refetchMyHistory } = useGetMyHistoryQuery({ page: 1, limit: 30 });
+  const { data: teamFaceData, refetch: refetchTeam } = useGetTeamAttendanceQuery({ page: 1, limit: 50 }, { skip: !rr.isManagerOrAbove });
+  const { data: companyFaceData, refetch: refetchCompany } = useGetCompanyAttendanceQuery({ page: 1, limit: 100 }, { skip: !rr.isHrOrAdmin });
+  const { data: analyticsData, refetch: refetchAnalytics, isFetching: isAnalyticsLoading } = useGetAttendanceAnalyticsSummaryQuery(undefined, { skip: !rr.isManagerOrAbove });
 
-  return { myFaceStatus, isMyStatusLoading, refetchMyStatus, analyticsData, isAnalyticsLoading, refetchAnalytics, companyFaceData, teamFaceData, personalFaceData, isLiveStreamLoading, refetchCompany, refetchTeam, refetchPersonal };
+  const refetchFeeds = () => { refetchToday(); refetchMyHistory(); if (rr.isManagerOrAbove) refetchTeam(); if (rr.isHrOrAdmin) refetchCompany(); };
+  return { myFaceStatus, myFaceHistory, teamFaceData, companyFaceData, analyticsData, refetchFeeds, refetchAnalytics, isAnalyticsLoading };
 }

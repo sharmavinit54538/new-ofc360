@@ -1,13 +1,8 @@
-import {
-  useGetLeavesHistoryQuery,
-  useCreateLeavesApplyMutation,
-  useCreateLeavesLeaveIdReviewMutation,
-} from "../services/attendanceApi";
+import { useGetLeavesQuery, useApplyLeaveMutation, useReviewLeaveMutation } from "../../attendanceApi";
 
 export function useLeaveQueries() {
-  const { data: leavesApiRes, isLoading: isLeavesLoading, refetch: refetchLeaves } = useGetLeavesHistoryQuery(undefined);
-  const [applyLeaveApi, { isLoading: isApplyingLeave }] = useCreateLeavesApplyMutation();
-  const [reviewLeaveApi] = useCreateLeavesLeaveIdReviewMutation();
-
-  return { leavesApiRes, isLeavesLoading, refetchLeaves, applyLeaveApi, isApplyingLeave, reviewLeaveApi };
+  const { data: leavesApiRes, refetch: refetchLeaves } = useGetLeavesQuery();
+  const [applyLeaveApi] = useApplyLeaveMutation();
+  const [reviewLeaveApi] = useReviewLeaveMutation();
+  return { leavesApiRes, refetchLeaves, applyLeaveApi, reviewLeaveApi };
 }

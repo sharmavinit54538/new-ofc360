@@ -1,13 +1,8 @@
-import {
-  useGetCalendarHolidaysQuery,
-  useCreateCalendarHolidaysMutation,
-  useDeleteCalendarHolidaysIdMutation,
-} from "../services/attendanceApi";
+import { useGetHolidaysQuery, useCreateHolidayMutation, useDeleteHolidayMutation } from "../../attendanceApi";
 
 export function useHolidayQueries() {
-  const { data: holidaysApiRes, isLoading: isHolidaysLoading, refetch: refetchHolidays } = useGetCalendarHolidaysQuery(undefined);
-  const [createHolidayApi, { isLoading: isCreatingHoliday }] = useCreateCalendarHolidaysMutation();
-  const [deleteHolidayApi] = useDeleteCalendarHolidaysIdMutation();
-
-  return { holidaysApiRes, isHolidaysLoading, refetchHolidays, createHolidayApi, isCreatingHoliday, deleteHolidayApi };
+  const { data: holidaysApiRes, refetch: refetchHolidays } = useGetHolidaysQuery();
+  const [createHolidayApi] = useCreateHolidayMutation();
+  const [deleteHolidayApi] = useDeleteHolidayMutation();
+  return { holidaysApiRes, refetchHolidays, createHolidayApi, deleteHolidayApi };
 }

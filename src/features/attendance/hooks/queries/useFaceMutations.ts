@@ -1,4 +1,4 @@
-import { useFaceCheckInMutation, useFaceCheckOutMutation } from "../services/attendanceApi";
+import { useFaceCheckInMutation, useFaceCheckOutMutation } from "../../attendanceApi";
 
 export function useFaceMutations() {
   const [faceCheckIn, { isLoading: isCheckingIn }] = useFaceCheckInMutation();
