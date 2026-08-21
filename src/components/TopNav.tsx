@@ -12,7 +12,6 @@ import {
   SlidersHorizontal,
   Lock
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -32,6 +31,7 @@ import { roleLabels, SystemRole, normalizeRole } from "@/features/auth/authTypes
 import { Badge } from "@/components/ui/badge";
 import { BackButton } from "@/components/common/BackButton";
 import { NotificationPanel } from "@/components/connect/NotificationPanel";
+import { GlobalSearchDialog } from "@/components/search/GlobalSearchDialog";
 import { toast } from "sonner";
 
 const ROOT_DASHBOARD_PATHS = [
@@ -56,11 +56,24 @@ interface TopNavProps {
 
 export function TopNav({ onMenuClick }: TopNavProps) {
   const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
+  const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, role, logout, setRole } = useAuth();
   const currentRole: SystemRole = role || normalizeRole(user?.role);
   const isRootDashboard = ROOT_DASHBOARD_PATHS.includes(location.pathname);
+
+  // Global shortcut (Ctrl+K / Cmd+K or /)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setSearchOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const userName =
     user?.name ||
@@ -109,25 +122,45 @@ export function TopNav({ onMenuClick }: TopNavProps) {
   }, [dark]);
 
   return (
-    <header className="h-16 border-b border-border/60 bg-sidebar/90 backdrop-blur-md flex items-center justify-between px-4 md:px-6 shrink-0 gap-3">
-      {/* Left Search / Mobile Menu / Back Button */}
-      <div className="flex items-center gap-2.5 flex-1 min-w-0">
-        {onMenuClick && (
-          <Button variant="ghost" size="icon" onClick={onMenuClick} className="md:hidden shrink-0">
-            <Menu className="w-5 h-5" />
+    <>
+      <header className="h-16 border-b border-border/60 bg-sidebar/90 backdrop-blur-md flex items-center justify-between px-4 md:px-6 shrink-0 gap-3">
+        {/* Left Search / Mobile Menu / Back Button */}
+        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+          {onMenuClick && (
+            <Button variant="ghost" size="icon" onClick={onMenuClick} className="md:hidden shrink-0">
+              <Menu className="w-5 h-5" />
+            </Button>
+          )}
+          {!isRootDashboard && (
+            <BackButton />
+          )}
+
+          {/* Mobile Search Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSearchOpen(true)}
+            className="sm:hidden text-muted-foreground h-9 w-9 shrink-0"
+            title="Search (Ctrl+K)"
+          >
+            <Search className="w-4 h-4" />
           </Button>
-        )}
-        {!isRootDashboard && (
-          <BackButton />
-        )}
-        <div className="relative w-full max-w-xs hidden sm:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search workforce, employees, candidates..."
-            className="pl-9 bg-secondary/40 border border-border/50 focus-visible:border-primary text-xs h-9 rounded-lg"
-          />
+
+          {/* Desktop Search Trigger */}
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            className="relative w-full max-w-sm hidden sm:flex items-center justify-between pl-9 pr-2.5 bg-secondary/40 hover:bg-secondary/70 border border-border/50 hover:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 text-xs h-9 rounded-lg text-muted-foreground transition-all cursor-pointer group text-left shadow-xs"
+          >
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+            <span className="truncate pr-2 select-none">
+              Search workforce, employees, candidates...
+            </span>
+            <kbd className="hidden md:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-semibold text-muted-foreground bg-background/80 border border-border/60 rounded shadow-2xs shrink-0 select-none group-hover:border-primary/30 group-hover:text-foreground">
+              Ctrl K
+            </kbd>
+          </button>
         </div>
-      </div>
 
       {/* Right Actions & Profile Trigger */}
       <div className="flex items-center gap-2.5">
@@ -199,5 +232,11 @@ export function TopNav({ onMenuClick }: TopNavProps) {
         </DropdownMenu>
       </div>
     </header>
+
+    <GlobalSearchDialog
+      open={searchOpen}
+      onOpenChange={setSearchOpen}
+    />
+  </>
   );
 }
