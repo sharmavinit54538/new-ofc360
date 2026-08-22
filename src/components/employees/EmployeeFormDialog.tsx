@@ -13,7 +13,9 @@ export default function EmployeeFormDialog({ open, onOpenChange, employee, onSav
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 rounded-2xl bg-card border border-border/70 overflow-hidden shadow-2xl">
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-          <EmployeeFormDialogHeader employee={employee} /><EmployeeFormBody state={state} /><EmployeeFormDialogFooter isEdit={Boolean(employee)} onCancel={() => onOpenChange(false)} />
+          <EmployeeFormDialogHeader employee={employee} />
+          <EmployeeFormBody state={state} />
+          <EmployeeFormDialogFooter isEdit={Boolean(employee)} onCancel={() => onOpenChange(false)} />
         </form>
       </DialogContent>
     </Dialog>
