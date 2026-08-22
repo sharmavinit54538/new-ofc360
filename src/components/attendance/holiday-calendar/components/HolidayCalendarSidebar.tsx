@@ -1,22 +1,13 @@
-import type { HolidayItem } from "@/stores/attendanceStore";
+import type { HolidayCalendarMainProps } from "../types/calendarMainProps";
 import { SelectedDateInspector } from "./SelectedDateInspector";
 import { MonthHolidaysList } from "./MonthHolidaysList";
 
-interface Props {
-  month: number;
-  activeDateStr: string | null;
-  selectedDateHolidays: HolidayItem[];
-  currentMonthHolidays: HolidayItem[];
-  onAddHoliday: (d?: string) => void;
-  onDeleteHoliday: (id: string) => void;
-  onSelectDate: (d: string) => void;
-}
-
-export function HolidayCalendarSidebar(props: Props) {
+export function HolidayCalendarSidebar(props: HolidayCalendarMainProps) {
+  const { month, activeDateStr, selectedDateHolidays, currentMonthHolidays, onAddHoliday, onDeleteHoliday, onSelectDate } = props;
   return (
     <div className="space-y-4 flex flex-col">
-      <SelectedDateInspector activeDateStr={props.activeDateStr} holidays={props.selectedDateHolidays} onAddHoliday={props.onAddHoliday} onDeleteHoliday={props.onDeleteHoliday} />
-      <MonthHolidaysList month={props.month} holidays={props.currentMonthHolidays} activeDateStr={props.activeDateStr} onSelectDate={props.onSelectDate} />
+      <SelectedDateInspector activeDateStr={activeDateStr} holidays={selectedDateHolidays} onAddHoliday={onAddHoliday} onDeleteHoliday={onDeleteHoliday} />
+      <MonthHolidaysList month={month} holidays={currentMonthHolidays} activeDateStr={activeDateStr} onSelectDate={onSelectDate} />
     </div>
   );
 }

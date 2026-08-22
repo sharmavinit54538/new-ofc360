@@ -10,7 +10,7 @@ interface Props {
   onDeleteHoliday: (id: string) => void;
 }
 
-export function SelectedDateInspector({ activeDateStr, holidays, onAddHoliday, onDeleteHoliday }: Props) {
+export function SelectedDateInspector({ activeDateStr, holidays = [], onAddHoliday, onDeleteHoliday }: Props) {
   const content = holidays.length > 0
     ? <div className="space-y-3">{holidays.map((h) => <SelectedDateItem key={h.id} holiday={h} onDelete={onDeleteHoliday} />)}</div>
     : <SelectedDateEmpty dateStr={activeDateStr} onAddHoliday={onAddHoliday} />;

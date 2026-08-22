@@ -2,12 +2,7 @@ import type { HolidayItem } from "@/stores/attendanceStore";
 import type { CalendarDayCell } from "../types/calendarDay";
 import { formatCalendarDate } from "./calendarDateHelpers";
 
-export function getNextMonthDays(
-  year: number,
-  month: number,
-  currLen: number,
-  map: Map<string, HolidayItem[]>
-): CalendarDayCell[] {
+export function getNextMonthDays(year: number, month: number, currLen: number, map: Map<string, HolidayItem[]>): CalendarDayCell[] {
   const remaining = 42 - currLen;
   const nextMonth = month === 11 ? 0 : month + 1;
   const nextYear = month === 11 ? year + 1 : year;

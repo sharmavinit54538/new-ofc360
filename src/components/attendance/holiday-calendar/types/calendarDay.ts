@@ -6,3 +6,9 @@ export interface CalendarDayCell {
   isCurrentMonth: boolean;
   holidays: HolidayItem[];
 }
+
+export interface CalendarDayCellProps {
+  cell: CalendarDayCell;
+  isSelected: boolean;
+  onSelect: (dateStr: string) => void;
+}
