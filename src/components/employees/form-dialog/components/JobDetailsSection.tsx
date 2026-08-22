@@ -12,9 +12,7 @@ export function JobDetailsSection({ job, meta }: { job: JobDetailsState; meta: J
         <Briefcase className="w-4 h-4 text-primary" />
         <span>3. Job Role & Organization Assignment</span>
       </div>
-      <JobOrgRow j={job} m={meta} />
-      <JobScheduleRow j={job} />
-      <JobLocationRow j={job} />
+      <JobOrgRow j={job} m={meta} /><JobScheduleRow j={job} /><JobLocationRow j={job} />
     </div>
   );
 }

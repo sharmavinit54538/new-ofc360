@@ -4,9 +4,7 @@ import type { AddressItem } from "@/types/hr";
 import { AddressCardTopRow } from "./AddressCardTopRow";
 import { AddressCardInputs } from "./AddressCardInputs";
 
-export function AddressCardItem({ addr, idx, onUpdate, onRemove }: {
-  addr: AddressItem; idx: number; onUpdate: (a: AddressItem) => void; onRemove: () => void;
-}) {
+export function AddressCardItem({ addr, idx, onUpdate, onRemove }: { addr: AddressItem; idx: number; onUpdate: (a: AddressItem) => void; onRemove: () => void; }) {
   return (
     <div className="p-4 rounded-xl bg-secondary/30 border border-border/40 space-y-3 relative">
       <div className="flex items-center justify-between">
