@@ -1,6 +1,7 @@
 import type { Employee } from "@/types/hr";
 import type { CompensationState } from "../types/compensationTypes";
 import type { NestedListsState } from "../types/nestedListTypes";
+import { syncLists } from "./syncLists";
 
 export function syncCompAndLists(emp: Employee | null, comp: CompensationState, lists: NestedListsState) {
   if (!emp) return;
@@ -11,12 +12,5 @@ export function syncCompAndLists(emp: Employee | null, comp: CompensationState, 
   comp.setPfDeduction(emp.pfDeduction ?? 72000);
   comp.setEsiDeduction(emp.esiDeduction ?? 0);
   comp.setProfTax(emp.profTax ?? 2500);
-
-  lists.setAddresses(emp.addresses || []);
-  lists.setKycDocuments(emp.kycDocuments || []);
-  lists.setEducation(emp.education || []);
-  lists.setWorkExperience(emp.workExperience || []);
-  lists.setSkills(emp.skills || []);
-  lists.setEmergencyContacts(emp.emergencyContacts || []);
-  lists.setBankAccounts(emp.bankAccounts || []);
+  syncLists(emp, lists);
 }
