@@ -1,0 +1,4 @@
+export const DEFAULT_ACTIVE_DATE = "2026-08-15";
+export const DEFAULT_VIEW_YEAR = 2026;
+export const DEFAULT_VIEW_MONTH_INDEX = 7;
+export const TOTAL_CALENDAR_CELLS = 42;
