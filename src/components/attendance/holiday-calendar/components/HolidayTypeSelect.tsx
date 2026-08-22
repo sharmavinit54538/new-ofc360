@@ -1,12 +1,7 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { HOLIDAY_TYPE_OPTIONS } from "../constants/holidayTypeOptions";
 
-interface Props {
-  value: string;
-  onChange: (val: string) => void;
-}
-
-export function HolidayTypeSelect({ value, onChange }: Props) {
+export function HolidayTypeSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger className="h-8 text-xs bg-secondary/30 border-border/60 w-36 font-medium">

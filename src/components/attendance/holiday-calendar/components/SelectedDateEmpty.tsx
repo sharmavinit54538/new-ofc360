@@ -1,12 +1,7 @@
 import { CalendarDays, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-interface Props {
-  dateStr: string | null;
-  onAddHoliday: (d?: string) => void;
-}
-
-export function SelectedDateEmpty({ dateStr, onAddHoliday }: Props) {
+export function SelectedDateEmpty({ dateStr, onAddHoliday }: { dateStr: string | null; onAddHoliday: (d?: string) => void }) {
   return (
     <div className="text-center py-6 space-y-2 bg-secondary/15 rounded-2xl p-4 border border-dashed border-border/50">
       <CalendarDays className="w-7 h-7 mx-auto text-muted-foreground/40" />

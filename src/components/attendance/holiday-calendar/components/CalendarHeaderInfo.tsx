@@ -1,13 +1,7 @@
 import { Calendar as CalendarIcon } from "lucide-react";
 import { MONTH_NAMES } from "../constants/monthNames";
 
-interface Props {
-  year: number;
-  month: number;
-  holidayCount: number;
-}
-
-export function CalendarHeaderInfo({ year, month, holidayCount }: Props) {
+export function CalendarHeaderInfo({ year, month, holidayCount }: { year: number; month: number; holidayCount: number }) {
   const countLabel = `${holidayCount} ${holidayCount === 1 ? "Holiday" : "Holidays"} scheduled this month`;
   return (
     <div className="flex items-center gap-3">

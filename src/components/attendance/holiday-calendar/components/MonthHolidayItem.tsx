@@ -2,13 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import type { HolidayItem } from "@/stores/attendanceStore";
 import { getHolidayBadgeStyle } from "../utils/badgeStyle";
 
-interface Props {
-  holiday: HolidayItem;
-  isActive: boolean;
-  onSelect: (d: string) => void;
-}
-
-export function MonthHolidayItem({ holiday, isActive, onSelect }: Props) {
+export function MonthHolidayItem({ holiday, isActive, onSelect }: { holiday: HolidayItem; isActive: boolean; onSelect: (d: string) => void }) {
   const activeClass = isActive ? "bg-primary/10 border-primary/40 text-foreground" : "bg-secondary/25 border-border/40 hover:bg-secondary/40";
   return (
     <div onClick={() => onSelect(holiday.date)} className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between text-xs ${activeClass}`}>

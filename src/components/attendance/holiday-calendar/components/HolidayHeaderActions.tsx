@@ -3,13 +3,11 @@ import { Button } from "@/components/ui/button";
 import type { HolidayViewMode } from "../types/holidayCalendarState";
 import { HolidayViewModeSwitcher } from "./HolidayViewModeSwitcher";
 
-interface Props {
+export function HolidayHeaderActions({ viewMode, onViewModeChange, onAddHoliday }: {
   viewMode: HolidayViewMode;
   onViewModeChange: (m: HolidayViewMode) => void;
   onAddHoliday: () => void;
-}
-
-export function HolidayHeaderActions({ viewMode, onViewModeChange, onAddHoliday }: Props) {
+}) {
   return (
     <div className="flex items-center gap-2">
       <HolidayViewModeSwitcher viewMode={viewMode} onViewModeChange={onViewModeChange} />

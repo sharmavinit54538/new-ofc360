@@ -1,16 +1,9 @@
-import type { HolidayItem } from "@/stores/attendanceStore";
+import type { MonthHolidaysListProps } from "../types/monthListProps";
 import { MonthHolidaysListHeader } from "./MonthHolidaysListHeader";
 import { MonthHolidayItem } from "./MonthHolidayItem";
 import { MonthHolidaysEmpty } from "./MonthHolidaysEmpty";
 
-interface Props {
-  month: number;
-  holidays: HolidayItem[];
-  activeDateStr: string | null;
-  onSelectDate: (d: string) => void;
-}
-
-export function MonthHolidaysList({ month, holidays = [], activeDateStr, onSelectDate }: Props) {
+export function MonthHolidaysList({ month, holidays = [], activeDateStr, onSelectDate }: MonthHolidaysListProps) {
   const items = holidays.length === 0 ? <MonthHolidaysEmpty /> : holidays.map((h) => (
     <MonthHolidayItem key={h.id} holiday={h} isActive={activeDateStr === h.date} onSelect={onSelectDate} />
   ));
