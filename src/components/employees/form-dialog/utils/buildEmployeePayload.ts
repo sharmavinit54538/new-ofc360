@@ -1,5 +1,6 @@
 import type { Employee } from "@/types/hr";
 import type { EmployeeFormState } from "../types/employeeFormState";
+import { buildCompPayload } from "./buildCompPayload";
 
 export function buildEmployeePayload(s: EmployeeFormState): Omit<Employee, "id"> {
   const { basic, contact, job, meta, comp, lists } = s;
@@ -10,8 +11,7 @@ export function buildEmployeePayload(s: EmployeeFormState): Omit<Employee, "id">
     role: meta.role, designation: job.designation.trim(), department: job.department,
     systemRole: meta.role, portalRole: meta.role, status: meta.status,
     joinedAt: job.joiningDate, joiningDate: job.joiningDate,
-    salary: comp.ctc, ctc: comp.ctc, basicSalary: comp.basicSalary, hra: comp.hra,
-    bonus: comp.bonus, pfDeduction: comp.pfDeduction, esiDeduction: comp.esiDeduction, profTax: comp.profTax,
+    ...buildCompPayload(comp),
     phone: contact.phone.trim(), alternatePhone: contact.alternatePhone.trim(),
     personalEmail: contact.personalEmail.trim(), companyWorkEmail: contact.companyWorkEmail.trim(),
     gender: basic.gender, dob: basic.dob, bloodGroup: basic.bloodGroup, maritalStatus: basic.maritalStatus, photoUrl: basic.photoUrl,

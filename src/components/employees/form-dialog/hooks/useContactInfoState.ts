@@ -7,14 +7,5 @@ export function useContactInfoState(): ContactInfoState {
   const [phone, setPhone] = useState("");
   const [alternatePhone, setAlternatePhone] = useState("");
 
-  return {
-    personalEmail,
-    setPersonalEmail,
-    companyWorkEmail,
-    setCompanyWorkEmail,
-    phone,
-    setPhone,
-    alternatePhone,
-    setAlternatePhone,
-  };
+  return { personalEmail, setPersonalEmail, companyWorkEmail, setCompanyWorkEmail, phone, setPhone, alternatePhone, setAlternatePhone };
 }

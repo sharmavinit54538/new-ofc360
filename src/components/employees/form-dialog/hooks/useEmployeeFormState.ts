@@ -9,13 +9,7 @@ import { useNestedListsState } from "./useNestedListsState";
 import { useEmployeeFormSync } from "./useEmployeeFormSync";
 
 export function useEmployeeFormState(employee: Employee | null, open: boolean): EmployeeFormState {
-  const basic = useBasicInfoState();
-  const contact = useContactInfoState();
-  const job = useJobDetailsState();
-  const meta = useJobMetaState();
-  const comp = useCompensationState();
-  const lists = useNestedListsState();
-  const state: EmployeeFormState = { basic, contact, job, meta, comp, lists };
+  const state: EmployeeFormState = { basic: useBasicInfoState(), contact: useContactInfoState(), job: useJobDetailsState(), meta: useJobMetaState(), comp: useCompensationState(), lists: useNestedListsState() };
   useEmployeeFormSync(employee, open, state);
   return state;
 }
