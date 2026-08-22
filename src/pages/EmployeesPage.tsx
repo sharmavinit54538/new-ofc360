@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -176,20 +176,28 @@ export default function EmployeesPage() {
 
   const employeeList = Array.isArray(employees) ? employees : [];
 
-  const filtered = employeeList.filter((e) => {
-    const matchesSearch =
-      (e.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (e.email || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (e.role || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (e.department || "").toLowerCase().includes(searchQuery.toLowerCase());
+  // ⚡ Bolt Performance Optimization:
+  // 1. Extracted .toLowerCase() calls out of the loop to prevent O(N) string allocations
+  // 2. Wrapped the filter in useMemo to prevent re-calculating on unrelated renders (like modal opens)
+  const filtered = useMemo(() => {
+    const lowerSearchQuery = searchQuery.toLowerCase();
+    const lowerStatusFilter = statusFilter.toLowerCase();
 
-    const matchesDept = departmentFilter === "ALL" || e.department === departmentFilter;
-    const matchesStatus = statusFilter === "ALL" || (e.status || "Active").toLowerCase() === statusFilter.toLowerCase();
-    const empRole = normalizeRole(e.role || e.systemRole || (e as any).backendRole);
-    const matchesRole = roleFilter === "ALL" || empRole === roleFilter;
+    return employeeList.filter((e) => {
+      const matchesSearch =
+        (e.name || "").toLowerCase().includes(lowerSearchQuery) ||
+        (e.email || "").toLowerCase().includes(lowerSearchQuery) ||
+        (e.role || "").toLowerCase().includes(lowerSearchQuery) ||
+        (e.department || "").toLowerCase().includes(lowerSearchQuery);
 
-    return matchesSearch && matchesDept && matchesStatus && matchesRole;
-  });
+      const matchesDept = departmentFilter === "ALL" || e.department === departmentFilter;
+      const matchesStatus = statusFilter === "ALL" || (e.status || "Active").toLowerCase() === lowerStatusFilter;
+      const empRole = normalizeRole(e.role || e.systemRole || (e as any).backendRole);
+      const matchesRole = roleFilter === "ALL" || empRole === roleFilter;
+
+      return matchesSearch && matchesDept && matchesStatus && matchesRole;
+    });
+  }, [employeeList, searchQuery, departmentFilter, statusFilter, roleFilter]);
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
