@@ -13,6 +13,14 @@ const ATTENDANCE_TAGS = [
 
 export const faceAttendancePunchApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
+    faceVerifyAttendance: builder.mutation<any, FormData | Record<string, any>>({
+      query: (body) => ({
+        url: "/api/v1/attendance/face/verify",
+        method: "POST",
+        body: body instanceof FormData ? body : body,
+      }),
+      invalidatesTags: ATTENDANCE_TAGS,
+    }),
     faceCheckIn: builder.mutation<FaceAttendanceMeResponse, FormData | FacePunchPayload>({
       query: (body) => ({ url: "/api/v1/attendance/face/check-in", method: "POST", body: buildFacePunchFormData(body, "face-checkin.jpg") }),
       transformResponse: (raw: RawEnvelope<FaceAttendanceMeResponse> | any) => normalizeMeResponse(raw),
@@ -30,4 +38,9 @@ export const faceAttendancePunchApi = baseApi.injectEndpoints({
     }),
   }),
 });
-export const { useFaceCheckInMutation, useFaceCheckOutMutation, useGetMyFaceAttendanceQuery } = faceAttendancePunchApi;
+export const {
+  useFaceVerifyAttendanceMutation,
+  useFaceCheckInMutation,
+  useFaceCheckOutMutation,
+  useGetMyFaceAttendanceQuery,
+} = faceAttendancePunchApi;
