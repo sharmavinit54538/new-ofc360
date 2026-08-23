@@ -1,8 +1,8 @@
 import { Route } from "react-router-dom";
 import { RoleGuard } from "@/components/auth/RoleGuard";
-import SecurityLandingPage from "@/pages/super-admin/security/SecurityLandingPage";
-import AdminSessionsPage from "@/pages/super-admin/security/AdminSessionsPage";
-import SecurityEventsPage from "@/pages/super-admin/security/SecurityEventsPage";
+import SecurityLandingPage from "@/features/super-admin/pages/security/SecurityLandingPage";
+import AdminSessionsPage from "@/features/super-admin/pages/security/AdminSessionsPage";
+import SecurityEventsPage from "@/features/super-admin/pages/security/SecurityEventsPage";
 
 export const renderSuperAdminAuditSecurityRoutes = () => (
   <>

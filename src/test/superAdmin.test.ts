@@ -95,7 +95,7 @@ describe("Super Admin RBAC & Architecture Test Suite", () => {
   });
 
   it("should have all superAdminApi endpoints properly registered in baseApi", async () => {
-    const { superAdminApi } = await import("@/services/api/superAdminApi");
+    const { superAdminApi } = await import("@/features/super-admin/api/superAdminApi");
     expect(superAdminApi.endpoints.getSuperAdminDashboard).toBeDefined();
     expect(superAdminApi.endpoints.getSuperAdminOrganizations).toBeDefined();
     expect(superAdminApi.endpoints.createSuperAdminOrganization).toBeDefined();
@@ -109,7 +109,7 @@ describe("Super Admin RBAC & Architecture Test Suite", () => {
   });
 
   it("should export direct API service functions for all Super Admin operations", async () => {
-    const api = await import("@/services/superAdminApi");
+    const api = await import("@/features/super-admin/api/superAdminApi");
     expect(typeof api.getDashboard).toBe("function");
     expect(typeof api.getStatistics).toBe("function");
     expect(typeof api.getOrganizations).toBe("function");

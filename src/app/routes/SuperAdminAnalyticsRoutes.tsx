@@ -1,9 +1,9 @@
 import { Route } from "react-router-dom";
 import { RoleGuard } from "@/components/auth/RoleGuard";
-import AnalyticsLandingPage from "@/pages/super-admin/analytics/AnalyticsLandingPage";
-import PlatformUsagePage from "@/pages/super-admin/analytics/PlatformUsagePage";
-import UserGrowthPage from "@/pages/super-admin/analytics/UserGrowthPage";
-import CompanyGrowthPage from "@/pages/super-admin/analytics/CompanyGrowthPage";
+import AnalyticsLandingPage from "@/features/super-admin/pages/analytics/AnalyticsLandingPage";
+import PlatformUsagePage from "@/features/super-admin/pages/analytics/PlatformUsagePage";
+import UserGrowthPage from "@/features/super-admin/pages/analytics/UserGrowthPage";
+import CompanyGrowthPage from "@/features/super-admin/pages/analytics/CompanyGrowthPage";
 
 export const renderSuperAdminAnalyticsRoutes = () => (
   <>

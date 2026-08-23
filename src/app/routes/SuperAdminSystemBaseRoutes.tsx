@@ -1,9 +1,9 @@
 import { Route } from "react-router-dom";
 import { RoleGuard } from "@/components/auth/RoleGuard";
-import SystemLandingPage from "@/pages/super-admin/system/SystemLandingPage";
-import SuperAdminSystemHealthPage from "@/pages/super-admin/system/SuperAdminSystemHealthPage";
-import SuperAdminAuditLogsPage from "@/pages/super-admin/system/SuperAdminAuditLogsPage";
-import PlatformSettingsPage from "@/pages/super-admin/system/PlatformSettingsPage";
+import SystemLandingPage from "@/features/super-admin/pages/system/SystemLandingPage";
+import SuperAdminSystemHealthPage from "@/features/super-admin/pages/system/SuperAdminSystemHealthPage";
+import SuperAdminAuditLogsPage from "@/features/super-admin/pages/system/SuperAdminAuditLogsPage";
+import PlatformSettingsPage from "@/features/super-admin/pages/system/PlatformSettingsPage";
 
 export const renderSuperAdminSystemBaseRoutes = () => (
   <>

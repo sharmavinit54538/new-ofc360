@@ -3,13 +3,13 @@ import {
   settingsApi,
   normalizeHRSettings,
   normalizeMFAResponse,
-} from "@/services/api/settingsApi";
+} from "@/features/settings/api/settingsApi";
 import {
   billingApi,
   normalizeSubscription,
   normalizePaymentMethod,
   normalizeInvoice,
-} from "@/services/api/billingApi";
+} from "@/features/settings/api/billingApi";
 
 describe("Settings & Billing API Services & Normalizers", () => {
   // =========================================================================

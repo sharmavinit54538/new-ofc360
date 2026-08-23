@@ -23,7 +23,7 @@ import EmployeeDashboardPage from "./dashboards/EmployeeDashboardPage";
 import ManagerDashboardPage from "./dashboards/ManagerDashboardPage";
 import ExecutiveDashboardPage from "./dashboards/ExecutiveDashboardPage";
 import ITAdminDashboardPage from "./dashboards/ITAdminDashboardPage";
-import SuperAdminDashboardPage from "./super-admin/SuperAdminDashboardPage";
+import SuperAdminDashboardPage from "@/features/super-admin/pages/SuperAdminDashboardPage";
 
 import { DashboardQuickActions } from "@/components/dashboard/DashboardQuickActions";
 import { DashboardAttendanceTrendChart } from "@/components/dashboard/DashboardAttendanceTrendChart";

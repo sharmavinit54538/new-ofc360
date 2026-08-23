@@ -1,9 +1,9 @@
 import { Route } from "react-router-dom";
 import { RoleGuard } from "@/components/auth/RoleGuard";
-import UsersPage from "@/pages/super-admin/platform/UsersPage";
-import HRAdminsPage from "@/pages/super-admin/platform/HRAdminsPage";
-import OnboardingTrackerPage from "@/pages/super-admin/platform/OnboardingTrackerPage";
-import SubscriptionsPage from "@/pages/super-admin/platform/SubscriptionsPage";
+import UsersPage from "@/features/super-admin/pages/platform/UsersPage";
+import HRAdminsPage from "@/features/super-admin/pages/platform/HRAdminsPage";
+import OnboardingTrackerPage from "@/features/super-admin/pages/platform/OnboardingTrackerPage";
+import SubscriptionsPage from "@/features/super-admin/pages/platform/SubscriptionsPage";
 
 export const renderSuperAdminTenantRoutes = () => (
   <>
