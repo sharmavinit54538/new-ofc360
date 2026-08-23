@@ -1,7 +1,7 @@
 import { Route } from "react-router-dom";
 import EmployeeActivatePage from "@/pages/employee/EmployeeActivatePage";
 import PublicCareersPage from "@/pages/PublicCareersPage";
-import HRAdminOnboardingPage from "@/pages/onboarding/HRAdminOnboardingPage";
+import HRAdminOnboardingPage from "@/features/onboarding/pages/HRAdminOnboardingPage";
 import { HRAdminOnboardingGuard } from "@/components/auth/HRAdminOnboardingGuard";
 
 export const renderAuthActivateRoutes = () => (

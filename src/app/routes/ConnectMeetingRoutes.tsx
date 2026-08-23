@@ -1,10 +1,10 @@
 import { Route } from "react-router-dom";
 import { RoleGuard } from "@/components/auth/RoleGuard";
-import ConnectCallsPage from "@/pages/connect/ConnectCallsPage";
-import ConnectMeetingsPage from "@/pages/connect/ConnectMeetingsPage";
-import MeetingRoomPage from "@/pages/connect/MeetingRoomPage";
-import ConnectFilesPage from "@/pages/connect/ConnectFilesPage";
-import ConnectContactsPage from "@/pages/connect/ConnectContactsPage";
+import ConnectCallsPage from "@/features/connect/pages/ConnectCallsPage";
+import ConnectMeetingsPage from "@/features/connect/pages/ConnectMeetingsPage";
+import MeetingRoomPage from "@/features/connect/pages/MeetingRoomPage";
+import ConnectFilesPage from "@/features/connect/pages/ConnectFilesPage";
+import ConnectContactsPage from "@/features/connect/pages/ConnectContactsPage";
 
 export const renderConnectMeetingRoutes = () => (
   <>

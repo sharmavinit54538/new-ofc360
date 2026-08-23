@@ -1,8 +1,8 @@
 import { Route } from "react-router-dom";
 import { RoleGuard } from "@/components/auth/RoleGuard";
-import ConnectOverviewPage from "@/pages/connect/ConnectOverviewPage";
-import ConnectChatPage from "@/pages/connect/ConnectChatPage";
-import ConnectChannelsPage from "@/pages/connect/ConnectChannelsPage";
+import ConnectOverviewPage from "@/features/connect/pages/ConnectOverviewPage";
+import ConnectChatPage from "@/features/connect/pages/ConnectChatPage";
+import ConnectChannelsPage from "@/features/connect/pages/ConnectChannelsPage";
 
 export const renderConnectChatRoutes = () => (
   <>

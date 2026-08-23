@@ -22,3 +22,10 @@ export * from "./recruitmentComplianceApi";
 export * from "./components/JobsManagerWizard";
 export * from "./components/CandidatePipelineBoard";
 export * from "./components/ScorecardSubmissionForm";
+
+// Pages
+export { default as RecruitmentPage } from "./pages/RecruitmentPage";
+export { default as AIATSPage } from "./pages/AIATSPage";
+export { default as AIInterviewPage } from "./pages/AIInterviewPage";
+export { default as AIRecruiterCopilotPage } from "./pages/AIRecruiterCopilotPage";
+export { default as ResumeATSCheckerPage } from "./pages/ResumeATSCheckerPage";

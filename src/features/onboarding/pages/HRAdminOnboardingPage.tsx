@@ -18,11 +18,11 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SEOHead } from "@/components/seo/SEOHead";
 import { toast } from "sonner";
-import { StepCompanyDetails } from "@/components/onboarding/StepCompanyDetails";
-import { StepHRAdminProfile } from "@/components/onboarding/StepHRAdminProfile";
-import { StepCompanyBranding } from "@/components/onboarding/StepCompanyBranding";
-import { StepPreferences } from "@/components/onboarding/StepPreferences";
-import { StepReview } from "@/components/onboarding/StepReview";
+import { StepCompanyDetails } from "@/features/onboarding/components/StepCompanyDetails";
+import { StepHRAdminProfile } from "@/features/onboarding/components/StepHRAdminProfile";
+import { StepCompanyBranding } from "@/features/onboarding/components/StepCompanyBranding";
+import { StepPreferences } from "@/features/onboarding/components/StepPreferences";
+import { StepReview } from "@/features/onboarding/components/StepReview";
 import type {
   CompleteOnboardingData,
   CompanyDetails,
