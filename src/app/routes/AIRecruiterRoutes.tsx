@@ -1,6 +1,6 @@
 import { Route } from "react-router-dom";
 import { RoleGuard } from "@/components/auth/RoleGuard";
-import AIRecruiterCopilotPage from "@/pages/AIRecruiterCopilotPage";
+import AIRecruiterCopilotPage from "@/features/recruitment/pages/AIRecruiterCopilotPage";
 import PredictiveWorkforcePage from "@/pages/intelligence/PredictiveWorkforcePage";
 import AIDocumentIntelligencePage from "@/pages/AIDocumentIntelligencePage";
 

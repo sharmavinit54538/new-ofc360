@@ -1,8 +1,8 @@
 import { Route } from "react-router-dom";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import PeoplePage from "@/pages/people/PeoplePage";
-import AttendancePage from "@/pages/AttendancePage";
-import PayrollPage from "@/pages/PayrollPage";
+import AttendancePage from "@/features/attendance/pages/AttendancePage";
+import PayrollPage from "@/features/payroll/pages/PayrollPage";
 
 export const renderPayrollAttendanceRoutes = () => (
   <>

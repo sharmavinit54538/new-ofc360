@@ -1,7 +1,7 @@
 import { Route } from "react-router-dom";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import TalentIntelligenceLandingPage from "@/pages/talent-intelligence/TalentIntelligenceLandingPage";
-import RecruitmentPage from "@/pages/RecruitmentPage";
+import RecruitmentPage from "@/features/recruitment/pages/RecruitmentPage";
 import DocumentIntelligencePage from "@/pages/talent-intelligence/DocumentIntelligencePage";
 import OnboardingIntelligencePage from "@/pages/talent-intelligence/OnboardingIntelligencePage";
 

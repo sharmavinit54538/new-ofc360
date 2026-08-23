@@ -1,7 +1,7 @@
 import { AIFaceHeader } from "./header/AIFaceHeader";
 import { TodayStationHero } from "./hero/TodayStationHero";
 import { AIFaceTabsContainer } from "./AIFaceTabsContainer";
-import { FaceCaptureModal } from "@/components/attendance/FaceCaptureModal";
+import { FaceCaptureModal } from "../../../components/FaceCaptureModal";
 
 export function AIFaceBody({ d, actions }: any) {
   const { auth, isModalOpen, setIsModalOpen, modalMode, me, hist } = d;

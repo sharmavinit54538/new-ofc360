@@ -7,3 +7,5 @@ export * from "./settingsApi"; export * from "./taxApi"; export * from "./compon
 export * from "./allowancesApi"; export * from "./templatesApi"; export * from "./securitySettingsApi";
 export * from "./aiPayrollApi"; export * from "./components/PayCyclesList";
 export * from "./components/SalaryProcessingRunner"; export * from "./components/PayslipDownloadButton";
+export { default as PayrollPage } from "./pages/PayrollPage";
+export { default as EmployeePayslipsPage } from "./pages/EmployeePayslipsPage";

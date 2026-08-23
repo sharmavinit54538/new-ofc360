@@ -28,23 +28,23 @@ import { Badge } from "@/components/ui/badge";
 import { useATSStore } from "@/stores/atsStore";
 
 // Modules imports
-import { ExecutiveDashboard } from "@/components/recruitment/ExecutiveDashboard";
-import { RequisitionsModule } from "@/components/recruitment/RequisitionsModule";
-import { CandidateDirectory } from "@/components/recruitment/CandidateDirectory";
-import { KanbanPipeline } from "@/components/recruitment/KanbanPipeline";
-import { AIResumeCopilot } from "@/components/recruitment/AIResumeCopilot";
-import { InterviewCalendar } from "@/components/recruitment/InterviewCalendar";
-import { ScorecardsModule } from "@/components/recruitment/ScorecardsModule";
-import { OfferManagement } from "@/components/recruitment/OfferManagement";
-import { TalentPoolCRM } from "@/components/recruitment/TalentPoolCRM";
-import { EmployeeReferral } from "@/components/recruitment/EmployeeReferral";
-import { VendorAgencyPortal } from "@/components/recruitment/VendorAgencyPortal";
-import { WorkflowAutomation } from "@/components/recruitment/WorkflowAutomation";
-import { OnboardingBridge } from "@/components/recruitment/OnboardingBridge";
-import { ComplianceAuditLogs } from "@/components/recruitment/ComplianceAuditLogs";
-import { ATSAnalyticsReports } from "@/components/recruitment/ATSAnalyticsReports";
-import { JobWizardModal } from "@/components/recruitment/JobWizardModal";
-import { JobPublishingModal } from "@/components/recruitment/JobPublishingModal";
+import { ExecutiveDashboard } from "@/features/recruitment/components/ExecutiveDashboard";
+import { RequisitionsModule } from "@/features/recruitment/components/RequisitionsModule";
+import { CandidateDirectory } from "@/features/recruitment/components/CandidateDirectory";
+import { KanbanPipeline } from "@/features/recruitment/components/KanbanPipeline";
+import { AIResumeCopilot } from "@/features/recruitment/components/AIResumeCopilot";
+import { InterviewCalendar } from "@/features/recruitment/components/InterviewCalendar";
+import { ScorecardsModule } from "@/features/recruitment/components/ScorecardsModule";
+import { OfferManagement } from "@/features/recruitment/components/OfferManagement";
+import { TalentPoolCRM } from "@/features/recruitment/components/TalentPoolCRM";
+import { EmployeeReferral } from "@/features/recruitment/components/EmployeeReferral";
+import { VendorAgencyPortal } from "@/features/recruitment/components/VendorAgencyPortal";
+import { WorkflowAutomation } from "@/features/recruitment/components/WorkflowAutomation";
+import { OnboardingBridge } from "@/features/recruitment/components/OnboardingBridge";
+import { ComplianceAuditLogs } from "@/features/recruitment/components/ComplianceAuditLogs";
+import { ATSAnalyticsReports } from "@/features/recruitment/components/ATSAnalyticsReports";
+import { JobWizardModal } from "@/features/recruitment/components/JobWizardModal";
+import { JobPublishingModal } from "@/features/recruitment/components/JobPublishingModal";
 
 interface ModuleCardDef {
   id: string;

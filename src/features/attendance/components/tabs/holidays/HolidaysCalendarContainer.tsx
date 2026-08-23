@@ -1,4 +1,4 @@
-import { HolidayCalendarView } from "@/components/attendance/HolidayCalendarView";
+import { HolidayCalendarView } from "../../holiday-calendar/HolidayCalendarView";
 import type { HolidayItem } from "../../../types/attendance.types";
 
 export function HolidaysCalendarContainer({ holidays, isHrOrAdmin, onDelete }: {

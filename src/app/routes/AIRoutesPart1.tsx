@@ -2,8 +2,8 @@ import { Route } from "react-router-dom";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import IntelligenceLandingPage from "@/pages/intelligence/IntelligenceLandingPage";
 import AIChatPage from "@/pages/AIChatPage";
-import AIATSPage from "@/pages/AIATSPage";
-import ResumeATSCheckerPage from "@/pages/tools/ResumeATSCheckerPage";
+import AIATSPage from "@/features/recruitment/pages/AIATSPage";
+import ResumeATSCheckerPage from "@/features/recruitment/pages/ResumeATSCheckerPage";
 
 export const renderAIRoutesPart1 = () => (
   <>

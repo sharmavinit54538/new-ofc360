@@ -1,8 +1,8 @@
 import { Route } from "react-router-dom";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import EmployeeDashboardPage from "@/pages/dashboards/EmployeeDashboardPage";
-import EmployeeLeavePage from "@/pages/employee/EmployeeLeavePage";
-import EmployeePayslipsPage from "@/pages/employee/EmployeePayslipsPage";
+import EmployeeLeavePage from "@/features/attendance/pages/EmployeeLeavePage";
+import EmployeePayslipsPage from "@/features/payroll/pages/EmployeePayslipsPage";
 import EmployeeDocumentsPage from "@/pages/employee/EmployeeDocumentsPage";
 import EmployeeOnboardingPage from "@/pages/employee/EmployeeOnboardingPage";
 import EmployeeHelpdeskPage from "@/pages/employee/EmployeeHelpdeskPage";

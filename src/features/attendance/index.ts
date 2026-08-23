@@ -1,8 +1,11 @@
 export { AttendanceView } from "./AttendanceView";
 export { default } from "./AttendanceView";
 export { default as AttendancePunchCard } from "./AttendancePunchCard";
+export { default as AttendancePage } from "./pages/AttendancePage";
+export { default as EmployeeLeavePage } from "./pages/EmployeeLeavePage";
+export { default as AIFaceAttendancePage } from "./pages/ai-face-attendance/AIFaceAttendancePage";
 export * from "./types";
 export * from "./constants";
 export * from "./hooks/useAttendance";
-export * from "./attendanceApi";
+export * from "./api";
 export * from "./attendanceSlice";

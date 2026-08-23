@@ -2,8 +2,8 @@ import { Route } from "react-router-dom";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import DashboardPage from "@/pages/DashboardPage";
 import HiringPlanningPage from "@/pages/HiringPlanningPage";
-import RecruitmentPage from "@/pages/RecruitmentPage";
-import OnboardingPage from "@/pages/OnboardingPage";
+import RecruitmentPage from "@/features/recruitment/pages/RecruitmentPage";
+import OnboardingPage from "@/features/onboarding/pages/OnboardingPage";
 
 export const renderWorkforceRoutes = () => (
   <>

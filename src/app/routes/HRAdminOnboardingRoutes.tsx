@@ -1,10 +1,10 @@
 import { Route } from "react-router-dom";
 import { RoleGuard } from "@/components/auth/RoleGuard";
-import OnboardingHubPage from "@/pages/onboarding/OnboardingHubPage";
-import WorkflowsManagementPage from "@/pages/onboarding/WorkflowsManagementPage";
-import NewHiresManagementPage from "@/pages/onboarding/NewHiresManagementPage";
-import DocumentsManagementPage from "@/pages/onboarding/DocumentsManagementPage";
-import TasksManagementPage from "@/pages/onboarding/TasksManagementPage";
+import OnboardingHubPage from "@/features/onboarding/pages/OnboardingHubPage";
+import WorkflowsManagementPage from "@/features/onboarding/pages/WorkflowsManagementPage";
+import NewHiresManagementPage from "@/features/onboarding/pages/NewHiresManagementPage";
+import DocumentsManagementPage from "@/features/onboarding/pages/DocumentsManagementPage";
+import TasksManagementPage from "@/features/onboarding/pages/TasksManagementPage";
 
 export const renderHRAdminOnboardingRoutes = () => (
   <>
