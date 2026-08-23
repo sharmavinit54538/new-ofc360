@@ -1,8 +1,8 @@
 import { Route } from "react-router-dom";
 import { RoleGuard } from "@/components/auth/RoleGuard";
-import LearningIntelligencePage from "@/pages/talent-intelligence/LearningIntelligencePage";
-import ExitIntelligencePage from "@/pages/talent-intelligence/ExitIntelligencePage";
-import HiringIntelligencePage from "@/pages/talent-intelligence/HiringIntelligencePage";
+import LearningIntelligencePage from "@/features/talent-intelligence/pages/LearningIntelligencePage";
+import ExitIntelligencePage from "@/features/talent-intelligence/pages/ExitIntelligencePage";
+import HiringIntelligencePage from "@/features/talent-intelligence/pages/HiringIntelligencePage";
 
 export const renderTalentIntelligenceHiringRoutes = () => (
   <>

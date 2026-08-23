@@ -23,10 +23,10 @@ import {
   FileCheck2,
   Users
 } from "lucide-react";
-import { TalentIntelligenceLayout } from "@/components/talent-intelligence/TalentIntelligenceLayout";
-import { TalentIntelligenceFeatureCard } from "@/components/talent-intelligence/TalentIntelligenceFeatureCard";
-import { TalentIntelligenceSection } from "@/components/talent-intelligence/TalentIntelligenceSection";
-import { TalentIntelligenceEmptyState } from "@/components/talent-intelligence/TalentIntelligenceEmptyState";
+import { TalentIntelligenceLayout } from "@/features/talent-intelligence/components/TalentIntelligenceLayout";
+import { TalentIntelligenceFeatureCard } from "@/features/talent-intelligence/components/TalentIntelligenceFeatureCard";
+import { TalentIntelligenceSection } from "@/features/talent-intelligence/components/TalentIntelligenceSection";
+import { TalentIntelligenceEmptyState } from "@/features/talent-intelligence/components/TalentIntelligenceEmptyState";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";

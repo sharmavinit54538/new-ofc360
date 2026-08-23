@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { ConnectLayout } from "@/components/connect/ConnectLayout";
+import { ConnectLayout } from "@/features/connect/components/ConnectLayout";
 import { useConnect } from "@/features/connect/hooks";
 import {
   useGetFilesQuery,
@@ -21,9 +21,9 @@ import {
   User,
   Share2,
 } from "lucide-react";
-import { FileCard } from "@/components/connect/FileCard";
-import { FilePicker } from "@/components/connect/FilePicker";
-import { ConnectEmptyState } from "@/components/connect/ConnectEmptyState";
+import { FileCard } from "@/features/connect/components/FileCard";
+import { FilePicker } from "@/features/connect/components/FilePicker";
+import { ConnectEmptyState } from "@/features/connect/components/ConnectEmptyState";
 import { toast } from "sonner";
 
 type FileTab = "all" | "shared_with_me" | "shared_by_me" | "recent" | "images" | "videos" | "documents";

@@ -3,7 +3,7 @@ import {
   FileCode2,
   Settings,
 } from "lucide-react";
-import { TalentIntelligenceCard } from "@/components/talent-intelligence/TalentIntelligenceCard";
+import { TalentIntelligenceCard } from "@/features/talent-intelligence/components/TalentIntelligenceCard";
 import {
   useGetSuperAdminAuditLogsQuery,
   useGetSuperAdminSystemHealthQuery,

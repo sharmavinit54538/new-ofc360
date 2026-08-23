@@ -1,9 +1,9 @@
 import { Route } from "react-router-dom";
 import { RoleGuard } from "@/components/auth/RoleGuard";
-import CultureIntelligencePage from "@/pages/intelligence/CultureIntelligencePage";
-import ComplianceIntelligencePage from "@/pages/intelligence/ComplianceIntelligencePage";
-import PredictiveWorkforcePage from "@/pages/intelligence/PredictiveWorkforcePage";
-import AIRecommendationsPage from "@/pages/intelligence/AIRecommendationsPage";
+import CultureIntelligencePage from "@/features/intelligence/pages/CultureIntelligencePage";
+import ComplianceIntelligencePage from "@/features/intelligence/pages/ComplianceIntelligencePage";
+import PredictiveWorkforcePage from "@/features/intelligence/pages/PredictiveWorkforcePage";
+import AIRecommendationsPage from "@/features/intelligence/pages/AIRecommendationsPage";
 
 export const renderIntelligencePredictiveRoutes = () => (
   <>

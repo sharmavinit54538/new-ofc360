@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ConnectLayout } from "@/components/connect/ConnectLayout";
+import { ConnectLayout } from "@/features/connect/components/ConnectLayout";
 import { useConnect } from "@/features/connect/hooks";
 
 export default function ConnectOverviewPage() {

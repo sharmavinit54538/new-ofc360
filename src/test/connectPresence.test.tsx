@@ -15,8 +15,8 @@ import {
 import { normalizeConnectUser, connectApi } from "@/services/api/connectApi";
 import { connectWebSocketService } from "@/services/connectWebSocketService";
 import { tabSessionManager } from "@/services/tabSessionManager";
-import { ChatList } from "@/components/connect/ChatList";
-import { PresenceIndicator } from "@/components/connect/PresenceIndicator";
+import { ChatList } from "@/features/connect/components/ChatList";
+import { PresenceIndicator } from "@/features/connect/components/PresenceIndicator";
 
 function renderWithProviders(ui: React.ReactElement) {
   return render(

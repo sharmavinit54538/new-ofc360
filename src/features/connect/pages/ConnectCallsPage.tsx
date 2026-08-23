@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { ConnectLayout } from "@/components/connect/ConnectLayout";
+import { ConnectLayout } from "@/features/connect/components/ConnectLayout";
 import { useConnect } from "@/features/connect/hooks";
 import {
   useGetCallLogsQuery,
@@ -26,8 +26,8 @@ import {
   PhoneMissed,
   Clock,
 } from "lucide-react";
-import { ConnectEmptyState } from "@/components/connect/ConnectEmptyState";
-import { PresenceIndicator } from "@/components/connect/PresenceIndicator";
+import { ConnectEmptyState } from "@/features/connect/components/ConnectEmptyState";
+import { PresenceIndicator } from "@/features/connect/components/PresenceIndicator";
 import { toast } from "sonner";
 
 export default function ConnectCallsPage() {

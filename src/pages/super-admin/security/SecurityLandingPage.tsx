@@ -2,7 +2,7 @@ import {
   Key,
   ShieldAlert,
 } from "lucide-react";
-import { TalentIntelligenceCard } from "@/components/talent-intelligence/TalentIntelligenceCard";
+import { TalentIntelligenceCard } from "@/features/talent-intelligence/components/TalentIntelligenceCard";
 import {
   useGetSuperAdminSessionsQuery,
   useGetSuperAdminSecurityEventsQuery,

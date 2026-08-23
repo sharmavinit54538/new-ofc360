@@ -27,7 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TalentIntelligenceLayout } from "@/components/talent-intelligence/TalentIntelligenceLayout";
+import { TalentIntelligenceLayout } from "@/features/talent-intelligence/components/TalentIntelligenceLayout";
 import { useGetEmployeesQuery } from "@/services/api/employeeApi";
 import { useDocumentStore } from "@/stores/documentStore";
 import { useAuth } from "@/hooks/useAuth";

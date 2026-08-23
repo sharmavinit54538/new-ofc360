@@ -1,7 +1,7 @@
-import { IntelligenceHubLayout } from "@/components/intelligence/IntelligenceHubLayout";
-import { IntelligenceHubHeader } from "@/components/intelligence/IntelligenceHubHeader";
-import { IntelligenceEmptyState } from "@/components/intelligence/IntelligenceEmptyState";
-import { InsightSection, InsightSectionItem } from "@/components/intelligence/InsightSection";
+import { IntelligenceHubLayout } from "@/features/intelligence/components/IntelligenceHubLayout";
+import { IntelligenceHubHeader } from "@/features/intelligence/components/IntelligenceHubHeader";
+import { IntelligenceEmptyState } from "@/features/intelligence/components/IntelligenceEmptyState";
+import { InsightSection, InsightSectionItem } from "@/features/intelligence/components/InsightSection";
 import {
   PieChart,
   Users,

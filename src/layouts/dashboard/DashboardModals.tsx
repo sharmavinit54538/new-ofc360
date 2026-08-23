@@ -1,7 +1,7 @@
 import { FloatingAIAssistant } from "@/components/FloatingAIAssistant";
-import { IncomingCallModal } from "@/components/connect/IncomingCallModal";
-import { CallScreen } from "@/components/connect/CallScreen";
-import { VideoCallModal } from "@/components/connect/VideoCallModal";
+import { IncomingCallModal } from "@/features/connect/components/IncomingCallModal";
+import { CallScreen } from "@/features/connect/components/CallScreen";
+import { VideoCallModal } from "@/features/connect/components/VideoCallModal";
 
 export function DashboardModals() {
   return (

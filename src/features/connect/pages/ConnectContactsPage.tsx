@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ConnectLayout } from "@/components/connect/ConnectLayout";
+import { ConnectLayout } from "@/features/connect/components/ConnectLayout";
 import { useConnect } from "@/features/connect/hooks";
 import { useAppSelector } from "@/app/hooks";
 import { selectUserPresenceMap } from "@/features/connect/selectors";
@@ -19,8 +19,8 @@ import {
   Video,
   Mail,
 } from "lucide-react";
-import { PresenceIndicator } from "@/components/connect/PresenceIndicator";
-import { ConnectEmptyState } from "@/components/connect/ConnectEmptyState";
+import { PresenceIndicator } from "@/features/connect/components/PresenceIndicator";
+import { ConnectEmptyState } from "@/features/connect/components/ConnectEmptyState";
 import { toast } from "sonner";
 
 export default function ConnectContactsPage() {

@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { MeetingRoom } from "@/components/connect/MeetingRoom";
+import { MeetingRoom } from "@/features/connect/components/MeetingRoom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 

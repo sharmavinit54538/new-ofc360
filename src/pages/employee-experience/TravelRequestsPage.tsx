@@ -1,8 +1,8 @@
-import { TalentIntelligenceLayout } from "@/components/talent-intelligence/TalentIntelligenceLayout";
-import { TalentIntelligenceHeader } from "@/components/talent-intelligence/TalentIntelligenceHeader";
-import { TalentIntelligenceFeatureCard } from "@/components/talent-intelligence/TalentIntelligenceFeatureCard";
-import { TalentIntelligenceSection } from "@/components/talent-intelligence/TalentIntelligenceSection";
-import { TalentIntelligenceEmptyState } from "@/components/talent-intelligence/TalentIntelligenceEmptyState";
+import { TalentIntelligenceLayout } from "@/features/talent-intelligence/components/TalentIntelligenceLayout";
+import { TalentIntelligenceHeader } from "@/features/talent-intelligence/components/TalentIntelligenceHeader";
+import { TalentIntelligenceFeatureCard } from "@/features/talent-intelligence/components/TalentIntelligenceFeatureCard";
+import { TalentIntelligenceSection } from "@/features/talent-intelligence/components/TalentIntelligenceSection";
+import { TalentIntelligenceEmptyState } from "@/features/talent-intelligence/components/TalentIntelligenceEmptyState";
 import { Plane, Building, Compass, FileCheck, DollarSign, Calendar } from "lucide-react";
 
 const featureCards = [

@@ -4,7 +4,7 @@ import { Provider } from "react-redux";
 import { store } from "@/app/store";
 import { MemoryRouter } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { ChatWindow } from "@/components/connect/ChatWindow";
+import { ChatWindow } from "@/features/connect/components/ChatWindow";
 import * as connectApiModule from "@/services/api/connectApi";
 
 function renderWithProviders(ui: React.ReactElement) {

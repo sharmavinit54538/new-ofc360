@@ -1,4 +1,4 @@
-import { baseApi } from "../baseApi";
+import { api as baseApi } from "@/api/client";
 import type { AIModelMetadata } from "./intelligenceTypes";
 import type { GetAiModelsArg } from "./intelligenceResponseTypes";
 

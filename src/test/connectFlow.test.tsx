@@ -4,15 +4,15 @@ import { Provider } from "react-redux";
 import { store } from "@/app/store";
 import { MemoryRouter } from "react-router-dom";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { ConnectHeader } from "@/components/connect/ConnectHeader";
-import { ChatList } from "@/components/connect/ChatList";
-import { ChannelList } from "@/components/connect/ChannelList";
-import { PresenceSelector } from "@/components/connect/PresenceSelector";
-import { ConnectSoundSettingsModal } from "@/components/connect/ConnectSoundSettingsModal";
-import { NewChatDialog } from "@/components/connect/NewChatDialog";
-import { NewChannelDialog } from "@/components/connect/NewChannelDialog";
-import { NewMeetingDialog } from "@/components/connect/NewMeetingDialog";
-import { ConnectSearchDialog } from "@/components/connect/ConnectSearchDialog";
+import { ConnectHeader } from "@/features/connect/components/ConnectHeader";
+import { ChatList } from "@/features/connect/components/ChatList";
+import { ChannelList } from "@/features/connect/components/ChannelList";
+import { PresenceSelector } from "@/features/connect/components/PresenceSelector";
+import { ConnectSoundSettingsModal } from "@/features/connect/components/ConnectSoundSettingsModal";
+import { NewChatDialog } from "@/features/connect/components/NewChatDialog";
+import { NewChannelDialog } from "@/features/connect/components/NewChannelDialog";
+import { NewMeetingDialog } from "@/features/connect/components/NewMeetingDialog";
+import { ConnectSearchDialog } from "@/features/connect/components/ConnectSearchDialog";
 
 function renderWithProviders(ui: React.ReactElement) {
   return render(

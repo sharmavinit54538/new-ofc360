@@ -1,8 +1,8 @@
 import { Route } from "react-router-dom";
 import { RoleGuard } from "@/components/auth/RoleGuard";
-import ResourceIntelligenceLandingPage from "@/pages/resource-intelligence/ResourceIntelligenceLandingPage";
-import AssetIntelligencePage from "@/pages/resource-intelligence/AssetIntelligencePage";
-import VendorIntelligencePage from "@/pages/resource-intelligence/VendorIntelligencePage";
+import ResourceIntelligenceLandingPage from "@/features/resource-intelligence/pages/ResourceIntelligenceLandingPage";
+import AssetIntelligencePage from "@/features/resource-intelligence/pages/AssetIntelligencePage";
+import VendorIntelligencePage from "@/features/resource-intelligence/pages/VendorIntelligencePage";
 
 export const renderResourceIntelligenceRoutes = () => (
   <>

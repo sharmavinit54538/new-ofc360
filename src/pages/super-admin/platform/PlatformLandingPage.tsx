@@ -6,7 +6,7 @@ import {
   DollarSign,
   RefreshCw,
 } from "lucide-react";
-import { TalentIntelligenceCard } from "@/components/talent-intelligence/TalentIntelligenceCard";
+import { TalentIntelligenceCard } from "@/features/talent-intelligence/components/TalentIntelligenceCard";
 import { useGetSuperAdminDashboardQuery } from "@/services/api/superAdminApi";
 import { Button } from "@/components/ui/button";
 

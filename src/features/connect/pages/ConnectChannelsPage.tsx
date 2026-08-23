@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ConnectLayout } from "@/components/connect/ConnectLayout";
-import { ChannelList } from "@/components/connect/ChannelList";
-import { ChannelView } from "@/components/connect/ChannelView";
+import { ConnectLayout } from "@/features/connect/components/ConnectLayout";
+import { ChannelList } from "@/features/connect/components/ChannelList";
+import { ChannelView } from "@/features/connect/components/ChannelView";
 import { useConnect } from "@/features/connect/hooks";
 
 export default function ConnectChannelsPage() {

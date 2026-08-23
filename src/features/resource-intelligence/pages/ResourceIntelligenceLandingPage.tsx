@@ -1,6 +1,6 @@
-import { TalentIntelligenceLayout } from "@/components/talent-intelligence/TalentIntelligenceLayout";
-import { TalentIntelligenceCard } from "@/components/talent-intelligence/TalentIntelligenceCard";
-import { TalentIntelligenceEmptyState } from "@/components/talent-intelligence/TalentIntelligenceEmptyState";
+import { TalentIntelligenceLayout } from "@/features/talent-intelligence/components/TalentIntelligenceLayout";
+import { TalentIntelligenceCard } from "@/features/talent-intelligence/components/TalentIntelligenceCard";
+import { TalentIntelligenceEmptyState } from "@/features/talent-intelligence/components/TalentIntelligenceEmptyState";
 import { Laptop, Handshake } from "lucide-react";
 
 const resourceModules = [

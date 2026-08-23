@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ConnectLayout } from "@/components/connect/ConnectLayout";
-import { ChatList } from "@/components/connect/ChatList";
-import { ChatWindow } from "@/components/connect/ChatWindow";
+import { ConnectLayout } from "@/features/connect/components/ConnectLayout";
+import { ChatList } from "@/features/connect/components/ChatList";
+import { ChatWindow } from "@/features/connect/components/ChatWindow";
 import { useConnect } from "@/features/connect/hooks";
 
 export default function ConnectChatPage() {

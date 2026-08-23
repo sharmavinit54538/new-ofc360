@@ -30,7 +30,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { roleLabels, SystemRole, normalizeRole } from "@/features/auth/authTypes";
 import { Badge } from "@/components/ui/badge";
 import { BackButton } from "@/components/common/BackButton";
-import { NotificationPanel } from "@/components/connect/NotificationPanel";
+import { NotificationPanel } from "@/features/connect/components/NotificationPanel";
 import { GlobalSearchDialog } from "@/components/search/GlobalSearchDialog";
 import { toast } from "sonner";
 

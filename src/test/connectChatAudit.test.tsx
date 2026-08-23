@@ -13,9 +13,9 @@ import {
   isCurrentUser,
 } from "@/services/api/connectApi";
 import { formatMessageTime, formatConversationTime } from "@/utils/formatTime";
-import { ChatList } from "@/components/connect/ChatList";
-import { ChatWindow } from "@/components/connect/ChatWindow";
-import { MessageBubble } from "@/components/connect/MessageBubble";
+import { ChatList } from "@/features/connect/components/ChatList";
+import { ChatWindow } from "@/features/connect/components/ChatWindow";
+import { MessageBubble } from "@/features/connect/components/MessageBubble";
 
 function renderWithProviders(ui: React.ReactElement) {
   return render(

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ConnectLayout } from "@/components/connect/ConnectLayout";
+import { ConnectLayout } from "@/features/connect/components/ConnectLayout";
 import { useConnect } from "@/features/connect/hooks";
 import { useGetMeetingsQuery } from "@/services/api/connectApi";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import {
   ArrowRight,
   Link2,
 } from "lucide-react";
-import { ConnectEmptyState } from "@/components/connect/ConnectEmptyState";
+import { ConnectEmptyState } from "@/features/connect/components/ConnectEmptyState";
 import { toast } from "sonner";
 
 export default function ConnectMeetingsPage() {
