@@ -23,7 +23,7 @@ import { payrollApi, useGetPayrollPeriodsQuery, useFinalizePayrollMutation } fro
 import { recruitmentApi, useGetJobsQuery, useUploadResumeMutation } from "@/services/api/recruitmentApi";
 import { timelineApi, useGetEmployeeTimelineQuery, useAddTimelineEventMutation } from "@/services/api/timelineApi";
 import { attendanceApi, useGetAttendanceRecordsQuery, useClockInMutation } from "@/services/api/attendanceApi";
-import { onboardingApi, useGetOnboardingTasksQuery } from "@/services/api/onboardingApi";
+import { onboardingApi, useGetOnboardingTasksQuery } from "@/features/onboarding/api";
 import { performanceApi, useGetPerformanceReviewsQuery } from "@/services/api/performanceApi";
 import { auditApi, useGetAuditLogsQuery } from "@/services/api/auditApi";
 

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { useGetOnboardingTasksQuery, useGetOnboardingProgressQuery } from "@/services/api/onboardingApi";
+import { useGetOnboardingTasksQuery, useGetOnboardingProgressQuery } from "@/features/onboarding/api";
 import { toast } from "sonner";
 
 export default function OnboardingPage() {

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useGetBillingInvoicesQuery } from "@/services/api/billingApi";
+import { useGetBillingInvoicesQuery } from "@/features/settings/api/billingApi";
 
 export function useInvoicesSettings() {
   const [invoicePage, setInvoicePage] = useState(1);

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useGetPaymentMethodsQuery } from "@/services/api/billingApi";
+import { useGetPaymentMethodsQuery } from "@/features/settings/api/billingApi";
 import type { PaymentMethodFormData } from "../types/billingTypes";
 
 export function usePaymentMethodsList() {

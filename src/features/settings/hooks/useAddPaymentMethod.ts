@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { useAddPaymentMethodMutation } from "@/services/api/billingApi";
+import { useAddPaymentMethodMutation } from "@/features/settings/api/billingApi";
 import { normalizeError } from "@/services/api/normalizeError";
 import type { usePaymentMethodsList } from "./usePaymentMethodsList";
 

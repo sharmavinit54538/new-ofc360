@@ -1,4 +1,4 @@
-import { useGetBillingSubscriptionQuery } from "@/services/api/billingApi";
+import { useGetBillingSubscriptionQuery } from "@/features/settings/api/billingApi";
 
 export function useBillingSettings() {
   const {
