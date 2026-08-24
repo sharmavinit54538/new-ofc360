@@ -28,7 +28,7 @@ function startConnectingWatchdog(callId: string) {
       connectAudioManager.playCallConnected();
       store.dispatch(setCallConnected({ callId }));
     }
-  }, 4000);
+  }, 5000);
 }
 
 export async function initWebRTCForCaller(
@@ -123,7 +123,12 @@ export async function initWebRTCForReceiver(
     });
 
     await connectWebRTCService.getLocalMedia(true, type === "video");
-    await connectWebRTCService.createAnswer();
+
+    // Process buffered remote offer or re-request from caller
+    const offerHandled = await connectWebRTCService.processPendingOffer();
+    if (!offerHandled) {
+      connectWebRTCService.requestOffer();
+    }
   } catch (err) {
     console.error("[WEBRTC_RECEIVER_INIT_ERROR]", err);
   }

@@ -10,6 +10,7 @@ import {
   resetCallState,
 } from "@/features/connect/callSlice";
 import { connectAudioManager } from "@/services/connectAudioManager";
+import { connectWebRTCService } from "@/services/connectWebRTCService";
 import { toast } from "sonner";
 
 export function handleWsCallEvent(
@@ -51,6 +52,7 @@ export function handleWsCallEvent(
     connectAudioManager.stopOutgoingCall();
     connectAudioManager.playCallConnected();
     store.dispatch(setCallConnecting());
+    connectWebRTCService.resendOffer();
     const callId = data.callId || data.call_id;
     setTimeout(() => {
       const state = store.getState().connectCall;

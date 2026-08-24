@@ -19,20 +19,32 @@ export class ConnectWebRTCService {
   public callId: string | null = null;
   public localStream: MediaStream | null = null;
   public remoteStream: MediaStream | null = null;
+  public pendingRemoteOffer: RTCSessionDescriptionInit | null = null;
   private signalUnsub: (() => void) | null = null;
   private onRemoteStreamCallback: ((stream: MediaStream) => void) | null = null;
   private onConnectionStateChangeCallback: ((state: RTCPeerConnectionState) => void) | null = null;
 
-  public init(config?: WebRTCInitConfig) {
-    // Cleanup previous connection if active
-    this.cleanup();
+  constructor() {
+    // Global signal listener binding to never miss incoming offers
+    this.signalUnsub = connectWebSocketService.onSignal((payload: any) => {
+      this.handleIncomingSignal(payload);
+    });
+  }
 
+  public init(config?: WebRTCInitConfig) {
     if (config?.targetUserId) this.targetUserId = config.targetUserId;
     if (config?.callId) this.callId = config.callId;
     if (config?.onRemoteStream) this.onRemoteStreamCallback = config.onRemoteStream;
     if (config?.onConnectionStateChange) this.onConnectionStateChangeCallback = config.onConnectionStateChange;
 
     if (typeof RTCPeerConnection === "undefined") return;
+
+    if (this.pc) {
+      try {
+        this.pc.close();
+      } catch {}
+      this.pc = null;
+    }
 
     const rtcConfig: RTCConfiguration = {
       iceServers: config?.iceServers || [
@@ -46,7 +58,7 @@ export class ConnectWebRTCService {
     try {
       this.pc = new RTCPeerConnection(rtcConfig);
 
-      // Handle Incoming Remote Media Stream / Tracks
+      // Handle Remote Audio/Video Tracks
       this.pc.ontrack = (event) => {
         if (event.streams && event.streams[0]) {
           this.remoteStream = event.streams[0];
@@ -70,7 +82,7 @@ export class ConnectWebRTCService {
         }
       };
 
-      // Handle Connection State Changes
+      // Handle Peer Connection State Changes
       this.pc.onconnectionstatechange = () => {
         if (this.pc) {
           this.onConnectionStateChangeCallback?.(this.pc.connectionState);
@@ -89,18 +101,18 @@ export class ConnectWebRTCService {
         }
       };
 
-      // Subscribe to real-time WebRTC signals from WebSocket
-      this.signalUnsub = connectWebSocketService.onSignal((payload: any) => {
-        this.handleIncomingSignal(payload);
-      });
+      // Ensure signal subscription is active
+      if (!this.signalUnsub) {
+        this.signalUnsub = connectWebSocketService.onSignal((payload: any) => {
+          this.handleIncomingSignal(payload);
+        });
+      }
     } catch (err) {
       console.error("[WEBRTC_INIT_ERROR]", err);
     }
   }
 
   public async handleIncomingSignal(payload: any) {
-    if (!this.pc) return;
-
     try {
       const sig = payload?.signal || payload;
       if (!sig) return;
@@ -108,43 +120,48 @@ export class ConnectWebRTCService {
       const sigType = sig.type;
 
       // 1. Handling SDP Offer (Receiver side)
-      if (sigType === "offer" || (sig.sdp && !this.pc.remoteDescription && sigType !== "answer")) {
-        const sdp = sig.sdp || sig;
-        await this.pc.setRemoteDescription(
-          new RTCSessionDescription({
-            type: "offer",
-            sdp: typeof sdp === "string" ? sdp : sdp.sdp,
-          })
-        );
-        await this.signal.flushIceCandidates(this.pc);
+      if (sigType === "offer" || (sig.sdp && sigType !== "answer")) {
+        const sdp = typeof sig.sdp === "string" ? sig.sdp : typeof sig === "string" ? sig : sig.sdp;
+        const offerInit: RTCSessionDescriptionInit = { type: "offer", sdp };
 
-        // If receiver, create and send answer back
-        const answer = await this.createAnswer();
-        return answer;
+        if (this.pc) {
+          await this.pc.setRemoteDescription(new RTCSessionDescription(offerInit));
+          await this.signal.flushIceCandidates(this.pc);
+          await this.createAnswer();
+        } else {
+          // Buffer offer until receiver answers
+          this.pendingRemoteOffer = offerInit;
+        }
       }
 
       // 2. Handling SDP Answer (Caller side)
-      else if (sigType === "answer" || (sig.sdp && this.pc.signalingState === "have-local-offer")) {
-        const sdp = sig.sdp || sig;
-        await this.pc.setRemoteDescription(
-          new RTCSessionDescription({
-            type: "answer",
-            sdp: typeof sdp === "string" ? sdp : sdp.sdp,
-          })
-        );
-        await this.signal.flushIceCandidates(this.pc);
+      else if (sigType === "answer" || (sig.sdp && this.pc?.signalingState === "have-local-offer")) {
+        const sdp = typeof sig.sdp === "string" ? sig.sdp : typeof sig === "string" ? sig : sig.sdp;
+        if (this.pc) {
+          await this.pc.setRemoteDescription(new RTCSessionDescription({ type: "answer", sdp }));
+          await this.signal.flushIceCandidates(this.pc);
+        }
       }
 
       // 3. Handling ICE Candidates
       else if (sigType === "ice-candidate" || sig.candidate || payload.candidate) {
         const candidateData = sig.candidate || payload.candidate || sig;
         if (candidateData && candidateData.candidate) {
-          if (this.pc.remoteDescription) {
-            await this.pc.addIceCandidate(new RTCIceCandidate(candidateData));
+          if (this.pc && this.pc.remoteDescription) {
+            try {
+              await this.pc.addIceCandidate(new RTCIceCandidate(candidateData));
+            } catch (err) {
+              console.warn("[WEBRTC_ICE_CANDIDATE_ADD]", err);
+            }
           } else {
             this.signal.iceCandidateQueue.push(candidateData);
           }
         }
+      }
+
+      // 4. Offer Re-request from Receiver
+      else if (sigType === "request_offer" || payload.type === "webrtc:request_offer") {
+        this.resendOffer();
       }
     } catch (err) {
       console.error("[WEBRTC_SIGNAL_HANDLE_ERROR]", err);
@@ -155,7 +172,6 @@ export class ConnectWebRTCService {
     const stream = await this.media.getLocalMedia(audio, video);
     this.localStream = stream;
     if (this.pc && stream) {
-      // Remove any previously added tracks before adding fresh tracks
       const senders = this.pc.getSenders();
       stream.getTracks().forEach((track) => {
         const existingSender = senders.find((s) => s.track?.kind === track.kind);
@@ -173,6 +189,38 @@ export class ConnectWebRTCService {
       });
     }
     return stream;
+  }
+
+  public resendOffer() {
+    if (this.pc && this.pc.localDescription) {
+      this.signal.sendSignal(this.targetUserId, this.callId, {
+        type: "offer",
+        sdp: this.pc.localDescription.sdp,
+      });
+    }
+  }
+
+  public requestOffer() {
+    if (this.targetUserId) {
+      this.signal.sendSignal(this.targetUserId, this.callId, {
+        type: "request_offer",
+      });
+    }
+  }
+
+  public async processPendingOffer(): Promise<boolean> {
+    if (this.pc && this.pendingRemoteOffer) {
+      try {
+        await this.pc.setRemoteDescription(new RTCSessionDescription(this.pendingRemoteOffer));
+        this.pendingRemoteOffer = null;
+        await this.signal.flushIceCandidates(this.pc);
+        await this.createAnswer();
+        return true;
+      } catch (err) {
+        console.error("[WEBRTC_PROCESS_PENDING_OFFER_ERROR]", err);
+      }
+    }
+    return false;
   }
 
   public async startScreenShare() {
@@ -206,10 +254,6 @@ export class ConnectWebRTCService {
   }
 
   public cleanup() {
-    if (this.signalUnsub) {
-      this.signalUnsub();
-      this.signalUnsub = null;
-    }
     this.media.stopLocalMedia();
     this.media.stopScreenShare();
     if (this.pc) {
@@ -222,6 +266,8 @@ export class ConnectWebRTCService {
     this.remoteStream = null;
     this.targetUserId = null;
     this.callId = null;
+    this.pendingRemoteOffer = null;
+    this.signal.iceCandidateQueue = [];
     this.onRemoteStreamCallback = null;
     this.onConnectionStateChangeCallback = null;
   }
