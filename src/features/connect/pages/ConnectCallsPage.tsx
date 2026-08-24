@@ -43,22 +43,27 @@ export default function ConnectCallsPage() {
   }, [setActiveTab]);
 
   // RTK Query hooks
-  const { data: callLogs = [], isLoading: isLogsLoading } = useGetCallLogsQuery();
-  const { data: colleaguesData } = useGetColleaguesQuery();
+  const { data: rawCallLogs, isLoading: isLogsLoading, isError: isLogsError } = useGetCallLogsQuery();
+  const { data: colleaguesData, isLoading: isColleaguesLoading, isError: isColleaguesError } = useGetColleaguesQuery();
   const { data: iceData } = useGetIceServersQuery();
 
   // Populate dynamic ICE servers
   useEffect(() => {
-    if (iceData?.iceServers) {
+    if (iceData?.iceServers && Array.isArray(iceData.iceServers)) {
       dispatch(setIceServers(iceData.iceServers));
     }
   }, [iceData, dispatch]);
+
+  const callLogs = useMemo(() => {
+    if (Array.isArray(rawCallLogs)) return rawCallLogs;
+    return [];
+  }, [rawCallLogs]);
 
   const employeesList: ConnectUser[] = useMemo(() => {
     let list: ConnectUser[] = [];
     if (Array.isArray(colleaguesData)) {
       list = colleaguesData;
-    } else if (colleaguesData && (colleaguesData as any).colleagues) {
+    } else if (colleaguesData && Array.isArray((colleaguesData as any).colleagues)) {
       list = (colleaguesData as any).colleagues;
     }
     return list.filter((emp) => emp?.id && (emp.name || emp.email) && emp.id !== currentUser?.id && emp.email !== currentUser?.email);
@@ -104,6 +109,14 @@ export default function ConnectCallsPage() {
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="h-16 rounded-2xl bg-card/60 animate-pulse border border-border/40" />
               ))}
+            </div>
+          ) : isLogsError ? (
+            <div className="flex-1 flex items-center justify-center">
+              <ConnectEmptyState
+                variant="calls"
+                title="No call history"
+                description="Your recent audio and video calls will appear here."
+              />
             </div>
           ) : callLogs.length === 0 ? (
             <div className="flex-1 flex items-center justify-center">
@@ -197,8 +210,16 @@ export default function ConnectCallsPage() {
 
           {/* Colleagues List */}
           <div className="flex-1 overflow-y-auto space-y-1.5 scrollbar-thin pr-1">
-            {filteredEmployees.length === 0 ? (
-              <p className="text-center py-8 text-xs text-muted-foreground">No colleagues found</p>
+            {isColleaguesLoading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="h-12 rounded-xl bg-card/60 animate-pulse border border-border/40" />
+                ))}
+              </div>
+            ) : filteredEmployees.length === 0 ? (
+              <p className="text-center py-8 text-xs text-muted-foreground">
+                {isColleaguesError ? "Unable to load colleagues" : "No colleagues found"}
+              </p>
             ) : (
               filteredEmployees.map((emp) => {
                 const fullName = emp.name || emp.email;
@@ -288,3 +309,4 @@ export default function ConnectCallsPage() {
     </ConnectLayout>
   );
 }
+

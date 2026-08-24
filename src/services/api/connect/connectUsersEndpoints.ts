@@ -5,8 +5,25 @@ import { extractListFromEnvelope } from "./extractListHelper";
 
 export const connectUsersApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getMe: builder.query<ConnectUser, void>({ query: () => "/api/v1/connect/users/me", transformResponse: (r: any) => normalizeConnectUser(r?.data || r), providesTags: ["ConnectUser"] }),
-    getColleagues: builder.query<ColleaguesResponse, GetColleaguesParams | void>({ query: (p) => ({ url: "/api/v1/connect/users/colleagues", params: p || undefined }), transformResponse: (r: any): ColleaguesResponse => ({ colleagues: extractListFromEnvelope(r, ["colleagues", "users"]).map(normalizeConnectUser), total: r?.total || 0, page: r?.page || 1, limit: r?.limit || 20 }), providesTags: ["ConnectColleagues"] }),
+    getMe: builder.query<ConnectUser, void>({
+      query: () => "/api/v1/auth/me",
+      transformResponse: (r: any) => normalizeConnectUser(r?.data || r),
+      providesTags: ["ConnectUser"],
+    }),
+    getColleagues: builder.query<ColleaguesResponse, GetColleaguesParams | void>({
+      query: (p) => ({ url: "/api/v1/connect/colleagues", params: p || undefined }),
+      transformResponse: (r: any): ColleaguesResponse => {
+        const rawList = extractListFromEnvelope(r, ["colleagues", "users", "items", "data"]);
+        const colleagues = Array.isArray(rawList) ? rawList.map(normalizeConnectUser) : [];
+        return {
+          colleagues,
+          total: r?.total || colleagues.length,
+          page: r?.page || 1,
+          limit: r?.limit || 20,
+        };
+      },
+      providesTags: ["ConnectColleagues"],
+    }),
     getUserPresence: builder.query<{ presence: string }, string>({ query: (id) => `/api/v1/connect/users/${id}/presence` }),
     batchPresence: builder.mutation<BatchPresenceResponse, BatchPresenceRequest>({ query: (b) => ({ url: "/api/v1/connect/users/presence/batch", method: "POST", body: b }) }),
     getBatchPresence: builder.mutation<BatchPresenceResponse, BatchPresenceRequest>({ query: (b) => ({ url: "/api/v1/connect/users/presence/batch", method: "POST", body: b }) }),
@@ -17,3 +34,4 @@ export const {
   useGetMeQuery, useGetColleaguesQuery, useGetUserPresenceQuery, useBatchPresenceMutation,
   useGetBatchPresenceMutation, useUpdatePresenceMutation, useUpdatePresenceMutation: useUpdateMyPresenceMutation,
 } = connectUsersApi;
+

@@ -24,19 +24,30 @@ export async function initiateOutgoingCall(
     return null;
   }
 
-  let callId = `call_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  let callId: string;
   try {
     const r = await store
       .dispatch(
         connectCallsApi.endpoints.initiateCall.initiate({
-          calleeId: targetUser.id,
-          targetUserId: targetUser.id,
+          calleeId: String(targetUser.id),
           type,
         })
       )
       .unwrap();
-    if (r?.callId) callId = r.callId;
-  } catch {}
+
+    if (r?.callId) {
+      callId = r.callId;
+    } else {
+      throw new Error("No call ID returned by server");
+    }
+  } catch (err: any) {
+    const errorMsg =
+      err?.data?.message ||
+      err?.message ||
+      (typeof err?.data === "string" ? err.data : "Failed to initiate call");
+    toast.error(errorMsg);
+    return null;
+  }
 
   store.dispatch(startOutgoingCall({ targetUser, type, callId }));
 
@@ -71,3 +82,4 @@ export async function initiateOutgoingCall(
   await initWebRTCForCaller(targetUser.id, callId, type);
   return callId;
 }
+
