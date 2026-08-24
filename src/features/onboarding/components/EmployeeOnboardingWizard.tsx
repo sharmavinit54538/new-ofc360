@@ -21,6 +21,16 @@ import {
 } from "../onboardingUiSlice";
 import { OnboardingDocumentUpload } from "./OnboardingDocumentUpload";
 import {
+  Step1PersonalInfo,
+  Step2BankDetails,
+  Step3StatutoryIDs,
+  Step4EmergencyContacts,
+  Step5Education,
+  Step6Experience,
+  Step7Additional,
+  Step9Policies,
+} from "./wizard-steps";
+import {
   User,
   CreditCard,
   FileCheck,
@@ -204,54 +214,6 @@ export const EmployeeOnboardingWizard: React.FC = () => {
     }
   };
 
-  const handleNext1 = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await saveStep1(step1Form);
-    dispatch(setCurrentWizardStep(2));
-  };
-
-  const handleNext2 = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await saveStep2(step2Form);
-    dispatch(setCurrentWizardStep(3));
-  };
-
-  const handleNext3 = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await saveStep3(step3Form);
-    dispatch(setCurrentWizardStep(4));
-  };
-
-  const handleNext4 = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await saveStep4(step4Form);
-    dispatch(setCurrentWizardStep(5));
-  };
-
-  const handleNext5 = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await saveStep5(step5Form);
-    dispatch(setCurrentWizardStep(6));
-  };
-
-  const handleNext6 = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await saveStep6(step6Form);
-    dispatch(setCurrentWizardStep(7));
-  };
-
-  const handleNext7 = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await saveStep7(step7Form);
-    dispatch(setCurrentWizardStep(8));
-  };
-
-  const handleNext9 = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await saveStep9(step9Form);
-    await completeOnboarding();
-  };
-
   const status = statusData?.data;
   const progressPercent = status?.completion_percentage || Math.round((currentWizardStep / 9) * 100);
 
@@ -365,435 +327,71 @@ export const EmployeeOnboardingWizard: React.FC = () => {
           <>
             {/* Step 1: Personal Info & Address */}
             {currentWizardStep === 1 && (
-              <form onSubmit={handleNext1} className="space-y-6">
-                <h3 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
-                  <User className="w-5 h-5 text-violet-400" /> Step 1: Personal & Contact Information
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">First Name *</label>
-                    <input
-                      type="text"
-                      required
-                      value={step1Form.first_name}
-                      onChange={(e) => setStep1Form({ ...step1Form, first_name: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Middle Name</label>
-                    <input
-                      type="text"
-                      value={step1Form.middle_name}
-                      onChange={(e) => setStep1Form({ ...step1Form, middle_name: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Last Name *</label>
-                    <input
-                      type="text"
-                      required
-                      value={step1Form.last_name}
-                      onChange={(e) => setStep1Form({ ...step1Form, last_name: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Date of Birth *</label>
-                    <input
-                      type="date"
-                      required
-                      value={step1Form.date_of_birth}
-                      onChange={(e) => setStep1Form({ ...step1Form, date_of_birth: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Personal Email *</label>
-                    <input
-                      type="email"
-                      required
-                      value={step1Form.personal_email}
-                      onChange={(e) => setStep1Form({ ...step1Form, personal_email: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Phone Number *</label>
-                    <input
-                      type="text"
-                      required
-                      value={step1Form.phone}
-                      onChange={(e) => setStep1Form({ ...step1Form, phone: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="border-t border-slate-800 pt-4 space-y-4">
-                  <h4 className="text-sm font-medium text-slate-300">Current Address</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="md:col-span-2">
-                      <label className="block text-xs font-medium text-slate-300 mb-1">Address Line 1 *</label>
-                      <input
-                        type="text"
-                        required
-                        value={step1Form.current_address_line1}
-                        onChange={(e) => setStep1Form({ ...step1Form, current_address_line1: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-300 mb-1">City *</label>
-                      <input
-                        type="text"
-                        required
-                        value={step1Form.current_city}
-                        onChange={(e) => setStep1Form({ ...step1Form, current_city: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-end pt-4 border-t border-slate-800">
-                  <button
-                    type="submit"
-                    disabled={isSaving1}
-                    className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white font-medium text-sm rounded-lg transition-all flex items-center gap-2"
-                  >
-                    Save & Continue <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </form>
+              <Step1PersonalInfo
+                formData={step1Form}
+                setFormData={setStep1Form}
+                isLoading={isSaving1}
+              />
             )}
 
             {/* Step 2: Bank Details */}
             {currentWizardStep === 2 && (
-              <form onSubmit={handleNext2} className="space-y-6">
-                <h3 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-violet-400" /> Step 2: Direct Deposit & Bank Details
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Bank Name *</label>
-                    <input
-                      type="text"
-                      required
-                      value={step2Form.bank_name}
-                      onChange={(e) => setStep2Form({ ...step2Form, bank_name: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Account Number *</label>
-                    <input
-                      type="text"
-                      required
-                      value={step2Form.account_number}
-                      onChange={(e) => setStep2Form({ ...step2Form, account_number: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">IFSC / Routing Code *</label>
-                    <input
-                      type="text"
-                      required
-                      value={step2Form.ifsc_code}
-                      onChange={(e) => setStep2Form({ ...step2Form, ifsc_code: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Branch Name</label>
-                    <input
-                      type="text"
-                      value={step2Form.branch_name}
-                      onChange={(e) => setStep2Form({ ...step2Form, branch_name: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-between pt-4 border-t border-slate-800">
-                  <button
-                    type="button"
-                    onClick={() => dispatch(setCurrentWizardStep(1))}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5"
-                  >
-                    <ArrowLeft className="w-4 h-4" /> Back
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSaving2}
-                    className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white font-medium text-sm rounded-lg transition-all flex items-center gap-2"
-                  >
-                    Save & Continue <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </form>
+              <Step2BankDetails
+                formData={step2Form}
+                setFormData={setStep2Form}
+                isLoading={isSaving2}
+                onBack={() => dispatch(setCurrentWizardStep(1))}
+              />
             )}
 
             {/* Step 3: Statutory IDs */}
             {currentWizardStep === 3 && (
-              <form onSubmit={handleNext3} className="space-y-6">
-                <h3 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
-                  <FileCheck className="w-5 h-5 text-violet-400" /> Step 3: Government Statutory IDs
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">PAN Number</label>
-                    <input
-                      type="text"
-                      value={step3Form.pan_number}
-                      onChange={(e) => setStep3Form({ ...step3Form, pan_number: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Aadhaar Number</label>
-                    <input
-                      type="text"
-                      value={step3Form.aadhaar_number}
-                      onChange={(e) => setStep3Form({ ...step3Form, aadhaar_number: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Passport Number</label>
-                    <input
-                      type="text"
-                      value={step3Form.passport_number}
-                      onChange={(e) => setStep3Form({ ...step3Form, passport_number: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">PF Account Number</label>
-                    <input
-                      type="text"
-                      value={step3Form.pf_account_number}
-                      onChange={(e) => setStep3Form({ ...step3Form, pf_account_number: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-between pt-4 border-t border-slate-800">
-                  <button
-                    type="button"
-                    onClick={() => dispatch(setCurrentWizardStep(2))}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5"
-                  >
-                    <ArrowLeft className="w-4 h-4" /> Back
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSaving3}
-                    className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white font-medium text-sm rounded-lg transition-all flex items-center gap-2"
-                  >
-                    Save & Continue <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </form>
+              <Step3StatutoryIDs
+                formData={step3Form}
+                setFormData={setStep3Form}
+                isLoading={isSaving3}
+                onBack={() => dispatch(setCurrentWizardStep(2))}
+              />
             )}
 
             {/* Step 4: Emergency Contacts */}
             {currentWizardStep === 4 && (
-              <form onSubmit={handleNext4} className="space-y-6">
-                <h3 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
-                  <PhoneCall className="w-5 h-5 text-violet-400" /> Step 4: Emergency Contact Information
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Primary Contact Name *</label>
-                    <input
-                      type="text"
-                      required
-                      value={step4Form.primary_contact_name}
-                      onChange={(e) => setStep4Form({ ...step4Form, primary_contact_name: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Relationship *</label>
-                    <input
-                      type="text"
-                      required
-                      value={step4Form.primary_relationship}
-                      onChange={(e) => setStep4Form({ ...step4Form, primary_relationship: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Phone Number *</label>
-                    <input
-                      type="text"
-                      required
-                      value={step4Form.primary_phone}
-                      onChange={(e) => setStep4Form({ ...step4Form, primary_phone: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-between pt-4 border-t border-slate-800">
-                  <button
-                    type="button"
-                    onClick={() => dispatch(setCurrentWizardStep(3))}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5"
-                  >
-                    <ArrowLeft className="w-4 h-4" /> Back
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSaving4}
-                    className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white font-medium text-sm rounded-lg transition-all flex items-center gap-2"
-                  >
-                    Save & Continue <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </form>
+              <Step4EmergencyContacts
+                formData={step4Form}
+                setFormData={setStep4Form}
+                isLoading={isSaving4}
+                onBack={() => dispatch(setCurrentWizardStep(3))}
+              />
             )}
 
             {/* Step 5: Education */}
             {currentWizardStep === 5 && (
-              <form onSubmit={handleNext5} className="space-y-6">
-                <h3 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
-                  <GraduationCap className="w-5 h-5 text-violet-400" /> Step 5: Educational History
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Highest Qualification</label>
-                    <input
-                      type="text"
-                      value={step5Form.highest_qualification}
-                      onChange={(e) => setStep5Form({ ...step5Form, highest_qualification: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Institution / University Name</label>
-                    <input
-                      type="text"
-                      value={step5Form.institution_name}
-                      onChange={(e) => setStep5Form({ ...step5Form, institution_name: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-between pt-4 border-t border-slate-800">
-                  <button
-                    type="button"
-                    onClick={() => dispatch(setCurrentWizardStep(4))}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5"
-                  >
-                    <ArrowLeft className="w-4 h-4" /> Back
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSaving5}
-                    className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white font-medium text-sm rounded-lg transition-all flex items-center gap-2"
-                  >
-                    Save & Continue <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </form>
+              <Step5Education
+                formData={step5Form}
+                setFormData={setStep5Form}
+                isLoading={isSaving5}
+                onBack={() => dispatch(setCurrentWizardStep(4))}
+              />
             )}
 
             {/* Step 6: Prior Experience */}
             {currentWizardStep === 6 && (
-              <form onSubmit={handleNext6} className="space-y-6">
-                <h3 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
-                  <Briefcase className="w-5 h-5 text-violet-400" /> Step 6: Prior Work Experience
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Previous Company</label>
-                    <input
-                      type="text"
-                      value={step6Form.previous_company}
-                      onChange={(e) => setStep6Form({ ...step6Form, previous_company: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Last Job Title</label>
-                    <input
-                      type="text"
-                      value={step6Form.last_designation}
-                      onChange={(e) => setStep6Form({ ...step6Form, last_designation: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-between pt-4 border-t border-slate-800">
-                  <button
-                    type="button"
-                    onClick={() => dispatch(setCurrentWizardStep(5))}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5"
-                  >
-                    <ArrowLeft className="w-4 h-4" /> Back
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSaving6}
-                    className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white font-medium text-sm rounded-lg transition-all flex items-center gap-2"
-                  >
-                    Save & Continue <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </form>
+              <Step6Experience
+                formData={step6Form}
+                setFormData={setStep6Form}
+                isLoading={isSaving6}
+                onBack={() => dispatch(setCurrentWizardStep(5))}
+              />
             )}
 
             {/* Step 7: Additional Info */}
             {currentWizardStep === 7 && (
-              <form onSubmit={handleNext7} className="space-y-6">
-                <h3 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-violet-400" /> Step 7: Additional Preferences
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Apparel / Shirt Size</label>
-                    <input
-                      type="text"
-                      value={step7Form.shirt_size}
-                      onChange={(e) => setStep7Form({ ...step7Form, shirt_size: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-300 mb-1">Dietary Preference</label>
-                    <input
-                      type="text"
-                      value={step7Form.dietary_preference}
-                      onChange={(e) => setStep7Form({ ...step7Form, dietary_preference: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3.5 py-2 text-sm text-slate-200 focus:outline-none focus:border-violet-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-between pt-4 border-t border-slate-800">
-                  <button
-                    type="button"
-                    onClick={() => dispatch(setCurrentWizardStep(6))}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5"
-                  >
-                    <ArrowLeft className="w-4 h-4" /> Back
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSaving7}
-                    className="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 text-white font-medium text-sm rounded-lg transition-all flex items-center gap-2"
-                  >
-                    Save & Continue <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </form>
+              <Step7Additional
+                formData={step7Form}
+                setFormData={setStep7Form}
+                isLoading={isSaving7}
+                onBack={() => dispatch(setCurrentWizardStep(6))}
+              />
             )}
 
             {/* Step 8: Document Upload Sub-component */}
@@ -806,67 +404,13 @@ export const EmployeeOnboardingWizard: React.FC = () => {
 
             {/* Step 9: Policies & Completion */}
             {currentWizardStep === 9 && (
-              <form onSubmit={handleNext9} className="space-y-6">
-                <h3 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
-                  <ShieldCheck className="w-5 h-5 text-violet-400" /> Step 9: Compliance & Policy Acceptance
-                </h3>
-                <div className="space-y-3 p-4 bg-slate-950 border border-slate-800 rounded-xl">
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      required
-                      checked={step9Form.nd_agreement_accepted}
-                      onChange={(e) =>
-                        setStep9Form({ ...step9Form, nd_agreement_accepted: e.target.checked })
-                      }
-                      className="mt-0.5 w-4 h-4 text-violet-600 bg-slate-900 border-slate-700 rounded focus:ring-violet-500"
-                    />
-                    <span className="text-sm text-slate-300">
-                      I have read and agree to the Non-Disclosure & Intellectual Property Agreement.
-                    </span>
-                  </label>
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      required
-                      checked={step9Form.code_of_conduct_accepted}
-                      onChange={(e) =>
-                        setStep9Form({ ...step9Form, code_of_conduct_accepted: e.target.checked })
-                      }
-                      className="mt-0.5 w-4 h-4 text-violet-600 bg-slate-900 border-slate-700 rounded focus:ring-violet-500"
-                    />
-                    <span className="text-sm text-slate-300">
-                      I accept the Employee Code of Conduct and Workplace Policies.
-                    </span>
-                  </label>
-                </div>
-
-                <div className="flex justify-between pt-4 border-t border-slate-800">
-                  <button
-                    type="button"
-                    onClick={() => dispatch(setCurrentWizardStep(8))}
-                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5"
-                  >
-                    <ArrowLeft className="w-4 h-4" /> Back to Documents
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSaving9 || isCompleting}
-                    className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold text-sm rounded-lg transition-all shadow-lg shadow-emerald-950/40 flex items-center gap-2"
-                  >
-                    {isCompleting ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Submitting...
-                      </>
-                    ) : (
-                      <>
-                        Complete Onboarding <CheckCircle2 className="w-4 h-4" />
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
+              <Step9Policies
+                formData={step9Form}
+                setFormData={setStep9Form}
+                isLoading={isSaving9}
+                isCompleting={isCompleting}
+                onBack={() => dispatch(setCurrentWizardStep(8))}
+              />
             )}
           </>
         )}

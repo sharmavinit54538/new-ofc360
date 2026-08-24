@@ -1,0 +1,9 @@
+export { Step1PersonalInfo } from "./Step1PersonalInfo";
+export { Step2BankInfo } from "./Step2BankInfo";
+export { Step3Statutory } from "./Step3Statutory";
+export { Step4EmergencyContact } from "./Step4EmergencyContact";
+export { Step5Education } from "./Step5Education";
+export { Step6PriorEmployment } from "./Step6PriorEmployment";
+export { Step7AdditionalDetails } from "./Step7AdditionalDetails";
+export { Step8Document } from "./Step8Document";
+export { Step9Policies } from "./Step9Policies";
