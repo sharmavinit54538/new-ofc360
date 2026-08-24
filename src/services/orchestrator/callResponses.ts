@@ -6,7 +6,7 @@ import {
 } from "@/features/connect/callSlice";
 import { connectWebSocketService } from "../connectWebSocketService";
 import { connectAudioManager } from "../connectAudioManager";
-import { connectApi } from "../api/connectApi";
+import { connectCallsApi } from "../api/connect/connectCallsEndpoints";
 import { ActiveCall } from "@/types/connect";
 import { initWebRTCForReceiver } from "./callWebRTCInit";
 
@@ -21,7 +21,7 @@ export async function acceptCallLogic(call: ActiveCall, onClearTimeout: () => vo
     try {
       await store
         .dispatch(
-          connectApi.endpoints.updateCallStatus.initiate({
+          connectCallsApi.endpoints.updateCallStatus.initiate({
             callId: call.id,
             status: "connected",
           })
@@ -62,7 +62,7 @@ export async function rejectCallLogic(call: ActiveCall, onClearTimeout: () => vo
     try {
       await store
         .dispatch(
-          connectApi.endpoints.updateCallStatus.initiate({
+          connectCallsApi.endpoints.updateCallStatus.initiate({
             callId: call.id,
             status: "rejected",
           })
