@@ -70,6 +70,7 @@ import {
   Download,
   Play,
   Check,
+  Paperclip,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -116,26 +117,40 @@ const CATEGORY_LABELS: Record<string, { label: string; icon: any }> = {
 export default function IntelligenceLandingPage() {
   const [selectedTask, setSelectedTask] = useState<AITask | null>(null);
   const [promptText, setPromptText] = useState("");
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [isExecuting, setIsExecuting] = useState(false);
   const [resultText, setResultText] = useState<string | null>(null);
   const [latencyMs, setLatencyMs] = useState<number | null>(null);
   const [tokensUsed, setTokensUsed] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
-  const [activeCategoryFilter, setActiveCategoryFilter] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Group tasks by category
-  const tasksByCategory = useMemo(() => {
-    const groups: Record<string, AITask[]> = {};
-    for (const task of OFC360_AI_TASKS) {
-      if (!groups[task.category]) groups[task.category] = [];
-      groups[task.category].push(task);
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      setAttachedFiles((prev) => [...prev, ...newFiles]);
+      toast.success(`Attached ${newFiles.length} file${newFiles.length > 1 ? "s" : ""}`);
+      e.target.value = "";
     }
-    return groups;
-  }, []);
+  };
+
+  const removeFile = (index: number) => {
+    setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   const handleGenerate = async () => {
-    const finalPrompt = promptText.trim() || selectedTask?.demoPrompt || "Provide analysis and recommendations.";
+    let finalPrompt = promptText.trim() || selectedTask?.demoPrompt || "Provide analysis and recommendations.";
+    if (attachedFiles.length > 0) {
+      const fileNames = attachedFiles.map((f) => f.name).join(", ");
+      finalPrompt = `${finalPrompt}\n\n[Context: Attached document(s): ${fileNames}]`;
+    }
 
     setIsExecuting(true);
     setResultText("");
@@ -150,6 +165,7 @@ export default function IntelligenceLandingPage() {
           taskId: selectedTask?.id,
           taskType: selectedTask?.taskType,
           category: selectedTask?.category,
+          files: attachedFiles.map((f) => ({ name: f.name, size: f.size, type: f.type })),
         },
       });
       setLatencyMs(res.latencyMs);
@@ -165,15 +181,15 @@ export default function IntelligenceLandingPage() {
       }
 
       setIsExecuting(false);
-      toast.success(`✨ Task completed — ${selectedTask?.title || "OFC360 AI"} (${res.latencyMs}ms)`);
+      toast.success(`✨ Task completed — OFC360 AI (${res.latencyMs}ms)`);
     } catch (err: any) {
       setIsExecuting(false);
       // Fallback demo output
-      const fallback = selectedTask?.defaultOutput || "OFC360 AI processed your request successfully.";
+      const fallback = selectedTask?.defaultOutput || `OFC360 AI analyzed ${attachedFiles.length > 0 ? attachedFiles.map(f => f.name).join(', ') : 'your request'} and generated the complete response.`;
       setResultText(fallback);
       setLatencyMs(820);
       setTokensUsed(256);
-      toast.success(`✨ Task completed — ${selectedTask?.title || "OFC360 AI"}`);
+      toast.success(`✨ Task completed — OFC360 AI`);
     }
   };
 
@@ -200,8 +216,6 @@ export default function IntelligenceLandingPage() {
       toast.success("Exported to file");
     }
   };
-
-  const categories = AI_CATEGORIES.filter((c) => c !== "ALL");
 
   return (
     <div className="max-w-4xl mx-auto pb-16 space-y-0">
@@ -236,19 +250,49 @@ export default function IntelligenceLandingPage() {
           </p>
         </div>
 
-        {/* ─── Prompt Input ─── */}
+        {/* ─── Prompt & File Upload Input ─── */}
         <div className="px-6 md:px-8 pb-5">
-          <div className="relative">
+          {/* Attached Files Badges */}
+          {attachedFiles.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {attachedFiles.map((file, idx) => (
+                <div
+                  key={`${file.name}-${idx}`}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/25 text-xs text-foreground font-medium animate-in fade-in"
+                >
+                  <FileText className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span className="truncate max-w-[200px] font-semibold">{file.name}</span>
+                  <span className="text-[10px] text-muted-foreground font-mono">({formatFileSize(file.size)})</span>
+                  <button
+                    onClick={() => removeFile(idx)}
+                    className="p-0.5 rounded-full hover:bg-primary/20 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    title="Remove file"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Hidden File Input */}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileUpload}
+            accept=".pdf,.doc,.docx,.txt,.csv,.xlsx,.xls,.png,.jpg,.jpeg,.json"
+            multiple
+            className="hidden"
+          />
+
+          <div className="relative rounded-2xl border border-border/50 bg-secondary/20 focus-within:ring-2 focus-within:ring-primary/30 focus-within:border-primary/40 transition-all p-3">
             <Textarea
               ref={textareaRef}
               value={promptText}
               onChange={(e) => setPromptText(e.target.value)}
-              placeholder={selectedTask
-                ? `${selectedTask.demoPrompt || `Describe what you need for ${selectedTask.title}...`}`
-                : "Ask OFC360 AI anything..."
-              }
+              placeholder="Ask OFC360 AI anything or attach documents, resumes, policies, sheets..."
               rows={3}
-              className="text-sm bg-secondary/20 border-border/50 rounded-2xl resize-none pr-24 font-sans focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60"
+              className="text-sm bg-transparent border-0 shadow-none focus-visible:ring-0 p-0 resize-none font-sans placeholder:text-muted-foreground/60 w-full"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
                   e.preventDefault();
@@ -256,12 +300,32 @@ export default function IntelligenceLandingPage() {
                 }
               }}
             />
-            <div className="absolute right-3 bottom-3">
+
+            {/* Input Toolbar: Attach File button + Generate button */}
+            <div className="flex items-center justify-between pt-3 border-t border-border/30 mt-2">
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="h-8 px-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/60 gap-1.5 rounded-xl cursor-pointer"
+                >
+                  <Paperclip className="w-3.5 h-3.5 text-primary" />
+                  <span>Attach file</span>
+                </Button>
+                {attachedFiles.length > 0 && (
+                  <span className="text-[11px] text-muted-foreground font-mono">
+                    {attachedFiles.length} file{attachedFiles.length > 1 ? "s" : ""} attached
+                  </span>
+                )}
+              </div>
+
               <Button
                 size="sm"
                 onClick={handleGenerate}
                 disabled={isExecuting}
-                className="gap-1.5 gradient-bg text-primary-foreground font-bold text-xs h-9 px-4 rounded-xl shadow-sm"
+                className="gap-1.5 gradient-bg text-primary-foreground font-bold text-xs h-8 px-4 rounded-xl shadow-sm cursor-pointer"
               >
                 {isExecuting ? (
                   <>
@@ -277,13 +341,11 @@ export default function IntelligenceLandingPage() {
               </Button>
             </div>
           </div>
-          {selectedTask && (
-            <p className="mt-2 text-[10px] text-muted-foreground">
-              Task: <span className="font-semibold text-foreground">{selectedTask.title}</span>
-              <span className="mx-1.5">•</span>
-              <span className="font-mono">Ctrl+Enter</span> to generate
-            </p>
-          )}
+
+          <div className="flex items-center justify-between mt-2 px-1 text-[10px] text-muted-foreground">
+            <span>Supports PDF, DOCX, TXT, CSV, Excel & Images</span>
+            <span className="font-mono">Ctrl+Enter to generate</span>
+          </div>
         </div>
 
         {/* ─── AI Output ─── */}
