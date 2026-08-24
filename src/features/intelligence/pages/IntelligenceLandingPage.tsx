@@ -114,9 +114,6 @@ const CATEGORY_LABELS: Record<string, { label: string; icon: any }> = {
 };
 
 export default function IntelligenceLandingPage() {
-  const navigate = useNavigate();
-  const [taskSearch, setTaskSearch] = useState("");
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<AITask | null>(null);
   const [promptText, setPromptText] = useState("");
   const [isExecuting, setIsExecuting] = useState(false);
@@ -125,19 +122,7 @@ export default function IntelligenceLandingPage() {
   const [tokensUsed, setTokensUsed] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
 
   // Group tasks by category
   const tasksByCategory = useMemo(() => {
@@ -148,46 +133,6 @@ export default function IntelligenceLandingPage() {
     }
     return groups;
   }, []);
-
-  // Filter tasks for dropdown
-  const filteredTasks = useMemo(() => {
-    const term = taskSearch.trim().toLowerCase();
-    let tasks = OFC360_AI_TASKS;
-
-    if (activeCategoryFilter) {
-      tasks = tasks.filter((t) => t.category === activeCategoryFilter);
-    }
-
-    if (term) {
-      tasks = tasks.filter(
-        (t) =>
-          t.title.toLowerCase().includes(term) ||
-          t.description.toLowerCase().includes(term) ||
-          t.category.toLowerCase().includes(term)
-      );
-    }
-
-    // Group filtered tasks
-    const groups: Record<string, AITask[]> = {};
-    for (const task of tasks) {
-      if (!groups[task.category]) groups[task.category] = [];
-      groups[task.category].push(task);
-    }
-    return groups;
-  }, [taskSearch, activeCategoryFilter]);
-
-  const handleSelectTask = (task: AITask) => {
-    if (task.route) {
-      navigate(task.route);
-      return;
-    }
-    setSelectedTask(task);
-    setPromptText(task.demoPrompt || "");
-    setIsDropdownOpen(false);
-    setResultText(null);
-    // Focus the textarea
-    setTimeout(() => textareaRef.current?.focus(), 100);
-  };
 
   const handleGenerate = async () => {
     const finalPrompt = promptText.trim() || selectedTask?.demoPrompt || "Provide analysis and recommendations.";
@@ -291,156 +236,7 @@ export default function IntelligenceLandingPage() {
           </p>
         </div>
 
-        {/* ─── Task Selector ─── */}
-        <div className="px-6 md:px-8 pb-4">
-          <div className="relative" ref={dropdownRef}>
-            {/* Trigger button */}
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="w-full flex items-center justify-between px-4 py-3 rounded-2xl border border-border/70 bg-secondary/30 hover:border-primary/40 hover:bg-secondary/50 transition-all text-sm cursor-pointer group"
-            >
-              <div className="flex items-center gap-2.5 text-left min-w-0">
-                {selectedTask ? (
-                  <>
-                    {(() => {
-                      const Icon = iconMap[selectedTask.iconName] || Bot;
-                      return <Icon className="w-4 h-4 text-primary shrink-0" />;
-                    })()}
-                    <div className="min-w-0">
-                      <span className="font-semibold text-foreground block truncate">{selectedTask.title}</span>
-                      <span className="text-[10px] text-muted-foreground">{selectedTask.category}</span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <Search className="w-4 h-4 text-muted-foreground shrink-0" />
-                    <span className="text-muted-foreground">Search or select a task...</span>
-                  </>
-                )}
-              </div>
-              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform shrink-0 ${isDropdownOpen ? "rotate-180" : ""}`} />
-            </button>
-
-            {/* Dropdown panel */}
-            <AnimatePresence>
-              {isDropdownOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -4 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute z-50 w-full mt-2 rounded-2xl border border-border/70 bg-card shadow-xl overflow-hidden"
-                >
-                  {/* Search inside dropdown */}
-                  <div className="p-3 border-b border-border/40">
-                    <div className="relative">
-                      <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        type="text"
-                        placeholder="Search tasks for OFC360 AI..."
-                        value={taskSearch}
-                        onChange={(e) => setTaskSearch(e.target.value)}
-                        className="pl-9 pr-8 bg-secondary/30 border-border/50 text-xs h-9 rounded-xl focus:ring-2 focus:ring-primary/30"
-                        autoFocus
-                      />
-                      {taskSearch && (
-                        <button
-                          onClick={() => setTaskSearch("")}
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 rounded-full cursor-pointer"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Category filter chips inside dropdown */}
-                    <div className="flex flex-wrap gap-1.5 mt-2.5">
-                      <button
-                        onClick={() => setActiveCategoryFilter(null)}
-                        className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold cursor-pointer transition-all ${
-                          !activeCategoryFilter
-                            ? "bg-primary/15 text-primary border border-primary/30"
-                            : "bg-secondary/50 text-muted-foreground hover:bg-secondary/80 border border-transparent"
-                        }`}
-                      >
-                        All
-                      </button>
-                      {categories.map((cat) => {
-                        const info = CATEGORY_LABELS[cat];
-                        if (!info) return null;
-                        return (
-                          <button
-                            key={cat}
-                            onClick={() => setActiveCategoryFilter(activeCategoryFilter === cat ? null : cat)}
-                            className={`px-2.5 py-1 rounded-lg text-[10px] font-semibold cursor-pointer transition-all ${
-                              activeCategoryFilter === cat
-                                ? "bg-primary/15 text-primary border border-primary/30"
-                                : "bg-secondary/50 text-muted-foreground hover:bg-secondary/80 border border-transparent"
-                            }`}
-                          >
-                            {info.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Task list grouped by category */}
-                  <div className="max-h-[360px] overflow-y-auto scrollbar-thin">
-                    {Object.keys(filteredTasks).length === 0 && (
-                      <div className="px-4 py-8 text-center text-xs text-muted-foreground">
-                        <Brain className="w-8 h-8 mx-auto mb-2 text-muted-foreground/40" />
-                        No tasks found matching "{taskSearch}"
-                      </div>
-                    )}
-
-                    {Object.entries(filteredTasks).map(([category, tasks]) => (
-                      <div key={category}>
-                        {/* Category header */}
-                        <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-secondary/20 border-b border-border/30 sticky top-0 z-10">
-                          {CATEGORY_LABELS[category]?.label || category}
-                          <span className="ml-1.5 text-muted-foreground/60">({tasks.length})</span>
-                        </div>
-                        {/* Tasks in this category */}
-                        {tasks.map((task) => {
-                          const Icon = iconMap[task.iconName] || Bot;
-                          const isSelected = selectedTask?.id === task.id;
-                          return (
-                            <button
-                              key={task.id}
-                              onClick={() => handleSelectTask(task)}
-                              className={`w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-primary/5 transition-colors cursor-pointer ${
-                                isSelected ? "bg-primary/8" : ""
-                              }`}
-                            >
-                              <Icon className={`w-4 h-4 shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
-                              <div className="min-w-0 flex-1">
-                                <div className={`text-xs font-semibold truncate ${isSelected ? "text-primary" : "text-foreground"}`}>
-                                  {task.title}
-                                </div>
-                                <div className="text-[10px] text-muted-foreground truncate">
-                                  {task.description}
-                                </div>
-                              </div>
-                              {task.route && (
-                                <Badge variant="outline" className="text-[8px] font-mono border-border/50 text-muted-foreground shrink-0">
-                                  Page
-                                </Badge>
-                              )}
-                              {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-
-        {/* ─── Quick Category Chips (outside dropdown) ─── */}
+        {/* ─── Suggested Categories ─── */}
         <div className="px-6 md:px-8 pb-4">
           <p className="text-[11px] text-muted-foreground font-medium mb-2">Suggested categories</p>
           <div className="flex flex-wrap gap-2">
@@ -448,21 +244,28 @@ export default function IntelligenceLandingPage() {
               const info = CATEGORY_LABELS[cat];
               if (!info) return null;
               const Icon = info.icon;
+              const isSelected = activeCategoryFilter === cat;
               return (
                 <button
                   key={cat}
                   onClick={() => {
-                    setActiveCategoryFilter(cat);
-                    setIsDropdownOpen(true);
-                    setTaskSearch("");
+                    const next = isSelected ? null : cat;
+                    setActiveCategoryFilter(next);
+                    if (next) {
+                      const firstTask = tasksByCategory[next]?.[0];
+                      if (firstTask) setSelectedTask(firstTask);
+                    } else {
+                      setSelectedTask(null);
+                    }
                   }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-secondary/40 border border-border/50 text-xs font-medium text-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-primary transition-all cursor-pointer"
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all cursor-pointer ${
+                    isSelected
+                      ? "bg-primary/15 border-primary/40 text-primary font-semibold shadow-xs"
+                      : "bg-secondary/40 border-border/50 text-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+                  }`}
                 >
                   <Icon className="w-3.5 h-3.5" />
                   {info.label}
-                  <span className="text-[10px] text-muted-foreground font-mono">
-                    {tasksByCategory[cat]?.length || 0}
-                  </span>
                 </button>
               );
             })}
