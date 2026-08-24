@@ -51,6 +51,13 @@ export function handleWsCallEvent(
     connectAudioManager.stopOutgoingCall();
     connectAudioManager.playCallConnected();
     store.dispatch(setCallConnecting());
+    const callId = data.callId || data.call_id;
+    setTimeout(() => {
+      const state = store.getState().connectCall;
+      if (state.status === "CONNECTING" || state.status === "connecting") {
+        store.dispatch(setCallConnected({ callId }));
+      }
+    }, 2000);
   }
 
   // 4. Remote peer declined/rejected call
