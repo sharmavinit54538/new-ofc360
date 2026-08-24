@@ -71,6 +71,7 @@ import {
   Play,
   Check,
   Paperclip,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -311,7 +312,7 @@ export default function IntelligenceLandingPage() {
                   onClick={() => fileInputRef.current?.click()}
                   className="h-8 px-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/60 gap-1.5 rounded-xl cursor-pointer"
                 >
-                  <Paperclip className="w-3.5 h-3.5 text-primary" />
+                  <Plus className="w-4 h-4 text-primary" />
                   <span>Attach file</span>
                 </Button>
                 {attachedFiles.length > 0 && (
