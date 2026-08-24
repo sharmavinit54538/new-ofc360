@@ -177,40 +177,8 @@ export function ConnectHeader() {
 
       {/* Right Controls & Quick Actions */}
       <div className="flex items-center gap-2 shrink-0">
-        {/* Global Search Button */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsSearchOpen(true)}
-          className="h-8 px-2.5 text-xs text-muted-foreground border-border/60 gap-1.5 hidden lg:inline-flex"
-        >
-          <Search className="w-3.5 h-3.5" />
-          <span>Search</span>
-          <kbd className="text-[9px] bg-muted border border-border/70 px-1 py-0.2 rounded font-mono">⌘K</kbd>
-        </Button>
-
         {/* Presence Selector */}
         <PresenceSelector />
-
-        {/* Connect Notification & Sound Settings Button */}
-        <Button
-          variant={isMutedAll ? "destructive" : "outline"}
-          size="sm"
-          onClick={() => dispatch(setIsSettingsOpen(true))}
-          className={`h-8 px-2.5 text-xs border-border/60 gap-1.5 transition-all ${
-            isMutedAll
-              ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/40"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-          title={isMutedAll ? "Connect Sounds Muted" : `Sound Settings (${masterVolume}%)`}
-        >
-          {isMutedAll ? (
-            <VolumeX className="w-3.5 h-3.5 text-rose-500 animate-pulse" />
-          ) : (
-            <Volume2 className="w-3.5 h-3.5 text-primary" />
-          )}
-          <span className="hidden md:inline font-semibold">{isMutedAll ? "Muted" : `${masterVolume}%`}</span>
-        </Button>
 
         {/* Start Instant Meeting */}
         <Button

@@ -26,9 +26,11 @@ export class ConnectWebRTCService {
 
   constructor() {
     // Global signal listener binding to never miss incoming offers
-    this.signalUnsub = connectWebSocketService.onSignal((payload: any) => {
-      this.handleIncomingSignal(payload);
-    });
+    if (typeof connectWebSocketService?.onSignal === "function") {
+      this.signalUnsub = connectWebSocketService.onSignal((payload: any) => {
+        this.handleIncomingSignal(payload);
+      });
+    }
   }
 
   public init(config?: WebRTCInitConfig) {
@@ -102,7 +104,7 @@ export class ConnectWebRTCService {
       };
 
       // Ensure signal subscription is active
-      if (!this.signalUnsub) {
+      if (!this.signalUnsub && typeof connectWebSocketService?.onSignal === "function") {
         this.signalUnsub = connectWebSocketService.onSignal((payload: any) => {
           this.handleIncomingSignal(payload);
         });
