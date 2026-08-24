@@ -16,3 +16,4 @@ export function useReportActions() {
 
   return { isRefreshing, isDeleting, handleRefresh, handleDelete };
 }
+
