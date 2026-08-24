@@ -7,7 +7,12 @@ describe("OFC360 Razorpay Real Payment Gateway Integration Tests", () => {
     vi.restoreAllMocks();
   });
 
-  describe("1. Razorpay RTK Query Endpoints Contract", () => {
+  describe("1. Razorpay RTK Query Endpoints Contract (FastAPI /api/v1/payments)", () => {
+    it("should have getPaymentPlans query defined", () => {
+      expect(billingRazorpayApi.endpoints.getPaymentPlans).toBeDefined();
+      expect(typeof billingRazorpayApi.endpoints.getPaymentPlans.initiate).toBe("function");
+    });
+
     it("should have createRazorpayOrder mutation defined", () => {
       expect(billingRazorpayApi.endpoints.createRazorpayOrder).toBeDefined();
       expect(typeof billingRazorpayApi.endpoints.createRazorpayOrder.initiate).toBe("function");
@@ -16,6 +21,16 @@ describe("OFC360 Razorpay Real Payment Gateway Integration Tests", () => {
     it("should have verifyRazorpayPayment mutation defined", () => {
       expect(billingRazorpayApi.endpoints.verifyRazorpayPayment).toBeDefined();
       expect(typeof billingRazorpayApi.endpoints.verifyRazorpayPayment.initiate).toBe("function");
+    });
+
+    it("should have getPaymentHistory query defined", () => {
+      expect(billingRazorpayApi.endpoints.getPaymentHistory).toBeDefined();
+      expect(typeof billingRazorpayApi.endpoints.getPaymentHistory.initiate).toBe("function");
+    });
+
+    it("should have getPaymentDetail query defined", () => {
+      expect(billingRazorpayApi.endpoints.getPaymentDetail).toBeDefined();
+      expect(typeof billingRazorpayApi.endpoints.getPaymentDetail.initiate).toBe("function");
     });
   });
 
@@ -44,10 +59,10 @@ describe("OFC360 Razorpay Real Payment Gateway Integration Tests", () => {
 
       const checkoutPromise = triggerRazorpayCheckout({
         key: "rzp_test_123456",
-        amount: 500000,
+        amount: 1499900,
         currency: "INR",
         name: "OFC360 Enterprise Suite",
-        description: "Upgrade to Professional Tier",
+        description: "Upgrade to Growth Pro Tier",
         order_id: "order_test_999",
       });
 
@@ -57,6 +72,7 @@ describe("OFC360 Razorpay Real Payment Gateway Integration Tests", () => {
       expect(mockOpen).toHaveBeenCalled();
       expect(capturedOptions.name).toBe("OFC360 Enterprise Suite");
       expect(capturedOptions.order_id).toBe("order_test_999");
+      expect(capturedOptions.amount).toBe(1499900);
 
       // Simulate Razorpay payment success callback
       capturedOptions.handler({
@@ -85,10 +101,10 @@ describe("OFC360 Razorpay Real Payment Gateway Integration Tests", () => {
 
       const checkoutPromise = triggerRazorpayCheckout({
         key: "rzp_test_123456",
-        amount: 500000,
+        amount: 1499900,
         currency: "INR",
         name: "OFC360 Enterprise Suite",
-        description: "Upgrade to Professional Tier",
+        description: "Upgrade to Growth Pro Tier",
         order_id: "order_test_999",
       });
 
