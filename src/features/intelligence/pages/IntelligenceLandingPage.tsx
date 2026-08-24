@@ -315,7 +315,7 @@ export default function IntelligenceLandingPage() {
           <div className="flex items-center gap-1.5 bg-secondary/50 p-1.5 rounded-2xl border border-border/50 overflow-x-auto scrollbar-none max-w-full">
             <button
               onClick={() => setActiveCategory("ALL")}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer flex items-center gap-2 ${
                 activeCategory === "ALL"
                   ? "bg-card text-primary shadow-xs font-bold border border-border/80"
                   : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
@@ -323,13 +323,13 @@ export default function IntelligenceLandingPage() {
             >
               <span>ALL — 1 AI ENGINE</span>
               <span
-                className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
                   activeCategory === "ALL"
                     ? "bg-primary/10 text-primary"
                     : "bg-secondary text-muted-foreground"
                 }`}
               >
-                {categoryCounts.ALL || capabilities.length}
+                {categoryCounts.ALL || capabilities.length} CAPABILITIES
               </span>
             </button>
 
