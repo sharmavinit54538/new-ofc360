@@ -1,6 +1,7 @@
 export function WorkforceTrendCard({ headcountRes }: { headcountRes: any }) {
-  const list = headcountRes?.data;
-  if (!list || list.length === 0) return null;
+  const rawList = headcountRes?.data?.data ?? headcountRes?.data;
+  const list = Array.isArray(rawList) ? rawList : [];
+  if (list.length === 0) return null;
   return (
     <div className="glass-card rounded-2xl p-5 border border-border/60 bg-card space-y-3">
       <h3 className="font-bold text-sm text-foreground">Headcount Growth Trend</h3>
@@ -14,3 +15,4 @@ export function WorkforceTrendCard({ headcountRes }: { headcountRes: any }) {
     </div>
   );
 }
+
