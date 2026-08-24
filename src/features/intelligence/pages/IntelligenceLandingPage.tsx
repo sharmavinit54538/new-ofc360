@@ -341,11 +341,6 @@ export default function IntelligenceLandingPage() {
               </Button>
             </div>
           </div>
-
-          <div className="flex items-center justify-between mt-2 px-1 text-[10px] text-muted-foreground">
-            <span>Supports PDF, DOCX, TXT, CSV, Excel & Images</span>
-            <span className="font-mono">Ctrl+Enter to generate</span>
-          </div>
         </div>
 
         {/* ─── AI Output ─── */}
