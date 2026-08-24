@@ -1,6 +1,6 @@
 import { connectWebSocketService } from "../connectWebSocketService";
 import { store } from "@/app/store";
-import { connectApi } from "../api/connectApi";
+import { connectCallsApi } from "../api/connect/connectCallsEndpoints";
 
 export class WebRTCSignalManager {
   public iceCandidateQueue: RTCIceCandidateInit[] = [];
@@ -9,7 +9,7 @@ export class WebRTCSignalManager {
     if (!targetUserId) return;
     const payload = { type: "webrtc:signal", targetUserId, receiver_id: targetUserId, callId, call_id: callId, signal };
     const sent = connectWebSocketService.send("webrtc:signal", payload);
-    if (!sent && callId) store.dispatch(connectApi.endpoints.sendCallSignal.initiate({ callId, targetUserId, signal } as any));
+    if (!sent && callId) store.dispatch(connectCallsApi.endpoints.sendCallSignal.initiate({ callId, targetUserId, signal } as any));
   }
 
   public async flushIceCandidates(pc: RTCPeerConnection | null) {

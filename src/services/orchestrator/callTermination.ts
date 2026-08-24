@@ -2,7 +2,7 @@ import { store } from "@/app/store";
 import { endCall, resetCallState } from "@/features/connect/callSlice";
 import { connectWebSocketService } from "../connectWebSocketService";
 import { connectAudioManager } from "../connectAudioManager";
-import { connectApi } from "../api/connectApi";
+import { connectCallsApi } from "../api/connect/connectCallsEndpoints";
 import { cleanupWebRTC } from "./callWebRTCInit";
 
 export async function cancelCallLogic(callIdParam?: string, onClearTimeout?: () => void) {
@@ -19,7 +19,7 @@ export async function cancelCallLogic(callIdParam?: string, onClearTimeout?: () 
     try {
       await store
         .dispatch(
-          connectApi.endpoints.updateCallStatus.initiate({
+          connectCallsApi.endpoints.updateCallStatus.initiate({
             callId,
             status: "rejected",
           })
@@ -77,7 +77,7 @@ export async function endActiveCallLogic(onClearTimeout?: () => void) {
     try {
       await store
         .dispatch(
-          connectApi.endpoints.updateCallStatus.initiate({
+          connectCallsApi.endpoints.updateCallStatus.initiate({
             callId,
             status: "ended",
             duration: finalDuration,

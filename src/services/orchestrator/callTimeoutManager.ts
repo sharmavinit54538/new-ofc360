@@ -2,7 +2,7 @@ import { store } from "@/app/store";
 import { setCallMissed, resetCallState } from "@/features/connect/callSlice";
 import { connectAudioManager } from "../connectAudioManager";
 import { connectWebSocketService } from "../connectWebSocketService";
-import { connectApi } from "../api/connectApi";
+import { connectCallsApi } from "../api/connect/connectCallsEndpoints";
 import { ConnectUser } from "@/types/connect";
 import { toast } from "sonner";
 
@@ -31,7 +31,7 @@ export class CallTimeoutManager {
 
         try {
           store.dispatch(
-            connectApi.endpoints.updateCallStatus.initiate({
+            connectCallsApi.endpoints.updateCallStatus.initiate({
               callId,
               status: "missed",
             })
