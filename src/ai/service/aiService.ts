@@ -24,7 +24,7 @@ import {
 import { aiConfig, aiEndpoints } from '../config/aiConfig';
 import { OFC360_AI_ENGINE } from '../aiEngine';
 
-interface FeatureAIAdapter {
+export interface FeatureAIAdapter {
   name: string;
   execute: (task: AITaskType, input: unknown, options?: AIServiceOptions) => Promise<unknown>;
 }

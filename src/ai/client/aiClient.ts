@@ -1,4 +1,3 @@
-import { baseApi } from '@/api/client';
 import type {
   AIChatRequest,
   AIChatResponse,

@@ -1,15 +1,10 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { FileCheck, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowRight, Loader2, ArrowLeft, CheckCircle2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
-import { useSaveStep9Mutation, useCompleteEmployeeOnboardingMutation } from "@/services/api/employeeOnboardingApi";
 import { normalizeError } from "@/services/api/normalizeError";
 
 interface Step9PoliciesProps {
@@ -35,28 +30,8 @@ export function Step9Policies({ initialData, onSave, onComplete, onBack, isLoadi
     signature_name: initialData?.signature_name || "",
   });
 
-  const [saveStep9, { isLoading: isSaving }] = useSaveStep9Mutation();
-  const [completeOnboarding, { isLoading: isCompleting }] = useCompleteEmployeeOnboardingMutation();
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.nda_acknowledged || !formData.code_of_conduct_acknowledged) {
-      toast.error("Please acknowledge all corporate policy agreements.");
-      return;
-    }
-    if (!formData.signature_name.trim()) {
-      toast.error("Please type your full legal signature.");
-      return;
-    }
-    try {
-      await onSave(formData);
-      toast.success("Step 9 (Policies & NDA) saved!");
-    } catch (err: any) {
-      toast.error(normalizeError(err).message);
-    }
-  };
-
-  const handleComplete = async () => {
     if (!formData.nda_acknowledged || !formData.code_of_conduct_acknowledged) {
       toast.error("Please acknowledge all corporate policy agreements.");
       return;
@@ -78,7 +53,7 @@ export function Step9Policies({ initialData, onSave, onComplete, onBack, isLoadi
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      onSubmit={handleComplete}
+      onSubmit={handleSubmit}
       className="space-y-5"
     >
       <div>
@@ -86,7 +61,7 @@ export function Step9Policies({ initialData, onSave, onComplete, onBack, isLoadi
         <p className="text-xs text-muted-foreground">Acknowledge corporate security policies and provide digital sign-off.</p>
       </div>
 
-      <div className="space-y-3 p-4 rounded-xl bg-secondary/20 border border-border/60 text-xs space-y-2">
+      <div className="space-y-3 p-4 rounded-xl bg-secondary/20 border border-border/60 text-xs">
         <div className="flex items-start gap-2">
           <input
             type="checkbox"
@@ -148,5 +123,3 @@ export function Step9Policies({ initialData, onSave, onComplete, onBack, isLoadi
     </motion.form>
   );
 }
-
-export { Step9Policies };

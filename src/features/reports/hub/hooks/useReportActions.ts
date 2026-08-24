@@ -1,4 +1,4 @@
-import { useRefreshReportMutation, useDeleteReportMutation } from "../reportsCoreApi";
+import { useRefreshReportMutation, useDeleteReportMutation } from "../../reportsCoreApi";
 
 export function useReportActions() {
   const [refreshReport, { isLoading: isRefreshing }] = useRefreshReportMutation();

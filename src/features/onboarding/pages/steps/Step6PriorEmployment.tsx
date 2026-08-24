@@ -1,19 +1,10 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Briefcase, Building, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { ArrowRight, Loader2, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useSaveStep6Mutation } from "@/services/api/employeeOnboardingApi";
 import { normalizeError } from "@/services/api/normalizeError";
 
 interface Step6PriorEmploymentProps {
@@ -43,8 +34,6 @@ export function Step6PriorEmployment({ initialData, onSave, onBack, isLoading }:
     reason_for_leaving: initialData?.reason_for_leaving || "",
     reference_contact: initialData?.reference_contact || "",
   });
-
-  const [saveStep6, { isLoading: isSaving }] = useSaveStep6Mutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,5 +119,3 @@ export function Step6PriorEmployment({ initialData, onSave, onBack, isLoading }:
     </motion.form>
   );
 }
-
-export { Step6PriorEmployment };

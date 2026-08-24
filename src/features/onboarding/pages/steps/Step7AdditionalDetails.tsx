@@ -1,17 +1,11 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Utensils, Shirt, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, Loader2, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useSaveStep7Mutation } from "@/services/api/employeeOnboardingApi";
 import { normalizeError } from "@/services/api/normalizeError";
 
 interface Step7AdditionalDetailsProps {
@@ -38,8 +32,6 @@ export function Step7AdditionalDetails({ initialData, onSave, onBack, isLoading 
     bio: initialData?.bio || "",
     hobbies: initialData?.hobbies || "",
   });
-
-  const [saveStep7, { isLoading: isSaving }] = useSaveStep7Mutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,5 +124,3 @@ export function Step7AdditionalDetails({ initialData, onSave, onBack, isLoading 
     </motion.form>
   );
 }
-
-export { Step7AdditionalDetails };

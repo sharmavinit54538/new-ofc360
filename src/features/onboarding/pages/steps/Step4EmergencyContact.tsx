@@ -1,17 +1,11 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Phone, Mail, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, Loader2, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useSaveStep4Mutation } from "@/services/api/employeeOnboardingApi";
 import { normalizeError } from "@/services/api/normalizeError";
 
 interface Step4EmergencyContactProps {
@@ -44,8 +38,6 @@ export function Step4EmergencyContact({ initialData, onSave, onBack, isLoading }
     secondary_relationship: initialData?.secondary_relationship || "",
     secondary_phone: initialData?.secondary_phone || "",
   });
-
-  const [saveStep4, { isLoading: isSaving }] = useSaveStep4Mutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -161,5 +153,3 @@ export function Step4EmergencyContact({ initialData, onSave, onBack, isLoading }
     </motion.form>
   );
 }
-
-export { Step4EmergencyContact };

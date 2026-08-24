@@ -1,23 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Upload, FileText, Trash2, X } from "lucide-react";
+import { Upload, FileText, Trash2, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowRight, Loader2, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { useUploadStep8DocumentMutation, useDeleteStep8DocumentMutation, useCompleteStep8DocumentsMutation } from "@/services/api/employeeOnboardingApi";
+import { useUploadStep8DocumentMutation, useDeleteStep8DocumentMutation } from "@/services/api/employeeOnboardingApi";
 import { normalizeError } from "@/services/api/normalizeError";
-
-interface Document {
-  id: string;
-  name: string;
-  type: string;
-  status: string;
-}
 
 interface Step8DocumentProps {
   initialData?: {
@@ -36,7 +25,6 @@ export function Step8Document({ initialData, onSave, onBack, isLoading }: Step8D
 
   const [uploadDocument] = useUploadStep8DocumentMutation();
   const [deleteDocument] = useDeleteStep8DocumentMutation();
-  const [completeStep8] = useCompleteStep8DocumentsMutation();
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, docType: string) => {
     const file = e.target.files?.[0];
@@ -102,7 +90,7 @@ export function Step8Document({ initialData, onSave, onBack, isLoading }: Step8D
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {documentTypes.map(({ type, label, icon: Icon }) => (
+        {documentTypes.map(({ type, label }) => (
           <div key={type} className="p-4 rounded-xl bg-secondary/20 border border-border/60 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-foreground">{label}</span>
@@ -158,12 +146,10 @@ export function Step8Document({ initialData, onSave, onBack, isLoading }: Step8D
 
       <div className="flex justify-between pt-2">
         <Button type="button" variant="outline" onClick={onBack} className="text-xs">Back</Button>
-        <Button type="button" onClick={onSave} disabled={isLoading} className="gradient-bg gap-2 text-xs">
+        <Button type="button" onClick={handleSaveStep8} disabled={isLoading} className="gradient-bg gap-2 text-xs">
           {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Save & Continue <ArrowRight className="w-4 h-4" /></>}
         </Button>
       </div>
     </motion.div>
   );
 }
-
-export { Step8Document };

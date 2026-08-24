@@ -1,17 +1,10 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { GraduationCap, Award, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, Loader2, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useSaveStep5Mutation } from "@/services/api/employeeOnboardingApi";
 import { normalizeError } from "@/services/api/normalizeError";
 
 interface Step5EducationProps {
@@ -41,8 +34,6 @@ export function Step5Education({ initialData, onSave, onBack, isLoading }: Step5
     passing_year: initialData?.passing_year || "",
     grade: initialData?.grade || "",
   });
-
-  const [saveStep5, { isLoading: isSaving }] = useSaveStep5Mutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,5 +125,3 @@ export function Step5Education({ initialData, onSave, onBack, isLoading }: Step5
     </motion.form>
   );
 }
-
-export { Step5Education };

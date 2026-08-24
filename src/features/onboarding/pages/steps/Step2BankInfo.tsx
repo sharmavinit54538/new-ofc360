@@ -1,18 +1,11 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { CreditCard, Building, Mail, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowRight, Loader2, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
-import { useSaveStep2Mutation } from "@/services/api/employeeOnboardingApi";
 import { normalizeError } from "@/services/api/normalizeError";
 
 interface Step2BankInfoProps {
@@ -42,8 +35,6 @@ export function Step2BankInfo({ initialData, onSave, onBack, isLoading }: Step2B
     branch_name: initialData?.branch_name || "",
     account_type: initialData?.account_type || "savings",
   });
-
-  const [saveStep2, { isLoading: isSaving }] = useSaveStep2Mutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,5 +127,3 @@ export function Step2BankInfo({ initialData, onSave, onBack, isLoading }: Step2B
     </motion.form>
   );
 }
-
-export { Step2BankInfo };
