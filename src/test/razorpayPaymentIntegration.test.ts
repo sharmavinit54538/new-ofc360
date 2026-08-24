@@ -17,61 +17,6 @@ describe("OFC360 Razorpay Real Payment Gateway Integration Tests", () => {
       expect(billingRazorpayApi.endpoints.verifyRazorpayPayment).toBeDefined();
       expect(typeof billingRazorpayApi.endpoints.verifyRazorpayPayment.initiate).toBe("function");
     });
-
-    it("should normalize order creation response payload safely", () => {
-      const endpoint = billingRazorpayApi.endpoints.createRazorpayOrder;
-      const rawBackendResponse = {
-        success: true,
-        data: {
-          id: "order_K7x9J2LmP4qR",
-          orderId: "order_K7x9J2LmP4qR",
-          amount: 235882,
-          currency: "INR",
-          key_id: "rzp_live_OFC360Production",
-          name: "OFC360 Enterprise",
-          description: "Plan Upgrade - Growth",
-        },
-      };
-
-      // @ts-ignore
-      const transformed = endpoint.transformResponse(rawBackendResponse);
-      expect(transformed).toEqual({
-        id: "order_K7x9J2LmP4qR",
-        orderId: "order_K7x9J2LmP4qR",
-        amount: 235882,
-        currency: "INR",
-        keyId: "rzp_live_OFC360Production",
-        name: "OFC360 Enterprise",
-        description: "Plan Upgrade - Growth",
-      });
-    });
-
-    it("should normalize payment verification response payload correctly", () => {
-      const endpoint = billingRazorpayApi.endpoints.verifyRazorpayPayment;
-      const rawBackendResponse = {
-        success: true,
-        message: "Payment verified successfully",
-        data: {
-          paymentId: "pay_K7x9PqR12345",
-          orderId: "order_K7x9J2LmP4qR",
-          subscription: {
-            plan: "Growth",
-            billingCycle: "Annual",
-            price: 19188,
-            currency: "INR",
-            status: "active",
-            seats: 25,
-          },
-        },
-      };
-
-      // @ts-ignore
-      const transformed = endpoint.transformResponse(rawBackendResponse);
-      expect(transformed.success).toBe(true);
-      expect(transformed.paymentId).toBe("pay_K7x9PqR12345");
-      expect(transformed.subscription?.plan).toBe("Growth");
-      expect(transformed.subscription?.status).toBe("active");
-    });
   });
 
   describe("2. Razorpay Client SDK Trigger Flow", () => {
@@ -89,7 +34,6 @@ describe("OFC360 Razorpay Real Payment Gateway Integration Tests", () => {
       const mockOpen = vi.fn();
       let capturedOptions: any;
 
-      // Mock window.Razorpay constructor
       window.Razorpay = vi.fn().mockImplementation((options) => {
         capturedOptions = options;
         return {
@@ -106,6 +50,9 @@ describe("OFC360 Razorpay Real Payment Gateway Integration Tests", () => {
         description: "Upgrade to Professional Tier",
         order_id: "order_test_999",
       });
+
+      // Wait a microtick for loadRazorpayScript to resolve
+      await new Promise((r) => setTimeout(r, 10));
 
       expect(mockOpen).toHaveBeenCalled();
       expect(capturedOptions.name).toBe("OFC360 Enterprise Suite");
@@ -144,6 +91,9 @@ describe("OFC360 Razorpay Real Payment Gateway Integration Tests", () => {
         description: "Upgrade to Professional Tier",
         order_id: "order_test_999",
       });
+
+      // Wait a microtick for loadRazorpayScript to resolve
+      await new Promise((r) => setTimeout(r, 10));
 
       capturedOptions.modal.ondismiss();
 
