@@ -2,12 +2,13 @@ import { ShieldAlert } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export function ComplianceRiskAuditCard({ list }: { list?: any[] }) {
-  if (!list || list.length === 0) return null;
+  const safeList = Array.isArray(list) ? list : [];
+  if (safeList.length === 0) return null;
   return (
     <div className="glass-card rounded-2xl p-5 border border-border/60 bg-card space-y-4">
       <h3 className="font-bold text-sm text-foreground flex items-center gap-2"><ShieldAlert className="w-4 h-4 text-rose-500" /> Compliance Risk Audit Register</h3>
       <div className="space-y-2.5">
-        {list.map((risk, idx) => (
+        {safeList.map((risk, idx) => (
           <div key={idx} className="flex justify-between items-center p-3.5 rounded-xl bg-secondary/30 border border-border/40 text-xs">
             <div>
               <div className="flex items-center gap-2">
