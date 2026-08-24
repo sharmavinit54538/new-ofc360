@@ -7,16 +7,53 @@ import { ConnectUser, CallType } from "@/types/connect";
 import { toast } from "sonner";
 import { initWebRTCForCaller } from "./callWebRTCInit";
 
-export async function initiateOutgoingCall(targetUser: ConnectUser, type: CallType, onStartTimeout: (callId: string) => void): Promise<string | null> {
+export async function initiateOutgoingCall(
+  targetUser: ConnectUser,
+  type: CallType,
+  onStartTimeout: (callId: string) => void
+): Promise<string | null> {
   const currentUser = store.getState().auth.user;
-  const callerId = String(currentUser?.id || currentUser?._id || "");
+  const callerId = String(currentUser?.id || (currentUser as any)?._id || "");
   if (!callerId || !targetUser?.id) return null;
-  if (callerId === String(targetUser.id)) { toast.error("You cannot call yourself."); return null; }
+
+  if (callerId === String(targetUser.id)) {
+    toast.error("You cannot call yourself.");
+    return null;
+  }
+
   let callId = `call_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-  try { const r = await store.dispatch(connectApi.endpoints.initiateCall.initiate({ calleeId: targetUser.id, targetUserId: targetUser.id, type })).unwrap(); if (r?.callId) callId = r.callId; } catch {}
+  try {
+    const r = await store
+      .dispatch(
+        connectApi.endpoints.initiateCall.initiate({
+          calleeId: targetUser.id,
+          targetUserId: targetUser.id,
+          type,
+        })
+      )
+      .unwrap();
+    if (r?.callId) callId = r.callId;
+  } catch {}
+
   store.dispatch(startOutgoingCall({ targetUser, type, callId }));
-  connectWebSocketService.send("call:start", { type: "call:start", callId, callerId, receiverId: targetUser.id, callType: type });
-  connectWebSocketService.send("call:incoming", { type: "call:incoming", callId, callerId, receiverId: targetUser.id, callType: type });
+
+  const callPayload = {
+    type: "call:start",
+    callId,
+    callerId,
+    callerName: currentUser?.name || "Colleague",
+    callerAvatar: currentUser?.avatar,
+    callerRole: currentUser?.role,
+    callerEmail: currentUser?.email,
+    receiverId: targetUser.id,
+    targetUserId: targetUser.id,
+    callType: type,
+  };
+
+  connectWebSocketService.send("call:start", callPayload);
+  connectWebSocketService.send("call:incoming", callPayload);
+  connectWebSocketService.send("call:invite", callPayload);
+
   connectAudioManager.playOutgoingCall();
   onStartTimeout(callId);
   await initWebRTCForCaller(targetUser.id, callId, type);

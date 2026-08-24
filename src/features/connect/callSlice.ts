@@ -13,12 +13,13 @@ export interface CallState {
   isSpeakerOn: boolean;
   duration: number;
   iceServers: IceServerConfig[];
+  errorMessage?: string;
 }
 
 const initialState: CallState = {
   activeCall: null,
   incomingCall: null,
-  status: "idle",
+  status: "IDLE",
   type: null,
   remoteUser: null,
   isMuted: false,
@@ -45,7 +46,7 @@ export const callSlice = createSlice({
         id: callId,
         type: action.payload.type,
         targetUser: action.payload.targetUser,
-        status: "calling",
+        status: "OUTGOING_CALLING",
         startTime: Date.now(),
         duration: 0,
         isMuted: false,
@@ -55,12 +56,20 @@ export const callSlice = createSlice({
       };
 
       state.activeCall = newCall;
-      state.status = "calling";
+      state.status = "OUTGOING_CALLING";
       state.type = action.payload.type;
       state.remoteUser = action.payload.targetUser;
       state.isMuted = false;
       state.isCameraEnabled = action.payload.type === "video";
       state.duration = 0;
+      state.errorMessage = undefined;
+    },
+
+    setOutgoingRinging: (state) => {
+      state.status = "OUTGOING_RINGING";
+      if (state.activeCall) {
+        state.activeCall.status = "OUTGOING_RINGING";
+      }
     },
 
     receiveIncomingCall: (
@@ -73,7 +82,7 @@ export const callSlice = createSlice({
         type: action.payload.type,
         targetUser: action.payload.caller,
         isIncoming: true,
-        status: "ringing",
+        status: "INCOMING_RINGING",
         duration: 0,
         isMuted: false,
         isCameraOff: action.payload.type === "audio",
@@ -81,46 +90,75 @@ export const callSlice = createSlice({
       };
 
       state.incomingCall = incoming;
-      state.status = "ringing";
+      state.status = "INCOMING_RINGING";
       state.type = action.payload.type;
       state.remoteUser = action.payload.caller;
+      state.errorMessage = undefined;
     },
 
     acceptIncomingCall: (state) => {
       if (!state.incomingCall) return;
-      const connectedCall: ActiveCall = {
+      const connectingCall: ActiveCall = {
         ...state.incomingCall,
-        status: "connected",
+        status: "CONNECTING",
         startTime: Date.now(),
         duration: 0,
       };
-      state.activeCall = connectedCall;
+      state.activeCall = connectingCall;
       state.incomingCall = null;
-      state.status = "connected";
+      state.status = "CONNECTING";
     },
 
     rejectIncomingCall: (state) => {
       state.incomingCall = null;
-      state.status = "idle";
+      state.status = "DECLINED";
       state.remoteUser = null;
       state.type = null;
+    },
+
+    setCallConnecting: (state) => {
+      state.status = "CONNECTING";
+      if (state.activeCall) {
+        state.activeCall.status = "CONNECTING";
+      }
     },
 
     setCallConnected: (state, action?: PayloadAction<{ callId?: string } | void | undefined>) => {
       if (state.activeCall) {
-        state.activeCall.status = "connected";
+        state.activeCall.status = "CONNECTED";
         state.activeCall.startTime = state.activeCall.startTime || Date.now();
       }
-      state.status = "connected";
+      state.status = "CONNECTED";
+    },
+
+    setCallDeclined: (state) => {
+      state.status = "DECLINED";
+      if (state.activeCall) {
+        state.activeCall.status = "DECLINED";
+      }
+    },
+
+    setCallMissed: (state) => {
+      state.status = "MISSED";
+      if (state.activeCall) {
+        state.activeCall.status = "MISSED";
+      }
+    },
+
+    setCallFailed: (state, action?: PayloadAction<string | undefined>) => {
+      state.status = "FAILED";
+      state.errorMessage = action?.payload || "Unable to connect call";
+      if (state.activeCall) {
+        state.activeCall.status = "FAILED";
+      }
     },
 
     endCall: (state) => {
-      state.activeCall = null;
+      state.status = "ENDED";
+      if (state.activeCall) {
+        state.activeCall.status = "ENDED";
+      }
       state.incomingCall = null;
-      state.status = "ended";
-      state.type = null;
-      state.remoteUser = null;
-      state.duration = 0;
       state.isScreenSharing = false;
     },
 
@@ -155,7 +193,7 @@ export const callSlice = createSlice({
     },
 
     incrementCallDuration: (state) => {
-      if (state.status === "connected") {
+      if (state.status === "CONNECTED" || state.status === "connected") {
         state.duration += 1;
         if (state.activeCall) state.activeCall.duration += 1;
       }
@@ -170,10 +208,15 @@ export const callSlice = createSlice({
 
 export const {
   startOutgoingCall,
+  setOutgoingRinging,
   receiveIncomingCall,
   acceptIncomingCall,
   rejectIncomingCall,
+  setCallConnecting,
   setCallConnected,
+  setCallDeclined,
+  setCallMissed,
+  setCallFailed,
   endCall,
   resetCallState,
   setIceServers,

@@ -146,13 +146,55 @@ export function useConnectCall() {
     [dispatch]
   );
 
+  const setOutgoingRinging = useCallback(
+    () => dispatch(callActions.setOutgoingRinging()),
+    [dispatch]
+  );
+
+  const setCallConnecting = useCallback(
+    () => dispatch(callActions.setCallConnecting()),
+    [dispatch]
+  );
+
+  const setCallConnected = useCallback(
+    (callId?: string) => dispatch(callActions.setCallConnected({ callId })),
+    [dispatch]
+  );
+
+  const setCallDeclined = useCallback(
+    () => dispatch(callActions.setCallDeclined()),
+    [dispatch]
+  );
+
+  const setCallMissed = useCallback(
+    () => dispatch(callActions.setCallMissed()),
+    [dispatch]
+  );
+
+  const setCallFailed = useCallback(
+    (error?: string) => dispatch(callActions.setCallFailed(error)),
+    [dispatch]
+  );
+
+  const resetCallState = useCallback(
+    () => dispatch(callActions.resetCallState()),
+    [dispatch]
+  );
+
   return {
     ...state,
     startOutgoingCall,
+    setOutgoingRinging,
     receiveIncomingCall,
     acceptIncomingCall,
     rejectIncomingCall,
+    setCallConnecting,
+    setCallConnected,
+    setCallDeclined,
+    setCallMissed,
+    setCallFailed,
     endCall,
+    resetCallState,
     toggleMute,
     toggleCamera,
     toggleScreenShare,

@@ -8,31 +8,27 @@ import { Phone, PhoneOff, Video } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function IncomingCallModal() {
-  const { incomingCall } = useConnectCall();
+  const { incomingCall, status } = useConnectCall();
+
+  const isIncomingRinging =
+    status === "INCOMING_RINGING" ||
+    status === "ringing" ||
+    Boolean(incomingCall);
 
   // Play incoming ringtone while ringing
   useEffect(() => {
-    if (incomingCall) {
+    if (isIncomingRinging && incomingCall) {
       connectAudioManager.playIncomingCall();
       return () => {
         connectAudioManager.stopIncomingCall();
       };
     }
-  }, [incomingCall]);
+  }, [isIncomingRinging, incomingCall]);
 
-  if (!incomingCall) return null;
+  if (!incomingCall || !isIncomingRinging) return null;
 
-  const handleAccept = async () => {
-    console.log(`[CALL_ACCEPTED] User accepting incoming call ${incomingCall.id} from ${incomingCall.targetUser?.name}`);
-    await connectCallOrchestrator.acceptCall(incomingCall);
-  };
-
-  const handleReject = async () => {
-    console.log(`[CALL_REJECTED] User rejecting incoming call ${incomingCall.id} from ${incomingCall.targetUser?.name}`);
-    await connectCallOrchestrator.rejectCall(incomingCall);
-  };
-
-  const callerName = incomingCall?.targetUser?.name || "Unknown";
+  const callerUser = incomingCall.caller || incomingCall.targetUser;
+  const callerName = callerUser?.name || "Colleague";
   const initials = callerName
     .split(" ")
     .filter(Boolean)
@@ -40,6 +36,14 @@ export function IncomingCallModal() {
     .join("")
     .slice(0, 2)
     .toUpperCase() || "U";
+
+  const handleAccept = async () => {
+    await connectCallOrchestrator.acceptCall(incomingCall);
+  };
+
+  const handleReject = async () => {
+    await connectCallOrchestrator.rejectCall(incomingCall);
+  };
 
   return (
     <AnimatePresence>
@@ -53,7 +57,7 @@ export function IncomingCallModal() {
           <div className="relative">
             <span className="absolute inset-0 rounded-full bg-emerald-500/30 animate-ping" />
             <Avatar className="w-12 h-12 border-2 border-emerald-500 shadow-md">
-              <AvatarImage src={incomingCall?.targetUser?.avatar} alt={callerName} />
+              <AvatarImage src={callerUser?.avatar} alt={callerName} />
               <AvatarFallback className="text-sm font-bold bg-primary/10 text-primary">
                 {initials}
               </AvatarFallback>
@@ -62,11 +66,11 @@ export function IncomingCallModal() {
 
           <div className="min-w-0 flex-1">
             <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">
-              Incoming {incomingCall?.type === "video" ? "Video" : "Audio"} Call...
+              Incoming {incomingCall.type === "video" ? "Video" : "Voice"} Call...
             </span>
             <h4 className="text-sm font-bold text-foreground truncate">{callerName}</h4>
             <p className="text-[11px] text-muted-foreground truncate">
-              {incomingCall?.targetUser?.role || "Colleague"} • {incomingCall?.targetUser?.department || "General"}
+              {callerUser?.role || "Colleague"} • {callerUser?.department || "General"}
             </p>
           </div>
         </div>
@@ -77,7 +81,7 @@ export function IncomingCallModal() {
             type="button"
             variant="destructive"
             onClick={handleReject}
-            className="flex-1 h-9 rounded-xl text-xs gap-1.5 font-semibold bg-rose-600 hover:bg-rose-700"
+            className="flex-1 h-9 rounded-xl text-xs gap-1.5 font-semibold bg-rose-600 hover:bg-rose-700 cursor-pointer"
           >
             <PhoneOff className="w-3.5 h-3.5" />
             <span>Decline</span>
@@ -86,10 +90,14 @@ export function IncomingCallModal() {
           <Button
             type="button"
             onClick={handleAccept}
-            className="flex-1 h-9 rounded-xl text-xs gap-1.5 font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
+            className="flex-1 h-9 rounded-xl text-xs gap-1.5 font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md cursor-pointer"
           >
-            {incomingCall.type === "video" ? <Video className="w-3.5 h-3.5" /> : <Phone className="w-3.5 h-3.5" />}
-            <span>Accept</span>
+            {incomingCall.type === "video" ? (
+              <Video className="w-3.5 h-3.5" />
+            ) : (
+              <Phone className="w-3.5 h-3.5" />
+            )}
+            <span>Answer</span>
           </Button>
         </div>
       </motion.div>

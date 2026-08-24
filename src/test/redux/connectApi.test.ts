@@ -204,11 +204,11 @@ describe("Connect Redux Slices & State Management", () => {
 
   it("should handle callSlice calling lifecycle and controls", () => {
     store.dispatch(startOutgoingCall({ targetUser: dummyUser, type: "audio" }));
-    expect(selectCallStatus(store.getState())).toBe("calling");
+    expect(selectCallStatus(store.getState())).toBe("OUTGOING_CALLING");
     expect(selectActiveCall(store.getState())?.targetUser.id).toBe(dummyUser.id);
 
     store.dispatch(setCallConnected());
-    expect(selectCallStatus(store.getState())).toBe("connected");
+    expect(selectCallStatus(store.getState())).toBe("CONNECTED");
 
     store.dispatch(toggleMute(true));
     expect(store.getState().connectCall.isMuted).toBe(true);
@@ -220,20 +220,22 @@ describe("Connect Redux Slices & State Management", () => {
     expect(store.getState().connectCall.isScreenSharing).toBe(true);
 
     store.dispatch(endCall());
-    expect(selectCallStatus(store.getState())).toBe("ended");
-    expect(selectActiveCall(store.getState())).toBeNull();
+    expect(selectCallStatus(store.getState())).toBe("ENDED");
 
     // Incoming call handling
     store.dispatch(receiveIncomingCall({ caller: dummyUser, type: "video" }));
     expect(selectIncomingCall(store.getState())?.targetUser.name).toBe("Jane Doe");
-    expect(selectCallStatus(store.getState())).toBe("ringing");
+    expect(selectCallStatus(store.getState())).toBe("INCOMING_RINGING");
 
     store.dispatch(acceptIncomingCall());
-    expect(selectCallStatus(store.getState())).toBe("connected");
+    expect(selectCallStatus(store.getState())).toBe("CONNECTING");
     expect(selectActiveCall(store.getState())).not.toBeNull();
 
+    store.dispatch(setCallConnected());
+    expect(selectCallStatus(store.getState())).toBe("CONNECTED");
+
     store.dispatch(endCall());
-    expect(selectActiveCall(store.getState())).toBeNull();
+    expect(selectCallStatus(store.getState())).toBe("ENDED");
   });
 
   it("should handle meetingSlice lifecycle", () => {

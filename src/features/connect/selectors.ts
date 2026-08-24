@@ -21,15 +21,29 @@ export const selectIsMailArtifactOpen = (state: RootState) => state.connect.isMa
 export const selectCallState = (state: RootState) => state.connectCall;
 export const selectActiveCall = (state: RootState) => state.connectCall.activeCall;
 export const selectIncomingCall = (state: RootState) => state.connectCall.incomingCall;
+export const selectOutgoingCall = (state: RootState) => {
+  const status = state.connectCall.status;
+  if (status === "OUTGOING_CALLING" || status === "OUTGOING_RINGING" || status === "calling" || status === "ringing") {
+    return state.connectCall.activeCall;
+  }
+  return null;
+};
 export const selectCallStatus = (state: RootState) => state.connectCall.status;
 export const selectCallType = (state: RootState) => state.connectCall.type;
 export const selectCallRemoteUser = (state: RootState) => state.connectCall.remoteUser;
+export const selectRemoteParticipant = (state: RootState) => state.connectCall.remoteUser;
 export const selectIsCallMuted = (state: RootState) => state.connectCall.isMuted;
 export const selectIsCallCameraEnabled = (state: RootState) => state.connectCall.isCameraEnabled;
 export const selectIsCallScreenSharing = (state: RootState) => state.connectCall.isScreenSharing;
 export const selectIsCallSpeakerOn = (state: RootState) => state.connectCall.isSpeakerOn;
 export const selectCallDuration = (state: RootState) => state.connectCall.duration;
 export const selectIceServers = (state: RootState) => state.connectCall.iceServers;
+export const selectIsCallActive = (state: RootState) => state.connectCall.status === "CONNECTED" || state.connectCall.status === "connected";
+export const selectIsCallConnecting = (state: RootState) => state.connectCall.status === "CONNECTING" || state.connectCall.status === "connecting";
+export const selectIsCallRinging = (state: RootState) =>
+  state.connectCall.status === "OUTGOING_RINGING" ||
+  state.connectCall.status === "INCOMING_RINGING" ||
+  state.connectCall.status === "ringing";
 
 // Meeting Selectors
 export const selectMeetingState = (state: RootState) => state.connectMeeting;

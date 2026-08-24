@@ -4,6 +4,12 @@ import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import {
   selectMasterVolume,
   selectIsMutedAll,
+  selectCallStatus,
+  selectActiveCall,
+  selectIncomingCall,
+  selectCallRemoteUser,
+  selectCallDuration,
+  selectCallType,
 } from "@/features/connect/selectors";
 import { setIsSettingsOpen } from "@/features/connect/soundSettingsSlice";
 import {
@@ -26,16 +32,26 @@ import {
   Users,
   Volume2,
   VolumeX,
+  Phone,
+  PhoneForwarded,
 } from "lucide-react";
 
 export function ConnectHeader() {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();
-  const { activeTab, setIsSearchOpen, setIsNewMeetingOpen } = useConnect();
+  const { setIsSearchOpen, setIsNewMeetingOpen } = useConnect();
 
   const isMutedAll = useAppSelector(selectIsMutedAll);
   const masterVolume = useAppSelector(selectMasterVolume);
+
+  // Call Status Selectors
+  const callStatus = useAppSelector(selectCallStatus);
+  const activeCall = useAppSelector(selectActiveCall);
+  const incomingCall = useAppSelector(selectIncomingCall);
+  const remoteUser = useAppSelector(selectCallRemoteUser);
+  const callDuration = useAppSelector(selectCallDuration);
+  const callType = useAppSelector(selectCallType);
 
   // RTK Query hooks
   const { data: conversations = [] } = useGetConversationsQuery();
@@ -44,6 +60,29 @@ export function ConnectHeader() {
   const { data: sharedFiles = [] } = useGetFilesQuery();
 
   const unreadMessagesCount = conversations.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
+
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins < 10 ? `0${mins}` : mins}:${secs < 10 ? `0${secs}` : secs}`;
+  };
+
+  const isConnected = callStatus === "CONNECTED" || callStatus === "connected";
+  const isOutgoing =
+    callStatus === "OUTGOING_CALLING" ||
+    callStatus === "OUTGOING_RINGING" ||
+    callStatus === "calling";
+  const isIncoming =
+    callStatus === "INCOMING_RINGING" ||
+    callStatus === "ringing" ||
+    Boolean(incomingCall);
+
+  const callPartnerName =
+    remoteUser?.name ||
+    activeCall?.targetUser?.name ||
+    incomingCall?.caller?.name ||
+    incomingCall?.targetUser?.name ||
+    "Colleague";
 
   const tabs = [
     {
@@ -110,6 +149,31 @@ export function ConnectHeader() {
           );
         })}
       </div>
+
+      {/* Global In-Call / Status Indicator Banner */}
+      {isConnected && (
+        <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-semibold animate-pulse">
+          <span className="w-2 h-2 rounded-full bg-emerald-500" />
+          <span>In call with {callPartnerName}</span>
+          <span className="font-mono bg-emerald-500/20 px-1.5 py-0.5 rounded font-bold">
+            {formatDuration(callDuration)}
+          </span>
+        </div>
+      )}
+
+      {isOutgoing && (
+        <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-semibold">
+          <PhoneForwarded className="w-3.5 h-3.5 animate-bounce" />
+          <span>Calling {callPartnerName}...</span>
+        </div>
+      )}
+
+      {isIncoming && !isConnected && (
+        <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-semibold animate-pulse">
+          <Phone className="w-3.5 h-3.5 animate-bounce" />
+          <span>Incoming call from {callPartnerName}</span>
+        </div>
+      )}
 
       {/* Right Controls & Quick Actions */}
       <div className="flex items-center gap-2 shrink-0">

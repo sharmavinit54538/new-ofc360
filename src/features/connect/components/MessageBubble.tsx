@@ -14,6 +14,11 @@ import {
   Play,
   Pause,
   Volume2,
+  Phone,
+  PhoneIncoming,
+  PhoneOutgoing,
+  PhoneMissed,
+  Video,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -147,8 +152,38 @@ export function MessageBubble({
             </div>
           )}
 
-          {/* Voice Message UI */}
-          {message.isVoiceMessage ? (
+          {/* Call Event UI */}
+          {message.isCallEvent || message.type === "call" || message.type === "call_event" ? (
+            <div className="flex items-center gap-3 py-1 px-1">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                message.callStatus === "missed" || message.content?.toLowerCase().includes("missed")
+                  ? "bg-rose-500/20 text-rose-500"
+                  : message.callStatus === "declined" || message.content?.toLowerCase().includes("declined")
+                  ? "bg-amber-500/20 text-amber-500"
+                  : "bg-emerald-500/20 text-emerald-500"
+              }`}>
+                {message.callType === "video" || message.content?.toLowerCase().includes("video") ? (
+                  <Video className="w-4 h-4" />
+                ) : message.callStatus === "missed" || message.content?.toLowerCase().includes("missed") ? (
+                  <PhoneMissed className="w-4 h-4" />
+                ) : isOutgoing ? (
+                  <PhoneOutgoing className="w-4 h-4" />
+                ) : (
+                  <PhoneIncoming className="w-4 h-4" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="font-semibold text-xs leading-snug">
+                  {message.content}
+                </p>
+                {message.callDuration !== undefined && (
+                  <span className="text-[10px] opacity-75 font-mono">
+                    Duration: {Math.floor(message.callDuration / 60)}m {message.callDuration % 60}s
+                  </span>
+                )}
+              </div>
+            </div>
+          ) : message.isVoiceMessage ? (
             <div className="flex items-center gap-3 py-1">
               <Button
                 type="button"

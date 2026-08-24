@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useConnectCall } from "@/features/connect/hooks";
 import { connectCallOrchestrator } from "@/services/connectCallOrchestrator";
-import { connectAudioManager } from "@/services/connectAudioManager";
 import { connectWebRTCService } from "@/services/connectWebRTCService";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,11 @@ import {
   VolumeX,
   PhoneOff,
   Wifi,
+  PhoneCall,
+  Loader2,
+  RotateCcw,
+  AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -31,15 +35,24 @@ export function CallScreen() {
 
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
 
-  // Duration counter
+  const isConnected = status === "CONNECTED" || status === "connected";
+  const isCalling = status === "OUTGOING_CALLING" || status === "calling";
+  const isRinging = status === "OUTGOING_RINGING" || status === "ringing";
+  const isConnecting = status === "CONNECTING" || status === "connecting";
+  const isDeclined = status === "DECLINED" || status === "declined";
+  const isMissed = status === "MISSED" || status === "missed";
+  const isFailed = status === "FAILED" || status === "failed";
+  const isEnded = status === "ENDED" || status === "ended";
+
+  // Duration counter starts ONLY when connected
   useEffect(() => {
-    if (status === "connected") {
+    if (isConnected) {
       const timer = setInterval(() => {
         incrementDuration();
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [status, incrementDuration]);
+  }, [isConnected, incrementDuration]);
 
   // Sync mute state to WebRTC
   useEffect(() => {
@@ -58,12 +71,54 @@ export function CallScreen() {
     await connectCallOrchestrator.endActiveCall();
   };
 
-  const initials = remoteUser.name
+  const handleRetry = async () => {
+    if (remoteUser) {
+      await connectCallOrchestrator.initiateCall(remoteUser, "audio");
+    }
+  };
+
+  const initials = (remoteUser.name || "U")
     .split(" ")
+    .filter(Boolean)
     .map((n) => n[0])
     .join("")
     .slice(0, 2)
     .toUpperCase();
+
+  const getStatusDisplay = () => {
+    if (isCalling) {
+      return { text: "Calling...", icon: PhoneCall, color: "text-amber-500", pulse: true };
+    }
+    if (isRinging) {
+      return { text: "Ringing...", icon: PhoneCall, color: "text-amber-500", pulse: true };
+    }
+    if (isConnecting) {
+      return { text: "Connecting...", icon: Loader2, color: "text-primary", spin: true };
+    }
+    if (isConnected) {
+      return { text: "Connected", icon: Wifi, color: "text-emerald-500" };
+    }
+    if (isDeclined) {
+      return { text: "Call Declined", icon: AlertCircle, color: "text-rose-500" };
+    }
+    if (isMissed) {
+      return { text: "Missed Call", icon: AlertCircle, color: "text-rose-500" };
+    }
+    if (isFailed) {
+      return { text: "Unable to connect call", icon: AlertCircle, color: "text-rose-500" };
+    }
+    if (isEnded) {
+      return {
+        text: duration > 0 ? `Call ended • ${formatDuration(duration)}` : "Call ended",
+        icon: CheckCircle2,
+        color: "text-muted-foreground",
+      };
+    }
+    return { text: "Connecting...", icon: Wifi, color: "text-muted-foreground" };
+  };
+
+  const statusInfo = getStatusDisplay();
+  const StatusIcon = statusInfo.icon;
 
   return (
     <AnimatePresence>
@@ -76,22 +131,35 @@ export function CallScreen() {
         <div className="w-full max-w-sm rounded-3xl bg-card border border-border/80 p-6 flex flex-col items-center text-center shadow-2xl relative overflow-hidden">
           {/* Top Status Bar */}
           <div className="w-full flex items-center justify-between text-xs text-muted-foreground mb-6">
-            <div className="flex items-center gap-1.5 font-medium">
-              <Wifi className="w-3.5 h-3.5 text-emerald-500" />
-              <span>{status === "connected" ? "Connected" : status === "calling" ? "Calling..." : status === "ringing" ? "Ringing..." : "Connecting..."}</span>
+            <div className={`flex items-center gap-1.5 font-medium ${statusInfo.color}`}>
+              <StatusIcon
+                className={`w-3.5 h-3.5 ${statusInfo.spin ? "animate-spin" : ""} ${
+                  statusInfo.pulse ? "animate-pulse" : ""
+                }`}
+              />
+              <span>{statusInfo.text}</span>
             </div>
-            <span className="font-mono bg-muted/60 px-2 py-0.5 rounded-full font-bold">
-              {formatDuration(duration)}
-            </span>
+            {isConnected ? (
+              <span className="font-mono bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full font-bold">
+                {formatDuration(duration)}
+              </span>
+            ) : duration > 0 ? (
+              <span className="font-mono bg-muted/60 px-2 py-0.5 rounded-full font-bold">
+                {formatDuration(duration)}
+              </span>
+            ) : null}
           </div>
 
           {/* Animated Avatar Rings */}
           <div className="relative mb-6">
-            {status === "connected" && (
-              <span className="absolute inset-0 rounded-full bg-primary/20 animate-ping opacity-60" />
+            {isConnected && (
+              <span className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping opacity-60" />
             )}
-            {status === "calling" && (
-              <span className="absolute inset-0 rounded-full bg-amber-500/20 animate-pulse opacity-60" />
+            {(isCalling || isRinging) && (
+              <span className="absolute inset-0 rounded-full bg-amber-500/25 animate-pulse opacity-75" />
+            )}
+            {isConnecting && (
+              <span className="absolute inset-0 rounded-full bg-primary/20 animate-spin opacity-60" />
             )}
             <div className="relative w-24 h-24 rounded-full border-4 border-card shadow-xl overflow-hidden bg-primary/10 flex items-center justify-center">
               <Avatar className="w-full h-full">
@@ -111,45 +179,69 @@ export function CallScreen() {
 
           {/* Control Bar */}
           <div className="flex items-center gap-4">
-            {/* Mic toggle */}
-            <Button
-              type="button"
-              variant={isMuted ? "destructive" : "secondary"}
-              size="icon"
-              onClick={() => toggleMute()}
-              className="w-12 h-12 rounded-full shadow-md transition-all hover:scale-105"
-              title={isMuted ? "Unmute Microphone" : "Mute Microphone"}
-            >
-              {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-            </Button>
+            {isFailed ? (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleEndCall}
+                  className="rounded-xl px-4 text-xs font-semibold"
+                >
+                  Close
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleRetry}
+                  className="rounded-xl px-4 text-xs font-semibold gradient-bg text-white gap-1.5"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Retry Call</span>
+                </Button>
+              </>
+            ) : (
+              <>
+                {/* Mic toggle */}
+                <Button
+                  type="button"
+                  variant={isMuted ? "destructive" : "secondary"}
+                  size="icon"
+                  onClick={() => toggleMute()}
+                  disabled={!isConnected && !isCalling && !isRinging}
+                  className="w-12 h-12 rounded-full shadow-md transition-all hover:scale-105 cursor-pointer"
+                  title={isMuted ? "Unmute Microphone" : "Mute Microphone"}
+                >
+                  {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                </Button>
 
-            {/* End / Cancel Call */}
-            <Button
-              type="button"
-              variant="destructive"
-              size="icon"
-              onClick={handleEndCall}
-              className="w-14 h-14 rounded-full bg-rose-600 hover:bg-rose-700 shadow-lg transition-all hover:scale-105"
-              title={status === "calling" || status === "ringing" ? "Cancel Call" : "End Call"}
-            >
-              <PhoneOff className="w-6 h-6" />
-            </Button>
+                {/* End / Cancel Call */}
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  onClick={handleEndCall}
+                  className="w-14 h-14 rounded-full bg-rose-600 hover:bg-rose-700 shadow-lg transition-all hover:scale-105 cursor-pointer"
+                  title={isCalling || isRinging ? "Cancel Call" : "End Call"}
+                >
+                  <PhoneOff className="w-6 h-6" />
+                </Button>
 
-            {/* Speaker toggle */}
-            <Button
-              type="button"
-              variant={isSpeakerOn ? "secondary" : "outline"}
-              size="icon"
-              onClick={() => toggleSpeaker()}
-              className="w-12 h-12 rounded-full shadow-md transition-all hover:scale-105"
-              title={isSpeakerOn ? "Mute Speaker" : "Unmute Speaker"}
-            >
-              {isSpeakerOn ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
-            </Button>
+                {/* Speaker toggle */}
+                <Button
+                  type="button"
+                  variant={isSpeakerOn ? "secondary" : "outline"}
+                  size="icon"
+                  onClick={() => toggleSpeaker()}
+                  className="w-12 h-12 rounded-full shadow-md transition-all hover:scale-105 cursor-pointer"
+                  title={isSpeakerOn ? "Mute Speaker" : "Unmute Speaker"}
+                >
+                  {isSpeakerOn ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Hidden remote audio element (audio playback handled by orchestrator) */}
+        {/* Hidden remote audio element */}
         <audio ref={remoteAudioRef} autoPlay playsInline style={{ display: "none" }} />
       </motion.div>
     </AnimatePresence>

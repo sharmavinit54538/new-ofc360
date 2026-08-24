@@ -1,31 +1,91 @@
 import { store } from "@/app/store";
-import { setCallConnected } from "@/features/connect/callSlice";
+import {
+  setCallConnecting,
+  setCallConnected,
+  setCallFailed,
+} from "@/features/connect/callSlice";
 import { connectWebRTCService } from "../connectWebRTCService";
 import { connectAudioManager } from "../connectAudioManager";
 import { attachRemoteAudio, cleanupRemoteAudio } from "./callAudioElement";
 import { CallType } from "@/types/connect";
 
-export async function initWebRTCForCaller(targetUserId: string, callId: string, type: CallType) {
+export async function initWebRTCForCaller(
+  targetUserId: string,
+  callId: string,
+  type: CallType
+) {
   try {
-    await connectWebRTCService.init({
-      targetUserId, callId,
-      onRemoteStream: (stream) => { attachRemoteAudio(stream); store.dispatch(setCallConnected({ callId })); },
-      onConnectionStateChange: (state) => { if (state === "connected") { connectAudioManager.stopOutgoingCall(); connectAudioManager.playCallConnected(); store.dispatch(setCallConnected({ callId })); } },
+    const iceServers = store.getState().connectCall.iceServers;
+
+    connectWebRTCService.init({
+      targetUserId,
+      callId,
+      iceServers,
+      onRemoteStream: (stream) => {
+        attachRemoteAudio(stream);
+        store.dispatch(setCallConnected({ callId }));
+      },
+      onConnectionStateChange: (state) => {
+        if (state === "connecting") {
+          store.dispatch(setCallConnecting());
+        } else if (state === "connected") {
+          connectAudioManager.stopOutgoingCall();
+          connectAudioManager.playCallConnected();
+          store.dispatch(setCallConnected({ callId }));
+        } else if (state === "failed") {
+          connectAudioManager.stopOutgoingCall();
+          connectAudioManager.playCallFailed();
+          store.dispatch(setCallFailed("Call connection failed"));
+        }
+      },
     });
+
     await connectWebRTCService.getLocalMedia(true, type === "video");
     await connectWebRTCService.createOffer();
-  } catch {}
+  } catch (err) {
+    console.error("[WEBRTC_CALLER_INIT_ERROR]", err);
+  }
 }
 
-export async function initWebRTCForReceiver(callerUserId: string, callId: string, type: CallType) {
+export async function initWebRTCForReceiver(
+  callerUserId: string,
+  callId: string,
+  type: CallType
+) {
   try {
-    await connectWebRTCService.init({
-      targetUserId: callerUserId, callId,
-      onRemoteStream: (stream) => { attachRemoteAudio(stream); store.dispatch(setCallConnected({ callId })); },
-      onConnectionStateChange: (state) => { if (state === "connected") { connectAudioManager.stopIncomingCall(); store.dispatch(setCallConnected({ callId })); } },
+    const iceServers = store.getState().connectCall.iceServers;
+
+    connectWebRTCService.init({
+      targetUserId: callerUserId,
+      callId,
+      iceServers,
+      onRemoteStream: (stream) => {
+        attachRemoteAudio(stream);
+        store.dispatch(setCallConnected({ callId }));
+      },
+      onConnectionStateChange: (state) => {
+        if (state === "connecting") {
+          store.dispatch(setCallConnecting());
+        } else if (state === "connected") {
+          connectAudioManager.stopIncomingCall();
+          connectAudioManager.playCallConnected();
+          store.dispatch(setCallConnected({ callId }));
+        } else if (state === "failed") {
+          connectAudioManager.stopIncomingCall();
+          connectAudioManager.playCallFailed();
+          store.dispatch(setCallFailed("Call connection failed"));
+        }
+      },
     });
+
     await connectWebRTCService.getLocalMedia(true, type === "video");
-  } catch {}
+    await connectWebRTCService.createAnswer();
+  } catch (err) {
+    console.error("[WEBRTC_RECEIVER_INIT_ERROR]", err);
+  }
 }
 
-export function cleanupWebRTC() { connectWebRTCService.cleanup(); cleanupRemoteAudio(); }
+export function cleanupWebRTC() {
+  connectWebRTCService.cleanup();
+  cleanupRemoteAudio();
+}
