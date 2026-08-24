@@ -1,8 +1,12 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { AI_CATEGORIES, type AIToolItem } from "../types/ai";
-import { executeAiModel } from "../utils/aiModelRouter";
+import { aiService } from "../ai";
 
 describe("OFC360 Intelligence — AI Model Workspaces Suite", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("verifies AI categories are valid", () => {
     expect(AI_CATEGORIES.length).toBeGreaterThanOrEqual(11);
   });
@@ -23,9 +27,24 @@ describe("OFC360 Intelligence — AI Model Workspaces Suite", () => {
     ];
 
     for (const model of sampleModels) {
-      const res = await executeAiModel(model, "Test prompt execution");
+      const mockResponse = {
+        content: `Test response for ${model.title}`,
+        latencyMs: 100,
+        tokensUsed: 50,
+        model: "gpt-4",
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const res = await aiService.generate({
+        prompt: `Test prompt for ${model.title}`,
+        task: 'text',
+      });
       expect(res).toBeTruthy();
-      expect(res.response).toBeTruthy();
+      expect(res.content).toBeTruthy();
       expect(res.latencyMs).toBeGreaterThanOrEqual(0);
       expect(res.tokensUsed).toBeGreaterThan(0);
     }

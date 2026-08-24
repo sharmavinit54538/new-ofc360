@@ -55,8 +55,7 @@ import {
 import { type AIToolItem } from "@/types/ai";
 import { useEmployeeStore } from "@/stores/employeeStore";
 import { useATSStore } from "@/stores/atsStore";
-import { useAIStore } from "@/stores/aiStore";
-import { executeAiModel, streamAiResponse } from "@/utils/aiModelRouter";
+import { aiService } from "@/ai";
 import { toast } from "sonner";
 
 interface AIModelWorkspaceModalProps {
@@ -67,7 +66,6 @@ interface AIModelWorkspaceModalProps {
 export function AIModelWorkspaceModal({ model, onClose }: AIModelWorkspaceModalProps) {
   const { employees } = useEmployeeStore();
   const { jobs } = useATSStore();
-  const { addLog } = useAIStore();
 
   // Common Input States
   const [selectedEmpId, setSelectedEmpId] = useState<string>(employees[0]?.id || "EMP-101");
@@ -120,28 +118,25 @@ export function AIModelWorkspaceModal({ model, onClose }: AIModelWorkspaceModalP
     setTokensUsed(null);
 
     try {
-      const res = await executeAiModel(model.id, finalPrompt, { stream: true });
+      const res = await aiService.generate({
+        prompt: finalPrompt,
+        task: 'text',
+        parameters: { stream: true },
+      });
       setLatencyMs(res.latencyMs);
       setTokensUsed(res.tokensUsed);
 
-      streamAiResponse(
-        res.response,
-        (chunk) => setResultText(chunk),
-        () => {
-          setIsExecuting(false);
-          addLog({
-            modelId: model.id,
-            modelTitle: model.title,
-            category: model.category,
-            promptSnippet: finalPrompt.slice(0, 50),
-            tokensUsed: res.tokensUsed,
-            latencyMs: res.latencyMs,
-            status: "Success",
-          });
-          toast.success(`⚡ ${model.title} workspace executed cleanly! (${res.latencyMs}ms)`);
-        },
-        16
-      );
+      // Simulate streaming for UI
+      const fullResponse = res.content;
+      let currentText = '';
+      for (let i = 0; i < fullResponse.length; i++) {
+        currentText = fullResponse.slice(0, i + 1);
+        setResultText(currentText);
+        await new Promise(r => setTimeout(r, 16));
+      }
+
+      setIsExecuting(false);
+      toast.success(`⚡ ${model.title} workspace executed cleanly! (${res.latencyMs}ms)`);
     } catch (err: any) {
       setIsExecuting(false);
       toast.error(`AI Model Execution Failed: ${err.message || "Unknown error"}`);

@@ -66,8 +66,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { AI_CATEGORIES, type AIToolItem, type AICategory } from "@/types/ai";
-import { ALL_71_AI_MODELS } from "@/data/aiToolsData";
+import { AI_CATEGORIES, type AIToolItem, type AICategory, ALL_71_AI_MODELS } from "@/types/ai";
 import { AIModelWorkspaceModal } from "@/features/intelligence/components/AIModelWorkspaceModal";
 import { useGetAiModelsQuery } from "@/services/api/intelligenceApi";
 
