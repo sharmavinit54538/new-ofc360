@@ -232,48 +232,12 @@ export default function IntelligenceLandingPage() {
             What can I help you with?
           </h2>
           <p className="text-xs text-muted-foreground">
-            Select a task or ask OFC360 AI anything.
+            Ask OFC360 AI anything across recruitment, employee, workforce, payroll, and more.
           </p>
         </div>
 
-        {/* ─── Suggested Categories ─── */}
-        <div className="px-6 md:px-8 pb-4">
-          <p className="text-[11px] text-muted-foreground font-medium mb-2">Suggested categories</p>
-          <div className="flex flex-wrap gap-2">
-            {categories.map((cat) => {
-              const info = CATEGORY_LABELS[cat];
-              if (!info) return null;
-              const Icon = info.icon;
-              const isSelected = activeCategoryFilter === cat;
-              return (
-                <button
-                  key={cat}
-                  onClick={() => {
-                    const next = isSelected ? null : cat;
-                    setActiveCategoryFilter(next);
-                    if (next) {
-                      const firstTask = tasksByCategory[next]?.[0];
-                      if (firstTask) setSelectedTask(firstTask);
-                    } else {
-                      setSelectedTask(null);
-                    }
-                  }}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all cursor-pointer ${
-                    isSelected
-                      ? "bg-primary/15 border-primary/40 text-primary font-semibold shadow-xs"
-                      : "bg-secondary/40 border-border/50 text-foreground hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  {info.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
         {/* ─── Prompt Input ─── */}
-        <div className="px-6 md:px-8 pb-5 border-t border-border/30 pt-5">
+        <div className="px-6 md:px-8 pb-5">
           <div className="relative">
             <Textarea
               ref={textareaRef}
