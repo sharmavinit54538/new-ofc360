@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useConnectCall } from "@/features/connect/hooks";
 import { connectCallOrchestrator } from "@/services/connectCallOrchestrator";
 import { connectWebRTCService } from "@/services/connectWebRTCService";
+import { setRemoteAudioSpeaker } from "@/services/orchestrator/callAudioElement";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -58,6 +59,22 @@ export function CallScreen() {
   useEffect(() => {
     connectWebRTCService.toggleMicrophone(!isMuted);
   }, [isMuted]);
+
+  // Sync remote audio stream to audio element
+  useEffect(() => {
+    if (remoteAudioRef.current && connectWebRTCService.remoteStream) {
+      remoteAudioRef.current.srcObject = connectWebRTCService.remoteStream;
+      remoteAudioRef.current.play().catch(() => {});
+    }
+  }, [isConnected]);
+
+  // Sync speaker toggle
+  useEffect(() => {
+    setRemoteAudioSpeaker(isSpeakerOn);
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.volume = isSpeakerOn ? 1.0 : 0.0;
+    }
+  }, [isSpeakerOn]);
 
   if (!activeCall || type !== "audio" || !remoteUser) return null;
 
