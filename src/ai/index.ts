@@ -2,13 +2,16 @@ export { OFC360_AI_ENGINE } from './aiEngine';
 export type { AIEngineConfig } from './aiEngine';
 
 export {
+  OFC360_AI_TASKS,
   OFC360_AI_CAPABILITIES,
-  ALL_71_AI_MODELS,
+  getAITasks,
+  getAITaskById,
+  getAITasksByCategory,
   getAICapabilities,
   getAICapabilityById,
   getAICapabilitiesByCategory,
 } from './capabilities';
-export type { AICapability, AIToolItem } from './capabilities';
+export type { AITask, AICapability, AIToolItem } from './capabilities';
 
 export { aiConfig, aiEndpoints, getAIEndpoint } from './config/aiConfig';
 export type { AIConfig, AIEndpointKey } from './config/aiConfig';

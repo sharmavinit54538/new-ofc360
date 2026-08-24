@@ -1,14 +1,14 @@
 import type { AICategory } from "@/types/ai/category";
 import { OFC360_AI_ENGINE } from "./aiEngine";
 
-export interface AICapability {
+export interface AITask {
   id: string;
   name?: string;
   title: string;
   category: Exclude<AICategory, "ALL">;
   description: string;
   taskType?: string;
-  badge: string; // Capability Status e.g. "ACTIVE", "AVAILABLE", "BETA"
+  badge: string; // Task Status e.g. "ACTIVE", "AVAILABLE", "BETA"
   engine: "ofc360-ai";
   iconName: string;
   route?: string;
@@ -16,7 +16,10 @@ export interface AICapability {
   defaultOutput?: string;
 }
 
-export const OFC360_AI_CAPABILITIES: AICapability[] = [
+/** @deprecated Use AITask instead */
+export type AICapability = AITask;
+
+export const OFC360_AI_TASKS: AITask[] = [
   // 1. Recruitment AI Capabilities
   {
     id: "recruitment-ats",
@@ -716,19 +719,24 @@ export const OFC360_AI_CAPABILITIES: AICapability[] = [
   },
 ];
 
-export function getAICapabilities(): AICapability[] {
-  return OFC360_AI_CAPABILITIES;
+export function getAITasks(): AITask[] {
+  return OFC360_AI_TASKS;
 }
 
-export function getAICapabilityById(id: string): AICapability | undefined {
-  return OFC360_AI_CAPABILITIES.find((c) => c.id === id);
+export function getAITaskById(id: string): AITask | undefined {
+  return OFC360_AI_TASKS.find((c) => c.id === id);
 }
 
-export function getAICapabilitiesByCategory(category: Exclude<AICategory, "ALL">): AICapability[] {
-  return OFC360_AI_CAPABILITIES.filter((c) => c.category === category);
+export function getAITasksByCategory(category: Exclude<AICategory, "ALL">): AITask[] {
+  return OFC360_AI_TASKS.filter((c) => c.category === category);
 }
 
-// Canonical Engine & Backward-Compatible Aliases
+// Canonical Engine
 export { OFC360_AI_ENGINE };
-export const ALL_71_AI_MODELS: AICapability[] = OFC360_AI_CAPABILITIES;
-export type AIToolItem = AICapability;
+
+// Backward-compatible aliases
+export const OFC360_AI_CAPABILITIES = OFC360_AI_TASKS;
+export const getAICapabilities = getAITasks;
+export const getAICapabilityById = getAITaskById;
+export const getAICapabilitiesByCategory = getAITasksByCategory;
+export type AIToolItem = AITask;

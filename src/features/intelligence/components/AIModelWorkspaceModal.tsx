@@ -52,14 +52,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { type AIToolItem } from "@/types/ai";
+import { type AITask } from "@/types/ai";
 import { useEmployeeStore } from "@/stores/employeeStore";
 import { useATSStore } from "@/stores/atsStore";
 import { aiService } from "@/ai";
 import { toast } from "sonner";
 
 interface AIModelWorkspaceModalProps {
-  model: AIToolItem | null;
+  model: AITask | null;
   onClose: () => void;
 }
 
@@ -448,11 +448,11 @@ export function AIModelWorkspaceModal({ model, onClose }: AIModelWorkspaceModalP
           >
             {isExecuting ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" /> Executing {model.title}...
+                <Loader2 className="w-4 h-4 animate-spin" /> Running {model.title}...
               </>
             ) : (
               <>
-                <Play className="w-4 h-4 fill-current" /> Execute Capability
+                <Play className="w-4 h-4 fill-current" /> Run Task
               </>
             )}
           </Button>
