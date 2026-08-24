@@ -608,36 +608,6 @@ export default function IntelligenceLandingPage() {
           </span>
         </div>
       </div>
-
-      {/* ━━━━ ARCHITECTURE SECTION ━━━━ */}
-      <div className="mt-6 rounded-2xl border border-border/50 bg-card/50 p-5 md:p-6">
-        <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-          <Network className="w-4 h-4 text-primary" />
-          Architecture
-        </h3>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 text-xs">
-          {[
-            { label: "Application", sub: "OFC360", icon: LayoutDashboard },
-            { label: "AI Engine", sub: "OFC360 AI", icon: Brain },
-            { label: "LLM Client", sub: "Unified Client", icon: Cpu },
-            { label: "Provider", sub: OFC360_AI_ENGINE.provider, icon: Server },
-            { label: "Model", sub: OFC360_AI_ENGINE.model, icon: Sparkles },
-          ].map((step, i, arr) => (
-            <div key={step.label} className="flex items-center gap-3">
-              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-secondary/40 border border-border/50">
-                <step.icon className="w-4 h-4 text-primary" />
-                <div>
-                  <div className="text-[10px] text-muted-foreground">{step.label}</div>
-                  <div className="font-bold text-foreground text-xs">{step.sub}</div>
-                </div>
-              </div>
-              {i < arr.length - 1 && (
-                <span className="text-muted-foreground/50 font-mono hidden sm:inline">→</span>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
