@@ -2,6 +2,7 @@ import { WebRTCMediaManager } from "./webRTCMediaManager";
 import { WebRTCSignalManager } from "./webRTCSignalManager";
 import { createPeerOffer, createPeerAnswer } from "./webRTCOfferAnswer";
 import { connectWebSocketService } from "../connectWebSocketService";
+import { registerOfferResender } from "../websocket/handlers/wsCallHandler";
 
 export interface WebRTCInitConfig {
   targetUserId?: string;
@@ -25,6 +26,7 @@ export class ConnectWebRTCService {
   private onConnectionStateChangeCallback: ((state: RTCPeerConnectionState) => void) | null = null;
 
   public ensureSignalSubscription() {
+    registerOfferResender(() => this.resendOffer());
     if (!this.signalUnsub && typeof connectWebSocketService?.onSignal === "function") {
       this.signalUnsub = connectWebSocketService.onSignal((payload: any) => {
         this.handleIncomingSignal(payload);

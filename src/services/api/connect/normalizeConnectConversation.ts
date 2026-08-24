@@ -1,7 +1,7 @@
 import { ConnectConversation } from "@/types/connect";
 import { normalizeConnectUser } from "./normalizeConnectUser";
 import { normalizeConnectMessage } from "./normalizeConnectMessage";
-import { isCurrentUser } from "./connectApiMerged";
+import { isCurrentUser } from "./connectApiUtils";
 
 export function normalizeConnectConversation(raw: any, currentUser?: any): ConnectConversation {
   if (!raw) return { id: "conv_unknown", participants: [], isGroup: false, unreadCount: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
