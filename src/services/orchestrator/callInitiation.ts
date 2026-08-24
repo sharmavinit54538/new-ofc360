@@ -5,7 +5,7 @@ import {
 } from "@/features/connect/callSlice";
 import { connectWebSocketService } from "../connectWebSocketService";
 import { connectAudioManager } from "../connectAudioManager";
-import { connectApi } from "../api/connectApi";
+import { connectCallsApi } from "../api/connect/connectCallsEndpoints";
 import { ConnectUser, CallType } from "@/types/connect";
 import { toast } from "sonner";
 import { initWebRTCForCaller } from "./callWebRTCInit";
@@ -28,7 +28,7 @@ export async function initiateOutgoingCall(
   try {
     const r = await store
       .dispatch(
-        connectApi.endpoints.initiateCall.initiate({
+        connectCallsApi.endpoints.initiateCall.initiate({
           calleeId: targetUser.id,
           targetUserId: targetUser.id,
           type,
