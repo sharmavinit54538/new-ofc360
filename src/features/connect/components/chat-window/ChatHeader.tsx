@@ -1,5 +1,6 @@
 import React from "react";
-import { Search, Phone, Video, MoreVertical, Pin, Sparkles, Info } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Search, Phone, Video, MoreVertical, Pin, Sparkles, Info, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -35,10 +36,22 @@ export function ChatHeader({
   onOpenVideoCall,
   onOpenAudioCall,
 }: ChatHeaderProps) {
+  const navigate = useNavigate();
+
   return (
-    <div className="h-16 px-4 border-b border-border/70 bg-card/60 backdrop-blur-md flex items-center justify-between gap-3 shrink-0">
+    <div className="h-16 px-3 md:px-4 border-b border-border/70 bg-card/60 backdrop-blur-md flex items-center justify-between gap-2 md:gap-3 shrink-0">
       {/* Recipient Profile */}
-      <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-center gap-2 md:gap-3 min-w-0">
+        {/* Mobile Back to List Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate("/connect/chat")}
+          className="md:hidden h-8 w-8 -ml-1 text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
+          title="Back to conversations"
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </Button>
         <div className="relative shrink-0">
           <Avatar className="w-10 h-10 border border-border/60">
             <AvatarImage src={participant.avatar} alt={participant.name} />

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ConnectChannel } from "@/types/connect";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,6 +15,7 @@ import {
   Info,
   UserPlus,
   Trash2,
+  ArrowLeft,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -100,13 +102,26 @@ export function ChannelHeader({ channel, onToggleSearch }: ChannelHeaderProps) {
     }
   };
 
+  const navigate = useNavigate();
+
   return (
     <>
-      <div className="h-16 px-4 border-b border-border/70 bg-card/60 backdrop-blur-md flex items-center justify-between gap-3 shrink-0">
+      <div className="h-16 px-3 md:px-4 border-b border-border/70 bg-card/60 backdrop-blur-md flex items-center justify-between gap-2 md:gap-3 shrink-0">
         {/* Channel Details */}
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0 border border-primary/20">
-            {channel.isPrivate ? <Lock className="w-5 h-5 text-amber-500" /> : <Hash className="w-5 h-5" />}
+        <div className="flex items-center gap-2 md:gap-3 min-w-0">
+          {/* Mobile Back Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/connect/channels")}
+            className="md:hidden h-8 w-8 -ml-1 text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
+            title="Back to channels"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+
+          <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0 border border-primary/20">
+            {channel.isPrivate ? <Lock className="w-4 h-4 md:w-5 md:h-5 text-amber-500" /> : <Hash className="w-4 h-4 md:w-5 md:h-5" />}
           </div>
 
           <div className="min-w-0">
