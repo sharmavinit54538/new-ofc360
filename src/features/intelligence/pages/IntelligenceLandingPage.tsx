@@ -267,44 +267,14 @@ export default function IntelligenceLandingPage() {
         <div className="absolute top-0 right-0 w-80 h-80 bg-primary/8 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-60 h-60 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative px-6 pt-7 pb-6 md:px-8">
-          {/* Top bar — badge + status */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[11px] font-bold tracking-wide uppercase">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>1 Core AI Engine</span>
-            </div>
-            <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[10px] font-bold gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block" />
-              {OFC360_AI_ENGINE.status}
-            </Badge>
-          </div>
-
+        <div className="relative px-6 py-7 md:px-8">
           {/* Title */}
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-1">
             OFC360 AI
           </h1>
-          <p className="text-sm md:text-base text-muted-foreground leading-relaxed max-w-lg mb-5">
+          <p className="text-sm md:text-base text-muted-foreground leading-relaxed max-w-lg">
             One intelligent AI engine for your entire workforce.
           </p>
-
-          {/* Engine spec bar */}
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[12px]">
-            <div className="flex items-center gap-1.5">
-              <Server className="w-3.5 h-3.5 text-primary/70" />
-              <span className="text-muted-foreground">Provider:</span>
-              <span className="font-bold text-foreground">{OFC360_AI_ENGINE.provider}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Cpu className="w-3.5 h-3.5 text-primary/70" />
-              <span className="text-muted-foreground">Model:</span>
-              <span className="font-mono font-bold text-primary">{OFC360_AI_ENGINE.model}</span>
-            </div>
-            <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-muted-foreground font-mono">
-              <Network className="w-3.5 h-3.5 text-primary/50" />
-              OFC360 AI → Ollama → qwen3:30b
-            </div>
-          </div>
         </div>
       </div>
 
