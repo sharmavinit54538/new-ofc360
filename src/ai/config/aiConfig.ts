@@ -1,3 +1,5 @@
+import { OFC360_AI_ENGINE } from "../aiEngine";
+
 export interface AIConfig {
   provider: string;
   model: string;
@@ -10,8 +12,8 @@ export interface AIConfig {
 }
 
 export const aiConfig: AIConfig = {
-  provider: import.meta.env.VITE_AI_PROVIDER || 'backend',
-  model: import.meta.env.VITE_AI_MODEL || 'gpt-4',
+  provider: import.meta.env.VITE_AI_PROVIDER || OFC360_AI_ENGINE.provider.toLowerCase(),
+  model: import.meta.env.VITE_AI_MODEL || OFC360_AI_ENGINE.model,
   baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
   apiKey: import.meta.env.VITE_AI_API_KEY || '',
   temperature: parseFloat(import.meta.env.VITE_AI_TEMPERATURE || '0.7'),
@@ -69,8 +71,10 @@ export const aiEndpoints = {
   },
   intelligence: {
     models: '/api/v1/intelligence/models',
+    capabilities: '/api/v1/intelligence/capabilities',
     modelById: (id: string) => `/api/v1/intelligence/models/${id}`,
     execute: (modelId: string) => `/api/v1/intelligence/models/${modelId}/execute`,
+    executeCapability: (id: string) => `/api/v1/intelligence/capabilities/${id}/execute`,
     executionStatus: (id: string) => `/api/v1/intelligence/executions/${id}`,
     history: '/api/v1/intelligence/executions/history',
     usage: '/api/v1/intelligence/usage',
@@ -96,5 +100,7 @@ export const aiEndpoints = {
 export type AIEndpointKey = keyof typeof aiEndpoints;
 
 export function getAIEndpoint(key: AIEndpointKey): string {
-  return aiEndpoints[key];
+  return aiEndpoints[key] as unknown as string;
 }
+
+export { OFC360_AI_ENGINE };

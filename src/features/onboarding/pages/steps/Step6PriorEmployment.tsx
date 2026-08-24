@@ -85,7 +85,7 @@ export function Step6PriorEmployment({ initialData, onSave, onBack, isLoading }:
           <Input
             placeholder="Role title"
             value={formData.last_designation}
-            onChange={(e) => setFormData({ ...formData, last_designation: e.target.value }))
+            onChange={(e) => setFormData({ ...formData, last_designation: e.target.value })}
             className="text-xs h-8"
           />
         </div>
@@ -95,7 +95,7 @@ export function Step6PriorEmployment({ initialData, onSave, onBack, isLoading }:
           <Input
             placeholder="e.g. 2 years 6 months"
             value={formData.employment_duration}
-            onChange={(e) => setFormData({ ...formData, employment_duration: e.target.value }))
+            onChange={(e) => setFormData({ ...formData, employment_duration: e.target.value })}
             className="text-xs h-8"
           />
         </div>

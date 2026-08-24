@@ -95,7 +95,7 @@ export function Step3Statutory({ initialData, onSave, onBack, isLoading }: Step3
           <Input
             placeholder="Passport number"
             value={formData.passport_number}
-            onChange={(e) => setFormData({ ...formData, passport_number: e.target.value }))
+            onChange={(e) => setFormData({ ...formData, passport_number: e.target.value })}
             className="text-xs h-8"
           />
         </div>
@@ -105,7 +105,7 @@ export function Step3Statutory({ initialData, onSave, onBack, isLoading }: Step3
           <Input
             placeholder="PF account number"
             value={formData.pf_account_number}
-            onChange={(e) => setFormData({ ...formData, pf_account_number: e.target.value }))
+            onChange={(e) => setFormData({ ...formData, pf_account_number: e.target.value })}
             className="text-xs h-8"
           />
         </div>
@@ -115,7 +115,7 @@ export function Step3Statutory({ initialData, onSave, onBack, isLoading }: Step3
           <Input
             placeholder="ESI number"
             value={formData.esi_number}
-            onChange={(e) => setFormData({ ...formData, esi_number: e.target.value }))
+            onChange={(e) => setFormData({ ...formData, esi_number: e.target.value })}
             className="text-xs h-8"
           />
         </div>

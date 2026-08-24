@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Sparkles,
   Search,
@@ -62,11 +62,21 @@ import {
   FileSpreadsheet,
   Loader2,
   X,
+  Cpu,
+  Server,
+  Network,
+  CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { AI_CATEGORIES, type AIToolItem, type AICategory, ALL_71_AI_MODELS } from "@/types/ai";
+import {
+  AI_CATEGORIES,
+  type AICapability,
+  type AICategory,
+  OFC360_AI_ENGINE,
+  OFC360_AI_CAPABILITIES,
+} from "@/types/ai";
 import { AIModelWorkspaceModal } from "@/features/intelligence/components/AIModelWorkspaceModal";
 import { useGetAiModelsQuery } from "@/services/api/intelligenceApi";
 
@@ -129,6 +139,9 @@ const iconMap: Record<string, any> = {
   FileSpreadsheet,
   Search,
   ScanFace,
+  Cpu,
+  Server,
+  Network,
 };
 
 // Category accent colors for cards and badges
@@ -150,20 +163,20 @@ export default function IntelligenceLandingPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("ALL");
-  const [activeModel, setActiveModel] = useState<AIToolItem | null>(null);
+  const [activeCapability, setActiveCapability] = useState<AICapability | null>(null);
 
-  // Query server models with graceful offline fallback
-  const { data: serverModels, isLoading, isError, refetch } = useGetAiModelsQuery();
+  // Query server endpoints with graceful offline fallback
+  const { data: serverModels, isLoading } = useGetAiModelsQuery();
 
-  // Combine server AI models with built-in comprehensive catalog
-  const allModels: AIToolItem[] = useMemo(() => {
+  // Normalize server response into canonical OFC360 capabilities
+  const capabilities: AICapability[] = useMemo(() => {
     if (serverModels && Array.isArray(serverModels) && serverModels.length > 0) {
-      const mappedServerModels: AIToolItem[] = serverModels.map((m) => {
-        const matchingPreset = ALL_71_AI_MODELS.find(
-          (p) => p.id === m.id || p.id === m.code || p.title.toLowerCase() === m.name.toLowerCase()
+      const mappedServerCapabilities: AICapability[] = serverModels.map((m) => {
+        const matchingPreset = OFC360_AI_CAPABILITIES.find(
+          (p) => p.id === m.id || p.id === (m as any).code || p.title.toLowerCase() === m.name.toLowerCase()
         );
         return {
-          id: m.id || m.code,
+          id: m.id || (m as any).code,
           title: m.name,
           category: (m.category === "workforce"
             ? "Workforce & Shift AI"
@@ -176,67 +189,151 @@ export default function IntelligenceLandingPage() {
             : m.category === "performance"
             ? "Performance & OKR AI"
             : matchingPreset?.category || "Analytics & Predictive AI") as Exclude<AICategory, "ALL">,
-          description: m.description || matchingPreset?.description || "Intelligent OFC360 enterprise AI model.",
-          badge: m.status?.toUpperCase() || matchingPreset?.badge || "ACTIVE",
+          description: m.description || matchingPreset?.description || "Intelligent OFC360 enterprise capability.",
+          taskType: (m as any).taskType || matchingPreset?.taskType || "task",
+          badge: (m as any).status?.toUpperCase() || matchingPreset?.badge || "ACTIVE",
+          engine: "ofc360-ai",
           iconName: matchingPreset?.iconName || "Bot",
           route: matchingPreset?.route,
-          demoPrompt: matchingPreset?.demoPrompt || `Execute ${m.name} analysis`,
-          defaultOutput: matchingPreset?.defaultOutput || `AI Model ${m.name} execution completed with accuracy score of ${m.accuracy || 95}%.`,
+          demoPrompt: matchingPreset?.demoPrompt || `Execute ${m.name} capability`,
+          defaultOutput: matchingPreset?.defaultOutput || `OFC360 AI executed ${m.name} with 95% confidence score.`,
         };
       });
 
-      const existingIds = new Set(mappedServerModels.map((m) => m.id));
-      const remainingPresets = ALL_71_AI_MODELS.filter((p) => !existingIds.has(p.id));
-      return [...mappedServerModels, ...remainingPresets];
+      const existingIds = new Set(mappedServerCapabilities.map((m) => m.id));
+      const remainingPresets = OFC360_AI_CAPABILITIES.filter((p) => !existingIds.has(p.id));
+      return [...mappedServerCapabilities, ...remainingPresets];
     }
-    // Reliable fallback ensuring 100% availability
-    return ALL_71_AI_MODELS;
+    return OFC360_AI_CAPABILITIES;
   }, [serverModels]);
 
-  // Filter models by search keyword & active category
-  const filteredModules = useMemo(() => {
-    return allModels.filter((mod) => {
+  // Filter capabilities by search keyword & active category
+  const filteredCapabilities = useMemo(() => {
+    return capabilities.filter((cap) => {
       const term = search.trim().toLowerCase();
       const matchesSearch =
         !term ||
-        mod.title.toLowerCase().includes(term) ||
-        mod.description.toLowerCase().includes(term) ||
-        mod.badge.toLowerCase().includes(term) ||
-        mod.category.toLowerCase().includes(term);
+        cap.title.toLowerCase().includes(term) ||
+        cap.description.toLowerCase().includes(term) ||
+        cap.badge.toLowerCase().includes(term) ||
+        cap.category.toLowerCase().includes(term);
 
       const matchesCategory =
-        activeCategory === "ALL" || mod.category === activeCategory;
+        activeCategory === "ALL" || cap.category === activeCategory;
 
       return matchesSearch && matchesCategory;
     });
-  }, [allModels, search, activeCategory]);
+  }, [capabilities, search, activeCategory]);
 
-  // Model count per category
+  // Capability count per category
   const categoryCounts = useMemo(() => {
-    const counts: Record<string, number> = { ALL: allModels.length };
-    for (const model of allModels) {
-      counts[model.category] = (counts[model.category] || 0) + 1;
+    const counts: Record<string, number> = { ALL: capabilities.length };
+    for (const cap of capabilities) {
+      counts[cap.category] = (counts[cap.category] || 0) + 1;
     }
     return counts;
-  }, [allModels]);
+  }, [capabilities]);
 
-  const handleOpenTool = (tool: AIToolItem) => {
-    if (tool.route) {
-      navigate(tool.route);
+  const handleOpenCapability = (cap: AICapability) => {
+    if (cap.route) {
+      navigate(cap.route);
       return;
     }
-    setActiveModel(tool);
+    setActiveCapability(cap);
   };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
+      {/* 1. HERO & CANONICAL ENGINE BANNER */}
+      <div className="relative overflow-hidden rounded-3xl border border-border/80 bg-gradient-to-br from-card via-card/90 to-primary/5 p-6 md:p-8 shadow-sm">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl -z-10 pointer-events-none" />
 
-      {/* FILTER & SEARCH BAR */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          {/* Left Hero Title */}
+          <div className="space-y-2 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold tracking-wide uppercase">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>One AI Model — All Capabilities</span>
+            </div>
+
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground">
+              OFC360 AI
+            </h1>
+
+            <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+              One intelligent AI engine powering every workflow across OFC360.
+            </p>
+          </div>
+
+          {/* Right AI Engine Spec Card */}
+          <div className="p-4 rounded-2xl bg-secondary/40 border border-border/70 backdrop-blur-sm space-y-3 min-w-[280px] shrink-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl gradient-bg flex items-center justify-center text-primary-foreground font-bold shadow-xs">
+                  <Cpu className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                    <span>{OFC360_AI_ENGINE.name}</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  </div>
+                  <div className="text-[10px] text-muted-foreground font-mono">1 Core AI Engine</div>
+                </div>
+              </div>
+              <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">
+                {OFC360_AI_ENGINE.status}
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border/50 text-[11px]">
+              <div>
+                <span className="text-muted-foreground">Provider:</span>
+                <span className="font-semibold text-foreground ml-1">{OFC360_AI_ENGINE.provider}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Model:</span>
+                <span className="font-mono font-semibold text-primary ml-1">{OFC360_AI_ENGINE.model}</span>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-border/50 flex items-center justify-between text-[10px] text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Server className="w-3 h-3 text-primary" /> Architecture
+              </span>
+              <span className="font-mono text-[10px] font-medium text-foreground">
+                OFC360 AI → Ollama → qwen3:30b
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. FILTER & SEARCH BAR */}
       <div className="space-y-3">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           {/* Categories Tab Scroll */}
           <div className="flex items-center gap-1.5 bg-secondary/50 p-1.5 rounded-2xl border border-border/50 overflow-x-auto scrollbar-none max-w-full">
-            {AI_CATEGORIES.map((cat) => {
+            <button
+              onClick={() => setActiveCategory("ALL")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 cursor-pointer flex items-center gap-1.5 ${
+                activeCategory === "ALL"
+                  ? "bg-card text-primary shadow-xs font-bold border border-border/80"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+              }`}
+            >
+              <span>ALL — 1 AI ENGINE</span>
+              <span
+                className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                  activeCategory === "ALL"
+                    ? "bg-primary/10 text-primary"
+                    : "bg-secondary text-muted-foreground"
+                }`}
+              >
+                {categoryCounts.ALL || capabilities.length}
+              </span>
+            </button>
+
+            {AI_CATEGORIES.filter((c) => c !== "ALL").map((cat) => {
               const count = categoryCounts[cat] || 0;
               const isActive = activeCategory === cat;
               return (
@@ -269,7 +366,7 @@ export default function IntelligenceLandingPage() {
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="Search 71+ AI models, tasks..."
+              placeholder="Search AI capabilities, tasks..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 pr-8 bg-card border-border/70 text-xs h-10 rounded-xl focus:ring-2 focus:ring-primary/30"
@@ -286,23 +383,23 @@ export default function IntelligenceLandingPage() {
         </div>
       </div>
 
-      {/* LOADING STATE */}
+      {/* 3. LOADING STATE */}
       {isLoading && (
         <div className="flex flex-col items-center justify-center py-16 gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading AI models repository...</p>
+          <p className="text-sm text-muted-foreground">Connecting to OFC360 AI engine...</p>
         </div>
       )}
 
-      {/* EMPTY STATE */}
-      {!isLoading && filteredModules.length === 0 && (
+      {/* 4. EMPTY STATE */}
+      {!isLoading && filteredCapabilities.length === 0 && (
         <div className="text-center py-16 px-4 rounded-3xl border border-dashed border-border bg-card/40 space-y-3">
           <Brain className="w-12 h-12 text-muted-foreground/40 mx-auto" />
-          <h3 className="text-base font-bold text-foreground">No AI Models Found</h3>
+          <h3 className="text-base font-bold text-foreground">No AI Capabilities Found</h3>
           <p className="text-xs text-muted-foreground max-w-sm mx-auto">
             {search
-              ? `No AI models matching "${search}" in ${activeCategory}. Try clearing search.`
-              : "No models available in this category."}
+              ? `No capabilities matching "${search}" in ${activeCategory}. Try clearing your search.`
+              : "No capabilities available in this category."}
           </p>
           {search && (
             <Button size="sm" variant="outline" onClick={() => setSearch("")} className="mt-2 text-xs">
@@ -312,13 +409,13 @@ export default function IntelligenceLandingPage() {
         </div>
       )}
 
-      {/* GRID OF AI MODELS */}
-      {!isLoading && filteredModules.length > 0 && (
+      {/* 5. GRID OF AI CAPABILITIES */}
+      {!isLoading && filteredCapabilities.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           <AnimatePresence mode="popLayout">
-            {filteredModules.map((mod, idx) => {
-              const IconComponent = iconMap[mod.iconName] || Bot;
-              const colorInfo = categoryColors[mod.category] || {
+            {filteredCapabilities.map((cap, idx) => {
+              const IconComponent = iconMap[cap.iconName] || Bot;
+              const colorInfo = categoryColors[cap.category] || {
                 bg: "bg-primary/10",
                 border: "border-primary/20",
                 text: "text-primary",
@@ -327,52 +424,68 @@ export default function IntelligenceLandingPage() {
 
               return (
                 <motion.div
-                  key={mod.id}
+                  key={cap.id}
                   layout
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: Math.min(idx * 0.012, 0.25), duration: 0.2 }}
                   className="group relative flex flex-col justify-between p-5 rounded-2xl border border-border/70 bg-card hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer"
-                  onClick={() => handleOpenTool(mod)}
+                  onClick={() => handleOpenCapability(cap)}
                 >
                   <div className="space-y-3">
+                    {/* Header Badges: Status + Engine */}
                     <div className="flex items-center justify-between">
                       <div className={`p-2.5 rounded-xl ${colorInfo.bg} ${colorInfo.text} border ${colorInfo.border} group-hover:scale-105 transition-transform`}>
                         <IconComponent className="w-5 h-5" />
                       </div>
-                      <Badge
-                        variant="secondary"
-                        className="text-[10px] font-bold uppercase tracking-wider bg-secondary text-secondary-foreground border border-border/60"
-                      >
-                        {mod.badge}
-                      </Badge>
+                      <div className="flex items-center gap-1.5">
+                        <Badge
+                          variant="secondary"
+                          className="text-[9px] font-bold uppercase tracking-wider bg-secondary text-secondary-foreground border border-border/60"
+                        >
+                          {cap.badge}
+                        </Badge>
+                        <Badge
+                          variant="outline"
+                          className="text-[9px] font-mono border-primary/30 text-primary bg-primary/5"
+                        >
+                          OFC360 AI
+                        </Badge>
+                      </div>
                     </div>
 
+                    {/* Title & Description */}
                     <div>
                       <h3 className="font-bold text-foreground text-sm group-hover:text-primary transition-colors line-clamp-1">
-                        {mod.title}
+                        {cap.title}
                       </h3>
                       <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
-                        {mod.description}
+                        {cap.description}
                       </p>
                     </div>
                   </div>
 
+                  {/* Card Footer: Category + Powered By + Action */}
                   <div className="pt-4 mt-3 border-t border-border/40 flex items-center justify-between">
-                    <span className="text-[11px] text-muted-foreground font-medium truncate max-w-[140px]">
-                      {mod.category}
-                    </span>
+                    <div>
+                      <div className="text-[11px] font-semibold text-foreground truncate max-w-[130px]">
+                        {cap.category}
+                      </div>
+                      <div className="text-[9px] text-muted-foreground font-mono">
+                        Powered by OFC360 AI
+                      </div>
+                    </div>
                     <Button
                       size="sm"
                       variant="ghost"
                       className="h-8 px-2 text-xs text-primary group-hover:translate-x-0.5 transition-transform font-semibold"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleOpenTool(mod);
+                        handleOpenCapability(cap);
                       }}
                     >
-                      {mod.route ? "Open Page" : "Launch"} <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                      {cap.route ? "Open Page" : "Open Capability"} <ArrowRight className="w-3.5 h-3.5 ml-1" />
                     </Button>
                   </div>
                 </motion.div>
@@ -382,10 +495,10 @@ export default function IntelligenceLandingPage() {
         </div>
       )}
 
-      {/* INTERACTIVE DOMAIN-TAILORED AI WORKSPACE MODAL */}
+      {/* 6. INTERACTIVE DOMAIN-TAILORED AI WORKSPACE MODAL */}
       <AIModelWorkspaceModal
-        model={activeModel}
-        onClose={() => setActiveModel(null)}
+        model={activeCapability}
+        onClose={() => setActiveCapability(null)}
       />
     </div>
   );

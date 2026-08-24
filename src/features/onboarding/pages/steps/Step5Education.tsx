@@ -68,7 +68,8 @@ export function Step5Education({ initialData, onSave, onBack, isLoading }: Step5
     >
       <div>
         <h3 className="text-xl font-bold text-foreground">Step 5 — Education Records</h3>
-        <p className="text-xs text-muted-foreground">Highest qualification and academic institution details.</      </div>
+        <p className="text-xs text-muted-foreground">Highest qualification and academic institution details.</p>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1">

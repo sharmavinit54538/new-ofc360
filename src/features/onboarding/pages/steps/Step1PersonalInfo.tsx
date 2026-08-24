@@ -168,7 +168,8 @@ function Step1PersonalInfo({ initialData, onSave, isLoading }: Step1PersonalInfo
     >
       <div>
         <h3 className="text-xl font-bold text-foreground">Step 1 — Personal Information</h3>
-        <p className="text-xs text-muted-foreground">Provide basic personal and residential details.</      </div>
+        <p className="text-xs text-muted-foreground">Provide basic personal and residential details.</p>
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-1">

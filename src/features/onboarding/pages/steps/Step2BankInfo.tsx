@@ -65,7 +65,8 @@ export function Step2BankInfo({ initialData, onSave, onBack, isLoading }: Step2B
     >
       <div>
         <h3 className="text-xl font-bold text-foreground">Step 2 — Bank Details</h3>
-        <p className="text-xs text-muted-foreground">Direct salary deposit bank details.</      </div>
+        <p className="text-xs text-muted-foreground">Direct salary deposit bank details.</p>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-1">

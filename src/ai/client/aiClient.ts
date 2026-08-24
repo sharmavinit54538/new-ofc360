@@ -126,7 +126,8 @@ class AIClient {
   }
 
   async executeModel(request: AIExecutionRequest, options?: AIServiceOptions): Promise<AIExecutionResponse> {
-    return this.request<AIExecutionResponse>(`/api/v1/intelligence/models/${request.modelId}/execute`, {
+    const targetId = request.capabilityId || request.modelId || 'ofc360-ai';
+    return this.request<AIExecutionResponse>(`/api/v1/intelligence/models/${targetId}/execute`, {
       method: 'POST',
       body: JSON.stringify({
         inputData: request.inputData,
@@ -134,6 +135,10 @@ class AIClient {
       }),
       signal: options?.signal,
     });
+  }
+
+  async executeCapability(capabilityId: string, inputData: unknown, parameters?: Record<string, unknown>, options?: AIServiceOptions): Promise<AIExecutionResponse> {
+    return this.executeModel({ capabilityId, inputData, parameters }, options);
   }
 
   async getExecutionStatus(id: string): Promise<AIExecutionResponse> {

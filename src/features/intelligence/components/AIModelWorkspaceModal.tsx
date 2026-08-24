@@ -136,10 +136,10 @@ export function AIModelWorkspaceModal({ model, onClose }: AIModelWorkspaceModalP
       }
 
       setIsExecuting(false);
-      toast.success(`⚡ ${model.title} workspace executed cleanly! (${res.latencyMs}ms)`);
+      toast.success(`⚡ ${model.title} capability executed cleanly! (${res.latencyMs}ms)`);
     } catch (err: any) {
       setIsExecuting(false);
-      toast.error(`AI Model Execution Failed: ${err.message || "Unknown error"}`);
+      toast.error(`OFC360 AI Execution Failed: ${err.message || "Unknown error"}`);
     }
   };
 
@@ -178,10 +178,15 @@ export function AIModelWorkspaceModal({ model, onClose }: AIModelWorkspaceModalP
                 <Sparkles className="w-5 h-5" />
               </div>
               <div>
-                <DialogTitle className="text-lg font-extrabold text-foreground flex items-center gap-2">
-                  {model.title}
-                </DialogTitle>
-                <DialogDescription className="text-xs text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <DialogTitle className="text-lg font-extrabold text-foreground">
+                    {model.title}
+                  </DialogTitle>
+                  <Badge variant="outline" className="text-[10px] font-mono border-primary/30 text-primary bg-primary/5">
+                    OFC360 AI • qwen3:30b
+                  </Badge>
+                </div>
+                <DialogDescription className="text-xs text-muted-foreground mt-0.5">
                   {model.description}
                 </DialogDescription>
               </div>
@@ -403,11 +408,11 @@ export function AIModelWorkspaceModal({ model, onClose }: AIModelWorkspaceModalP
               >
                 <div className="flex items-center justify-between text-xs font-bold text-emerald-600 dark:text-emerald-400">
                   <span className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4" /> AI Engine Result Output
+                    <CheckCircle2 className="w-4 h-4" /> OFC360 AI Engine Output
                   </span>
                   {latencyMs && (
                     <Badge variant="outline" className="text-[10px] font-mono border-emerald-500/30 text-emerald-600 dark:text-emerald-400">
-                      {latencyMs}ms • {tokensUsed || 32} tokens
+                      {latencyMs}ms • {tokensUsed || 32} tokens • qwen3:30b
                     </Badge>
                   )}
                 </div>
@@ -447,7 +452,7 @@ export function AIModelWorkspaceModal({ model, onClose }: AIModelWorkspaceModalP
               </>
             ) : (
               <>
-                <Play className="w-4 h-4 fill-current" /> Execute AI Model
+                <Play className="w-4 h-4 fill-current" /> Execute Capability
               </>
             )}
           </Button>

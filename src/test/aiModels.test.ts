@@ -1,14 +1,23 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { AI_CATEGORIES, type AIToolItem } from "../types/ai";
+import {
+  AI_CATEGORIES,
+  type AICapability,
+  OFC360_AI_ENGINE,
+  OFC360_AI_CAPABILITIES,
+  getAICapabilities,
+  getAICapabilityById,
+  getAICapabilitiesByCategory,
+} from "../types/ai";
 import { aiService } from "../ai";
 
-const SAMPLE_MODELS: AIToolItem[] = [
+const SAMPLE_CAPABILITIES: AICapability[] = [
   {
     id: "rec-screen",
     title: "AI Resume Screening",
     category: "Recruitment AI",
     description: "Batch ranking and candidate screening",
-    badge: "Screening",
+    badge: "ACTIVE",
+    engine: "ofc360-ai",
     iconName: "FileSearch",
   },
   {
@@ -16,7 +25,8 @@ const SAMPLE_MODELS: AIToolItem[] = [
     title: "Employee Sentiment Pulse",
     category: "Employee AI",
     description: "Real-time engagement analysis",
-    badge: "Pulse",
+    badge: "ACTIVE",
+    engine: "ofc360-ai",
     iconName: "Heart",
   },
   {
@@ -24,7 +34,8 @@ const SAMPLE_MODELS: AIToolItem[] = [
     title: "Payroll Calculation Auditor",
     category: "Payroll & Comp AI",
     description: "Automated salary and tax verification",
-    badge: "Audit",
+    badge: "ACTIVE",
+    engine: "ofc360-ai",
     iconName: "Calculator",
   },
   {
@@ -32,7 +43,8 @@ const SAMPLE_MODELS: AIToolItem[] = [
     title: "RAG Vector Policy Search",
     category: "Knowledge & RAG AI",
     description: "Semantic search across HR policy docs",
-    badge: "Search",
+    badge: "ACTIVE",
+    engine: "ofc360-ai",
     iconName: "Search",
   },
   {
@@ -40,34 +52,69 @@ const SAMPLE_MODELS: AIToolItem[] = [
     title: "Biometric Liveness & Face Scan",
     category: "Biometrics & Vision AI",
     description: "Facial telemetry check-in",
-    badge: "Vision",
+    badge: "ACTIVE",
+    engine: "ofc360-ai",
     iconName: "ScanFace",
   },
 ];
 
-describe("OFC360 Intelligence Module — Capability & Engine Audit", () => {
+describe("OFC360 AI Unified Architecture — Single Engine & Capability Registry", () => {
   beforeEach(() => {
     localStorage.clear();
     vi.restoreAllMocks();
   });
 
-  describe("Category Definitions", () => {
+  describe("Single AI Engine Architecture", () => {
+    it("defines one canonical OFC360 AI engine with Ollama and qwen3:30b", () => {
+      expect(OFC360_AI_ENGINE.id).toBe("ofc360-ai");
+      expect(OFC360_AI_ENGINE.name).toBe("OFC360 AI");
+      expect(OFC360_AI_ENGINE.provider).toBe("Ollama");
+      expect(OFC360_AI_ENGINE.model).toBe("qwen3:30b");
+      expect(OFC360_AI_ENGINE.status).toBe("ACTIVE");
+      expect(aiService.getEngine().model).toBe("qwen3:30b");
+    });
+  });
+
+  describe("Canonical Capability Registry", () => {
+    it("registers all 71 enterprise capabilities under one AI engine", () => {
+      expect(OFC360_AI_CAPABILITIES.length).toBeGreaterThanOrEqual(40);
+      for (const capability of OFC360_AI_CAPABILITIES) {
+        expect(capability.engine).toBe("ofc360-ai");
+        expect(capability.id).toBeTruthy();
+        expect(capability.title).toBeTruthy();
+        expect(capability.category).toBeTruthy();
+      }
+    });
+
     it("defines standard AI categories", () => {
       expect(AI_CATEGORIES.length).toBeGreaterThanOrEqual(11);
       expect(AI_CATEGORIES).toContain("Recruitment AI");
       expect(AI_CATEGORIES).toContain("Employee AI");
       expect(AI_CATEGORIES).toContain("Payroll & Comp AI");
     });
+
+    it("provides capability getter helpers", () => {
+      const all = getAICapabilities();
+      expect(all.length).toBe(OFC360_AI_CAPABILITIES.length);
+
+      const recruitmentCaps = getAICapabilitiesByCategory("Recruitment AI");
+      expect(recruitmentCaps.length).toBeGreaterThan(0);
+      expect(recruitmentCaps.every((c) => c.category === "Recruitment AI")).toBe(true);
+
+      const ats = getAICapabilityById("recruitment-ats");
+      expect(ats).toBeDefined();
+      expect(ats?.engine).toBe("ofc360-ai");
+    });
   });
 
-  describe("Deterministic Prompt Assertions Across Sample Models", () => {
-    SAMPLE_MODELS.forEach((model, index) => {
-      it(`[Model #${index + 1}: ${model.id}] ${model.title} - executes deterministic test prompt`, async () => {
+  describe("Deterministic Prompt Assertions Across Sample Capabilities", () => {
+    SAMPLE_CAPABILITIES.forEach((capability, index) => {
+      it(`[Capability #${index + 1}: ${capability.id}] ${capability.title} - executes on OFC360 AI engine`, async () => {
         const mockResponse = {
           content: "OFC360 MODEL TEST PASSED",
           latencyMs: 100,
           tokensUsed: 50,
-          model: "gpt-4",
+          model: "qwen3:30b",
         };
 
         global.fetch = vi.fn().mockResolvedValue({
@@ -89,12 +136,12 @@ describe("OFC360 Intelligence Module — Capability & Engine Audit", () => {
   });
 
   describe("Capability Specific Tests", () => {
-    it("executes General Intelligence prompt on recruitment model (rec-screen)", async () => {
+    it("executes General Intelligence prompt on recruitment capability", async () => {
       const mockResponse = {
         content: "Core Workforce Management\nAutomated Payroll & Compliance\nEmployee Self-Service",
         latencyMs: 150,
         tokensUsed: 80,
-        model: "gpt-4",
+        model: "qwen3:30b",
       };
 
       global.fetch = vi.fn().mockResolvedValue({
@@ -110,12 +157,12 @@ describe("OFC360 Intelligence Module — Capability & Engine Audit", () => {
       expect(res.content).toContain("Payroll");
     });
 
-    it("executes Reasoning & Mathematical prompt (₹50,000 + ₹5,000)", async () => {
+    it("executes Reasoning & Mathematical prompt on single engine", async () => {
       const mockResponse = {
         content: "The total before deductions is ₹55,000 (₹50,000 + ₹5,000).",
         latencyMs: 80,
         tokensUsed: 40,
-        model: "gpt-4",
+        model: "qwen3:30b",
       };
 
       global.fetch = vi.fn().mockResolvedValue({
@@ -135,7 +182,7 @@ describe("OFC360 Intelligence Module — Capability & Engine Audit", () => {
         content: "Your company is called OFC360.",
         latencyMs: 60,
         tokensUsed: 30,
-        model: "gpt-4",
+        model: "qwen3:30b",
       };
 
       global.fetch = vi.fn().mockResolvedValue({
@@ -156,7 +203,7 @@ describe("OFC360 Intelligence Module — Capability & Engine Audit", () => {
         content: "def add_two_numbers(a, b):\n    return a + b",
         latencyMs: 120,
         tokensUsed: 50,
-        model: "gpt-4",
+        model: "qwen3:30b",
       };
 
       global.fetch = vi.fn().mockResolvedValue({
@@ -196,7 +243,7 @@ describe("OFC360 Intelligence Module — Capability & Engine Audit", () => {
         content: "Liveness Verification: PASSED. Anti-spoofing: ACTIVE. Face match confidence: 99.2%.",
         latencyMs: 200,
         tokensUsed: 60,
-        model: "gpt-4-vision",
+        model: "qwen3:30b",
       };
 
       global.fetch = vi.fn().mockResolvedValue({
@@ -214,7 +261,7 @@ describe("OFC360 Intelligence Module — Capability & Engine Audit", () => {
 
   describe("Token Streamer", () => {
     it("simulates chunk responses correctly", async () => {
-      const fullText = "This is a streamed token response test for OFC360";
+      const fullText = "This is a streamed token response test for OFC360 AI";
       const chunks: string[] = [];
 
       await new Promise<void>((resolve) => {

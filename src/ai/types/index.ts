@@ -1,3 +1,6 @@
+export type { AIEngineConfig } from '../aiEngine';
+export type { AICapability } from '../capabilities';
+
 export interface AIMessage {
   role: 'system' | 'user' | 'assistant' | 'function';
   content: string;
@@ -163,14 +166,16 @@ export interface AIModelMetadata {
 }
 
 export interface AIExecutionRequest {
-  modelId: string;
+  modelId?: string;
+  capabilityId?: string;
   inputData: unknown;
   parameters?: Record<string, unknown>;
 }
 
 export interface AIExecutionResponse {
   id: string;
-  modelId: string;
+  modelId?: string;
+  capabilityId?: string;
   status: 'pending' | 'running' | 'completed' | 'failed';
   inputData: unknown;
   outputData?: unknown;

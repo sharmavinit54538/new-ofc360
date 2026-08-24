@@ -22,6 +22,7 @@ import {
   AITaskType,
 } from '../types';
 import { aiConfig, aiEndpoints } from '../config/aiConfig';
+import { OFC360_AI_ENGINE } from '../aiEngine';
 
 interface FeatureAIAdapter {
   name: string;
@@ -32,6 +33,10 @@ class AIService {
   private client = aiClient;
   private config = aiConfig;
   private adapters: Map<string, FeatureAIAdapter> = new Map();
+
+  getEngine() {
+    return OFC360_AI_ENGINE;
+  }
 
   getConfig() {
     return { ...this.config };
@@ -87,6 +92,10 @@ class AIService {
 
   async executeModel(request: AIExecutionRequest, options?: AIServiceOptions): Promise<AIExecutionResponse> {
     return this.client.executeModel(request, options);
+  }
+
+  async executeCapability(capabilityId: string, inputData: unknown, parameters?: Record<string, unknown>, options?: AIServiceOptions): Promise<AIExecutionResponse> {
+    return this.client.executeCapability(capabilityId, inputData, parameters, options);
   }
 
   async getExecutionStatus(id: string): Promise<AIExecutionResponse> {
