@@ -177,7 +177,7 @@ export function VideoCallModal() {
         color: "text-zinc-400",
       };
     }
-    return { text: "Connecting...", icon: Wifi, color: "text-zinc-400" };
+    return { text: "Ringing...", icon: PhoneCall, color: "text-amber-400", pulse: true };
   };
 
   const statusInfo = getStatusDisplay();

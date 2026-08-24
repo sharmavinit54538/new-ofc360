@@ -114,7 +114,7 @@ export function CallScreen() {
         color: "text-muted-foreground",
       };
     }
-    return { text: "Connecting...", icon: Wifi, color: "text-muted-foreground" };
+    return { text: "Ringing...", icon: PhoneCall, color: "text-amber-500", pulse: true };
   };
 
   const statusInfo = getStatusDisplay();

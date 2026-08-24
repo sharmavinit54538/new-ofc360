@@ -26,16 +26,29 @@ export async function initWebRTCForCaller(
         store.dispatch(setCallConnected({ callId }));
       },
       onConnectionStateChange: (state) => {
+        const currentCallStatus = store.getState().connectCall.status;
+        const isCallingOrRinging =
+          currentCallStatus === "OUTGOING_CALLING" ||
+          currentCallStatus === "OUTGOING_RINGING" ||
+          currentCallStatus === "INCOMING_RINGING" ||
+          currentCallStatus === "calling" ||
+          currentCallStatus === "ringing";
+
         if (state === "connecting") {
-          store.dispatch(setCallConnecting());
+          // Do NOT override outgoing calling or ringing with connecting until peer accepts
+          if (!isCallingOrRinging) {
+            store.dispatch(setCallConnecting());
+          }
         } else if (state === "connected") {
           connectAudioManager.stopOutgoingCall();
           connectAudioManager.playCallConnected();
           store.dispatch(setCallConnected({ callId }));
         } else if (state === "failed") {
-          connectAudioManager.stopOutgoingCall();
-          connectAudioManager.playCallFailed();
-          store.dispatch(setCallFailed("Call connection failed"));
+          if (!isCallingOrRinging) {
+            connectAudioManager.stopOutgoingCall();
+            connectAudioManager.playCallFailed();
+            store.dispatch(setCallFailed("Call connection failed"));
+          }
         }
       },
     });

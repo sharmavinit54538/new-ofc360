@@ -1,5 +1,8 @@
 import { store } from "@/app/store";
-import { startOutgoingCall } from "@/features/connect/callSlice";
+import {
+  startOutgoingCall,
+  setOutgoingRinging,
+} from "@/features/connect/callSlice";
 import { connectWebSocketService } from "../connectWebSocketService";
 import { connectAudioManager } from "../connectAudioManager";
 import { connectApi } from "../api/connectApi";
@@ -56,6 +59,15 @@ export async function initiateOutgoingCall(
 
   connectAudioManager.playOutgoingCall();
   onStartTimeout(callId);
+
+  // Transition from calling -> ringing
+  setTimeout(() => {
+    const currentStatus = store.getState().connectCall.status;
+    if (currentStatus === "OUTGOING_CALLING" || currentStatus === "calling") {
+      store.dispatch(setOutgoingRinging());
+    }
+  }, 1200);
+
   await initWebRTCForCaller(targetUser.id, callId, type);
   return callId;
 }
