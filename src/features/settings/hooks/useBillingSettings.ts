@@ -8,5 +8,6 @@ export function useBillingSettings() {
     refetch: refetchSub,
   } = useGetBillingSubscriptionQuery();
 
-  return { subscription, isLoadingSub, subError, refetchSub };
+  return { subscription, isLoadingSub, subError, refetchSub, refetchSubscription: refetchSub };
 }
+
