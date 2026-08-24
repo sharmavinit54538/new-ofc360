@@ -24,9 +24,8 @@ export class ConnectWebRTCService {
   private onRemoteStreamCallback: ((stream: MediaStream) => void) | null = null;
   private onConnectionStateChangeCallback: ((state: RTCPeerConnectionState) => void) | null = null;
 
-  constructor() {
-    // Global signal listener binding to never miss incoming offers
-    if (typeof connectWebSocketService?.onSignal === "function") {
+  public ensureSignalSubscription() {
+    if (!this.signalUnsub && typeof connectWebSocketService?.onSignal === "function") {
       this.signalUnsub = connectWebSocketService.onSignal((payload: any) => {
         this.handleIncomingSignal(payload);
       });
@@ -34,6 +33,7 @@ export class ConnectWebRTCService {
   }
 
   public init(config?: WebRTCInitConfig) {
+    this.ensureSignalSubscription();
     if (config?.targetUserId) this.targetUserId = config.targetUserId;
     if (config?.callId) this.callId = config.callId;
     if (config?.onRemoteStream) this.onRemoteStreamCallback = config.onRemoteStream;
