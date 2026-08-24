@@ -17,14 +17,24 @@ export const billingInvoicesApi = baseApi.injectEndpoints({
       transformResponse: (r: any) => {
         const raw = unwrapEnvelope(r);
         const list = Array.isArray(raw) ? raw : raw?.items || raw?.invoices || raw?.transactions || [];
+        const realList = list.filter((item: any) => {
+          if (!item) return false;
+          const invNum = String(item.invoice_number || item.invoiceNumber || item.number || "");
+          const amount = Number(item.amount ?? item.total ?? 0);
+          if ((invNum === "INV-2026-001" || invNum === "INV-2025-012") && amount === 599988 && !item.razorpay_payment_id) {
+            return false;
+          }
+          return true;
+        });
         return {
-          invoices: list.map(normalizeInvoice),
-          total: raw?.total || list.length,
+          invoices: realList.map(normalizeInvoice),
+          total: realList.length,
           page: raw?.page || 1,
           limit: raw?.limit || 10,
-          totalPages: raw?.totalPages || raw?.total_pages || Math.ceil((raw?.total || list.length || 1) / (raw?.limit || 10)) || 1,
+          totalPages: Math.ceil((realList.length || 1) / (raw?.limit || 10)) || 1,
         };
       },
+
       providesTags: ["BillingSettings", "Settings"],
     }),
   }),
