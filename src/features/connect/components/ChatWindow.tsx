@@ -41,6 +41,7 @@ import { ChatComposer } from "./ChatComposer";
 import { ConnectEmptyState } from "./ConnectEmptyState";
 import { ConnectErrorState } from "./ConnectErrorState";
 import { toast } from "sonner";
+import { ChatHeader, MessageList, TypingIndicator } from "./chat-window";
 
 /**
  * Extracts a person's display name from various possible object structures:
@@ -563,190 +564,48 @@ export function ChatWindow({
   return (
     <div className={`flex-1 flex flex-col h-full bg-background/90 overflow-hidden select-none ${className}`}>
       {/* Header */}
-      <div className="h-16 px-4 border-b border-border/70 bg-card/60 backdrop-blur-md flex items-center justify-between gap-3 shrink-0">
-        {/* Recipient Profile */}
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="relative shrink-0">
-            <Avatar className="w-10 h-10 border border-border/60">
-              <AvatarImage src={participant.avatar} alt={participant.name} />
-              <AvatarFallback className="text-xs bg-primary/15 text-primary font-bold">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            <PresenceIndicator
-              status={participant.presence}
-              size="sm"
-              withPulse={participant.presence === "online"}
-              className="absolute -bottom-0.5 -right-0.5 ring-2 ring-background"
-            />
-          </div>
-
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-foreground truncate">{participant.name}</h3>
-            </div>
-            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground truncate">
-              <span>{participant.role || "Team Member"} • {participant.department || "General"}</span>
-              <span>•</span>
-              <span
-                className={`inline-flex items-center gap-1 font-medium ${
-                  participant.presence === "online"
-                    ? "text-emerald-500"
-                    : participant.presence === "away"
-                    ? "text-amber-500"
-                    : participant.presence === "busy" || participant.presence === "dnd"
-                    ? "text-rose-500"
-                    : "text-muted-foreground"
-                }`}
-              >
-                {participant.presence === "online"
-                  ? "● Online"
-                  : participant.presence === "away"
-                  ? "● Away"
-                  : participant.presence === "busy"
-                  ? "● Busy"
-                  : participant.presence === "dnd"
-                  ? "● Do Not Disturb"
-                  : "○ Offline"}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Action Controls */}
-        <div className="flex items-center gap-1.5 shrink-0">
-          {showSearch && (
-            <div className="relative w-48 mr-1">
-              <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={messageSearch}
-                onChange={(e) => setMessageSearch(e.target.value)}
-                placeholder="Search messages..."
-                className="pl-7 h-8 text-xs rounded-xl bg-muted/40 border-border/60"
-                autoFocus
-              />
-            </div>
-          )}
-
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowSearch(!showSearch)}
-            className="w-8 h-8 rounded-xl text-muted-foreground hover:text-foreground"
-            title="Search In Conversation"
-          >
-            <Search className="w-4 h-4" />
-          </Button>
-
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={handleStartAudio}
-            className="w-8 h-8 rounded-xl text-primary hover:bg-primary/15"
-            title="Audio Call"
-          >
-            <Phone className="w-4 h-4" />
-          </Button>
-
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={handleStartVideo}
-            className="w-8 h-8 rounded-xl text-primary hover:bg-primary/15"
-            title="Video Call"
-          >
-            <Video className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
+      <ChatHeader
+        participant={participant}
+        initials={initials}
+        showSearch={showSearch}
+        setShowSearch={setShowSearch}
+        messageSearch={messageSearch}
+        setMessageSearch={setMessageSearch}
+        onOpenVideoCall={handleStartVideo}
+        onOpenAudioCall={handleStartAudio}
+      />
 
       {/* Message Stream */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin">
-        {isMessagesLoading ? (
-          <div className="space-y-3 py-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div
-                key={i}
-                className={`h-12 w-2/3 rounded-2xl bg-card/60 animate-pulse border border-border/40 ${
-                  i % 2 === 0 ? "ml-auto" : "mr-auto"
-                }`}
-              />
-            ))}
-          </div>
-        ) : isMessagesError ? (
-          <div className="p-6">
-            <ConnectErrorState
-              variant="connection_failed"
-              title="Failed to Load Messages"
-              description="Could not load messages for this conversation. Please check your connection and try again."
-              onRetry={() => refetchMessages()}
-            />
-          </div>
-        ) : messages.length === 0 ? (
-          <ConnectEmptyState
-            variant="messages"
-            title="No messages yet"
-            description={`Say hello to ${participant.name} to kick off the conversation!`}
-          />
-        ) : (
-          messages.map((message, idx) => {
-            const isOutgoing = isCurrentUser(
-              message.senderId || (message as any).sender_id || (message as any).user_id || (message as any).sender,
-              currentUser
-            );
-
-            const prevMsg = idx > 0 ? messages[idx - 1] : null;
-            const isConsecutive = prevMsg
-              ? isCurrentUser(
-                  prevMsg.senderId || (prevMsg as any).sender_id || (prevMsg as any).user_id,
-                  currentUser
-                ) === isOutgoing &&
-                String(prevMsg.senderId || (prevMsg as any).sender_id || "") ===
-                  String(message.senderId || (message as any).sender_id || "")
-              : false;
-
-            return (
-              <MessageBubble
-                key={message.id}
-                message={message}
-                isOutgoing={isOutgoing}
-                isConsecutive={isConsecutive}
-                currentUserId={currentUserId}
-                onReplyInThread={() => setActiveThreadMessage(message)}
-                onToggleReaction={(msgId, emoji) =>
-                  toggleReaction({ messageId: msgId, emoji, conversationId: activeConversationId })
-                }
-                onTogglePin={(msgId) =>
-                  pinMessage({
-                    messageId: msgId,
-                    isPinned: !message.isPinned,
-                    conversationId: activeConversationId,
-                  })
-                }
-                onDelete={(msgId) =>
-                  deleteMessage({ messageId: msgId, conversationId: activeConversationId })
-                }
-              />
-            );
-          })
-        )}
+        <MessageList
+          messages={messages}
+          isLoading={isMessagesLoading}
+          isError={isMessagesError}
+          error={messagesError}
+          currentUser={currentUser}
+          currentUserId={currentUserId}
+          activeConversationId={activeConversationId}
+          chatScrollRef={messagesEndRef}
+          onReplyInThread={setActiveThreadMessage}
+          onToggleReaction={(msgId, emoji) =>
+            toggleReaction({ messageId: msgId, emoji, conversationId: activeConversationId })
+          }
+          onTogglePin={(msgId) =>
+            pinMessage({
+              messageId: msgId,
+              isPinned: !messages.find((m) => m.id === msgId)?.isPinned,
+              conversationId: activeConversationId,
+            })
+          }
+          onDelete={(msgId) =>
+            deleteMessage({ messageId: msgId, conversationId: activeConversationId })
+          }
+          refetchMessages={refetchMessages}
+          isCurrentUser={isCurrentUser}
+        />
 
         {/* Real-time Typing Indicator */}
-        {typingUsers.length > 0 && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground italic px-2 py-1">
-            <span className="flex gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" />
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce delay-100" />
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce delay-200" />
-            </span>
-            <span>{typingUsers.join(", ")} is typing...</span>
-          </div>
-        )}
-
-        <div ref={messagesEndRef} />
+        <TypingIndicator typingUsers={typingUsers} />
       </div>
 
       {/* Message Composer */}
