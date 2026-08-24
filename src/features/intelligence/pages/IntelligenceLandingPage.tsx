@@ -306,7 +306,7 @@ export default function IntelligenceLandingPage() {
                   </span>
                   {latencyMs && (
                     <Badge variant="outline" className="text-[10px] font-mono border-emerald-500/30 text-emerald-600 dark:text-emerald-400">
-                      {latencyMs}ms • {tokensUsed || 0} tokens • qwen3:30b
+                      {latencyMs}ms • {tokensUsed || 0} tokens
                     </Badge>
                   )}
                 </div>
@@ -335,15 +335,6 @@ export default function IntelligenceLandingPage() {
           )}
         </AnimatePresence>
 
-        {/* ─── Footer ─── */}
-        <div className="px-6 md:px-8 py-3 border-t border-border/30 flex items-center justify-between">
-          <span className="text-[10px] text-muted-foreground font-mono">
-            Powered by {OFC360_AI_ENGINE.provider} • {OFC360_AI_ENGINE.model}
-          </span>
-          <span className="text-[10px] text-muted-foreground">
-            {OFC360_AI_TASKS.length} tasks available
-          </span>
-        </div>
       </div>
     </div>
   );
