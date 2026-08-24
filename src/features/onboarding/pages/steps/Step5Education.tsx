@@ -99,7 +99,7 @@ export function Step5Education({ initialData, onSave, onBack, isLoading }: Step5
           <Input
             placeholder="e.g. Engineering / Business"
             value={formData.field_of_study}
-            onChange={(e) => setFormData({ ...formData, field_of_study: e.target.value }))
+            onChange={(e) => setFormData({ ...formData, field_of_study: e.target.value })}
             className="text-xs h-8"
           />
         </div>
