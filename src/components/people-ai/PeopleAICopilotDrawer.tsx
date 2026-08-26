@@ -71,7 +71,7 @@ export const PeopleAICopilotDrawer: React.FC<PeopleAICopilotDrawerProps> = ({
     {
       id: "msg-welcome",
       sender: "ai",
-      text: "### 👋 Namaste & Welcome to OFC360 People Intelligence Copilot!\n\nI have complete 360° access to live organization data with verified role authorization.\n\n**You can ask me anything in English, Hindi, or Hinglish:**\n* 👤 *\"Tell me about Vinit Sharma\"* or *\"Mamraj Yadav ki details\"*\n* 👥 *\"List all employees\"* or *\"Sabhi employees dikhao\"*\n* 💰 *\"Show salary breakdown\"* or *\"Highest salary kiski hai?\"*\n* ⏰ *\"Who is on leave today?\"* or *\"Attendance rate kitna hai?\"*\n* 🏢 *\"Engineering department details\"* or *\"Who are the managers?\"*\n* 🟡 *\"Who is on probation?\"* or *\"Who needs attention today?\"*",
+      text: "### Welcome to OFC360 People Intelligence Copilot\n\nI have complete access to live organizational data with verified role-based access control.\n\n**You can ask inquiries in English, Hindi, or Hinglish, such as:**\n* *\"Tell me about Vinit Sharma\"* or *\"Mamraj Yadav profile\"*\n* *\"List all employees in directory\"* or *\"Sabhi employees dikhao\"*\n* *\"Show salary breakdown and payroll totals\"*\n* *\"Who is on leave today and what is the attendance rate?\"*\n* *\"Show Engineering department details\"* or *\"Who are the managers?\"*\n* *\"Who is currently on probation?\"* or *\"Who needs attention today?\"*",
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     },
   ]);
@@ -102,12 +102,12 @@ export const PeopleAICopilotDrawer: React.FC<PeopleAICopilotDrawerProps> = ({
   ];
 
   const quickActionChips = [
-    { label: "👥 All Employees", query: "Show all employees in directory table", icon: Users },
-    { label: "💰 Salaries & Payroll", query: "Show company salary and payroll breakdown", icon: DollarSign },
-    { label: "⏰ Attendance & Leaves", query: "Who is on leave and what is the attendance rate?", icon: Clock },
-    { label: "🟡 Probation List", query: "Who is on probation right now?", icon: AlertTriangle },
-    { label: "🏢 Engineering Team", query: "Tell me about Engineering department", icon: Building2 },
-    { label: "👑 Founders & Leadership", query: "Who are the founders and leadership team of OFC360?", icon: Crown },
+    { label: "All Employees", query: "Show all employees in directory table", icon: Users },
+    { label: "Salaries & Payroll", query: "Show company salary and payroll breakdown", icon: DollarSign },
+    { label: "Attendance & Leaves", query: "Who is on leave and what is the attendance rate?", icon: Clock },
+    { label: "Probation List", query: "Who is on probation right now?", icon: AlertTriangle },
+    { label: "Engineering Team", query: "Tell me about Engineering department", icon: Building2 },
+    { label: "Founders & Leadership", query: "Who are the founders and leadership team of OFC360?", icon: Crown },
   ];
 
   const currentSuggested =
@@ -154,7 +154,7 @@ export const PeopleAICopilotDrawer: React.FC<PeopleAICopilotDrawerProps> = ({
       const errorMsg: ChatMessage = {
         id: `err-${Date.now()}`,
         sender: "ai",
-        text: "⚠️ I was unable to process your query against the live data store. Please verify your network connection or try rephrasing.",
+        text: "I was unable to process your query against the live data store. Please verify your connection or try again.",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
       setMessages((prev) => [...prev, errorMsg]);
@@ -206,7 +206,7 @@ export const PeopleAICopilotDrawer: React.FC<PeopleAICopilotDrawerProps> = ({
                   </Badge>
                 </h3>
                 <p className="text-[11px] text-muted-foreground">
-                  Complete 360° intelligence across workforce, payroll, and organization
+                  Grounded intelligence across workforce, payroll, and organization
                 </p>
               </div>
             </div>
@@ -257,7 +257,7 @@ export const PeopleAICopilotDrawer: React.FC<PeopleAICopilotDrawerProps> = ({
                 <button
                   key={idx}
                   onClick={() => handleSend(chip.query)}
-                  className="flex items-center gap-1 text-[10px] font-semibold bg-secondary/60 hover:bg-primary/10 text-foreground hover:text-primary px-2.5 py-1 rounded-md border border-border/50 transition-all shrink-0 cursor-pointer"
+                  className="flex items-center gap-1.5 text-[11px] font-medium bg-secondary/60 hover:bg-primary/10 text-foreground hover:text-primary px-2.5 py-1 rounded-md border border-border/50 transition-all shrink-0 cursor-pointer"
                 >
                   <Icon className="w-3 h-3 text-primary" />
                   <span>{chip.label}</span>
