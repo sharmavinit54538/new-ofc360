@@ -7,7 +7,6 @@ import {
   Briefcase,
   Crown,
   ShieldCheck,
-  Bot,
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,11 +15,9 @@ import DepartmentsPage from "@/pages/departments/DepartmentsPage";
 import ManagersManagementPage from "@/pages/people/ManagersManagementPage";
 import ExecutivesManagementPage from "@/pages/people/ExecutivesManagementPage";
 import ITAdminsManagementPage from "@/pages/people/ITAdminsManagementPage";
-import { PeopleCommandCenterBar } from "@/components/people-ai/PeopleCommandCenterBar";
 import { PeopleAICopilotDrawer } from "@/components/people-ai/PeopleAICopilotDrawer";
 import { PeopleWorkflowApprovalsModal } from "@/components/people-ai/PeopleWorkflowApprovalsModal";
 import { PeopleDataHealthModal } from "@/components/people-ai/PeopleDataHealthModal";
-import { useGetPeopleIntelligenceSummaryQuery } from "@/services/api/peopleAiApi";
 
 type TabType = "employees" | "departments" | "manager" | "executive" | "it_admin";
 
@@ -31,8 +28,6 @@ export default function PeoplePage() {
   const [isCopilotOpen, setIsCopilotOpen] = useState(false);
   const [isApprovalsOpen, setIsApprovalsOpen] = useState(false);
   const [isDataHealthOpen, setIsDataHealthOpen] = useState(false);
-
-  const { data: summary } = useGetPeopleIntelligenceSummaryQuery();
 
   const paramTab = searchParams.get("tab") as TabType | null;
   const currentTab: TabType =
@@ -56,16 +51,7 @@ export default function PeoplePage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      {/* 1. Today's People Intelligence Command Center */}
-      <PeopleCommandCenterBar
-        summary={summary}
-        onOpenCopilot={() => setIsCopilotOpen(true)}
-        onOpenApprovals={() => setIsApprovalsOpen(true)}
-        onOpenDataHealth={() => setIsDataHealthOpen(true)}
-        onSelectTab={handleTabChange}
-      />
-
-      {/* 2. Tab Navigation Bar */}
+      {/* Tab Navigation Bar */}
       <div className="flex items-center justify-between pb-2 border-b border-border/40">
         <div className="flex items-center bg-secondary/60 p-1 rounded-xl border border-border/50 overflow-x-auto scrollbar-none max-w-full">
           {tabs.map((t) => {
@@ -101,7 +87,7 @@ export default function PeoplePage() {
         </div>
       </div>
 
-      {/* 3. Section Content */}
+      {/* Section Content */}
       <motion.div
         key={currentTab}
         initial={{ opacity: 0, y: 6 }}
@@ -112,10 +98,15 @@ export default function PeoplePage() {
         {currentTab === "departments" && <DepartmentsPage onOpenCopilot={() => setIsCopilotOpen(true)} />}
         {currentTab === "manager" && <ManagersManagementPage onOpenCopilot={() => setIsCopilotOpen(true)} />}
         {currentTab === "executive" && <ExecutivesManagementPage onOpenCopilot={() => setIsCopilotOpen(true)} />}
-        {currentTab === "it_admin" && <ITAdminsManagementPage onOpenCopilot={() => setIsCopilotOpen(true)} onOpenDataHealth={() => setIsDataHealthOpen(true)} />}
+        {currentTab === "it_admin" && (
+          <ITAdminsManagementPage
+            onOpenCopilot={() => setIsCopilotOpen(true)}
+            onOpenDataHealth={() => setIsDataHealthOpen(true)}
+          />
+        )}
       </motion.div>
 
-      {/* 4. AI Modals & Drawers */}
+      {/* AI Modals & Copilot Drawer */}
       <PeopleAICopilotDrawer
         open={isCopilotOpen}
         onClose={() => setIsCopilotOpen(false)}
