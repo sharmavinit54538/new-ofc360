@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useSearchParams, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -6,18 +7,32 @@ import {
   Briefcase,
   Crown,
   ShieldCheck,
+  Bot,
+  Sparkles,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import EmployeesPage from "@/pages/EmployeesPage";
 import DepartmentsPage from "@/pages/departments/DepartmentsPage";
 import ManagersManagementPage from "@/pages/people/ManagersManagementPage";
 import ExecutivesManagementPage from "@/pages/people/ExecutivesManagementPage";
 import ITAdminsManagementPage from "@/pages/people/ITAdminsManagementPage";
+import { PeopleCommandCenterBar } from "@/components/people-ai/PeopleCommandCenterBar";
+import { PeopleAICopilotDrawer } from "@/components/people-ai/PeopleAICopilotDrawer";
+import { PeopleWorkflowApprovalsModal } from "@/components/people-ai/PeopleWorkflowApprovalsModal";
+import { PeopleDataHealthModal } from "@/components/people-ai/PeopleDataHealthModal";
+import { useGetPeopleIntelligenceSummaryQuery } from "@/services/api/peopleAiApi";
 
 type TabType = "employees" | "departments" | "manager" | "executive" | "it_admin";
 
 export default function PeoplePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
+
+  const [isCopilotOpen, setIsCopilotOpen] = useState(false);
+  const [isApprovalsOpen, setIsApprovalsOpen] = useState(false);
+  const [isDataHealthOpen, setIsDataHealthOpen] = useState(false);
+
+  const { data: summary } = useGetPeopleIntelligenceSummaryQuery();
 
   const paramTab = searchParams.get("tab") as TabType | null;
   const currentTab: TabType =
@@ -40,8 +55,17 @@ export default function PeoplePage() {
   ];
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Tab Navigation (Clean Top Bar) */}
+    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+      {/* 1. Today's People Intelligence Command Center */}
+      <PeopleCommandCenterBar
+        summary={summary}
+        onOpenCopilot={() => setIsCopilotOpen(true)}
+        onOpenApprovals={() => setIsApprovalsOpen(true)}
+        onOpenDataHealth={() => setIsDataHealthOpen(true)}
+        onSelectTab={handleTabChange}
+      />
+
+      {/* 2. Tab Navigation Bar */}
       <div className="flex items-center justify-between pb-2 border-b border-border/40">
         <div className="flex items-center bg-secondary/60 p-1 rounded-xl border border-border/50 overflow-x-auto scrollbar-none max-w-full">
           {tabs.map((t) => {
@@ -63,21 +87,49 @@ export default function PeoplePage() {
             );
           })}
         </div>
+
+        <div className="hidden sm:flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setIsCopilotOpen(true)}
+            className="text-xs h-9 px-3 font-semibold border-primary/30 text-primary hover:bg-primary/10 gap-1.5 shadow-2xs cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-primary" />
+            <span>Ask People AI</span>
+          </Button>
+        </div>
       </div>
 
-      {/* Tab Contents */}
+      {/* 3. Section Content */}
       <motion.div
         key={currentTab}
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
       >
-        {currentTab === "employees" && <EmployeesPage />}
-        {currentTab === "departments" && <DepartmentsPage />}
-        {currentTab === "manager" && <ManagersManagementPage />}
-        {currentTab === "executive" && <ExecutivesManagementPage />}
-        {currentTab === "it_admin" && <ITAdminsManagementPage />}
+        {currentTab === "employees" && <EmployeesPage onOpenCopilot={() => setIsCopilotOpen(true)} />}
+        {currentTab === "departments" && <DepartmentsPage onOpenCopilot={() => setIsCopilotOpen(true)} />}
+        {currentTab === "manager" && <ManagersManagementPage onOpenCopilot={() => setIsCopilotOpen(true)} />}
+        {currentTab === "executive" && <ExecutivesManagementPage onOpenCopilot={() => setIsCopilotOpen(true)} />}
+        {currentTab === "it_admin" && <ITAdminsManagementPage onOpenCopilot={() => setIsCopilotOpen(true)} onOpenDataHealth={() => setIsDataHealthOpen(true)} />}
       </motion.div>
+
+      {/* 4. AI Modals & Drawers */}
+      <PeopleAICopilotDrawer
+        open={isCopilotOpen}
+        onClose={() => setIsCopilotOpen(false)}
+      />
+
+      <PeopleWorkflowApprovalsModal
+        open={isApprovalsOpen}
+        onOpenChange={setIsApprovalsOpen}
+      />
+
+      <PeopleDataHealthModal
+        open={isDataHealthOpen}
+        onOpenChange={setIsDataHealthOpen}
+      />
     </div>
   );
 }
