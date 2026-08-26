@@ -9,13 +9,14 @@ export function normalizeSubscription(data: any): BillingSubscription {
       billingCycle: "Monthly",
       price: 0,
       currency: "INR",
-      status: "active",
-      seats: 10,
-      usedSeats: 1,
+      status: "inactive",
+      seats: 0,
+      usedSeats: 0,
       renewalDate: "—",
       nextBillingDate: "—",
     };
   }
+
 
   const raw = (data as RawEnvelope<any>)?.data || data;
   const rawPlan = raw.plan || raw.planName || raw.plan_name || raw.tier || "Community Tier";
