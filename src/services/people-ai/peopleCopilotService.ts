@@ -806,7 +806,7 @@ export class PeopleCopilotService {
   }
 
   // =========================================================================
-  // RESPONSE GENERATOR METHODS
+  // RESPONSE GENERATOR METHODS (Clean, ChatGPT Style, 0 Emojis)
   // =========================================================================
 
   private static generateEmployeeProfileResponse(
@@ -840,37 +840,39 @@ export class PeopleCopilotService {
     const canViewComp = userRole === "hr_admin" || userRole === "super_admin" || userRole === "executive";
 
     const compSection = canViewComp
-      ? `\n### 💰 **Compensation & Payroll Breakdown**\n` +
-        `* **Annual CTC:** ₹${salary.toLocaleString("en-IN")}/year (₹${Math.round(salary / 12).toLocaleString("en-IN")}/month)\n` +
-        `* **Basic Salary:** ₹${basic.toLocaleString("en-IN")}/yr | **HRA:** ₹${hra.toLocaleString("en-IN")}/yr\n` +
-        `* **Performance Bonus:** ₹${bonus.toLocaleString("en-IN")}/yr\n` +
-        `* **Statutory Deductions:** PF: ₹21,600/yr | Prof Tax: ₹2,500/yr`
-      : `\n### 💰 **Compensation:** *[Protected under RBAC Confidentiality Policy]*`;
+      ? `\n### Compensation and Payroll Details\n` +
+        `* **Annual CTC:** INR ${salary.toLocaleString("en-IN")}/year (approx. INR ${Math.round(salary / 12).toLocaleString("en-IN")}/month)\n` +
+        `* **Basic Salary:** INR ${basic.toLocaleString("en-IN")}/year\n` +
+        `* **House Rent Allowance (HRA):** INR ${hra.toLocaleString("en-IN")}/year\n` +
+        `* **Performance Bonus:** INR ${bonus.toLocaleString("en-IN")}/year\n` +
+        `* **Statutory Deductions:** Provident Fund (PF): INR 21,600/year, Professional Tax: INR 2,500/year`
+      : `\n### Compensation\n*[Protected under Role-Based Access Control confidentiality policies]*`;
 
     const signalsSection = intel
-      ? `\n### 🚨 **Real-Time 7-Dimensional AI Intelligence Signals**\n` +
-        `* 🚀 **Performance Signal:** ${intel.signals.performance.headline} (Index: ${perfScore}%)\n` +
-        `* 🤝 **Engagement Status:** ${intel.signals.engagement.headline}\n` +
-        `* ⚖️ **Workload Bandwidth:** ${intel.signals.workload.headline} (~${intel.workloadTelemetry.currentWeeklyHours} hrs/wk)\n` +
-        `* ⏰ **Attendance Reliability:** ${intel.signals.attendance.headline} (97.4% on-time)\n` +
-        `* 📈 **Growth & Trajectory:** ${intel.signals.growth.headline}`
+      ? `\n### AI Organizational Diagnostics\n` +
+        `* **Performance Signal:** ${intel.signals.performance.headline} (Performance Index: ${perfScore}%)\n` +
+        `* **Engagement Status:** ${intel.signals.engagement.headline}\n` +
+        `* **Workload Bandwidth:** ${intel.signals.workload.headline} (Average ${intel.workloadTelemetry.currentWeeklyHours} hours/week)\n` +
+        `* **Attendance Reliability:** ${intel.signals.attendance.headline} (97.4% on-time check-in rate)\n` +
+        `* **Growth and Milestone:** ${intel.signals.growth.headline}`
       : "";
 
-    const answer = `### 📋 Comprehensive Employee 360 Profile: **${emp.name}**\n\n` +
-      `| Metric | Verified Grounded Detail |\n` +
+    const answer = `### Employee 360 Profile: ${emp.name}\n\n` +
+      `Here is the verified employee intelligence profile for **${emp.name}**:\n\n` +
+      `| Parameter | Record Details |\n` +
       `| :--- | :--- |\n` +
-      `| **Employee Code / ID** | \`${empCode}\` (ID: ${emp.id}) |\n` +
+      `| **Employee Code / ID** | \`${empCode}\` (Database ID: ${emp.id}) |\n` +
       `| **Designation / Role** | **${role}** |\n` +
       `| **System Access Tier** | \`${sysRole.toUpperCase()}\` |\n` +
-      `| **Department** | ${dept} — *${subDept}* |\n` +
+      `| **Department** | ${dept} (${subDept}) |\n` +
       `| **Reporting Manager** | **${manager}** |\n` +
       `| **Employment Status** | \`${status.toUpperCase()}\` |\n` +
-      `| **Work Location & Shift** | ${location} • ${shift} |\n` +
-      `| **Corporate Email** | [${emp.email || "N/A"}](mailto:${emp.email}) |\n` +
-      `| **Mobile Phone** | ${phone} |\n` +
+      `| **Work Location and Shift** | ${location} | ${shift} |\n` +
+      `| **Official Email** | [${emp.email || "N/A"}](mailto:${emp.email}) |\n` +
+      `| **Contact Phone** | ${phone} |\n` +
       `| **Date of Joining** | ${joined} |\n` +
-      `| **Performance Velocity** | **${perfScore}%** (Consistently High Contributor) |\n` +
-      `| **Key Competencies** | ${skillsStr} |\n` +
+      `| **Performance Index** | **${perfScore}%** (Consistently High Performance) |\n` +
+      `| **Core Competencies** | ${skillsStr} |\n` +
       compSection + "\n" +
       signalsSection;
 
@@ -879,8 +881,8 @@ export class PeopleCopilotService {
       supportingDataPoints: [
         `Employee ID: ${emp.id} | Code: ${empCode}`,
         `Department: ${dept} | Manager: ${manager}`,
-        `Record Status: Verified Live in OFC360 Active Directory`,
-        `Telemetry Confidence: 99% Grounded Data`,
+        `Record Status: Verified Active in OFC360 Central Directory`,
+        `Data Confidence: 99% Grounded Data`,
       ],
       suggestedFollowUps: [
         `Show me compensation breakdown for ${emp.name}`,
@@ -913,22 +915,22 @@ export class PeopleCopilotService {
       const status = e.status || "Active";
       const manager = e.reportingManager || e.managerName || "Vinit Sharma";
       const salary = userRole === "hr_admin" || userRole === "super_admin"
-        ? `₹${((e.salary || e.ctc || 0) / 100000).toFixed(1)}L/yr`
+        ? `INR ${((e.salary || e.ctc || 0) / 100000).toFixed(1)}L/yr`
         : `[Protected]`;
 
       return `| ${idx + 1} | **${e.name}** | \`${code}\` | ${role} | ${dept} | **${status}** | ${manager} | ${salary} |`;
     }).join("\n");
 
-    const answer = `### 👥 OFC360 Authorized Employee Directory (${employees.length} Total Personnel)\n\n` +
-      `**Quick Summary:**\n` +
-      `* 🟢 **Active Full-Time:** ${activeCount} members\n` +
-      `* 🟡 **Under Probation:** ${probationCount} member(s)\n` +
-      `* 🔴 **Serving Notice:** ${noticeCount} member(s)\n` +
-      `* 🛡️ **Data Health Score:** ${summary.dataHealthScore || 96}%\n\n` +
-      `| # | Employee Name | Code | Role / Designation | Department | Status | Manager | Compensation |\n` +
+    const answer = `### Employee Directory (${employees.length} Total Registered Personnel)\n\n` +
+      `Here is the authorized roster of personnel currently monitored in the OFC360 central system:\n\n` +
+      `* **Active Full-Time Staff:** ${activeCount} members\n` +
+      `* **Under Probationary Review:** ${probationCount} member(s)\n` +
+      `* **Serving Notice Period:** ${noticeCount} member(s)\n` +
+      `* **Overall Data Hygiene Score:** ${summary.dataHealthScore || 96}%\n\n` +
+      `| # | Employee Name | Code | Role / Designation | Department | Status | Reporting Manager | Annual Compensation |\n` +
       `| :-: | :--- | :--- | :--- | :--- | :---: | :--- | :--- |\n` +
       tableRows +
-      `\n\n*Tip: You can ask full details about any individual (e.g., "Tell me about ${employees[0]?.name || "Vinit Sharma"}") for complete 360 telemetry.*`;
+      `\n\n*Note: To view the full 360-degree telemetry for any individual, you can ask for their specific profile (for example: "Tell me about ${employees[0]?.name || "Vinit Sharma"}").*`;
 
     return {
       answer,
@@ -990,30 +992,31 @@ export class PeopleCopilotService {
 
     const deptRows = Object.entries(deptCompMap).map(([dept, data]) => {
       const avg = Math.round(data.total / Math.max(1, data.count));
-      return `| **${dept}** | ${data.count} | ₹${(data.total / 100000).toFixed(2)} Lakhs | ₹${(avg / 100000).toFixed(2)} Lakhs/yr | ₹${Math.round(data.total / 12).toLocaleString("en-IN")} |`;
+      return `| **${dept}** | ${data.count} | INR ${(data.total / 100000).toFixed(2)} Lakhs | INR ${(avg / 100000).toFixed(2)} Lakhs/year | INR ${Math.round(data.total / 12).toLocaleString("en-IN")} |`;
     }).join("\n");
 
-    const answer = `### 💰 OFC360 Organizational Compensation & Payroll Intelligence\n\n` +
-      `* **Total Annual Payroll Expenditure:** **₹${(totalAnnualPayroll / 10000000).toFixed(2)} Crores / year** (₹${(totalAnnualPayroll / 100000).toFixed(2)} Lakhs)\n` +
-      `* **Total Monthly Payroll Outflow:** **₹${monthlyPayroll.toLocaleString("en-IN")} / month**\n` +
-      `* **Average Employee Annual CTC:** **₹${(avgSalary / 100000).toFixed(2)} Lakhs/yr** (₹${Math.round(avgSalary / 12).toLocaleString("en-IN")}/mo)\n` +
-      `* **Highest Compensation Tier:** ₹${((highest?.salary || highest?.ctc || 0) / 100000).toFixed(2)}L/yr (${highest?.name || "Executive"})\n` +
-      `* **Lowest Compensation Tier:** ₹${((lowest?.salary || lowest?.ctc || 0) / 100000).toFixed(2)}L/yr (${lowest?.name || "Associate"})\n\n` +
-      `### 📊 **Department-Wise Compensation Breakdown**\n\n` +
-      `| Department | Headcount | Total Annual CTC | Average Package | Monthly Run-rate |\n` +
+    const answer = `### Compensation & Payroll Intelligence\n\n` +
+      `Here is the verified payroll analysis synthesized from the OFC360 compensation master ledger:\n\n` +
+      `* **Annual Payroll Expenditure:** **INR ${(totalAnnualPayroll / 10000000).toFixed(2)} Crores / year** (INR ${(totalAnnualPayroll / 100000).toFixed(2)} Lakhs)\n` +
+      `* **Monthly Payroll Outflow:** **INR ${monthlyPayroll.toLocaleString("en-IN")} / month**\n` +
+      `* **Average Annual CTC:** **INR ${(avgSalary / 100000).toFixed(2)} Lakhs/year** (INR ${Math.round(avgSalary / 12).toLocaleString("en-IN")}/month)\n` +
+      `* **Highest Compensation Tier:** INR ${((highest?.salary || highest?.ctc || 0) / 100000).toFixed(2)} Lakhs/year (${highest?.name || "Executive"})\n` +
+      `* **Entry / Associate Tier:** INR ${((lowest?.salary || lowest?.ctc || 0) / 100000).toFixed(2)} Lakhs/year (${lowest?.name || "Associate"})\n\n` +
+      `### Department-Wise Compensation Breakdown\n\n` +
+      `| Department | Headcount | Total Annual CTC | Average Package | Monthly Disbursement |\n` +
       `| :--- | :-: | :--- | :--- | :--- |\n` +
       deptRows +
-      `\n\n### 🛡️ **Statutory & Deductions Summary**\n` +
-      `* **Provident Fund (PF):** Standard 12% contribution with ₹21,600 statutory cap.\n` +
-      `* **Professional Tax (PT):** ₹2,500/yr per state labor regulations.\n` +
-      `* **Tax Deduction at Source (TDS):** Computed under New Tax Regime slabs automatically.`;
+      `\n\n### Statutory and Tax Deductions\n` +
+      `* **Provident Fund (PF):** Standard 12% employer and employee contribution up to statutory limits.\n` +
+      `* **Professional Tax (PT):** INR 2,500/year calculated in accordance with regional labor laws.\n` +
+      `* **Tax Deducted at Source (TDS):** Automatically calculated based on selected tax regime slabs.`;
 
     return {
       answer,
       supportingDataPoints: [
         `Audited ${employees.length} compensation records`,
-        `Total Annual Budget: ₹${(totalAnnualPayroll / 10000000).toFixed(2)} Cr`,
-        `Monthly Disbursement: ₹${monthlyPayroll.toLocaleString("en-IN")}`,
+        `Total Annual Budget: INR ${(totalAnnualPayroll / 10000000).toFixed(2)} Cr`,
+        `Monthly Disbursement: INR ${monthlyPayroll.toLocaleString("en-IN")}`,
       ],
       suggestedFollowUps: [
         "Show me all employees in Engineering",
@@ -1033,21 +1036,21 @@ export class PeopleCopilotService {
     userRole: SystemRole
   ): AskPeopleAIResponse {
     const leaveEmps = employees.filter(e => (e.status || "").toLowerCase().includes("leave"));
-    const probationEmps = employees.filter(e => (e.status || "").toLowerCase().includes("probation"));
 
-    const answer = `### ⏰ OFC360 Attendance, Presence & Leave Telemetry\n\n` +
-      `* **Organization Punctuality & Presence Index:** **97.4% on-time record** over past 60 operating days\n` +
-      `* **Currently On Approved Leave:** ${leaveEmps.length} employee(s) ${leaveEmps.length > 0 ? `(${leaveEmps.map(e => e.name).join(", ")})` : "— *Zero active unplanned leaves today*"}\n` +
-      `* **Standard Operating Shift:** 09:30 AM to 06:30 PM (IST) with 45-min flexible window\n` +
-      `* **Average Weekly Bandwidth:** 40.8 hours / week per full-time engineer\n\n` +
-      `### 🌴 **Corporate Leave Balances & Policy Parameters**\n` +
-      `| Leave Category | Annual Quota | Accrual Frequency | Carry Forward Rule |\n` +
+    const answer = `### Attendance, Presence & Leave Telemetry\n\n` +
+      `Here is the current attendance and workforce presence overview across all operating units:\n\n` +
+      `* **Punctuality & Presence Index:** **97.4% on-time check-in record** over the past 60 operating days.\n` +
+      `* **Currently on Approved Leave:** ${leaveEmps.length} personnel ${leaveEmps.length > 0 ? `(${leaveEmps.map(e => e.name).join(", ")})` : "(Zero unplanned absences reported today)"}.\n` +
+      `* **Standard Operating Shift:** 09:30 AM to 06:30 PM (IST) with a 45-minute flexible arrival window.\n` +
+      `* **Average Weekly Delivery Bandwidth:** 40.8 hours/week per full-time contributor.\n\n` +
+      `### Corporate Leave Policies and Balances\n\n` +
+      `| Leave Category | Annual Quota | Accrual Schedule | Carry Forward Terms |\n` +
       `| :--- | :-: | :--- | :--- |\n` +
-      `| **Casual Leave (CL)** | 12 Days | 1.0 Day / Month | Lapses at year end |\n` +
-      `| **Privilege / Earned Leave (PL)** | 15 Days | 1.25 Days / Month | Max 30 days accumulable |\n` +
-      `| **Sick Leave (SL)** | 8 Days | Annual Credit | Medical certificate for > 2 days |\n` +
-      `| **Maternity / Paternity** | 26 Weeks / 2 Weeks | Event based | Paid leave compliant |\n\n` +
-      `*Biometric and digital geofenced clock-in logs are synced in real time with central payroll.*`;
+      `| **Casual Leave (CL)** | 12 Days | 1.0 Day / Month | Lapses at the end of each calendar year |\n` +
+      `| **Privilege / Earned Leave (PL)** | 15 Days | 1.25 Days / Month | Up to 30 days accumulable |\n` +
+      `| **Sick Leave (SL)** | 8 Days | Credited Annually | Medical certification required for >2 consecutive days |\n` +
+      `| **Parental Leave** | 26 Weeks / 2 Weeks | Event-triggered | Fully paid under statutory maternity and paternity guidelines |\n\n` +
+      `*Biometric clock-in and digital geofenced attendance logs synchronize in real time with central payroll computation.*`;
 
     return {
       answer,
@@ -1082,29 +1085,29 @@ export class PeopleCopilotService {
       const isUnderstaffed = deptMembers.length < 3 && matchedDept.name.toLowerCase() === "engineering";
 
       const memberList = deptMembers.map((m, idx) => 
-        `* **${m.name}** — ${m.role || m.designation || "Specialist"} | Status: \`${m.status || "Active"}\` | Email: ${m.email} | CTC: ₹${((m.salary || m.ctc || 0) / 100000).toFixed(1)}L/yr`
+        `* **${m.name}** — ${m.role || m.designation || "Specialist"} | Status: \`${m.status || "Active"}\` | Email: ${m.email} | CTC: INR ${((m.salary || m.ctc || 0) / 100000).toFixed(1)}L/year`
       ).join("\n");
 
-      const answer = `### 🏢 Deep Department Intelligence: **${matchedDept.name}**\n\n` +
+      const answer = `### Deep Department Intelligence: **${matchedDept.name}**\n\n` +
         `* **Department Code:** \`${matchedDept.code || matchedDept.name.slice(0, 3).toUpperCase()}\`\n` +
         `* **Head of Department:** **${matchedDept.headOfDepartment || deptMembers[0]?.name || "Vinit Sharma"}**\n` +
         `* **Current Active Headcount:** **${deptMembers.length} team members**\n` +
-        `* **Staffing Health Status:** **${isUnderstaffed ? "⚠️ UNDERSTAFFED (Capacity Bottleneck Risk)" : "✅ OPTIMAL CAPACITY"}**\n` +
+        `* **Staffing Status:** **${isUnderstaffed ? "Understaffed (Capacity Bottleneck Risk)" : "Optimal Capacity"}**\n` +
         `* **Department Health Score:** **${isUnderstaffed ? "74/100" : "92/100"}**\n` +
-        `* **Annual Department Payroll:** ₹${(totalDeptSalary / 100000).toFixed(2)} Lakhs/yr (₹${Math.round(totalDeptSalary / 12).toLocaleString("en-IN")}/mo)\n\n` +
-        `### 👥 **Department Roster & Assigned Personnel**\n` +
+        `* **Annual Payroll Allocation:** INR ${(totalDeptSalary / 100000).toFixed(2)} Lakhs/year (approx. INR ${Math.round(totalDeptSalary / 12).toLocaleString("en-IN")}/month)\n\n` +
+        `### Department Members and Roles\n` +
         (memberList || "*No personnel currently mapped to this department.*") + "\n\n" +
-        `### 🎯 **Operational Diagnostics & Capacity Insights**\n` +
-        `* **Sprint Velocity:** Operating at 89% milestone completion index.\n` +
-        `* **Attendance Reliability:** 96.8% punctuality rating across team.\n` +
-        `* **Key Risk:** ${isUnderstaffed ? "High single-point dependency on lead engineers during production cycles." : "Zero critical staffing risks detected."}`;
+        `### Operational Diagnostics and Risk Analysis\n` +
+        `* **Sprint Velocity:** Milestone delivery index verified at 89%.\n` +
+        `* **Attendance Reliability:** 96.8% punctuality rating across team members.\n` +
+        `* **Risk Assessment:** ${isUnderstaffed ? "Single-point delivery dependency identified on senior contributors during major release cycles." : "Operating smoothly with zero critical capacity bottlenecks."}`;
 
       return {
         answer,
         supportingDataPoints: [
           `Department: ${matchedDept.name}`,
           `Members Count: ${deptMembers.length}`,
-          `Budget: ₹${(totalDeptSalary / 100000).toFixed(2)} Lakhs`,
+          `Budget: INR ${(totalDeptSalary / 100000).toFixed(2)} Lakhs`,
         ],
         suggestedFollowUps: [
           `Who is the manager of ${matchedDept.name}?`,
@@ -1123,17 +1126,17 @@ export class PeopleCopilotService {
     const deptRows = departments.map(d => {
       const count = employees.filter(e => (e.department || "").toLowerCase() === d.name.toLowerCase()).length;
       const isUnder = count < 2 && d.name.toLowerCase() === "engineering";
-      const status = isUnder ? "⚠️ Understaffed" : count >= 3 ? "✅ Optimal" : "🟢 Adequate";
+      const status = isUnder ? "Understaffed" : count >= 3 ? "Optimal" : "Adequate";
       const health = isUnder ? "74%" : "91%";
 
       return `| **${d.name}** | \`${d.code || d.name.slice(0, 3).toUpperCase()}\` | ${d.headOfDepartment || "Lead"} | **${count}** | ${status} | ${health} |`;
     }).join("\n");
 
-    const answer = `### 🏢 Organization-Wide Department Breakdown (${departments.length} Units)\n\n` +
+    const answer = `### Organization-Wide Department Breakdown (${departments.length} Units)\n\n` +
       `| Department Name | Code | Department Head | Headcount | Staffing Status | Health Index |\n` +
       `| :--- | :---: | :--- | :-: | :---: | :-: |\n` +
       deptRows +
-      `\n\n*Tip: Ask for any specific department (e.g. "Tell me about Engineering") for exhaustive operational telemetry and member rosters.*`;
+      `\n\n*Note: You can request deep operational diagnostics for any specific department (for example: "Tell me about Engineering").*`;
 
     return {
       answer,
@@ -1158,7 +1161,7 @@ export class PeopleCopilotService {
     employees: Employee[],
     userRole: SystemRole
   ): AskPeopleAIResponse {
-    // Identify managers (either explicit role 'manager' or reportingManager references)
+    // Identify managers
     const managerNames = Array.from(new Set(employees.map(e => e.reportingManager || e.managerName).filter(Boolean))) as string[];
     
     const mgrCards = managerNames.map((mgrName, idx) => {
@@ -1167,17 +1170,17 @@ export class PeopleCopilotService {
       const dept = mgrEmp?.department || directReports[0]?.department || "Operations";
       const role = mgrEmp?.role || "Team Lead / Manager";
 
-      return `### 👔 ${idx + 1}. **${mgrName}** — *${role} (${dept})*\n` +
+      return `### ${idx + 1}. **${mgrName}** — ${role} (${dept})\n` +
         `* **Direct Reports (${directReports.length}):** ${directReports.map(d => `\`${d.name}\` (${d.role})`).join(", ") || "Executive Lead"}\n` +
-        `* **Team Performance Index:** 91.5% | **Attendance:** 97.2%\n` +
-        `* **Workload Health:** Balanced sprint distribution with zero overdue blockers`;
+        `* **Team Performance Score:** 91.5% | **Attendance Reliability:** 97.2%\n` +
+        `* **Workload Health:** Balanced allocation across active milestone deliverables`;
     }).join("\n\n");
 
-    const answer = `### 👔 OFC360 Management Hierarchy & Reporting Lines\n\n` +
+    const answer = `### Management Hierarchy & Reporting Structure\n\n` +
       `**Executive Leadership:**\n` +
-      `* 👑 **Vinit Sharma** — VP of Engineering & Co-Founder (Direct Reports: Engineering Managers, HR Head, DevOps Architect)\n` +
-      `* 👑 **Banoth Siddarth** — Co-Founder & Executive Director (Direct Reports: Product Design Head, Sales Head, Finance Head)\n\n` +
-      `**Active Operational Managers & Team Direct Reports:**\n\n` +
+      `* **Vinit Sharma** — VP of Engineering & Co-Founder (Direct Reports: Engineering Managers, HR Head, DevOps Architect)\n` +
+      `* **Banoth Siddarth** — Co-Founder & Executive Director (Direct Reports: Product Design Head, Sales Head, Finance Head)\n\n` +
+      `**Operational Managers & Direct Reporting Teams:**\n\n` +
       mgrCards;
 
     return {
@@ -1208,7 +1211,7 @@ export class PeopleCopilotService {
 
     if (probationEmps.length === 0) {
       return {
-        answer: "### 🟢 Probation Milestone Status\n\nAll current personnel have completed their formal 90-day confirmation reviews. There are zero employees under active probation.",
+        answer: "### Probation Milestone Status\n\nAll current personnel have completed their formal 90-day confirmation reviews. There are zero employees under active probation.",
         supportingDataPoints: ["Zero probation outliers detected"],
         suggestedFollowUps: ["Who needs attention today?", "Show employee directory"],
         recommendedActions: [],
@@ -1224,16 +1227,16 @@ export class PeopleCopilotService {
       const manager = e.reportingManager || e.managerName || "Mamraj Yadav";
       const perfScore = (e as any).performanceScore || 84;
 
-      return `### 🟡 ${idx + 1}. **${e.name}** (\`${e.role || "Software Engineer"}\`)\n` +
+      return `### ${idx + 1}. **${e.name}** (\`${e.role || "Software Engineer"}\`)\n` +
         `* **Department:** ${e.department || "Engineering"}\n` +
-        `* **Joining Date:** ${joined} (Probation Window: 90 Days)\n` +
+        `* **Joining Date:** ${joined} (Probation Period: 90 Days)\n` +
         `* **Direct Manager:** **${manager}**\n` +
-        `* **Onboarding Score:** 94% compliance modules completed\n` +
+        `* **Onboarding Progress:** 94% compliance modules completed\n` +
         `* **Performance Index:** ${perfScore}%\n` +
         `* **Action Required:** Manager Confirmation Review & Sign-Off Workflow pending`;
     }).join("\n\n");
 
-    const answer = `### 📋 Active Probation Reviews (${probationEmps.length} Personnel Requiring Attention)\n\n` +
+    const answer = `### Active Probation Reviews (${probationEmps.length} Personnel Requiring Review)\n\n` +
       list +
       `\n\n*You can trigger the 1-click probation confirmation workflow directly from the Operations Queue.*`;
 
@@ -1265,7 +1268,7 @@ export class PeopleCopilotService {
 
     if (noticeEmps.length === 0) {
       return {
-        answer: "### 🟢 Notice Period & Retention Status\n\nZero employees are currently serving formal notice periods. Workforce retention index is at 98.2% across all operating departments.",
+        answer: "### Notice Period & Retention Status\n\nZero employees are currently serving formal notice periods. Workforce retention index is at 98.2% across all operating departments.",
         supportingDataPoints: ["Zero active exit transitions logged"],
         suggestedFollowUps: ["Who needs attention today?", "Show workforce health"],
         recommendedActions: [],
@@ -1277,10 +1280,10 @@ export class PeopleCopilotService {
     }
 
     const list = noticeEmps.map((e, idx) => 
-      `* **${e.name}** (${e.role || "Specialist"}) — Department: ${e.department} | Manager: ${e.reportingManager} | KT Status: In Progress`
+      `* **${e.name}** (${e.role || "Specialist"}) — Department: ${e.department} | Manager: ${e.reportingManager} | Knowledge Transfer: In Progress`
     ).join("\n");
 
-    const answer = `### ⚠️ Notice Period & Transition Management (${noticeEmps.length} Active Transitions)\n\n` +
+    const answer = `### Notice Period & Transition Management (${noticeEmps.length} Active Transitions)\n\n` +
       list +
       `\n\n*Knowledge transfer workflows and asset return checklists are active for these personnel.*`;
 
@@ -1314,22 +1317,22 @@ export class PeopleCopilotService {
 
     const avgScore = Math.round(perfList.reduce((a, b) => a + b.score, 0) / Math.max(1, perfList.length));
 
-    let answer = `### 📊 OFC360 Organizational Performance & KPI Telemetry\n\n` +
-      `* **Company-Wide Performance Index:** **${avgScore}%** (Target Benchmark: >85%)\n` +
+    let answer = `### Organizational Performance & KPI Telemetry\n\n` +
+      `* **Company-Wide Performance Index:** **${avgScore}%** (Benchmark Target: >85%)\n` +
       `* **Goal Completion Ratio:** 87.4% on-track across quarterly OKR milestones\n` +
-      `* **Top Contributors (≥90%):** ${topPerformers.length} personnel\n` +
-      `* **Steady Contributors (80-89%):** ${steadyContributors.length} personnel\n` +
-      `* **Under Observation (<80%):** ${lowPerformers.length} personnel\n\n`;
+      `* **Top Contributors (Score ≥90%):** ${topPerformers.length} personnel\n` +
+      `* **Steady Contributors (Score 80-89%):** ${steadyContributors.length} personnel\n` +
+      `* **Under Observation (Score <80%):** ${lowPerformers.length} personnel\n\n`;
 
-    answer += `### 🌟 **Top High-Performing Contributors**\n`;
+    answer += `### Top High-Performing Contributors\n`;
     topPerformers.slice(0, 5).forEach((p, i) => {
-      answer += `${i + 1}. **${p.name}** (${p.dept} • *${p.role}*) — Index: **${p.score}%**\n`;
+      answer += `${i + 1}. **${p.name}** (${p.dept} | ${p.role}) — Index: **${p.score}%**\n`;
     });
 
     if (lowPerformers.length > 0) {
-      answer += `\n### ⚠️ **Coaching & Development Focus Areas**\n`;
+      answer += `\n### Coaching & Development Focus Areas\n`;
       lowPerformers.forEach((p) => {
-        answer += `* **${p.name}** (${p.dept}) — Index: **${p.score}%** (*Recommended: 1-on-1 sprint coaching sync*)\n`;
+        answer += `* **${p.name}** (${p.dept}) — Index: **${p.score}%** (Recommended: Schedule 1-on-1 sprint coaching sync)\n`;
       });
     }
 
@@ -1367,7 +1370,7 @@ export class PeopleCopilotService {
 
     if (matches.length === 0) {
       return {
-        answer: `### 🔍 Skill & Talent Search: "${skillTerm}"\n\nNo active personnel currently have verified skills matching "${skillTerm}". You can request skill tagging from the profile enrichment queue.`,
+        answer: `### Skill & Talent Search: "${skillTerm}"\n\nNo active personnel currently have verified skills matching "${skillTerm}". You can request skill tagging from the profile enrichment queue.`,
         supportingDataPoints: [`Queried ${employees.length} employee skill inventories`],
         suggestedFollowUps: ["Show all employee skills", "List all employees"],
         recommendedActions: [],
@@ -1380,12 +1383,12 @@ export class PeopleCopilotService {
 
     const list = matches.map((m, idx) => {
       const skillsStr = Array.isArray(m.skills) ? m.skills.map(s => typeof s === "string" ? s : s.name).join(", ") : "Specialized";
-      return `${idx + 1}. **${m.name}** — *${m.role}* (${m.department})\n` +
+      return `${idx + 1}. **${m.name}** — ${m.role} (${m.department})\n` +
         `   * **Verified Competencies:** ${skillsStr}\n` +
         `   * **Contact:** [${m.email}](mailto:${m.email}) | Manager: ${m.reportingManager || "Vinit Sharma"}`;
     }).join("\n\n");
 
-    const answer = `### 🔍 Matching Talent for Skill/Role: **"${skillTerm.toUpperCase()}"** (${matches.length} Found)\n\n` + list;
+    const answer = `### Matching Talent for Skill/Role: "${skillTerm.toUpperCase()}" (${matches.length} Found)\n\n` + list;
 
     return {
       answer,
@@ -1413,22 +1416,22 @@ export class PeopleCopilotService {
 
     const items: string[] = [];
     if (probationEmps.length > 0) {
-      items.push(`🟡 **${probationEmps.length} Employee(s) approaching probation completion:** ${probationEmps.map(e => `**${e.name}** (${e.department})`).join(", ")}`);
+      items.push(`* **${probationEmps.length} Employee(s) approaching probation completion:** ${probationEmps.map(e => `**${e.name}** (${e.department})`).join(", ")}`);
     }
     if (noticeEmps.length > 0) {
-      items.push(`🔴 **${noticeEmps.length} Employee(s) in active exit transition:** ${noticeEmps.map(e => `**${e.name}** (${e.department})`).join(", ")}`);
+      items.push(`* **${noticeEmps.length} Employee(s) in active exit transition:** ${noticeEmps.map(e => `**${e.name}** (${e.department})`).join(", ")}`);
     }
     if (lowPerf.length > 0) {
-      items.push(`⚠️ **${lowPerf.length} Employee(s) with velocity dip (<75%):** ${lowPerf.map(e => `**${e.name}**`).join(", ")}`);
+      items.push(`* **${lowPerf.length} Employee(s) with velocity dip (<75%):** ${lowPerf.map(e => `**${e.name}**`).join(", ")}`);
     }
 
     if (items.length === 0) {
-      items.push("🟢 **All monitored employee profiles are operating within nominal thresholds with zero critical anomalies.**");
+      items.push("* **All monitored employee profiles are operating within nominal thresholds with zero critical anomalies.**");
     }
 
-    const answer = `### 🚨 Prioritized Attention & Action Summary for Today\n\n` +
+    const answer = `### Prioritized Attention & Action Summary for Today\n\n` +
       items.join("\n\n") +
-      `\n\n### ⚡ **Top Recommended Next Steps:**\n` +
+      `\n\n### Top Recommended Next Steps:\n` +
       recommendations.slice(0, 3).map((r, i) => `${i + 1}. **${r.title}** — *${r.suggestedAction}*`).join("\n");
 
     return {
@@ -1464,7 +1467,7 @@ export class PeopleCopilotService {
       `   * **Action:** \`${r.suggestedAction}\``
     ).join("\n\n");
 
-    const answer = `### ⚡ OFC360 Autonomous Operations & Approvals Queue (${count} Pending Items)\n\n` +
+    const answer = `### Autonomous Operations & Approvals Queue (${count} Pending Items)\n\n` +
       (recList || "All approval workflows have been completed. Operations queue is clear.") +
       `\n\n*You can approve or reject these items directly from the Operations Queue modal.*`;
 
@@ -1496,12 +1499,12 @@ export class PeopleCopilotService {
     const missingEmail = context.employees.filter(e => !e.email).length;
     const score = summary.dataHealthScore || 96;
 
-    const answer = `### 🛡️ OFC360 Data Quality, Security & IT Governance Intelligence\n\n` +
+    const answer = `### Data Quality, Security & IT Governance Intelligence\n\n` +
       `* **Overall Data Quality Health Score:** **${score}/100** (Enterprise Grade A+)\n` +
       `* **Total User Accounts Monitored:** ${totalEmps} verified active records\n` +
       `* **Department Mapping Integrity:** ${unassignedDept === 0 ? "100% Complete" : `${unassignedDept} unmapped records`}\n` +
       `* **Corporate Email Compliance:** ${missingEmail === 0 ? "100% Verified" : `${missingEmail} missing emails`}\n` +
-      `* **SSO & RBAC Enforcement:** Single Sign-On Active • Strict Role Separation Policy \`RBAC-702\`\n` +
+      `* **SSO & RBAC Enforcement:** Single Sign-On Active, Strict Role Separation Policy \`RBAC-702\`\n` +
       `* **Audit Pipeline:** Continuous 24x7 telemetry logging with zero tamper tolerance`;
 
     return {
@@ -1524,12 +1527,12 @@ export class PeopleCopilotService {
   }
 
   private static generateFoundersResponse(userRole: SystemRole): AskPeopleAIResponse {
-    const answer = `### 🌟 About OFC360 & EquinoxSphere Leadership\n\n` +
+    const answer = `### About OFC360 & EquinoxSphere Leadership\n\n` +
       `**OFC360** is an enterprise AI-powered HR and workforce management platform developed by **EquinoxSphere**.\n\n` +
-      `### 👑 **Founders & Owners:**\n` +
-      `* 🚀 **Vinit Sharma** — **Co-Founder & VP of Engineering**\n` +
-      `  * Spearheads platform engineering, distributed system architecture, and autonomous AI intelligence workflows.\n\n` +
-      `* 💡 **Banoth Siddarth** — **Co-Founder & Executive Director**\n` +
+      `### Founders & Ownership\n\n` +
+      `* **Vinit Sharma** — **Co-Founder & VP of Engineering**\n` +
+      `  * Spearheads platform engineering, distributed systems architecture, and autonomous AI intelligence workflows.\n\n` +
+      `* **Banoth Siddarth** — **Co-Founder & Executive Director**\n` +
       `  * Leads product strategy, UX innovation, enterprise adoption, and predictive workforce intelligence models.\n\n` +
       `**Mission:** Eliminating operational friction across HR, payroll automation, biometric attendance, talent acquisition, and AI-driven organizational governance.`;
 
@@ -1564,15 +1567,15 @@ export class PeopleCopilotService {
     const totalPayroll = employees.reduce((a, b) => a + Number(b.salary || b.ctc || 0), 0);
     const probationCount = employees.filter(e => (e.status || "").toLowerCase().includes("probation")).length;
 
-    const answer = `### 🌐 OFC360 Live Workforce Intelligence Overview\n\n` +
-      `I analyzed your query: **"${query}"** against live authorized organizational data.\n\n` +
-      `* 👥 **Total Monitored Workforce:** **${employees.length} Personnel** across **${departments.length} Departments**\n` +
-      `* 🟢 **Attendance & Presence Reliability:** **97.4%** on-time check-in index\n` +
-      `* 📈 **Company Performance Index:** **88.6%** milestone execution rate\n` +
-      `* 💰 **Annual Payroll Run-Rate:** **₹${(totalPayroll / 10000000).toFixed(2)} Crores / yr** (₹${Math.round(totalPayroll / 12).toLocaleString("en-IN")}/mo)\n` +
-      `* 🛡️ **Data Health Hygiene:** **${summary.dataHealthScore || 96}%**\n` +
-      `* ⚡ **Action Queue:** **${summary.pendingApprovalsCount || recommendations.length} pending operations** (${probationCount} probation review due)\n\n` +
-      `### 💡 **You can ask me specific questions like:**\n` +
+    const answer = `### Live Workforce Intelligence Overview\n\n` +
+      `I analyzed your query: **"${query}"** against authorized organizational data.\n\n` +
+      `* **Total Monitored Workforce:** **${employees.length} Personnel** across **${departments.length} Departments**\n` +
+      `* **Attendance & Presence Reliability:** **97.4%** on-time check-in index\n` +
+      `* **Company Performance Index:** **88.6%** milestone execution rate\n` +
+      `* **Annual Payroll Run-Rate:** **INR ${(totalPayroll / 10000000).toFixed(2)} Crores / year** (approx. INR ${Math.round(totalPayroll / 12).toLocaleString("en-IN")}/month)\n` +
+      `* **Data Health Hygiene:** **${summary.dataHealthScore || 96}%**\n` +
+      `* **Action Queue:** **${summary.pendingApprovalsCount || recommendations.length} pending operations** (${probationCount} probation review due)\n\n` +
+      `### Suggested Inquiries\n` +
       `* *"Tell me about Vinit Sharma"* (or any employee for full 360 profile)\n` +
       `* *"Show salary breakdown by department"* or *"Who is highest paid?"*\n` +
       `* *"Who is on leave today?"* or *"Who is on probation?"*\n` +
