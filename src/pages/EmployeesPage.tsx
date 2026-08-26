@@ -16,11 +16,8 @@ import {
   CheckCircle2,
   Plus,
   Sparkles,
-  ArrowRight,
-  TrendingUp,
   GitPullRequest,
   DoorOpen,
-  Eye,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -69,7 +66,6 @@ import { roleLabels, ROLE_OPTIONS, normalizeRole } from "@/features/auth/authTyp
 import { type Employee } from "@/types/hr";
 import EmployeeFormDialog from "@/components/employees/EmployeeFormDialog";
 import { Employee360Drawer } from "@/components/people-ai/Employee360Drawer";
-import { PeopleAISignalBadge } from "@/components/people-ai/PeopleAISignalBadge";
 import { normalizeError } from "@/services/api/normalizeError";
 import { toast } from "sonner";
 
@@ -142,7 +138,6 @@ export default function EmployeesPage({ onOpenCopilot }: EmployeesPageProps) {
       } else {
         const created = await createEmployeeApi(empData).unwrap();
         toast.success(`${empData.name} added`);
-        // Automatically trigger Joiner onboarding lifecycle
         if (created?.id) {
           triggerJoinerApi({ employee: created as Employee });
         }
@@ -264,29 +259,17 @@ export default function EmployeesPage({ onOpenCopilot }: EmployeesPageProps) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
-            <span>Employee Directory & 360 Intelligence</span>
+            <span>Employee Directory</span>
             <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20 font-mono">
               {employeeList.length} Total
             </Badge>
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Manage corporate headcount, system role assignments, AI signal diagnostics, and autonomous lifecycle operations.
+            Manage corporate headcount, system role assignments, department mappings, and employee records.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          {onOpenCopilot && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onOpenCopilot}
-              className="text-xs h-10 px-3 font-semibold border-primary/30 text-primary hover:bg-primary/10 gap-1.5 cursor-pointer"
-            >
-              <Sparkles className="w-4 h-4 text-primary" />
-              <span>Ask People AI</span>
-            </Button>
-          )}
-
           <Button
             onClick={handleOpenAdd}
             className="gradient-bg text-primary-foreground text-xs h-10 px-4 font-semibold shadow-md gap-1.5 cursor-pointer"
@@ -364,11 +347,11 @@ export default function EmployeesPage({ onOpenCopilot }: EmployeesPageProps) {
             <TableRow>
               <TableHead className="text-xs font-bold text-foreground">User / Employee</TableHead>
               <TableHead className="text-xs font-bold text-foreground">Department</TableHead>
-              <TableHead className="text-xs font-bold text-foreground">System Role</TableHead>
+              <TableHead className="text-xs font-bold text-foreground">System Access Role</TableHead>
               <TableHead className="text-xs font-bold text-foreground">Status</TableHead>
-              <TableHead className="text-xs font-bold text-foreground">AI Intelligence Signal</TableHead>
               <TableHead className="text-xs font-bold text-foreground">Annual CTC / Salary</TableHead>
-              <TableHead className="w-24 text-right font-bold text-foreground">Actions</TableHead>
+              <TableHead className="text-xs font-bold text-foreground">Joined Date</TableHead>
+              <TableHead className="w-12 text-right font-bold text-foreground">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -436,15 +419,6 @@ export default function EmployeesPage({ onOpenCopilot }: EmployeesPageProps) {
                   .toUpperCase() || "E";
 
                 const isEmpActive = (emp.status || "Active").toLowerCase().includes("active");
-                const isProbation = (emp.status || "").toLowerCase().includes("probation");
-                const isNotice = (emp.status || "").toLowerCase().includes("notice");
-
-                const signalStatus = isNotice ? "critical" : isProbation ? "attention_required" : "positive";
-                const signalHeadline = isNotice
-                  ? "Exit Transition: Notice Active"
-                  : isProbation
-                  ? "Probation: 90-Day Milestone Confirmation Due"
-                  : "Performance: High Velocity (88%)";
 
                 return (
                   <TableRow key={emp.id} className="hover:bg-secondary/30 transition-colors">
@@ -456,18 +430,7 @@ export default function EmployeesPage({ onOpenCopilot }: EmployeesPageProps) {
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <p className="font-bold text-xs text-foreground truncate">{displayName}</p>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleOpen360(emp)}
-                              className="h-5 w-5 rounded text-primary hover:bg-primary/10"
-                              title="Open Employee 360 AI Profile"
-                            >
-                              <Sparkles className="w-3 h-3" />
-                            </Button>
-                          </div>
+                          <p className="font-bold text-xs text-foreground truncate">{displayName}</p>
                           <p className="text-[11px] text-muted-foreground flex items-center gap-1 truncate">
                             <Mail className="w-3 h-3 shrink-0" /> {displayEmail}
                           </p>
@@ -493,128 +456,113 @@ export default function EmployeesPage({ onOpenCopilot }: EmployeesPageProps) {
                         {emp.status || "ACTIVE"}
                       </span>
                     </TableCell>
-                    <TableCell>
-                      <PeopleAISignalBadge
-                        status={signalStatus}
-                        headline={signalHeadline}
-                      />
-                    </TableCell>
                     <TableCell className="text-xs font-mono font-semibold">
                       ₹{(emp.salary || emp.ctc || 0).toLocaleString()}/yr
                     </TableCell>
+                    <TableCell className="text-xs text-muted-foreground font-mono">
+                      {emp.joinedAt || emp.joiningDate || "—"}
+                    </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleOpen360(emp)}
-                          className="h-8 text-xs font-semibold px-2 text-primary hover:bg-primary/10 gap-1 hidden md:flex cursor-pointer"
-                        >
-                          <Sparkles className="w-3 h-3" />
-                          <span>360 AI</span>
-                        </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-60 rounded-xl p-1.5 shadow-lg border-border/60">
+                          <DropdownMenuItem
+                            onClick={() => handleOpen360(emp)}
+                            className="text-xs gap-2 cursor-pointer font-semibold text-primary py-2"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-primary" /> View Employee 360 AI Profile
+                          </DropdownMenuItem>
 
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-60 rounded-xl p-1.5 shadow-lg border-border/60">
-                            <DropdownMenuItem
-                              onClick={() => handleOpen360(emp)}
-                              className="text-xs gap-2 cursor-pointer font-semibold text-primary py-2"
-                            >
-                              <Sparkles className="w-3.5 h-3.5 text-primary" /> View Employee 360 AI Profile
-                            </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleOpenEdit(emp)}
+                            className="text-xs gap-2 cursor-pointer font-medium py-2"
+                          >
+                            <Edit className="w-3.5 h-3.5 text-foreground" /> Edit Role & Details
+                          </DropdownMenuItem>
 
-                            <DropdownMenuItem
-                              onClick={() => handleOpenEdit(emp)}
-                              className="text-xs gap-2 cursor-pointer font-medium py-2"
-                            >
-                              <Edit className="w-3.5 h-3.5 text-foreground" /> Edit Role & Details
-                            </DropdownMenuItem>
+                          <DropdownMenuSeparator className="my-1" />
+                          <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                            Autonomous Workflows
+                          </DropdownMenuLabel>
 
-                            <DropdownMenuSeparator className="my-1" />
-                            <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                              Autonomous HR Workflows
-                            </DropdownMenuLabel>
+                          <DropdownMenuItem
+                            onClick={() => handleTriggerJoiner(emp)}
+                            className="text-xs gap-2 text-blue-600 dark:text-blue-400 font-medium cursor-pointer py-2"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Start Onboarding Pipeline
+                          </DropdownMenuItem>
 
-                            <DropdownMenuItem
-                              onClick={() => handleTriggerJoiner(emp)}
-                              className="text-xs gap-2 text-blue-600 dark:text-blue-400 font-medium cursor-pointer py-2"
-                            >
-                              <CheckCircle2 className="w-3.5 h-3.5" /> Start Onboarding Pipeline
-                            </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleTriggerMover(emp)}
+                            className="text-xs gap-2 text-purple-600 dark:text-purple-400 font-medium cursor-pointer py-2"
+                          >
+                            <GitPullRequest className="w-3.5 h-3.5" /> Start Mover / Transfer Workflow
+                          </DropdownMenuItem>
 
-                            <DropdownMenuItem
-                              onClick={() => handleTriggerMover(emp)}
-                              className="text-xs gap-2 text-purple-600 dark:text-purple-400 font-medium cursor-pointer py-2"
-                            >
-                              <GitPullRequest className="w-3.5 h-3.5" /> Start Mover / Transfer Workflow
-                            </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleTriggerLeaver(emp)}
+                            className="text-xs gap-2 text-amber-600 dark:text-amber-400 font-medium cursor-pointer py-2"
+                          >
+                            <DoorOpen className="w-3.5 h-3.5" /> Start Exit Clearance Workflow
+                          </DropdownMenuItem>
 
-                            <DropdownMenuItem
-                              onClick={() => handleTriggerLeaver(emp)}
-                              className="text-xs gap-2 text-amber-600 dark:text-amber-400 font-medium cursor-pointer py-2"
-                            >
-                              <DoorOpen className="w-3.5 h-3.5" /> Start Exit Clearance Workflow
-                            </DropdownMenuItem>
+                          <DropdownMenuSeparator className="my-1" />
 
-                            <DropdownMenuSeparator className="my-1" />
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setRole(emp.systemRole || "employee");
+                              toast.success(
+                                `Switched active role to ${roleLabels[emp.systemRole || "employee"]}`
+                              );
+                            }}
+                            className="text-xs gap-2 text-teal-600 dark:text-teal-400 font-semibold cursor-pointer py-2"
+                          >
+                            <UserCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" /> Switch UI to This Role
+                          </DropdownMenuItem>
 
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setRole(emp.systemRole || "employee");
-                                toast.success(
-                                  `Switched active role to ${roleLabels[emp.systemRole || "employee"]}`
-                                );
-                              }}
-                              className="text-xs gap-2 text-teal-600 dark:text-teal-400 font-semibold cursor-pointer py-2"
-                            >
-                              <UserCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" /> Switch UI to This Role
-                            </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleSendInvite(emp.id, emp.name)}
+                            className="text-xs gap-2 text-blue-600 dark:text-blue-400 font-medium cursor-pointer py-2"
+                          >
+                            <Send className="w-3.5 h-3.5 text-blue-500" /> Send Invitation
+                          </DropdownMenuItem>
 
-                            <DropdownMenuItem
-                              onClick={() => handleSendInvite(emp.id, emp.name)}
-                              className="text-xs gap-2 text-blue-600 dark:text-blue-400 font-medium cursor-pointer py-2"
-                            >
-                              <Send className="w-3.5 h-3.5 text-blue-500" /> Send Invitation
-                            </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleResetPassword(emp.id, emp.name)}
+                            className="text-xs gap-2 text-amber-600 dark:text-amber-400 font-medium cursor-pointer py-2"
+                          >
+                            <KeyRound className="w-3.5 h-3.5 text-amber-500" /> Reset Password
+                          </DropdownMenuItem>
 
-                            <DropdownMenuItem
-                              onClick={() => handleResetPassword(emp.id, emp.name)}
-                              className="text-xs gap-2 text-amber-600 dark:text-amber-400 font-medium cursor-pointer py-2"
-                            >
-                              <KeyRound className="w-3.5 h-3.5 text-amber-500" /> Reset Password
-                            </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleToggleActive(emp)}
+                            className="text-xs gap-2 font-medium cursor-pointer py-2"
+                          >
+                            {isEmpActive ? (
+                              <>
+                                <UserX className="w-3.5 h-3.5 text-orange-500" /> Deactivate Account
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Activate Account
+                              </>
+                            )}
+                          </DropdownMenuItem>
 
-                            <DropdownMenuItem
-                              onClick={() => handleToggleActive(emp)}
-                              className="text-xs gap-2 font-medium cursor-pointer py-2"
-                            >
-                              {isEmpActive ? (
-                                <>
-                                  <UserX className="w-3.5 h-3.5 text-orange-500" /> Deactivate Account
-                                </>
-                              ) : (
-                                <>
-                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Activate Account
-                                </>
-                              )}
-                            </DropdownMenuItem>
+                          <DropdownMenuSeparator className="my-1" />
 
-                            <DropdownMenuSeparator className="my-1" />
-
-                            <DropdownMenuItem
-                              onClick={() => handleDelete(emp.id, emp.name)}
-                              className="text-xs gap-2 text-destructive focus:text-destructive font-semibold cursor-pointer py-2"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" /> Remove User
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(emp.id, emp.name)}
+                            className="text-xs gap-2 text-destructive focus:text-destructive font-semibold cursor-pointer py-2"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" /> Remove User
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 );

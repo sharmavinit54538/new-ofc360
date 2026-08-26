@@ -15,11 +15,6 @@ import {
   UserX,
   CheckCircle2,
   Sparkles,
-  Target,
-  Clock,
-  Layers,
-  ArrowRight,
-  ShieldCheck,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -46,7 +41,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import {
   useGetManagersQuery,
@@ -209,29 +203,17 @@ export default function ManagersManagementPage({ onOpenCopilot }: ManagersManage
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
-            <span>Manager Intelligence & Leadership Roster</span>
+            <span>Managers Directory</span>
             <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20 font-mono">
               {managerList.length} Managers
             </Badge>
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Team leadership supervision, approval delegation, span-of-control analytics, and manager intelligence.
+            Team leadership supervision, approval delegation, span-of-control, and manager records.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          {onOpenCopilot && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onOpenCopilot}
-              className="text-xs h-10 px-3 font-semibold border-primary/30 text-primary hover:bg-primary/10 gap-1.5 cursor-pointer"
-            >
-              <Sparkles className="w-4 h-4 text-primary" />
-              <span>Manager AI Focus</span>
-            </Button>
-          )}
-
           <Button
             onClick={handleOpenCreate}
             className="gradient-bg text-primary-foreground text-xs h-10 px-4 font-semibold shadow-md gap-1.5 cursor-pointer"
@@ -239,50 +221,6 @@ export default function ManagersManagementPage({ onOpenCopilot }: ManagersManage
             <UserPlus className="w-4 h-4" />
             <span>Add Manager</span>
           </Button>
-        </div>
-      </div>
-
-      {/* "What Should Managers Focus on Today?" AI Focus Board */}
-      <div className="glass-card rounded-2xl p-4 border border-border/60 bg-gradient-to-r from-card to-primary/5 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Target className="w-4 h-4 text-primary" />
-            <h3 className="text-xs font-bold text-foreground uppercase tracking-wider">
-              Autonomous Manager Focus Actions
-            </h3>
-          </div>
-          <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-500 border-emerald-500/20 font-semibold">
-            AI Synchronized
-          </Badge>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-          <div className="p-3 rounded-xl glass-card border border-border/60 bg-card space-y-1">
-            <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-primary" /> Q3 Milestone Reviews
-            </span>
-            <p className="text-[11px] text-muted-foreground">
-              Review sprint deliverables and unblock dependencies for {employeeList.length} direct team members.
-            </p>
-          </div>
-
-          <div className="p-3 rounded-xl glass-card border border-border/60 bg-card space-y-1">
-            <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-amber-500" /> Pending Leave Approvals
-            </span>
-            <p className="text-[11px] text-muted-foreground">
-              Authorize active time-off requests to keep departmental capacity telemetry synchronized.
-            </p>
-          </div>
-
-          <div className="p-3 rounded-xl glass-card border border-border/60 bg-card space-y-1">
-            <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> Probation Confirmations
-            </span>
-            <p className="text-[11px] text-muted-foreground">
-              Complete 90-day onboarding confirmation evaluations for eligible probation members.
-            </p>
-          </div>
         </div>
       </div>
 
@@ -325,7 +263,7 @@ export default function ManagersManagementPage({ onOpenCopilot }: ManagersManage
               <TableHead className="text-xs font-bold text-foreground">Direct Team Size</TableHead>
               <TableHead className="text-xs font-bold text-foreground">Status</TableHead>
               <TableHead className="text-xs font-bold text-foreground">Annual CTC / Salary</TableHead>
-              <TableHead className="w-24 text-right font-bold text-foreground">Actions</TableHead>
+              <TableHead className="w-12 text-right font-bold text-foreground">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -424,88 +362,76 @@ export default function ManagersManagementPage({ onOpenCopilot }: ManagersManage
                       ₹{((mgr as any).salary || (mgr as any).ctc || 1450000).toLocaleString()}/yr
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleOpen360(mgr as any)}
-                          className="h-8 text-xs font-semibold px-2 text-primary hover:bg-primary/10 gap-1 hidden md:flex cursor-pointer"
-                        >
-                          <Sparkles className="w-3 h-3" />
-                          <span>360 AI</span>
-                        </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56 rounded-xl p-1.5 shadow-lg border-border/60">
+                          <DropdownMenuItem
+                            onClick={() => handleOpen360(mgr as any)}
+                            className="text-xs gap-2 cursor-pointer font-semibold text-primary py-2"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-primary" /> View Manager 360 AI Profile
+                          </DropdownMenuItem>
 
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-56 rounded-xl p-1.5 shadow-lg border-border/60">
-                            <DropdownMenuItem
-                              onClick={() => handleOpen360(mgr as any)}
-                              className="text-xs gap-2 cursor-pointer font-semibold text-primary py-2"
-                            >
-                              <Sparkles className="w-3.5 h-3.5 text-primary" /> View Manager 360 AI Profile
-                            </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleOpenEdit(mgr as any)}
+                            className="text-xs gap-2 cursor-pointer font-medium py-2"
+                          >
+                            <Edit className="w-3.5 h-3.5 text-foreground" /> Edit Role & Details
+                          </DropdownMenuItem>
 
-                            <DropdownMenuItem
-                              onClick={() => handleOpenEdit(mgr as any)}
-                              className="text-xs gap-2 cursor-pointer font-medium py-2"
-                            >
-                              <Edit className="w-3.5 h-3.5 text-foreground" /> Edit Role & Details
-                            </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setRole("manager");
+                              toast.success(`Switched active view to Manager Dashboard (${mgr.name})`);
+                            }}
+                            className="text-xs gap-2 text-teal-600 dark:text-teal-400 font-semibold cursor-pointer py-2"
+                          >
+                            <UserCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" /> Switch UI to Manager Role
+                          </DropdownMenuItem>
 
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setRole("manager");
-                                toast.success(`Switched active view to Manager Dashboard (${mgr.name})`);
-                              }}
-                              className="text-xs gap-2 text-teal-600 dark:text-teal-400 font-semibold cursor-pointer py-2"
-                            >
-                              <UserCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" /> Switch UI to Manager Role
-                            </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleSendInvite(mgr.id, mgr.name)}
+                            className="text-xs gap-2 text-blue-600 dark:text-blue-400 font-medium cursor-pointer py-2"
+                          >
+                            <Send className="w-3.5 h-3.5 text-blue-500" /> Send Invitation
+                          </DropdownMenuItem>
 
-                            <DropdownMenuItem
-                              onClick={() => handleSendInvite(mgr.id, mgr.name)}
-                              className="text-xs gap-2 text-blue-600 dark:text-blue-400 font-medium cursor-pointer py-2"
-                            >
-                              <Send className="w-3.5 h-3.5 text-blue-500" /> Send Invitation
-                            </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleResetPassword(mgr.id, mgr.name)}
+                            className="text-xs gap-2 text-amber-600 dark:text-amber-400 font-medium cursor-pointer py-2"
+                          >
+                            <KeyRound className="w-3.5 h-3.5 text-amber-500" /> Reset Password
+                          </DropdownMenuItem>
 
-                            <DropdownMenuItem
-                              onClick={() => handleResetPassword(mgr.id, mgr.name)}
-                              className="text-xs gap-2 text-amber-600 dark:text-amber-400 font-medium cursor-pointer py-2"
-                            >
-                              <KeyRound className="w-3.5 h-3.5 text-amber-500" /> Reset Password
-                            </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleToggleActive(mgr)}
+                            className="text-xs gap-2 font-medium cursor-pointer py-2"
+                          >
+                            {isMgrActive ? (
+                              <>
+                                <UserX className="w-3.5 h-3.5 text-orange-500" /> Deactivate Account
+                              </>
+                            ) : (
+                              <>
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Activate Account
+                              </>
+                            )}
+                          </DropdownMenuItem>
 
-                            <DropdownMenuItem
-                              onClick={() => handleToggleActive(mgr)}
-                              className="text-xs gap-2 font-medium cursor-pointer py-2"
-                            >
-                              {isMgrActive ? (
-                                <>
-                                  <UserX className="w-3.5 h-3.5 text-orange-500" /> Deactivate Account
-                                </>
-                              ) : (
-                                <>
-                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Activate Account
-                                </>
-                              )}
-                            </DropdownMenuItem>
+                          <DropdownMenuSeparator className="my-1" />
 
-                            <DropdownMenuSeparator className="my-1" />
-
-                            <DropdownMenuItem
-                              onClick={() => handleDelete(mgr.id, mgr.name)}
-                              className="text-xs gap-2 text-destructive focus:text-destructive font-semibold cursor-pointer py-2"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" /> Remove Manager
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(mgr.id, mgr.name)}
+                            className="text-xs gap-2 text-destructive focus:text-destructive font-semibold cursor-pointer py-2"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" /> Remove Manager
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 );

@@ -10,17 +10,7 @@ import {
   ShieldCheck,
   UserCheck,
   Building2,
-  Key,
-  Server,
-  AlertTriangle,
-  CheckCircle2,
   Sparkles,
-  Zap,
-  Activity,
-  Layers,
-  Wrench,
-  Shield,
-  FileCode2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -54,7 +44,6 @@ import {
   useUpdateEmployeeFullMutation,
   useDeactivateEmployeeMutation,
 } from "@/services/api/employeeApi";
-import { useGetITSystemIntelligenceQuery } from "@/services/api/peopleAiApi";
 import { useAuth } from "@/hooks/useAuth";
 import { roleLabels } from "@/features/auth/authTypes";
 import { type Employee } from "@/types/hr";
@@ -80,8 +69,6 @@ export default function ITAdminsManagementPage({
   const { setRole } = useAuth();
   const { data: rawEmployees = [], isLoading } = useGetEmployeesQuery();
   const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
-
-  const { data: itIntel } = useGetITSystemIntelligenceQuery({ employees });
 
   const [createEmployee] = useCreateEmployeeMutation();
   const [updateEmployee] = useUpdateEmployeeFullMutation();
@@ -138,41 +125,17 @@ export default function ITAdminsManagementPage({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
-            <span>IT & System Admin Operations</span>
+            <span>IT & System Admin Directory</span>
             <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20 font-mono">
               {admins.length} Administrators
             </Badge>
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            User lifecycle management, access anomaly surveillance, directory synchronization, and security governance.
+            System administration roster, identity privileges, and account governance records.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          {onOpenDataHealth && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onOpenDataHealth}
-              className="text-xs h-10 px-3 font-semibold border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 gap-1.5 cursor-pointer"
-            >
-              <ShieldCheck className="w-4 h-4" />
-              <span>Data Health ({itIntel?.dataQualityScore || 96}%)</span>
-            </Button>
-          )}
-
-          {onOpenCopilot && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onOpenCopilot}
-              className="text-xs h-10 px-3 font-semibold border-primary/30 text-primary hover:bg-primary/10 gap-1.5 cursor-pointer"
-            >
-              <Sparkles className="w-4 h-4 text-primary" />
-              <span>IT Copilot</span>
-            </Button>
-          )}
-
           <Button
             onClick={handleOpenCreate}
             className="gradient-bg text-primary-foreground text-xs h-10 px-4 font-semibold shadow-md gap-1.5 cursor-pointer"
@@ -180,61 +143,6 @@ export default function ITAdminsManagementPage({
             <UserPlus className="w-4 h-4" />
             <span>Add IT Admin</span>
           </Button>
-        </div>
-      </div>
-
-      {/* IT System Intelligence Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="glass-card rounded-xl p-4 border border-border/60 bg-card space-y-1">
-          <div className="flex items-center justify-between text-muted-foreground text-xs">
-            <span>Active User Accounts</span>
-            <Key className="w-4 h-4 text-primary" />
-          </div>
-          <p className="text-xl font-bold font-mono text-foreground">
-            {itIntel?.activeAccounts || employees.length}
-          </p>
-          <span className="text-[10px] text-emerald-500 font-semibold flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3" /> Directory Synchronized
-          </span>
-        </div>
-
-        <div className="glass-card rounded-xl p-4 border border-border/60 bg-card space-y-1">
-          <div className="flex items-center justify-between text-muted-foreground text-xs">
-            <span>Lifecycle Workflows</span>
-            <Layers className="w-4 h-4 text-blue-500" />
-          </div>
-          <p className="text-xl font-bold font-mono text-foreground">
-            {(itIntel?.joinerMoverLeaverSync.activeOnboardingWorkflows || 0) + (itIntel?.joinerMoverLeaverSync.pendingLeaverAccessRevocations || 0)}
-          </p>
-          <span className="text-[10px] text-muted-foreground">
-            JML Lifecycle Queue Active
-          </span>
-        </div>
-
-        <div className="glass-card rounded-xl p-4 border border-border/60 bg-card space-y-1">
-          <div className="flex items-center justify-between text-muted-foreground text-xs">
-            <span>Permission Anomalies</span>
-            <AlertTriangle className="w-4 h-4 text-amber-500" />
-          </div>
-          <p className="text-xl font-bold font-mono text-foreground">
-            {itIntel?.permissionAnomalies.length || 0}
-          </p>
-          <span className={`text-[10px] font-semibold ${itIntel?.permissionAnomalies.length === 0 ? "text-emerald-500" : "text-amber-500"}`}>
-            {itIntel?.permissionAnomalies.length === 0 ? "Zero Anomalies" : "Action Recommended"}
-          </span>
-        </div>
-
-        <div className="glass-card rounded-xl p-4 border border-border/60 bg-card space-y-1">
-          <div className="flex items-center justify-between text-muted-foreground text-xs">
-            <span>Integration Status</span>
-            <Zap className="w-4 h-4 text-emerald-500" />
-          </div>
-          <p className="text-base font-bold font-mono text-foreground">
-            SSO: {itIntel?.integrationHealth.sso || "CONNECTED"}
-          </p>
-          <span className="text-[10px] text-emerald-500 font-semibold">
-            Audit Pipeline: ACTIVE
-          </span>
         </div>
       </div>
 
@@ -274,7 +182,7 @@ export default function ITAdminsManagementPage({
               <TableHead className="text-xs font-bold text-foreground">System Role</TableHead>
               <TableHead className="text-xs font-bold text-foreground">Status</TableHead>
               <TableHead className="text-xs font-bold text-foreground">Security Scope</TableHead>
-              <TableHead className="w-24 text-right font-bold text-foreground">Actions</TableHead>
+              <TableHead className="w-12 text-right font-bold text-foreground">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -348,7 +256,7 @@ export default function ITAdminsManagementPage({
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-[10px] font-mono bg-secondary/50 text-foreground">
-                        System Operations (No HR Confidential)
+                        System Operations
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">

@@ -11,14 +11,6 @@ import {
   UserCheck,
   Building2,
   Sparkles,
-  TrendingUp,
-  ShieldCheck,
-  Activity,
-  ArrowRight,
-  Send,
-  KeyRound,
-  UserX,
-  CheckCircle2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -52,8 +44,6 @@ import {
   useUpdateEmployeeFullMutation,
   useDeactivateEmployeeMutation,
 } from "@/services/api/employeeApi";
-import { useGetDepartmentsQuery } from "@/services/api/departmentApi";
-import { useGetExecutiveIntelligenceQuery } from "@/services/api/peopleAiApi";
 import { useAuth } from "@/hooks/useAuth";
 import { roleLabels } from "@/features/auth/authTypes";
 import { type Employee } from "@/types/hr";
@@ -75,12 +65,8 @@ const statusStyle: Record<string, string> = {
 export default function ExecutivesManagementPage({ onOpenCopilot }: ExecutivesManagementPageProps) {
   const { setRole } = useAuth();
   const { data: rawEmployees = [], isLoading } = useGetEmployeesQuery();
-  const { data: rawDepartments = [] } = useGetDepartmentsQuery();
 
   const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
-  const departments = Array.isArray(rawDepartments) ? rawDepartments : [];
-
-  const { data: briefing } = useGetExecutiveIntelligenceQuery({ employees, departments });
 
   const [createEmployee] = useCreateEmployeeMutation();
   const [updateEmployee] = useUpdateEmployeeFullMutation();
@@ -151,29 +137,17 @@ export default function ExecutivesManagementPage({ onOpenCopilot }: ExecutivesMa
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
-            <span>Executive & CXO Intelligence Briefing</span>
+            <span>Executive & Leadership Roster</span>
             <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20 font-mono">
               {executives.length} CXO Leaders
             </Badge>
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Strategic workforce governance, organizational health index, executive decisions, and leadership roster.
+            Executive leadership roster, strategic portfolio assignments, and governance records.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          {onOpenCopilot && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onOpenCopilot}
-              className="text-xs h-10 px-3 font-semibold border-primary/30 text-primary hover:bg-primary/10 gap-1.5 cursor-pointer"
-            >
-              <Sparkles className="w-4 h-4 text-primary" />
-              <span>Ask Executive AI</span>
-            </Button>
-          )}
-
           <Button
             onClick={handleOpenCreate}
             className="gradient-bg text-primary-foreground text-xs h-10 px-4 font-semibold shadow-md gap-1.5 cursor-pointer"
@@ -181,60 +155,6 @@ export default function ExecutivesManagementPage({ onOpenCopilot }: ExecutivesMa
             <UserPlus className="w-4 h-4" />
             <span>Add CXO / Leader</span>
           </Button>
-        </div>
-      </div>
-
-      {/* Executive AI Briefing Card */}
-      <div className="glass-card rounded-2xl p-5 border border-primary/20 bg-gradient-to-r from-card via-card to-primary/5 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/40 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center">
-              <Crown className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="font-bold text-xs text-foreground uppercase tracking-wider">
-                Autonomous Executive AI Briefing
-              </h3>
-              <p className="text-[11px] text-muted-foreground">
-                Synthesized live from {employees.length} workforce profiles & department capacity logs
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Badge className="bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 text-xs font-mono font-bold">
-              Health Index: {briefing?.workforceHealthScore || 89}%
-            </Badge>
-          </div>
-        </div>
-
-        <p className="text-xs text-foreground/90 leading-relaxed font-medium">
-          {briefing?.executiveSummary || `OFC360 Workforce Health Index is stable at 89/100 with ${employees.length} active personnel across all operating units.`}
-        </p>
-
-        {/* 2-Column Strategic Highlights */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-          <div className="p-3.5 rounded-xl glass-card border border-border/60 bg-emerald-500/5 space-y-1.5">
-            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5" /> What Is Improving
-            </span>
-            <ul className="text-xs space-y-1 text-muted-foreground">
-              {briefing?.whatIsImproving.map((item, i) => (
-                <li key={i}>• {item}</li>
-              )) || <li>• Core milestone delivery velocity is at quarterly peak.</li>}
-            </ul>
-          </div>
-
-          <div className="p-3.5 rounded-xl glass-card border border-border/60 bg-amber-500/5 space-y-1.5">
-            <span className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-              <Activity className="w-3.5 h-3.5" /> Leadership Focus Areas
-            </span>
-            <ul className="text-xs space-y-1 text-muted-foreground">
-              {briefing?.whatRequiresAttention.map((item, i) => (
-                <li key={i}>• {item}</li>
-              )) || <li>• Review specialized capacity for Q4 engineering requisitions.</li>}
-            </ul>
-          </div>
         </div>
       </div>
 
@@ -276,7 +196,7 @@ export default function ExecutivesManagementPage({ onOpenCopilot }: ExecutivesMa
               <TableHead className="text-xs font-bold text-foreground">Designation / Role</TableHead>
               <TableHead className="text-xs font-bold text-foreground">Status</TableHead>
               <TableHead className="text-xs font-bold text-foreground">Annual CTC / Salary</TableHead>
-              <TableHead className="w-24 text-right font-bold text-foreground">Actions</TableHead>
+              <TableHead className="w-12 text-right font-bold text-foreground">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -352,50 +272,38 @@ export default function ExecutivesManagementPage({ onOpenCopilot }: ExecutivesMa
                       ₹{(ex.salary || ex.ctc || 2800000).toLocaleString()}/yr
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleOpen360(ex)}
-                          className="h-8 text-xs font-semibold px-2 text-primary hover:bg-primary/10 gap-1 hidden md:flex cursor-pointer"
-                        >
-                          <Sparkles className="w-3 h-3" />
-                          <span>360 AI</span>
-                        </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56 rounded-xl p-1.5 shadow-lg border-border/60">
+                          <DropdownMenuItem
+                            onClick={() => handleOpen360(ex)}
+                            className="text-xs gap-2 cursor-pointer font-semibold text-primary py-2"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-primary" /> View Executive 360 AI Profile
+                          </DropdownMenuItem>
 
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-56 rounded-xl p-1.5 shadow-lg border-border/60">
-                            <DropdownMenuItem
-                              onClick={() => handleOpen360(ex)}
-                              className="text-xs gap-2 cursor-pointer font-semibold text-primary py-2"
-                            >
-                              <Sparkles className="w-3.5 h-3.5 text-primary" /> View Executive 360 AI Profile
-                            </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleOpenEdit(ex)}
+                            className="text-xs gap-2 cursor-pointer font-medium py-2"
+                          >
+                            <Edit className="w-3.5 h-3.5 text-foreground" /> Edit Role & Details
+                          </DropdownMenuItem>
 
-                            <DropdownMenuItem
-                              onClick={() => handleOpenEdit(ex)}
-                              className="text-xs gap-2 cursor-pointer font-medium py-2"
-                            >
-                              <Edit className="w-3.5 h-3.5 text-foreground" /> Edit Role & Details
-                            </DropdownMenuItem>
-
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setRole("executive");
-                                toast.success(`Switched active view to Executive Dashboard (${ex.name})`);
-                              }}
-                              className="text-xs gap-2 text-teal-600 dark:text-teal-400 font-semibold cursor-pointer py-2"
-                            >
-                              <UserCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" /> Switch UI to Executive Role
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setRole("executive");
+                              toast.success(`Switched active view to Executive Dashboard (${ex.name})`);
+                            }}
+                            className="text-xs gap-2 text-teal-600 dark:text-teal-400 font-semibold cursor-pointer py-2"
+                          >
+                            <UserCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" /> Switch UI to Executive Role
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 );
