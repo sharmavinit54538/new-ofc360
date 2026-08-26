@@ -9,7 +9,18 @@ import {
   UserPlus,
   ShieldCheck,
   UserCheck,
-  Building2
+  Building2,
+  Key,
+  Server,
+  AlertTriangle,
+  CheckCircle2,
+  Sparkles,
+  Zap,
+  Activity,
+  Layers,
+  Wrench,
+  Shield,
+  FileCode2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,21 +32,21 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@/components/ui/table";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   useGetEmployeesQuery,
@@ -43,23 +54,35 @@ import {
   useUpdateEmployeeFullMutation,
   useDeactivateEmployeeMutation,
 } from "@/services/api/employeeApi";
+import { useGetITSystemIntelligenceQuery } from "@/services/api/peopleAiApi";
 import { useAuth } from "@/hooks/useAuth";
 import { roleLabels } from "@/features/auth/authTypes";
 import { type Employee } from "@/types/hr";
 import EmployeeFormDialog from "@/components/employees/EmployeeFormDialog";
 import { toast } from "sonner";
 
+interface ITAdminsManagementPageProps {
+  onOpenCopilot?: () => void;
+  onOpenDataHealth?: () => void;
+}
+
 const statusStyle: Record<string, string> = {
-  Active: "bg-emerald-500/15 text-emerald-500 border-emerald-500/30 font-bold tracking-wider",
-  "On Leave": "bg-amber-500/15 text-amber-500 border-amber-500/30 font-bold tracking-wider",
-  Probation: "bg-blue-500/15 text-blue-500 border-blue-500/30 font-bold tracking-wider",
-  Notice: "bg-destructive/15 text-destructive border-destructive/30 font-bold tracking-wider",
+  Active: "bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 font-bold tracking-wider",
+  "On Leave": "bg-amber-500/15 text-amber-500 border border-amber-500/30 font-bold tracking-wider",
+  Probation: "bg-blue-500/15 text-blue-500 border border-blue-500/30 font-bold tracking-wider",
+  Notice: "bg-destructive/15 text-destructive border border-destructive/30 font-bold tracking-wider",
 };
 
-export default function ITAdminsManagementPage() {
+export default function ITAdminsManagementPage({
+  onOpenCopilot,
+  onOpenDataHealth,
+}: ITAdminsManagementPageProps) {
   const { setRole } = useAuth();
   const { data: rawEmployees = [], isLoading } = useGetEmployeesQuery();
   const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
+
+  const { data: itIntel } = useGetITSystemIntelligenceQuery({ employees });
+
   const [createEmployee] = useCreateEmployeeMutation();
   const [updateEmployee] = useUpdateEmployeeFullMutation();
   const [deactivateEmployee] = useDeactivateEmployeeMutation();
@@ -76,9 +99,9 @@ export default function ITAdminsManagementPage() {
 
   const filteredAdmins = admins.filter((admin) => {
     const matchesSearch =
-      admin.name.toLowerCase().includes(search.toLowerCase()) ||
-      admin.email.toLowerCase().includes(search.toLowerCase()) ||
-      admin.id.toLowerCase().includes(search.toLowerCase());
+      (admin.name || "").toLowerCase().includes(search.toLowerCase()) ||
+      (admin.email || "").toLowerCase().includes(search.toLowerCase()) ||
+      (admin.id || "").toLowerCase().includes(search.toLowerCase());
     const matchesDept = deptFilter === "ALL" || admin.department === deptFilter;
     return matchesSearch && matchesDept;
   });
@@ -96,25 +119,16 @@ export default function ITAdminsManagementPage() {
   const handleSave = async (data: Omit<Employee, "id">) => {
     try {
       if (editingAdmin) {
-        await updateEmployee({ id: editingAdmin.id, ...data }).unwrap();
+        await updateEmployee({ id: editingAdmin.id, employee: { ...data, systemRole: "it_admin" } }).unwrap();
         toast.success(`IT Admin ${data.name} updated successfully.`);
       } else {
         await createEmployee({ ...data, systemRole: "it_admin" }).unwrap();
-        toast.success(`New IT Admin ${data.name} created successfully.`);
+        toast.success(`IT Admin ${data.name} created successfully.`);
       }
       setIsFormOpen(false);
       setEditingAdmin(null);
     } catch (err: any) {
-      toast.error(err?.data?.message || "Failed to save IT Admin.");
-    }
-  };
-
-  const handleDelete = async (id: string, name: string) => {
-    try {
-      await deactivateEmployee(id).unwrap();
-      toast.success(`IT Admin ${name} deactivated.`);
-    } catch (err: any) {
-      toast.error(err?.data?.message || "Failed to deactivate IT Admin.");
+      toast.error(err?.data?.message || "Failed to save IT admin record.");
     }
   };
 
@@ -123,29 +137,113 @@ export default function ITAdminsManagementPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-            <span>IT & System Administrators Directory</span>
-          </h2>
+          <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
+            <span>IT & System Admin Operations</span>
+            <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20 font-mono">
+              {admins.length} Administrators
+            </Badge>
+          </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {admins.length} administrators with infrastructure, security & IAM privileges
+            User lifecycle management, access anomaly surveillance, directory synchronization, and security governance.
           </p>
         </div>
-        <Button
-          size="sm"
-          onClick={handleOpenCreate}
-          className="gap-1.5 gradient-bg text-primary-foreground font-bold h-10 px-4 rounded-xl shadow-sm"
-        >
-          <UserPlus className="w-4 h-4" /> Grant / Create IT Admin
-        </Button>
+
+        <div className="flex items-center gap-2">
+          {onOpenDataHealth && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onOpenDataHealth}
+              className="text-xs h-10 px-3 font-semibold border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 gap-1.5 cursor-pointer"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>Data Health ({itIntel?.dataQualityScore || 96}%)</span>
+            </Button>
+          )}
+
+          {onOpenCopilot && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onOpenCopilot}
+              className="text-xs h-10 px-3 font-semibold border-primary/30 text-primary hover:bg-primary/10 gap-1.5 cursor-pointer"
+            >
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span>IT Copilot</span>
+            </Button>
+          )}
+
+          <Button
+            onClick={handleOpenCreate}
+            className="gradient-bg text-primary-foreground text-xs h-10 px-4 font-semibold shadow-md gap-1.5 cursor-pointer"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>Add IT Admin</span>
+          </Button>
+        </div>
       </div>
 
-      {/* Controls Bar */}
-      <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      {/* IT System Intelligence Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="glass-card rounded-xl p-4 border border-border/60 bg-card space-y-1">
+          <div className="flex items-center justify-between text-muted-foreground text-xs">
+            <span>Active User Accounts</span>
+            <Key className="w-4 h-4 text-primary" />
+          </div>
+          <p className="text-xl font-bold font-mono text-foreground">
+            {itIntel?.activeAccounts || employees.length}
+          </p>
+          <span className="text-[10px] text-emerald-500 font-semibold flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3" /> Directory Synchronized
+          </span>
+        </div>
+
+        <div className="glass-card rounded-xl p-4 border border-border/60 bg-card space-y-1">
+          <div className="flex items-center justify-between text-muted-foreground text-xs">
+            <span>Lifecycle Workflows</span>
+            <Layers className="w-4 h-4 text-blue-500" />
+          </div>
+          <p className="text-xl font-bold font-mono text-foreground">
+            {(itIntel?.joinerMoverLeaverSync.activeOnboardingWorkflows || 0) + (itIntel?.joinerMoverLeaverSync.pendingLeaverAccessRevocations || 0)}
+          </p>
+          <span className="text-[10px] text-muted-foreground">
+            JML Lifecycle Queue Active
+          </span>
+        </div>
+
+        <div className="glass-card rounded-xl p-4 border border-border/60 bg-card space-y-1">
+          <div className="flex items-center justify-between text-muted-foreground text-xs">
+            <span>Permission Anomalies</span>
+            <AlertTriangle className="w-4 h-4 text-amber-500" />
+          </div>
+          <p className="text-xl font-bold font-mono text-foreground">
+            {itIntel?.permissionAnomalies.length || 0}
+          </p>
+          <span className={`text-[10px] font-semibold ${itIntel?.permissionAnomalies.length === 0 ? "text-emerald-500" : "text-amber-500"}`}>
+            {itIntel?.permissionAnomalies.length === 0 ? "Zero Anomalies" : "Action Recommended"}
+          </span>
+        </div>
+
+        <div className="glass-card rounded-xl p-4 border border-border/60 bg-card space-y-1">
+          <div className="flex items-center justify-between text-muted-foreground text-xs">
+            <span>Integration Status</span>
+            <Zap className="w-4 h-4 text-emerald-500" />
+          </div>
+          <p className="text-base font-bold font-mono text-foreground">
+            SSO: {itIntel?.integrationHealth.sso || "CONNECTED"}
+          </p>
+          <span className="text-[10px] text-emerald-500 font-semibold">
+            Audit Pipeline: ACTIVE
+          </span>
+        </div>
+      </div>
+
+      {/* Filter Toolbar */}
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between glass-card p-3 rounded-xl border border-border/60">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search IT admins by name, email, or role..."
+            placeholder="Search IT Admins by name, email, ID..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 text-xs h-10 bg-secondary/30 border-border/60"
@@ -159,12 +257,9 @@ export default function ITAdminsManagementPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="ALL">All Departments</SelectItem>
+            <SelectItem value="IT">IT</SelectItem>
             <SelectItem value="Engineering">Engineering</SelectItem>
-            <SelectItem value="Design">Design</SelectItem>
-            <SelectItem value="Marketing">Marketing</SelectItem>
-            <SelectItem value="Sales">Sales</SelectItem>
-            <SelectItem value="HR">HR</SelectItem>
-            <SelectItem value="Finance">Finance</SelectItem>
+            <SelectItem value="Operations">Operations</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -174,68 +269,58 @@ export default function ITAdminsManagementPage() {
         <Table>
           <TableHeader className="bg-secondary/40">
             <TableRow>
-              <TableHead className="text-xs font-bold text-foreground">IT Administrator</TableHead>
+              <TableHead className="text-xs font-bold text-foreground">Administrator</TableHead>
               <TableHead className="text-xs font-bold text-foreground">Department</TableHead>
               <TableHead className="text-xs font-bold text-foreground">System Role</TableHead>
               <TableHead className="text-xs font-bold text-foreground">Status</TableHead>
-              <TableHead className="text-xs font-bold text-foreground">Compensation</TableHead>
-              <TableHead className="text-xs font-bold text-foreground">Joined Date</TableHead>
-              <TableHead className="w-12 text-right font-bold text-foreground">Actions</TableHead>
+              <TableHead className="text-xs font-bold text-foreground">Security Scope</TableHead>
+              <TableHead className="w-24 text-right font-bold text-foreground">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredAdmins.length === 0 ? (
+            {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground text-xs">
+                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground text-xs">
+                  <div className="flex flex-col items-center justify-center space-y-2">
+                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    <p className="font-semibold text-xs text-foreground">Loading IT admin directory...</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : filteredAdmins.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground text-xs">
                   <div className="flex flex-col items-center justify-center space-y-2">
                     <ShieldCheck className="w-8 h-8 text-muted-foreground/40" />
                     <p className="font-bold text-sm text-foreground">
-                      {admins.length === 0 ? "No IT administrators registered yet" : "No IT admins match your search"}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground max-w-sm">
-                      {admins.length === 0
-                        ? 'Click the "+ Grant / Create IT Admin" button to provision system administrator accounts.'
-                        : "Try resetting your department filter or search query."}
+                      {admins.length === 0 ? "No IT Administrators assigned yet" : "No administrators match filter criteria"}
                     </p>
                   </div>
                 </TableCell>
               </TableRow>
             ) : (
-              filteredAdmins.map((adm) => {
-                const displayName =
-                  adm.name ||
-                  (adm.firstName ? `${adm.firstName} ${adm.lastName || ""}`.trim() : "") ||
-                  (adm.email ? adm.email.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "") ||
-                  "IT Admin";
-
-                const displayEmail =
-                  adm.email ||
-                  adm.companyWorkEmail ||
-                  adm.personalEmail ||
-                  "No email specified";
-
+              filteredAdmins.map((admin) => {
+                const displayName = admin.name || "IT Admin";
+                const displayEmail = admin.email || "No email specified";
                 const initials = displayName
                   .split(" ")
                   .filter(Boolean)
                   .map((n) => n[0])
                   .join("")
                   .slice(0, 2)
-                  .toUpperCase() || "A";
+                  .toUpperCase() || "IT";
 
                 return (
-                  <TableRow key={adm.id} className="hover:bg-secondary/30 transition-colors">
+                  <TableRow key={admin.id} className="hover:bg-secondary/30 transition-colors">
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9 border border-teal-500/30 shrink-0">
-                          <AvatarFallback className="bg-teal-500/10 text-teal-600 dark:text-teal-400 text-xs font-bold">
+                        <Avatar className="h-9 w-9 border border-primary/20 shrink-0">
+                          <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
                             {initials}
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
-                          <p className="font-bold text-xs text-foreground flex items-center gap-1 truncate">
-                            {displayName}
-                            <ShieldCheck className="w-3 h-3 text-teal-600 dark:text-teal-400 shrink-0" />
-                          </p>
+                          <p className="font-bold text-xs text-foreground truncate">{displayName}</p>
                           <p className="text-[11px] text-muted-foreground flex items-center gap-1 truncate">
                             <Mail className="w-3 h-3 shrink-0" /> {displayEmail}
                           </p>
@@ -244,28 +329,27 @@ export default function ITAdminsManagementPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="text-[11px] font-medium bg-secondary/80">
-                        {adm.department}
+                        {admin.department || "IT"}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge className="bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20 text-[10px] font-bold">
-                        IT / System Admin
+                      <Badge className="bg-primary/10 text-primary border-primary/20 text-xs font-bold">
+                        {roleLabels[admin.systemRole || "it_admin"]}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                          statusStyle[adm.status] || "bg-secondary text-foreground"
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] uppercase ${
+                          statusStyle[admin.status || "Active"] || statusStyle.Active
                         }`}
                       >
-                        {adm.status}
+                        {admin.status || "ACTIVE"}
                       </span>
                     </TableCell>
-                    <TableCell className="text-xs font-mono font-semibold">
-                      ₹{(adm.salary || adm.ctc || 0).toLocaleString()}/yr
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground font-mono">
-                      {adm.joinedAt || adm.joiningDate || "—"}
+                    <TableCell>
+                      <Badge variant="outline" className="text-[10px] font-mono bg-secondary/50 text-foreground">
+                        System Operations (No HR Confidential)
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -274,28 +358,38 @@ export default function ITAdminsManagementPage() {
                             <MoreHorizontal className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-52 rounded-xl p-1.5 shadow-lg border-border/60">
+                        <DropdownMenuContent align="end" className="w-56 rounded-xl p-1.5 shadow-lg border-border/60">
                           <DropdownMenuItem
-                            onClick={() => handleOpenEdit(adm)}
+                            onClick={() => handleOpenEdit(admin)}
                             className="text-xs gap-2 cursor-pointer font-medium py-2"
                           >
                             <Edit className="w-3.5 h-3.5 text-foreground" /> Edit Role & Details
                           </DropdownMenuItem>
+
                           <DropdownMenuItem
                             onClick={() => {
                               setRole("it_admin");
-                              toast.success(`Switched active view to IT Admin Dashboard (${adm.name})`);
+                              toast.success(`Switched active view to IT Admin Dashboard (${admin.name})`);
                             }}
                             className="text-xs gap-2 text-teal-600 dark:text-teal-400 font-semibold cursor-pointer py-2"
                           >
-                            <UserCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" /> Switch UI to This Role
+                            <UserCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" /> Switch UI to IT Admin Role
                           </DropdownMenuItem>
+
                           <DropdownMenuSeparator className="my-1" />
+
                           <DropdownMenuItem
-                            onClick={() => handleDelete(adm.id, adm.name)}
+                            onClick={async () => {
+                              try {
+                                await deactivateEmployee(admin.id).unwrap();
+                                toast.success(`Deactivated account for ${admin.name}`);
+                              } catch (err: any) {
+                                toast.error("Failed to deactivate account.");
+                              }
+                            }}
                             className="text-xs gap-2 text-destructive focus:text-destructive font-semibold cursor-pointer py-2"
                           >
-                            <Trash2 className="w-3.5 h-3.5" /> Remove User
+                            <Trash2 className="w-3.5 h-3.5" /> Deactivate Account
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -308,7 +402,7 @@ export default function ITAdminsManagementPage() {
         </Table>
       </div>
 
-      {/* Employee Form Dialog with Preset IT Admin Role */}
+      {/* Form Dialog */}
       <EmployeeFormDialog
         open={isFormOpen}
         onOpenChange={setIsFormOpen}

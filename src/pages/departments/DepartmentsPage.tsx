@@ -8,15 +8,44 @@ import { DepartmentProfileDrawer } from "@/components/departments/DepartmentProf
 import { ImportDialog } from "@/components/departments/ImportDialog";
 import { RoleGuard } from "@/components/auth/RoleGuard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, List, GitFork, BarChart3 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Building2, List, GitFork, BarChart3, Sparkles } from "lucide-react";
 
-export default function DepartmentsPage() {
+interface DepartmentsPageProps {
+  onOpenCopilot?: () => void;
+}
+
+export default function DepartmentsPage({ onOpenCopilot }: DepartmentsPageProps) {
   const [activeView, setActiveView] = useState("table");
 
   return (
     <RoleGuard module="departments">
       <div className="space-y-6">
+        {/* Top Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
+              <span>Department Intelligence & Structure</span>
+            </h1>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Organizational hierarchy mapping, department telemetry, capacity diagnostics, and cost-center allocation.
+            </p>
+          </div>
 
+          {onOpenCopilot && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onOpenCopilot}
+                className="text-xs h-9 px-3 font-semibold border-primary/30 text-primary hover:bg-primary/10 gap-1.5 cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4 text-primary" />
+                <span>Department AI Insights</span>
+              </Button>
+            </div>
+          )}
+        </div>
 
         {/* Stats Cards */}
         <DepartmentStatsCards />

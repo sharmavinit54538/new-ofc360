@@ -15,6 +15,12 @@ import {
   UserX,
   CheckCircle2,
   Plus,
+  Sparkles,
+  ArrowRight,
+  TrendingUp,
+  GitPullRequest,
+  DoorOpen,
+  Eye,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -41,6 +47,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import {
   useGetEmployeesQuery,
@@ -52,12 +59,23 @@ import {
   useActivateEmployeeByAdminMutation,
   useResetEmployeePasswordMutation,
 } from "@/services/api/employeeApi";
+import {
+  useTriggerJoinerWorkflowMutation,
+  useTriggerMoverWorkflowMutation,
+  useTriggerLeaverWorkflowMutation,
+} from "@/services/api/peopleAiApi";
 import { useAuth } from "@/hooks/useAuth";
 import { roleLabels, ROLE_OPTIONS, normalizeRole } from "@/features/auth/authTypes";
 import { type Employee } from "@/types/hr";
 import EmployeeFormDialog from "@/components/employees/EmployeeFormDialog";
+import { Employee360Drawer } from "@/components/people-ai/Employee360Drawer";
+import { PeopleAISignalBadge } from "@/components/people-ai/PeopleAISignalBadge";
 import { normalizeError } from "@/services/api/normalizeError";
 import { toast } from "sonner";
+
+interface EmployeesPageProps {
+  onOpenCopilot?: () => void;
+}
 
 const getStatusBadgeStyle = (status?: string) => {
   const s = (status || "active").toLowerCase().replace(/_/g, " ");
@@ -76,7 +94,7 @@ const getStatusBadgeStyle = (status?: string) => {
   return "bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 font-bold tracking-wider";
 };
 
-export default function EmployeesPage() {
+export default function EmployeesPage({ onOpenCopilot }: EmployeesPageProps) {
   const { setRole } = useAuth();
   const { data: employees = [], isLoading, isFetching, isError, error, refetch } = useGetEmployeesQuery();
   const [createEmployeeApi] = useCreateEmployeeMutation();
@@ -87,12 +105,19 @@ export default function EmployeesPage() {
   const [activateEmployeeApi] = useActivateEmployeeByAdminMutation();
   const [resetPasswordApi] = useResetEmployeePasswordMutation();
 
+  const [triggerJoinerApi] = useTriggerJoinerWorkflowMutation();
+  const [triggerMoverApi] = useTriggerMoverWorkflowMutation();
+  const [triggerLeaverApi] = useTriggerLeaverWorkflowMutation();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEmp, setEditingEmp] = useState<Employee | null>(null);
+
+  const [selected360Emp, setSelected360Emp] = useState<Employee | null>(null);
+  const [is360Open, setIs360Open] = useState(false);
 
   const handleOpenAdd = () => {
     setEditingEmp(null);
@@ -104,14 +129,23 @@ export default function EmployeesPage() {
     setIsFormOpen(true);
   };
 
+  const handleOpen360 = (emp: Employee) => {
+    setSelected360Emp(emp);
+    setIs360Open(true);
+  };
+
   const handleSaveEmployee = async (empData: Omit<Employee, "id">) => {
     try {
       if (editingEmp) {
         await updateEmployeeApi({ id: editingEmp.id, changes: empData }).unwrap();
         toast.success(`${empData.name || editingEmp.name} updated`);
       } else {
-        await createEmployeeApi(empData).unwrap();
+        const created = await createEmployeeApi(empData).unwrap();
         toast.success(`${empData.name} added`);
+        // Automatically trigger Joiner onboarding lifecycle
+        if (created?.id) {
+          triggerJoinerApi({ employee: created as Employee });
+        }
       }
       setIsFormOpen(false);
       setEditingEmp(null);
@@ -174,6 +208,39 @@ export default function EmployeesPage() {
     }
   };
 
+  const handleTriggerJoiner = async (emp: Employee) => {
+    try {
+      await triggerJoinerApi({ employee: emp }).unwrap();
+      toast.success(`Onboarding lifecycle initiated for ${emp.name}`);
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Failed to trigger joiner workflow");
+    }
+  };
+
+  const handleTriggerMover = async (emp: Employee) => {
+    try {
+      await triggerMoverApi({
+        employee: emp,
+        changes: { newRole: `Senior ${emp.role || "Specialist"}` },
+      }).unwrap();
+      toast.success(`Internal mobility pipeline initiated for ${emp.name}`);
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Failed to trigger mover workflow");
+    }
+  };
+
+  const handleTriggerLeaver = async (emp: Employee) => {
+    try {
+      await triggerLeaverApi({
+        employee: emp,
+        reason: "Voluntary Transition",
+      }).unwrap();
+      toast.success(`Exit clearance workflow initiated for ${emp.name}`);
+    } catch (err: any) {
+      toast.error(err?.data?.message || "Failed to trigger leaver workflow");
+    }
+  };
+
   const employeeList = Array.isArray(employees) ? employees : [];
 
   const filtered = employeeList.filter((e) => {
@@ -197,20 +264,32 @@ export default function EmployeesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
-            <span>Employee Directory</span>
+            <span>Employee Directory & 360 Intelligence</span>
             <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/20 font-mono">
               {employeeList.length} Total
             </Badge>
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Manage corporate headcount, system role assignments, department mappings, and employee records.
+            Manage corporate headcount, system role assignments, AI signal diagnostics, and autonomous lifecycle operations.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
+          {onOpenCopilot && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onOpenCopilot}
+              className="text-xs h-10 px-3 font-semibold border-primary/30 text-primary hover:bg-primary/10 gap-1.5 cursor-pointer"
+            >
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span>Ask People AI</span>
+            </Button>
+          )}
+
           <Button
             onClick={handleOpenAdd}
-            className="gradient-bg text-primary-foreground text-xs h-10 px-4 font-semibold shadow-md gap-1.5"
+            className="gradient-bg text-primary-foreground text-xs h-10 px-4 font-semibold shadow-md gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Add Employee</span>
@@ -285,11 +364,11 @@ export default function EmployeesPage() {
             <TableRow>
               <TableHead className="text-xs font-bold text-foreground">User / Employee</TableHead>
               <TableHead className="text-xs font-bold text-foreground">Department</TableHead>
-              <TableHead className="text-xs font-bold text-foreground">System Access Role</TableHead>
+              <TableHead className="text-xs font-bold text-foreground">System Role</TableHead>
               <TableHead className="text-xs font-bold text-foreground">Status</TableHead>
+              <TableHead className="text-xs font-bold text-foreground">AI Intelligence Signal</TableHead>
               <TableHead className="text-xs font-bold text-foreground">Annual CTC / Salary</TableHead>
-              <TableHead className="text-xs font-bold text-foreground">Joined Date</TableHead>
-              <TableHead className="w-12 text-right font-bold text-foreground">Actions</TableHead>
+              <TableHead className="w-24 text-right font-bold text-foreground">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -328,7 +407,7 @@ export default function EmployeesPage() {
                     </p>
                     <p className="text-[11px] text-muted-foreground max-w-sm">
                       {employeeList.length === 0
-                        ? 'Get started by creating employees and system user accounts using the "+ Add User / Employee" button above.'
+                        ? 'Get started by creating employees and system user accounts using the "+ Add Employee" button above.'
                         : "Try clearing your search query or department filters to see more results."}
                     </p>
                   </div>
@@ -357,6 +436,15 @@ export default function EmployeesPage() {
                   .toUpperCase() || "E";
 
                 const isEmpActive = (emp.status || "Active").toLowerCase().includes("active");
+                const isProbation = (emp.status || "").toLowerCase().includes("probation");
+                const isNotice = (emp.status || "").toLowerCase().includes("notice");
+
+                const signalStatus = isNotice ? "critical" : isProbation ? "attention_required" : "positive";
+                const signalHeadline = isNotice
+                  ? "Exit Transition: Notice Active"
+                  : isProbation
+                  ? "Probation: 90-Day Milestone Confirmation Due"
+                  : "Performance: High Velocity (88%)";
 
                 return (
                   <TableRow key={emp.id} className="hover:bg-secondary/30 transition-colors">
@@ -368,7 +456,18 @@ export default function EmployeesPage() {
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
-                          <p className="font-bold text-xs text-foreground truncate">{displayName}</p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-bold text-xs text-foreground truncate">{displayName}</p>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleOpen360(emp)}
+                              className="h-5 w-5 rounded text-primary hover:bg-primary/10"
+                              title="Open Employee 360 AI Profile"
+                            >
+                              <Sparkles className="w-3 h-3" />
+                            </Button>
+                          </div>
                           <p className="text-[11px] text-muted-foreground flex items-center gap-1 truncate">
                             <Mail className="w-3 h-3 shrink-0" /> {displayEmail}
                           </p>
@@ -377,7 +476,7 @@ export default function EmployeesPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="text-[11px] font-medium bg-secondary/80">
-                        {emp.department}
+                        {emp.department || "Unassigned"}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -394,78 +493,128 @@ export default function EmployeesPage() {
                         {emp.status || "ACTIVE"}
                       </span>
                     </TableCell>
+                    <TableCell>
+                      <PeopleAISignalBadge
+                        status={signalStatus}
+                        headline={signalHeadline}
+                      />
+                    </TableCell>
                     <TableCell className="text-xs font-mono font-semibold">
                       ₹{(emp.salary || emp.ctc || 0).toLocaleString()}/yr
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground font-mono">
-                      {emp.joinedAt || emp.joiningDate || "—"}
-                    </TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56 rounded-xl p-1.5 shadow-lg border-border/60">
-                          <DropdownMenuItem
-                            onClick={() => handleOpenEdit(emp)}
-                            className="text-xs gap-2 cursor-pointer font-medium py-2"
-                          >
-                            <Edit className="w-3.5 h-3.5 text-foreground" /> Edit Role & Details
-                          </DropdownMenuItem>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleOpen360(emp)}
+                          className="h-8 text-xs font-semibold px-2 text-primary hover:bg-primary/10 gap-1 hidden md:flex cursor-pointer"
+                        >
+                          <Sparkles className="w-3 h-3" />
+                          <span>360 AI</span>
+                        </Button>
 
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setRole(emp.systemRole || "employee");
-                              toast.success(
-                                `Switched active role to ${roleLabels[emp.systemRole || "employee"]}`
-                              );
-                            }}
-                            className="text-xs gap-2 text-teal-600 dark:text-teal-400 font-semibold cursor-pointer py-2"
-                          >
-                            <UserCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" /> Switch UI to This Role
-                          </DropdownMenuItem>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-60 rounded-xl p-1.5 shadow-lg border-border/60">
+                            <DropdownMenuItem
+                              onClick={() => handleOpen360(emp)}
+                              className="text-xs gap-2 cursor-pointer font-semibold text-primary py-2"
+                            >
+                              <Sparkles className="w-3.5 h-3.5 text-primary" /> View Employee 360 AI Profile
+                            </DropdownMenuItem>
 
-                          <DropdownMenuItem
-                            onClick={() => handleSendInvite(emp.id, emp.name)}
-                            className="text-xs gap-2 text-blue-600 dark:text-blue-400 font-medium cursor-pointer py-2"
-                          >
-                            <Send className="w-3.5 h-3.5 text-blue-500" /> Send Invitation
-                          </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleOpenEdit(emp)}
+                              className="text-xs gap-2 cursor-pointer font-medium py-2"
+                            >
+                              <Edit className="w-3.5 h-3.5 text-foreground" /> Edit Role & Details
+                            </DropdownMenuItem>
 
-                          <DropdownMenuItem
-                            onClick={() => handleResetPassword(emp.id, emp.name)}
-                            className="text-xs gap-2 text-amber-600 dark:text-amber-400 font-medium cursor-pointer py-2"
-                          >
-                            <KeyRound className="w-3.5 h-3.5 text-amber-500" /> Reset Password
-                          </DropdownMenuItem>
+                            <DropdownMenuSeparator className="my-1" />
+                            <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                              Autonomous HR Workflows
+                            </DropdownMenuLabel>
 
-                          <DropdownMenuItem
-                            onClick={() => handleToggleActive(emp)}
-                            className="text-xs gap-2 font-medium cursor-pointer py-2"
-                          >
-                            {isEmpActive ? (
-                              <>
-                                <UserX className="w-3.5 h-3.5 text-orange-500" /> Deactivate Account
-                              </>
-                            ) : (
-                              <>
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Activate Account
-                              </>
-                            )}
-                          </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleTriggerJoiner(emp)}
+                              className="text-xs gap-2 text-blue-600 dark:text-blue-400 font-medium cursor-pointer py-2"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Start Onboarding Pipeline
+                            </DropdownMenuItem>
 
-                          <DropdownMenuSeparator className="my-1" />
+                            <DropdownMenuItem
+                              onClick={() => handleTriggerMover(emp)}
+                              className="text-xs gap-2 text-purple-600 dark:text-purple-400 font-medium cursor-pointer py-2"
+                            >
+                              <GitPullRequest className="w-3.5 h-3.5" /> Start Mover / Transfer Workflow
+                            </DropdownMenuItem>
 
-                          <DropdownMenuItem
-                            onClick={() => handleDelete(emp.id, emp.name)}
-                            className="text-xs gap-2 text-destructive focus:text-destructive font-semibold cursor-pointer py-2"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" /> Remove User
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                            <DropdownMenuItem
+                              onClick={() => handleTriggerLeaver(emp)}
+                              className="text-xs gap-2 text-amber-600 dark:text-amber-400 font-medium cursor-pointer py-2"
+                            >
+                              <DoorOpen className="w-3.5 h-3.5" /> Start Exit Clearance Workflow
+                            </DropdownMenuItem>
+
+                            <DropdownMenuSeparator className="my-1" />
+
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setRole(emp.systemRole || "employee");
+                                toast.success(
+                                  `Switched active role to ${roleLabels[emp.systemRole || "employee"]}`
+                                );
+                              }}
+                              className="text-xs gap-2 text-teal-600 dark:text-teal-400 font-semibold cursor-pointer py-2"
+                            >
+                              <UserCheck className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" /> Switch UI to This Role
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                              onClick={() => handleSendInvite(emp.id, emp.name)}
+                              className="text-xs gap-2 text-blue-600 dark:text-blue-400 font-medium cursor-pointer py-2"
+                            >
+                              <Send className="w-3.5 h-3.5 text-blue-500" /> Send Invitation
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                              onClick={() => handleResetPassword(emp.id, emp.name)}
+                              className="text-xs gap-2 text-amber-600 dark:text-amber-400 font-medium cursor-pointer py-2"
+                            >
+                              <KeyRound className="w-3.5 h-3.5 text-amber-500" /> Reset Password
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                              onClick={() => handleToggleActive(emp)}
+                              className="text-xs gap-2 font-medium cursor-pointer py-2"
+                            >
+                              {isEmpActive ? (
+                                <>
+                                  <UserX className="w-3.5 h-3.5 text-orange-500" /> Deactivate Account
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> Activate Account
+                                </>
+                              )}
+                            </DropdownMenuItem>
+
+                            <DropdownMenuSeparator className="my-1" />
+
+                            <DropdownMenuItem
+                              onClick={() => handleDelete(emp.id, emp.name)}
+                              className="text-xs gap-2 text-destructive focus:text-destructive font-semibold cursor-pointer py-2"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" /> Remove User
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -481,6 +630,19 @@ export default function EmployeesPage() {
         onOpenChange={setIsFormOpen}
         employee={editingEmp}
         onSave={handleSaveEmployee}
+      />
+
+      {/* Employee 360 AI Profile Drawer */}
+      <Employee360Drawer
+        open={is360Open}
+        onClose={() => setIs360Open(false)}
+        employee={selected360Emp}
+        allEmployees={employeeList}
+        onTriggerAction={(act, emp) => {
+          if (act.includes("Training")) handleTriggerJoiner(emp);
+          else if (act.includes("Transfer") || act.includes("Mover")) handleTriggerMover(emp);
+          else if (act.includes("Exit") || act.includes("Leaver")) handleTriggerLeaver(emp);
+        }}
       />
     </motion.div>
   );
