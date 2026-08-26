@@ -524,14 +524,10 @@ export class PeopleCopilotService {
     }
 
     // 2. Resolve Active / Grounded Entities
-    // If context has employees, use them. If sparse/empty, merge with verified grounded roster
+    // If context has employees, use them. If empty, use verified grounded roster
     let baseEmployees: Employee[] = [];
     if (Array.isArray(systemContext.employees) && systemContext.employees.length > 0) {
       baseEmployees = [...systemContext.employees];
-      // If only 1-2 items, enrich with default roster to ensure rich organizational intelligence
-      if (baseEmployees.length <= 2 && !baseEmployees.some(e => e.name?.toLowerCase().includes("vinit"))) {
-        baseEmployees = [...baseEmployees, ...DEFAULT_GROUNDED_EMPLOYEES.filter(de => !baseEmployees.some(be => be.id === de.id))];
-      }
     } else {
       baseEmployees = [...DEFAULT_GROUNDED_EMPLOYEES];
     }
@@ -1417,7 +1413,7 @@ export class PeopleCopilotService {
 
     const items: string[] = [];
     if (probationEmps.length > 0) {
-      items.push(`🟡 **${probationEmps.length} Employee(s) approaching 90-day confirmation milestone:** ${probationEmps.map(e => `**${e.name}** (${e.department})`).join(", ")}`);
+      items.push(`🟡 **${probationEmps.length} Employee(s) approaching probation completion:** ${probationEmps.map(e => `**${e.name}** (${e.department})`).join(", ")}`);
     }
     if (noticeEmps.length > 0) {
       items.push(`🔴 **${noticeEmps.length} Employee(s) in active exit transition:** ${noticeEmps.map(e => `**${e.name}** (${e.department})`).join(", ")}`);
