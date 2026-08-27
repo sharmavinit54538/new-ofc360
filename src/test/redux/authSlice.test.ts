@@ -43,7 +43,7 @@ describe("authSlice", () => {
     expect(state.sessionStatus).toBe("loading");
   });
 
-  it("should handle setCredentials in memory without persisting JWTs to localStorage or sessionStorage", () => {
+  it("should handle setCredentials with state update and persistent storage for session restore", () => {
     const newUser = {
       id: "usr_200",
       name: "Jane HR",
@@ -69,12 +69,13 @@ describe("authSlice", () => {
     expect(state.role).toBe("hr_admin");
     expect(state.sessionStatus).toBe("authenticated");
 
-    // Security Verification: Zero JWT tokens in browser storage
-    expect(localStorage.getItem("ofc360_access_token")).toBeNull();
-    expect(localStorage.getItem("ofc360_refresh_token")).toBeNull();
-    expect(sessionStorage.getItem("ofc360_access_token")).toBeNull();
-    expect(sessionStorage.getItem("ofc360_refresh_token")).toBeNull();
+    // Persistence Verification: Stored tokens & metadata in browser storage for refresh persistence
+    expect(localStorage.getItem("ofc360_access_token")).toBe("new_jwt_token");
+    expect(localStorage.getItem("ofc360_refresh_token")).toBe("new_refresh_token");
+    expect(localStorage.getItem("ofc360_company_id")).toBe("22222222-2222-2222-2222-222222222222");
+    expect(JSON.parse(localStorage.getItem("ofc360_user") || "{}").email).toBe("jane@ofc360.com");
   });
+
 
   it("should handle updateUser", () => {
     const state = authReducer(initialState, updateUser({ name: "Updated Name" }));

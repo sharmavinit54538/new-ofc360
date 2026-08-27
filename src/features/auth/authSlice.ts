@@ -1,16 +1,40 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { AuthState, AuthUser, SystemRole, SessionStatus, normalizeRole } from "./authTypes";
+import {
+  getStoredAccessToken,
+  getStoredRefreshToken,
+  getStoredUser,
+  getStoredCompanyId,
+  setStoredAuth,
+  clearStoredAuth,
+  isValidToken,
+} from "@/services/auth/authStorage";
 
-const initialState: AuthState = {
-  user: null,
-  token: null,
-  refreshToken: null,
-  isAuthenticated: false,
-  isInitializing: true,
-  role: "employee",
-  companyId: null,
-  sessionStatus: "loading",
+export const getInitialAuthState = (): AuthState => {
+  const token = getStoredAccessToken();
+  const refreshToken = getStoredRefreshToken();
+  const user = getStoredUser();
+  const companyId = getStoredCompanyId() || user?.companyId || null;
+  const hasToken = isValidToken(token);
+  const hasRefresh = isValidToken(refreshToken);
+  const hasUser = Boolean(user && (user.id || user.email));
+
+  const isPotentialAuth = hasToken || hasRefresh || hasUser;
+  const initialRole: SystemRole = normalizeRole(user?.role);
+
+  return {
+    user: user || null,
+    token: hasToken ? token : null,
+    refreshToken: hasRefresh ? refreshToken : null,
+    isAuthenticated: isPotentialAuth,
+    isInitializing: true,
+    role: initialRole,
+    companyId: companyId,
+    sessionStatus: "loading",
+  };
 };
+
+const initialState: AuthState = getInitialAuthState();
 
 export const authSlice = createSlice({
   name: "auth",
@@ -54,7 +78,7 @@ export const authSlice = createSlice({
       const isAuth = Boolean(normalizedUser) && (hasValidToken || isSessionRestored) && !isExplicitEmptyToken;
 
       state.user = isExplicitEmptyToken ? null : normalizedUser;
-      state.token = hasValidToken ? token.trim() : null;
+      state.token = hasValidToken ? token.trim() : (isExplicitEmptyToken ? null : state.token);
       if (refreshToken && typeof refreshToken === "string" && refreshToken.trim().length > 0) {
         state.refreshToken = refreshToken.trim();
       } else if (isExplicitEmptyToken) {
@@ -65,6 +89,17 @@ export const authSlice = createSlice({
       state.sessionStatus = isAuth ? "authenticated" : "unauthenticated";
       state.role = normalizedRole;
       state.companyId = activeCompanyId || null;
+
+      if (isAuth && normalizedUser) {
+        setStoredAuth({
+          token: state.token,
+          refreshToken: state.refreshToken,
+          user: normalizedUser,
+          companyId: activeCompanyId || null,
+        });
+      } else if (isExplicitEmptyToken) {
+        clearStoredAuth();
+      }
     },
 
     updateUser: (state, action: PayloadAction<Partial<AuthUser>>) => {
@@ -83,6 +118,10 @@ export const authSlice = createSlice({
         } else if ((action.payload as any).company_id) {
           state.companyId = (action.payload as any).company_id;
         }
+        setStoredAuth({
+          user: state.user,
+          companyId: state.companyId,
+        });
       }
     },
 
@@ -91,6 +130,10 @@ export const authSlice = createSlice({
       state.role = role;
       if (state.user) {
         state.user.role = role;
+        setStoredAuth({
+          user: state.user,
+          companyId: state.companyId,
+        });
       }
     },
 
@@ -98,6 +141,11 @@ export const authSlice = createSlice({
       state.companyId = action.payload;
       if (state.user) {
         state.user.companyId = action.payload || undefined;
+      }
+      if (action.payload) {
+        setStoredAuth({
+          companyId: action.payload,
+        });
       }
     },
 
@@ -133,14 +181,7 @@ export const authSlice = createSlice({
       state.role = "employee";
       state.companyId = null;
 
-      // Clean up any legacy tokens from older sessions if present
-      try {
-        localStorage.removeItem("ofc360_access_token");
-        localStorage.removeItem("ofc360_refresh_token");
-        localStorage.removeItem("ofc360_user");
-      } catch {
-        // ignore
-      }
+      clearStoredAuth();
     },
   },
 });
@@ -158,4 +199,4 @@ export const {
 export { normalizeRole } from "./authTypes";
 export type { AuthUser, AuthState, SystemRole } from "./authTypes";
 
-export default authSlice.reducer;
+export default authSlice.reducer;

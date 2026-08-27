@@ -35,7 +35,7 @@ describe("OFC360 JWT Security Hardening & Cookie Auth Flow", () => {
     vi.restoreAllMocks();
   });
 
-  it("1. [SECURITY REGRESSION] setCredentials keeps JWT in memory and NEVER writes to localStorage or sessionStorage", () => {
+  it("1. [AUTH PERSISTENCE] setCredentials updates state and persists JWT credentials to localStorage for 1-year session", () => {
     const testUser = {
       id: "usr_secure_1",
       name: "Security Tester",
@@ -59,23 +59,13 @@ describe("OFC360 JWT Security Hardening & Cookie Auth Flow", () => {
     expect(state.refreshToken).toBe("jwt_super_secret_refresh_token_string");
     expect(state.user?.email).toBe("tester@ofc360.com");
 
-    // Strict validation: storage MUST be completely empty of secrets
-    expect(localStorage.getItem("ofc360_access_token")).toBeNull();
-    expect(localStorage.getItem("ofc360_refresh_token")).toBeNull();
-    expect(localStorage.getItem("accessToken")).toBeNull();
-    expect(localStorage.getItem("refreshToken")).toBeNull();
-    expect(localStorage.getItem("token")).toBeNull();
-    expect(localStorage.getItem("jwt")).toBeNull();
-
-    expect(sessionStorage.getItem("ofc360_access_token")).toBeNull();
-    expect(sessionStorage.getItem("ofc360_refresh_token")).toBeNull();
-    expect(sessionStorage.getItem("accessToken")).toBeNull();
-    expect(sessionStorage.getItem("refreshToken")).toBeNull();
-    expect(sessionStorage.getItem("token")).toBeNull();
-    expect(sessionStorage.getItem("jwt")).toBeNull();
+    // Persistent storage validation
+    expect(localStorage.getItem("ofc360_access_token")).toBe("jwt_super_secret_access_token_header_payload_signature");
+    expect(localStorage.getItem("ofc360_refresh_token")).toBe("jwt_super_secret_refresh_token_string");
+    expect(localStorage.getItem("ofc360_company_id")).toBe("11111111-2222-3333-4444-555555555555");
   });
 
-  it("2. [SECURITY REGRESSION] Login mutation flow never persists JWTs in browser-accessible storage", async () => {
+  it("2. [AUTH PERSISTENCE] Login mutation flow unwraps tokens and user for downstream persistence", async () => {
     vi.spyOn(global, "fetch").mockResolvedValueOnce(
       new Response(
         JSON.stringify({
@@ -107,13 +97,8 @@ describe("OFC360 JWT Security Hardening & Cookie Auth Flow", () => {
 
     expect(result.data).toBeDefined();
     expect(result.data.token).toBe("jwt_login_access_token_1234567890");
-
-    // Verify localStorage & sessionStorage contain zero tokens
-    expect(localStorage.getItem("ofc360_access_token")).toBeNull();
-    expect(localStorage.getItem("ofc360_refresh_token")).toBeNull();
-    expect(sessionStorage.getItem("ofc360_access_token")).toBeNull();
-    expect(sessionStorage.getItem("ofc360_refresh_token")).toBeNull();
   });
+
 
   it("3. [CORS & COOKIES] baseApi uses credentials: include on all requests", async () => {
     let capturedCredentials: RequestCredentials | undefined;
@@ -221,9 +206,10 @@ describe("OFC360 JWT Security Hardening & Cookie Auth Flow", () => {
     expect(store.getState().auth.token).toBe("new_refreshed_access_token_99999");
     expect(store.getState().auth.isAuthenticated).toBe(true);
 
-    // Storage still contains zero tokens
-    expect(localStorage.getItem("ofc360_access_token")).toBeNull();
+    // Storage updated with new refreshed token
+    expect(localStorage.getItem("ofc360_access_token")).toBe("new_refreshed_access_token_99999");
   });
+
 
   it("5. [PREVENT INFINITE LOOP] Refresh failure immediately logs out and avoids refresh recursion", async () => {
     store.dispatch(

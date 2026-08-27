@@ -2,16 +2,16 @@ import { isValidToken } from "../authStorage";
 import { formatAuthUser } from "./authNameHelper";
 
 export async function fetchMeEndpoint(rawBaseUrl: string, currentToken?: string | null) {
-  if (!isValidToken(currentToken)) {
-    return { success: false, status: 401 };
-  }
   try {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (isValidToken(currentToken)) {
+      headers["Authorization"] = `Bearer ${currentToken.trim()}`;
+    }
     const fetchOptions: RequestInit = {
       method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${currentToken.trim()}`,
-      },
+      headers,
       credentials: "include",
     };
     const meRes = await fetch(`${rawBaseUrl}/api/v1/auth/me`, fetchOptions);
@@ -24,3 +24,4 @@ export async function fetchMeEndpoint(rawBaseUrl: string, currentToken?: string 
     return { success: false, status: 0 };
   }
 }
+

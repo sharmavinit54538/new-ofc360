@@ -5,8 +5,14 @@ import {
   FetchArgs,
   FetchBaseQueryError,
 } from "@reduxjs/toolkit/query/react";
-import type { RootState } from "@/app/store";
-import { isValidToken, isValidUUID, isPublicRequest, needsCompanyId } from "@/services/auth/authStorage";
+import {
+  isValidToken,
+  isValidUUID,
+  isPublicRequest,
+  needsCompanyId,
+  getStoredAccessToken,
+  getStoredCompanyId,
+} from "@/services/auth/authStorage";
 import { createAuthBaseQueryWithReauth } from "@/services/auth/authInterceptor";
 
 export { isPublicRequest, isValidToken, isValidUUID, needsCompanyId } from "@/services/auth/authStorage";
@@ -25,8 +31,8 @@ export const baseQuery = fetchBaseQuery({
   },
   prepareHeaders: (headers, { getState, endpoint }) => {
     const state = getState() as RootState;
-    const token = state?.auth?.token;
-    const companyId = state?.auth?.companyId || state?.company?.activeCompany?.id;
+    const token = state?.auth?.token || getStoredAccessToken();
+    const companyId = state?.auth?.companyId || state?.company?.activeCompany?.id || getStoredCompanyId();
 
     const isPublic = isPublicRequest(undefined, endpoint);
 
@@ -41,6 +47,7 @@ export const baseQuery = fetchBaseQuery({
     return headers;
   },
 });
+
 
 export const baseQueryWithReauth: BaseQueryFn<
   string | FetchArgs,
