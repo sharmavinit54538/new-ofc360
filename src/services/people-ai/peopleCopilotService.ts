@@ -1394,7 +1394,9 @@ export class PeopleCopilotService {
         id: matchedName.toLowerCase().replace(/\s+/g, "-"),
         name: matchedName,
         code: matchedName.slice(0, 3).toUpperCase(),
+        headOfDepartment: "Not Assigned",
         employeeCount: employees.filter((e) => (e.department || "").toLowerCase() === matchedName.toLowerCase()).length,
+        budget: 0,
       };
     }
 

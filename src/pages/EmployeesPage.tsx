@@ -526,9 +526,10 @@ export default function EmployeesPage({ onOpenCopilot }: EmployeesPageProps) {
 
                           <DropdownMenuItem
                             onClick={() => {
-                              setRole(emp.systemRole || "employee");
+                              const targetRole = normalizeRole(emp.systemRole || emp.role);
+                              setRole(targetRole);
                               toast.success(
-                                `Switched active role to ${roleLabels[emp.systemRole || "employee"]}`
+                                `Switched active role to ${roleLabels[targetRole] || "Employee"}`
                               );
                             }}
                             className="text-xs gap-2 text-teal-600 dark:text-teal-400 font-semibold cursor-pointer py-2"

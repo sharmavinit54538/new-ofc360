@@ -21,7 +21,7 @@ describe("Ask People AI — 100% Real Data & Backend Action Execution", () => {
       salary: 1800000,
       ctc: 1800000,
       reportingManager: "Amit Kumar",
-      skills: ["React", "TypeScript", "Node.js"],
+      skills: [{ name: "React" }, { name: "TypeScript" }, { name: "Node.js" }],
       performanceScore: 88,
     },
     {
@@ -38,7 +38,7 @@ describe("Ask People AI — 100% Real Data & Backend Action Execution", () => {
       status: "Active",
       salary: 2800000,
       ctc: 2800000,
-      skills: ["Leadership", "Architecture"],
+      skills: [{ name: "Leadership" }, { name: "Architecture" }],
       performanceScore: 94,
     },
     {
@@ -55,7 +55,7 @@ describe("Ask People AI — 100% Real Data & Backend Action Execution", () => {
       status: "Active",
       salary: 2200000,
       ctc: 2200000,
-      skills: ["Finance", "Payroll"],
+      skills: [{ name: "Finance" }, { name: "Payroll" }],
       performanceScore: 92,
     },
     {
@@ -72,7 +72,7 @@ describe("Ask People AI — 100% Real Data & Backend Action Execution", () => {
       status: "Notice",
       salary: 1400000,
       ctc: 1400000,
-      skills: ["Cypress", "QA"],
+      skills: [{ name: "Cypress" }, { name: "QA" }],
       performanceScore: 78,
     },
     {
@@ -89,7 +89,7 @@ describe("Ask People AI — 100% Real Data & Backend Action Execution", () => {
       status: "Probation",
       salary: 900000,
       ctc: 900000,
-      skills: ["React"],
+      skills: [{ name: "React" }],
       performanceScore: 82,
     },
   ];
@@ -100,7 +100,23 @@ describe("Ask People AI — 100% Real Data & Backend Action Execution", () => {
   ];
 
   const realManagers: Manager[] = [
-    { id: "mgr-102", employeeId: "emp-102", name: "Amit Kumar", email: "amit.kumar@ofc360.com", department: "Engineering", role: "Engineering Manager", teamSize: 3 },
+    {
+      id: "mgr-102",
+      employeeId: "emp-102",
+      name: "Amit Kumar",
+      email: "amit.kumar@ofc360.com",
+      department: "Engineering",
+      role: "Engineering Manager",
+      teamSize: 3,
+      directReportIds: ["emp-101", "emp-104", "emp-105"],
+      permissions: {
+        canApproveLeave: true,
+        canApproveAttendance: true,
+        canApprovePayroll: true,
+        canConductAppraisals: true,
+        canInitiateRequisitions: true,
+      },
+    },
   ];
 
   const realContext: SystemContext = {
