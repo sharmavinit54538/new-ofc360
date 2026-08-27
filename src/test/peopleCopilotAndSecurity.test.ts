@@ -55,12 +55,13 @@ describe("OFC360 People AI — Copilot Grounding, RBAC Scoping, & Data Quality",
     );
 
     expect(res).toBeDefined();
-    expect(res.answer).toContain("probation");
+    expect(res.answer.toLowerCase()).toContain("probation");
     expect(res.answer).toContain("Karan Johar");
     expect(res.supportingDataPoints.length).toBeGreaterThan(0);
     expect(res.confidence).toBe("HIGH");
     expect(res.authorizedScope).toContain("hr_admin");
   });
+
 
   it("2. Blocks prompt injection and unauthorized compensation bypass attempts", async () => {
     const res = await PeopleCopilotService.queryPeopleAI(

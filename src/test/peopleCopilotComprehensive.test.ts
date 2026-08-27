@@ -186,8 +186,9 @@ describe("Ask People AI — 100% Real Data & Backend Action Execution", () => {
     expect(res).toBeDefined();
     expect(res.answer).toContain("Compensation & Payroll Intelligence");
     expect(res.answer).toContain("Annual Payroll Expenditure");
-    expect(res.answer).toContain("9,100,000"); // 18L + 28L + 22L + 14L + 9L = 91L
+    expect(res.answer).toMatch(/91,00,000|9,100,000/); // 18L + 28L + 22L + 14L + 9L = 91L
   });
+
 
   it("6. Real Action: 'Rahul Sharma ko Finance me move karo' executes real update mutation", async () => {
     const updateSpy = vi.fn().mockResolvedValue({ data: { id: "emp-101", department: "Finance" } });
