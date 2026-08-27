@@ -366,6 +366,7 @@ export interface ConfirmationDetails {
     | "ACTIVATE_EMPLOYEE"
     | "DELETE_EMPLOYEE"
     | "BULK_DEACTIVATE"
+    | "BULK_DELETE"
     | "BULK_MOVE"
     | "BULK_CHANGE_MANAGER";
   title: string;
@@ -443,6 +444,7 @@ export interface ActionResult {
     | "ACTIVATE_EMPLOYEE"
     | "DELETE_EMPLOYEE"
     | "BULK_DEACTIVATE"
+    | "BULK_DELETE"
     | "BULK_MOVE"
     | "BULK_CHANGE_MANAGER";
   targetEmployeeId?: string;
@@ -451,6 +453,7 @@ export interface ActionResult {
   details?: any;
   error?: string;
 }
+
 
 export interface ActionExecutor {
   updateEmployee?: (id: string, changes: any) => Promise<{ data?: any; error?: any }>;

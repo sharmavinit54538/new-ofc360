@@ -241,6 +241,23 @@ const ActionResultCard: React.FC<{
     details?: string;
   };
 }> = ({ result }) => {
+  if (!result.success) {
+    return (
+      <div className="rounded-xl p-3.5 bg-rose-500/10 border border-rose-500/30 text-foreground space-y-1.5 my-1">
+        <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-bold text-xs">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+          <span>Action Could Not Be Completed</span>
+        </div>
+        <p className="text-xs font-medium text-foreground leading-relaxed">
+          {result.message}
+        </p>
+        {result.details && (
+          <p className="text-[11px] text-muted-foreground">{result.details}</p>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-xl p-3.5 bg-emerald-500/10 border border-emerald-500/30 text-foreground space-y-1.5 my-1">
       <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-xs">
@@ -254,11 +271,43 @@ const ActionResultCard: React.FC<{
         <p className="text-[11px] text-muted-foreground">{result.details}</p>
       )}
       <p className="text-[10px] text-emerald-600/80 dark:text-emerald-400/80 font-medium">
-        The Employee Directory has been updated.
+        The Employee Directory and database have been updated.
       </p>
     </div>
   );
 };
+
+const MissingFieldsPromptCard: React.FC<{
+  fields: Array<{
+    field: string;
+    label: string;
+    placeholder?: string;
+    type?: "text" | "email" | "select";
+    options?: string[];
+    value?: string;
+  }>;
+}> = ({ fields }) => {
+  return (
+    <div className="rounded-xl p-3 bg-secondary/40 border border-primary/25 space-y-2 my-1">
+      <div className="flex items-center gap-1.5 text-primary font-bold text-xs">
+        <Sparkles className="w-3.5 h-3.5" />
+        <span>Required Information</span>
+      </div>
+      <div className="space-y-1 text-xs">
+        {fields.map((f, i) => (
+          <div key={i} className="flex items-center justify-between text-[11px] py-0.5 border-b border-border/20 last:border-0">
+            <span className="text-muted-foreground font-medium">{f.label}:</span>
+            <span className="font-mono text-primary text-[11px]">{f.placeholder || "Required"}</span>
+          </div>
+        ))}
+      </div>
+      <p className="text-[10px] text-muted-foreground pt-0.5">
+        Please reply with the missing email and phone number in chat to complete creation.
+      </p>
+    </div>
+  );
+};
+
 
 /* -------------------------------------------------------------------------- */
 /* 4. Confirmation Card Component                                             */
@@ -646,8 +695,14 @@ export const PeopleAICopilotDrawer: React.FC<PeopleAICopilotDrawerProps> = ({
                         {structured.type === "compensation_overview" && structured.compensation && (
                           <CompensationOverviewComponent compensation={structured.compensation} />
                         )}
+
+                        {/* 6. Missing Fields Prompt */}
+                        {structured.type === "missing_fields_prompt" && structured.missingFields && (
+                          <MissingFieldsPromptCard fields={structured.missingFields} />
+                        )}
                       </div>
                     )}
+
 
                     <div className="flex items-center justify-end text-[9px] text-muted-foreground/70 pt-0.5">
                       <span>{msg.timestamp}</span>
