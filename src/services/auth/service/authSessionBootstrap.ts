@@ -12,7 +12,15 @@ export async function runAuthBootstrap(dispatch: AppDispatch, getState: () => Ro
     const refreshToken = isValidToken(state.auth.refreshToken) ? state.auth.refreshToken.trim() : getStoredRefreshToken();
     const storedUser = getStoredUser();
 
-    // 1. If an access token exists, validate it via /api/v1/auth/me
+    // 1. Token Pre-Check:
+    // If NO accessToken and NO refreshToken exists in state or storage,
+    // immediately set auth state to unauthenticated and return early without making any network requests.
+    if (!token && !refreshToken) {
+      dispatch(logout());
+      return false;
+    }
+
+    // 2. If an access token exists, validate it via /api/v1/auth/me
     if (token) {
       const meResult = await fetchMeEndpoint(rawBaseUrl, token);
       if (meResult.success && meResult.user) {
@@ -40,7 +48,7 @@ export async function runAuthBootstrap(dispatch: AppDispatch, getState: () => Ro
       }
     }
 
-    // 2. If access token was missing or expired (401), and a refresh token is present, attempt refresh
+    // 3. If access token was missing or expired (401), and a refresh token is present, attempt refresh
     if (refreshToken) {
       const refreshed = await fetchRefreshAndRetry(rawBaseUrl, refreshToken);
       if (refreshed) {
@@ -57,22 +65,6 @@ export async function runAuthBootstrap(dispatch: AppDispatch, getState: () => Ro
       }
     }
 
-    // 3. If NO tokens in storage, attempt cookie session check via /api/v1/auth/me with credentials: "include"
-    if (!token && !refreshToken) {
-      const cookieMeResult = await fetchMeEndpoint(rawBaseUrl, null);
-      if (cookieMeResult.success && cookieMeResult.user) {
-        dispatch(
-          setCredentials({
-            user: cookieMeResult.user,
-            token: undefined,
-            refreshToken: undefined,
-            companyId: cookieMeResult.user.companyId,
-          })
-        );
-        return true;
-      }
-    }
-
     // 4. If neither succeeded, clear auth state cleanly
     dispatch(logout());
     return false;
@@ -82,4 +74,5 @@ export async function runAuthBootstrap(dispatch: AppDispatch, getState: () => Ro
     return false;
   }
 }
+
 

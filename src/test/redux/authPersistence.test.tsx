@@ -231,7 +231,8 @@ describe("OFC360 1-Year Auth Persistence & Session Restoration Acceptance Suite"
     expect(localStorage.getItem("ofc360_refresh_token")).toBe("newly_refreshed_refresh_token_888");
   });
 
-  it("5. [COOKIE SESSION RESTORATION] Restores session via cookie credentials when localStorage has no token", async () => {
+  it("5. [COOKIE / TOKEN RESTORATION] Restores session via /auth/me when valid token is stored", async () => {
+    localStorage.setItem("ofc360_access_token", "cookie_bearer_token_123");
     vi.spyOn(global, "fetch").mockImplementation(async (input: RequestInfo | URL) => {
       const url = typeof input === "string" ? input : input instanceof Request ? input.url : String(input);
       if (url.includes("/api/v1/auth/me")) {
@@ -279,6 +280,7 @@ describe("OFC360 1-Year Auth Persistence & Session Restoration Acceptance Suite"
     expect(store.getState().auth.isAuthenticated).toBe(true);
     expect(store.getState().auth.user?.name).toBe("Cookie User");
   });
+
 
   it("6. [EXPLICIT LOGOUT CLEANUP] Logout completely clears memory and localStorage", () => {
     const store = createTestStore();
