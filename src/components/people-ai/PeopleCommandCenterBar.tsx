@@ -31,12 +31,13 @@ export const PeopleCommandCenterBar: React.FC<PeopleCommandCenterBarProps> = ({
   onOpenDataHealth,
   onSelectTab,
 }) => {
-  const criticalCount = summary?.criticalIssuesCount ?? 3;
-  const attentionCount = summary?.attentionRequiredCount ?? 7;
-  const actionsCount = summary?.recommendedActionsCount ?? 12;
-  const eventsCount = summary?.upcomingEventsCount ?? 5;
-  const approvalsCount = summary?.pendingApprovalsCount ?? 8;
-  const dataHealth = summary?.dataHealthScore ?? 96;
+  const criticalCount = summary?.criticalIssuesCount ?? 0;
+  const attentionCount = summary?.attentionRequiredCount ?? 0;
+  const actionsCount = summary?.recommendedActionsCount ?? 0;
+  const eventsCount = summary?.upcomingEventsCount ?? 0;
+  const approvalsCount = summary?.pendingApprovalsCount ?? 0;
+  const dataHealth = summary?.dataHealthScore ?? 100;
+
 
   const statPills = [
     {

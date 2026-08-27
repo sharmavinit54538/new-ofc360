@@ -333,6 +333,25 @@ export interface AskPeopleAIRequest {
   contextEntityId?: string;
 }
 
+export interface ActionResult {
+  success: boolean;
+  actionType: "MOVE_DEPARTMENT" | "CHANGE_MANAGER" | "UPDATE_ROLE" | "UPDATE_SALARY" | "CREATE_EMPLOYEE" | "DEACTIVATE_EMPLOYEE" | "ACTIVATE_EMPLOYEE" | "DELETE_EMPLOYEE" | "BULK_DEACTIVATE";
+  targetEmployeeId?: string;
+  targetEmployeeName?: string;
+  message: string;
+  details?: any;
+  error?: string;
+}
+
+export interface ActionExecutor {
+  updateEmployee?: (id: string, changes: any) => Promise<{ data?: any; error?: any }>;
+  createEmployee?: (employee: any) => Promise<{ data?: any; error?: any }>;
+  deactivateEmployee?: (id: string) => Promise<{ data?: any; error?: any }>;
+  activateEmployee?: (id: string) => Promise<{ data?: any; error?: any }>;
+  deleteEmployee?: (id: string) => Promise<{ data?: any; error?: any }>;
+  revalidate?: () => void;
+}
+
 export interface AskPeopleAIResponse {
   answer: string;
   supportingDataPoints: string[];
@@ -342,4 +361,6 @@ export interface AskPeopleAIResponse {
   confidenceScore: number;
   authorizedScope: string;
   dataGroundingSummary: string;
+  actionExecuted?: ActionResult;
 }
+

@@ -19,23 +19,24 @@ import { PeopleWorkflowEngine } from "../people-ai/peopleWorkflowEngine";
 import { PeopleDataQualityEngine, type DataHealthReport } from "../people-ai/peopleDataQualityEngine";
 import { PeopleCopilotService } from "../people-ai/peopleCopilotService";
 import { PeopleAuditService } from "../people-ai/peopleAuditService";
+import { employeeCrudApi } from "./employees/employeeCrudEndpoints";
+import { employeeActivationApi } from "./employees/employeeActivationEndpoints";
 import type { RootState } from "@/app/store";
 import type { Employee, Department, Manager, AttendanceRecord } from "@/types/hr";
 import type { SystemContext } from "../people-ai/peopleContextCollector";
 
 export const peopleAiApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getPeopleIntelligenceSummary: builder.query<PeopleIntelligenceSummary, void>({
-      queryFn: async (_arg, { getState }) => {
+    getPeopleIntelligenceSummary: builder.query<PeopleIntelligenceSummary, { employees?: Employee[]; departments?: Department[] } | void>({
+      queryFn: async (arg, { getState }) => {
         try {
           const state = getState() as RootState;
-          // Extract employees and departments from cache/store or defaults
-          const employees = (state as any)?.employees?.list || [];
-          const departments = (state as any)?.departments?.list || [];
+          const employees = (arg as any)?.employees || (state as any)?.employees?.list || [];
+          const departments = (arg as any)?.departments || (state as any)?.departments?.list || [];
           const managers = (state as any)?.managers?.list || [];
 
           const systemContext: SystemContext = {
-            employees: Array.isArray(employees) && employees.length > 0 ? employees : [],
+            employees: Array.isArray(employees) ? employees : [],
             departments: Array.isArray(departments) ? departments : [],
             managers: Array.isArray(managers) ? managers : [],
             attendanceRecords: [],
@@ -54,6 +55,7 @@ export const peopleAiApi = baseApi.injectEndpoints({
       },
       providesTags: ["Timeline"],
     }),
+
 
     getEmployee360Intelligence: builder.query<Employee360Intelligence, { employeeId: string; employees?: Employee[]; departments?: Department[] }>({
       queryFn: async ({ employeeId, employees = [], departments = [] }) => {
@@ -234,21 +236,73 @@ export const peopleAiApi = baseApi.injectEndpoints({
       providesTags: ["Timeline"],
     }),
 
-    askPeopleAI: builder.mutation<AskPeopleAIResponse, { request: AskPeopleAIRequest; employees: Employee[]; departments: Department[]; managers?: Manager[]; role?: string; userId?: string }>({
-      queryFn: async ({ request, employees, departments, managers = [], role = "hr_admin", userId = "u1" }) => {
+    askPeopleAI: builder.mutation<
+      AskPeopleAIResponse,
+      {
+        request: AskPeopleAIRequest;
+        employees: Employee[];
+        departments: Department[];
+        managers?: Manager[];
+        role?: string;
+        userId?: string;
+        actorName?: string;
+      }
+    >({
+      queryFn: async (
+        { request, employees, departments, managers = [], role = "hr_admin", userId = "u1", actorName = "Authenticated User" },
+        { dispatch }
+      ) => {
         try {
           const systemContext: SystemContext = {
-            employees,
-            departments,
-            managers,
+            employees: Array.isArray(employees) ? employees : [],
+            departments: Array.isArray(departments) ? departments : [],
+            managers: Array.isArray(managers) ? managers : [],
             attendanceRecords: [],
+          };
+
+          const actionExecutor = {
+            updateEmployee: async (id: string, changes: Partial<Employee>) => {
+              const result = await dispatch(employeeCrudApi.endpoints.updateEmployee.initiate({ id, changes }));
+              return result;
+            },
+            createEmployee: async (emp: Partial<Employee>) => {
+              const result = await dispatch(employeeCrudApi.endpoints.createEmployee.initiate(emp));
+              return result;
+            },
+            deactivateEmployee: async (id: string) => {
+              const result = await dispatch(employeeActivationApi.endpoints.deactivateEmployee.initiate(id));
+              return result;
+            },
+            activateEmployee: async (id: string) => {
+              const result = await dispatch(employeeActivationApi.endpoints.activateEmployeeByAdmin.initiate(id));
+              return result;
+            },
+            deleteEmployee: async (id: string) => {
+              const result = await dispatch(employeeCrudApi.endpoints.deleteEmployee.initiate(id));
+              return result;
+            },
+            revalidate: () => {
+              dispatch(
+                employeeCrudApi.util.invalidateTags([
+                  { type: "Employee", id: "LIST" },
+                  "Employee",
+                  "Department",
+                  "Manager",
+                  "Timeline",
+                  "SuperAdminOrganizations",
+                  "SuperAdminDashboard",
+                ])
+              );
+            },
           };
 
           const resp = await PeopleCopilotService.queryPeopleAI(
             request,
             role as any,
             userId,
-            systemContext
+            systemContext,
+            actorName,
+            actionExecutor
           );
           return { data: resp };
         } catch (error: any) {
@@ -261,6 +315,7 @@ export const peopleAiApi = baseApi.injectEndpoints({
         }
       },
     }),
+
 
     triggerJoinerWorkflow: builder.mutation<PeopleWorkflow, { employee: Employee; initiator?: string }>({
       queryFn: async ({ employee, initiator = "HR Admin" }) => {

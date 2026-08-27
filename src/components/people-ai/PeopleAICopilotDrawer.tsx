@@ -71,7 +71,7 @@ export const PeopleAICopilotDrawer: React.FC<PeopleAICopilotDrawerProps> = ({
     {
       id: "msg-welcome",
       sender: "ai",
-      text: "### Welcome to OFC360 People Intelligence Copilot\n\nI have complete access to live organizational data with verified role-based access control.\n\n**You can ask inquiries in English, Hindi, or Hinglish, such as:**\n* *\"Tell me about Vinit Sharma\"* or *\"Mamraj Yadav profile\"*\n* *\"List all employees in directory\"* or *\"Sabhi employees dikhao\"*\n* *\"Show salary breakdown and payroll totals\"*\n* *\"Who is on leave today and what is the attendance rate?\"*\n* *\"Show Engineering department details\"* or *\"Who are the managers?\"*\n* *\"Who is currently on probation?\"* or *\"Who needs attention today?\"*",
+      text: "### Welcome to OFC360 People Intelligence Copilot\n\nI have complete access to live organizational data with verified role-based access control and zero mock data.\n\n**You can execute actions and inquiries in English, Hindi, or Hinglish, such as:**\n* *\"Move [Employee] to Finance\"* or *\"[Employee] ko Finance me move karo\"*\n* *\"Make [Manager] [Employee]'s manager\"* or *\"[Employee] ka manager [Manager] ko banao\"*\n* *\"List all employees in directory\"* or *\"Sabhi employees dikhao\"*\n* *\"Show salary breakdown and payroll totals\"*\n* *\"Who is on leave today and what is the attendance rate?\"*\n* *\"Tell me about [Employee Name]\"* or *\"Who is on probation?\"*",
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     },
   ]);
@@ -97,7 +97,7 @@ export const PeopleAICopilotDrawer: React.FC<PeopleAICopilotDrawerProps> = ({
     "Give me workforce health overview.",
     "Show compensation & payroll totals.",
     "Which departments are at risk?",
-    "Who are the company founders?",
+    "Who are the leadership members?",
     "Show all department comparisons.",
   ];
 
@@ -106,8 +106,8 @@ export const PeopleAICopilotDrawer: React.FC<PeopleAICopilotDrawerProps> = ({
     { label: "Salaries & Payroll", query: "Show company salary and payroll breakdown", icon: DollarSign },
     { label: "Attendance & Leaves", query: "Who is on leave and what is the attendance rate?", icon: Clock },
     { label: "Probation List", query: "Who is on probation right now?", icon: AlertTriangle },
-    { label: "Engineering Team", query: "Tell me about Engineering department", icon: Building2 },
-    { label: "Founders & Leadership", query: "Who are the founders and leadership team of OFC360?", icon: Crown },
+    { label: "Departments", query: "Show all departments in organization", icon: Building2 },
+    { label: "Leadership", query: "Who are the leaders and managers in organization?", icon: Crown },
   ];
 
   const currentSuggested =
@@ -139,7 +139,12 @@ export const PeopleAICopilotDrawer: React.FC<PeopleAICopilotDrawerProps> = ({
         managers,
         role: role || "hr_admin",
         userId: user?.id || "hr-admin",
+        actorName: (user as any)?.name || user?.email || "Authenticated User",
       }).unwrap();
+
+      if (res.actionExecuted?.success) {
+        toast.success(res.actionExecuted.message);
+      }
 
       const aiMsg: ChatMessage = {
         id: `ai-${Date.now()}`,
@@ -160,6 +165,7 @@ export const PeopleAICopilotDrawer: React.FC<PeopleAICopilotDrawerProps> = ({
       setMessages((prev) => [...prev, errorMsg]);
     }
   };
+
 
   const handleCopy = (id: string, text: string) => {
     navigator.clipboard.writeText(text);
