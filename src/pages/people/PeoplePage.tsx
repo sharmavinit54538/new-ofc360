@@ -73,18 +73,6 @@ export default function PeoplePage() {
             );
           })}
         </div>
-
-        <div className="hidden sm:flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setIsCopilotOpen(true)}
-            className="text-xs h-9 px-3.5 font-bold border-primary/40 text-primary bg-primary/5 hover:bg-primary/15 gap-1.5 shadow-2xs cursor-pointer rounded-xl"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-primary" />
-            <span>People AI</span>
-          </Button>
-        </div>
       </div>
 
       {/* Section Content */}
