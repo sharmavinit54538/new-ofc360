@@ -319,4 +319,76 @@ describe("Ask People AI — 100% Real Data & Backend Action Execution", () => {
     expect(res.answer).toContain("I couldn't find");
     expect(res.answer).toContain("John Doe");
   });
+
+  it("11. Returns structured employee_card payload without exposing raw UUIDs in text", async () => {
+    const res = await PeopleCopilotService.queryPeopleAI(
+      { query: "Tell me about Rahul Sharma" },
+      "hr_admin",
+      "admin-1",
+      realContext
+    );
+
+    expect(res).toBeDefined();
+    expect(res.structuredOutput).toBeDefined();
+    expect(res.structuredOutput?.type).toBe("employee_card");
+    expect(res.structuredOutput?.employee?.name).toBe("Rahul Sharma");
+    expect(res.structuredOutput?.employee?.department).toBe("Engineering");
+    expect(res.structuredOutput?.employee?.role).toBe("Software Engineer");
+    // Text should not contain raw database UUID
+    expect(res.answer).not.toContain("emp-101");
+  });
+
+  it("12. Returns structured employee_list for department query without markdown pipe tables", async () => {
+    const res = await PeopleCopilotService.queryPeopleAI(
+      { query: "Engineering ke saare employees dikhao" },
+      "hr_admin",
+      "admin-1",
+      realContext
+    );
+
+    expect(res).toBeDefined();
+    expect(res.structuredOutput).toBeDefined();
+    expect(res.structuredOutput?.type).toBe("employee_list");
+    expect(res.structuredOutput?.title).toContain("Engineering");
+    expect(res.structuredOutput?.count).toBe(4);
+    expect(res.structuredOutput?.employees?.length).toBe(4);
+    // Should NOT contain raw markdown pipe table formatting
+    expect(res.answer).not.toContain("|---|---|");
+  });
+
+  it("13. Executes confirmed action via confirmedAction payload directly", async () => {
+    const updateSpy = vi.fn().mockResolvedValue({ data: { id: "emp-101" } });
+    const revalidateSpy = vi.fn();
+
+    const actionExecutor: ActionExecutor = {
+      updateEmployee: updateSpy,
+      revalidate: revalidateSpy,
+    };
+
+    const res = await PeopleCopilotService.queryPeopleAI(
+      {
+        query: "Confirm",
+        confirmedAction: {
+          actionType: "MOVE_DEPARTMENT",
+          title: "Move Rahul Sharma to Finance",
+          description: "Move department to Finance",
+          targetEmployeeId: "emp-101",
+          targetEmployeeName: "Rahul Sharma",
+          newValue: "Finance",
+        },
+      },
+      "hr_admin",
+      "admin-1",
+      realContext,
+      "Admin User",
+      actionExecutor
+    );
+
+    expect(res).toBeDefined();
+    expect(updateSpy).toHaveBeenCalledWith("emp-101", expect.objectContaining({ department: "Finance" }));
+    expect(revalidateSpy).toHaveBeenCalled();
+    expect(res.structuredOutput?.type).toBe("action_result");
+    expect(res.actionExecuted?.success).toBe(true);
+  });
 });
+

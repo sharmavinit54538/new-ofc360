@@ -327,15 +327,124 @@ export interface PeopleAuditEntry {
   confidence?: string;
 }
 
+export type PeopleAIResponseType =
+  | "text"
+  | "employee_card"
+  | "employee_list"
+  | "department_list"
+  | "manager_list"
+  | "compensation_overview"
+  | "attendance_overview"
+  | "confirmation_request"
+  | "action_result"
+  | "disambiguation"
+  | "missing_fields_prompt";
+
+export interface CleanEmployeeItem {
+  id: string; // Used internally for backend dispatch / confirmations; NEVER rendered as raw UUID in UI
+  name: string;
+  email?: string;
+  role?: string;
+  department?: string;
+  manager?: string;
+  status?: string;
+  salary?: number | string;
+  joinedAt?: string;
+  phone?: string;
+  performanceScore?: number;
+  skills?: string[];
+}
+
+export interface ConfirmationDetails {
+  actionType:
+    | "MOVE_DEPARTMENT"
+    | "CHANGE_MANAGER"
+    | "UPDATE_ROLE"
+    | "UPDATE_SALARY"
+    | "CREATE_EMPLOYEE"
+    | "DEACTIVATE_EMPLOYEE"
+    | "ACTIVATE_EMPLOYEE"
+    | "DELETE_EMPLOYEE"
+    | "BULK_DEACTIVATE"
+    | "BULK_MOVE"
+    | "BULK_CHANGE_MANAGER";
+  title: string;
+  description: string;
+  targetEmployeeId?: string;
+  targetEmployeeName?: string;
+  currentValue?: string;
+  newValue?: string;
+  affectedCount?: number;
+  affectedEmployees?: CleanEmployeeItem[];
+  payload?: any;
+}
+
+export interface StructuredAIOutput {
+  type: PeopleAIResponseType;
+  title?: string;
+  count?: number;
+  employee?: CleanEmployeeItem;
+  employees?: CleanEmployeeItem[];
+  departments?: Array<{ name: string; code?: string; headcount: number; headOfDepartment?: string }>;
+  compensation?: {
+    totalAnnual: number;
+    totalMonthly: number;
+    avgSalary: number;
+    headcount: number;
+    departments: Array<{ department: string; count: number; annualTotal: number; monthlyTotal: number; avgCtc: number }>;
+  };
+  attendance?: {
+    totalWorkforce: number;
+    presentCount: number;
+    onLeaveCount: number;
+    attendanceRate: string;
+    onLeaveEmployees: CleanEmployeeItem[];
+  };
+  confirmation?: ConfirmationDetails;
+  actionResult?: {
+    success: boolean;
+    actionType: string;
+    message: string;
+    employeeName?: string;
+    details?: string;
+  };
+  disambiguation?: {
+    title: string;
+    prompt: string;
+    options: CleanEmployeeItem[];
+    pendingAction?: any;
+  };
+  missingFields?: Array<{
+    field: string;
+    label: string;
+    placeholder?: string;
+    type?: "text" | "email" | "select";
+    options?: string[];
+    value?: string;
+  }>;
+}
+
 export interface AskPeopleAIRequest {
   query: string;
   scope?: "all" | "team" | "department" | "self";
   contextEntityId?: string;
+  confirmedAction?: ConfirmationDetails;
 }
 
 export interface ActionResult {
   success: boolean;
-  actionType: "MOVE_DEPARTMENT" | "CHANGE_MANAGER" | "UPDATE_ROLE" | "UPDATE_SALARY" | "CREATE_EMPLOYEE" | "DEACTIVATE_EMPLOYEE" | "ACTIVATE_EMPLOYEE" | "DELETE_EMPLOYEE" | "BULK_DEACTIVATE";
+  actionType:
+    | "MOVE_DEPARTMENT"
+    | "CHANGE_MANAGER"
+    | "UPDATE_ROLE"
+    | "UPDATE_SALARY"
+    | "CREATE_EMPLOYEE"
+    | "DEACTIVATE_EMPLOYEE"
+    | "ACTIVATE_EMPLOYEE"
+    | "DELETE_EMPLOYEE"
+    | "BULK_DEACTIVATE"
+    | "BULK_MOVE"
+    | "BULK_CHANGE_MANAGER";
   targetEmployeeId?: string;
   targetEmployeeName?: string;
   message: string;
@@ -362,5 +471,7 @@ export interface AskPeopleAIResponse {
   authorizedScope: string;
   dataGroundingSummary: string;
   actionExecuted?: ActionResult;
+  structuredOutput?: StructuredAIOutput;
 }
+
 

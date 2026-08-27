@@ -270,9 +270,21 @@ export default function EmployeesPage({ onOpenCopilot }: EmployeesPageProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          {onOpenCopilot && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onOpenCopilot}
+              className="text-xs h-10 px-3.5 font-bold border-primary/40 text-primary bg-primary/5 hover:bg-primary/15 gap-1.5 shadow-xs cursor-pointer rounded-xl"
+            >
+              <Sparkles className="w-4 h-4 text-primary" />
+              <span>People AI</span>
+            </Button>
+          )}
+
           <Button
             onClick={handleOpenAdd}
-            className="gradient-bg text-primary-foreground text-xs h-10 px-4 font-semibold shadow-md gap-1.5 cursor-pointer"
+            className="gradient-bg text-primary-foreground text-xs h-10 px-4 font-semibold shadow-md gap-1.5 cursor-pointer rounded-xl"
           >
             <Plus className="w-4 h-4" />
             <span>Add Employee</span>

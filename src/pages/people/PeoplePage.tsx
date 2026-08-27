@@ -79,10 +79,10 @@ export default function PeoplePage() {
             size="sm"
             variant="outline"
             onClick={() => setIsCopilotOpen(true)}
-            className="text-xs h-9 px-3 font-semibold border-primary/30 text-primary hover:bg-primary/10 gap-1.5 shadow-2xs cursor-pointer"
+            className="text-xs h-9 px-3.5 font-bold border-primary/40 text-primary bg-primary/5 hover:bg-primary/15 gap-1.5 shadow-2xs cursor-pointer rounded-xl"
           >
             <Sparkles className="w-3.5 h-3.5 text-primary" />
-            <span>Ask People AI</span>
+            <span>People AI</span>
           </Button>
         </div>
       </div>
