@@ -284,7 +284,7 @@ export function GlobalSearchDialog({
   }, [filteredResults]);
 
   // Flattened visible items for keyboard navigation
-  const flattenedItems: FlattenedSearchItem[] = useMemo(() => {
+  const { flattenedItems, itemIndexMap } = useMemo(() => {
     const list: FlattenedSearchItem[] = [];
     const empList = filteredResults?.employees || [];
     const candList = filteredResults?.candidates || [];
@@ -311,7 +311,20 @@ export function GlobalSearchDialog({
       slice.forEach((act) => list.push({ type: "action", data: act }));
     }
 
-    return list;
+    const map = new Map<string, number>();
+    list.forEach((item, index) => {
+      if (item.type === "employee") {
+        map.set(`emp-${item.data.id || item.data.email}`, index);
+      } else if (item.type === "candidate") {
+        map.set(`cand-${item.data.candidate_id}`, index);
+      } else if (item.type === "page") {
+        map.set(`page-${item.data.id}`, index);
+      } else if (item.type === "action") {
+        map.set(`act-${item.data.id}`, index);
+      }
+    });
+
+    return { flattenedItems: list, itemIndexMap: map };
   }, [activeCategory, filteredResults]);
 
   // Reset selectedIndex when flattened list changes
@@ -444,9 +457,7 @@ export function GlobalSearchDialog({
                         ? filteredResults.employees.slice(0, 5)
                         : filteredResults.employees
                       ).map((emp) => {
-                        const globalIndex = flattenedItems.findIndex(
-                          (item) => item.type === "employee" && item.data.id === emp.id
-                        );
+                        const globalIndex = itemIndexMap.get(`emp-${emp.id || emp.email}`);
                         return (
                           <SearchEmployeeItem
                             key={`emp-${emp.id || emp.email}`}
@@ -483,9 +494,7 @@ export function GlobalSearchDialog({
                         ? filteredResults.candidates.slice(0, 4)
                         : filteredResults.candidates
                       ).map((cand) => {
-                        const globalIndex = flattenedItems.findIndex(
-                          (item) => item.type === "candidate" && item.data.candidate_id === cand.candidate_id
-                        );
+                        const globalIndex = itemIndexMap.get(`cand-${cand.candidate_id}`);
                         return (
                           <SearchCandidateItem
                             key={`cand-${cand.candidate_id}`}
@@ -522,9 +531,7 @@ export function GlobalSearchDialog({
                         ? filteredResults.pages.slice(0, 5)
                         : filteredResults.pages
                       ).map((page) => {
-                        const globalIndex = flattenedItems.findIndex(
-                          (item) => item.type === "page" && item.data.id === page.id
-                        );
+                        const globalIndex = itemIndexMap.get(`page-${page.id}`);
                         return (
                           <SearchNavItem
                             key={`page-${page.id}`}
@@ -552,9 +559,7 @@ export function GlobalSearchDialog({
                         ? filteredResults.actions.slice(0, 4)
                         : filteredResults.actions
                       ).map((act) => {
-                        const globalIndex = flattenedItems.findIndex(
-                          (item) => item.type === "action" && item.data.id === act.id
-                        );
+                        const globalIndex = itemIndexMap.get(`act-${act.id}`);
                         return (
                           <SearchActionItem
                             key={`act-${act.id}`}
