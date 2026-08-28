@@ -13,29 +13,38 @@ export function DepartmentAnalytics() {
   const departments = Array.isArray(rawDepartments) ? rawDepartments : [];
 
   // Compute live department metrics
-  const deptBreakdown = departments.map((dept) => {
-    const members = employees.filter(
-      (e) => (e.department || "").toLowerCase() === dept.name.toLowerCase()
-    );
-    const avgScore = members.length > 0
-      ? Math.round(
-          members.reduce((acc, m) => acc + ((m as any).performanceScore || 82), 0) / members.length
-        )
-      : 80;
-    const monthlyCost = members.reduce(
-      (acc, m) => acc + Number(m.salary || m.ctc || 0) / 12,
-      0
-    );
+  const deptBreakdown = React.useMemo(() => {
+    // ⚡ Bolt: Optimize O(N*M) nested loop to O(N+M) by grouping employees first
+    // Impact: Reduces time complexity from O(Departments * Employees) to O(Departments + Employees)
+    const employeesByDept = employees.reduce((acc, emp) => {
+      const deptName = (emp.department || "").toLowerCase();
+      if (!acc[deptName]) acc[deptName] = [];
+      acc[deptName].push(emp);
+      return acc;
+    }, {} as Record<string, typeof employees>);
 
-    return {
-      name: dept.name,
-      headcount: members.length,
-      performanceScore: avgScore,
-      monthlyPayroll: monthlyCost,
-      attendanceRate: 96.5,
-      capacityUtilization: members.length >= 3 ? 92 : members.length * 30,
-    };
-  });
+    return departments.map((dept) => {
+      const members = employeesByDept[dept.name.toLowerCase()] || [];
+      const avgScore = members.length > 0
+        ? Math.round(
+            members.reduce((acc, m) => acc + ((m as any).performanceScore || 82), 0) / members.length
+          )
+        : 80;
+      const monthlyCost = members.reduce(
+        (acc, m) => acc + Number(m.salary || m.ctc || 0) / 12,
+        0
+      );
+
+      return {
+        name: dept.name,
+        headcount: members.length,
+        performanceScore: avgScore,
+        monthlyPayroll: monthlyCost,
+        attendanceRate: 96.5,
+        capacityUtilization: members.length >= 3 ? 92 : members.length * 30,
+      };
+    });
+  }, [departments, employees]);
 
   return (
     <div className="space-y-4">
