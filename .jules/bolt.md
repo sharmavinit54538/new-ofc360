@@ -1,0 +1,3 @@
+## 2024-08-28 - Optimize nested filtering loops in array maps
+**Learning:** Found a common anti-pattern in the codebase where an array mapping operation inside a React component (`DepartmentAnalytics.tsx`) uses a `.filter()` or `.reduce()` inside of it on another list (e.g. filtering `employees` by `department`), leading to O(N*M) time complexity running on every render.
+**Action:** When calculating statistics across multiple joined entities, always build an index/hash map (e.g. grouping by ID or Name) first outside of the map function using `reduce`, effectively reducing the time complexity to O(N+M). Wrap the whole operation in `useMemo` so it's not needlessly re-calculated on unrelated re-renders.
