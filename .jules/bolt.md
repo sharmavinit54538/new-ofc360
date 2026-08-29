@@ -1,0 +1,3 @@
+## 2024-08-29 - Memoization of Local Complex List Filtering with RTK Query Data
+**Learning:** Components consuming RTK Query arrays directly (e.g. `employeeList = Array.isArray(employees) ? employees : []`) and performing complex local string filtering inside the render phase are prone to expensive re-evaluations whenever any unrelated local state (like dialog toggles) changes.
+**Action:** Always wrap complex, multi-condition array filters (especially those utilizing string manipulations like `.toLowerCase()`) in a `useMemo` hook, ensuring the work is only done when filter inputs or the source list change.
