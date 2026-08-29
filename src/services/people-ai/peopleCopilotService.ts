@@ -92,7 +92,7 @@ export class PeopleCopilotService {
   ): Promise<AskPeopleAIResponse> {
     const origQuery = req.query.trim();
     const origLower = origQuery.toLowerCase();
-    const q = origLower.replace(/['".,\/#!$%\^&\*;:{}=\-_`~()]/g, " ").replace(/\s+/g, " ").trim();
+    const q = origLower.replace(/['".,\/#!$%^&*;:{}=\-_`~()]/g, " ").replace(/\s+/g, " ").trim();
 
     // 1. RBAC Firewall Checks
     if (
@@ -242,7 +242,7 @@ export class PeopleCopilotService {
 
     if (statusPredicate || (matchedDept && (q.includes("employee") || q.includes("show") || q.includes("list") || q.includes("kaun") || q.includes("who")))) {
       let filtered = [...authorizedEmployees];
-      let filterTitleParts: string[] = [];
+        const filterTitleParts: string[] = [];
 
       if (statusPredicate) {
         if (statusPredicate === "NOTICE") {
@@ -2853,11 +2853,11 @@ export class PeopleCopilotService {
       `* **Active Departments:** **${context.departments.length}**\n` +
       `* **Data Hygiene Score:** **${summary.dataHealthScore}%**\n\n` +
       `**How can I help you today? You can ask me to:**\n` +
-      `* *\"Engineering ke saare employees dikhao\"*\n` +
-      `* *\"Move Rahul to Finance\"*\n` +
-      `* *\"Show salary breakdown\"*\n` +
-      `* *\"Who is on leave today?\"*\n` +
-      `* *\"Add new employee\"*`;
+      `* *"Engineering ke saare employees dikhao"*\n` +
+      `* *"Move Rahul to Finance"*\n` +
+      `* *"Show salary breakdown"*\n` +
+      `* *"Who is on leave today?"*\n` +
+      `* *"Add new employee"*`;
 
     return {
       answer,

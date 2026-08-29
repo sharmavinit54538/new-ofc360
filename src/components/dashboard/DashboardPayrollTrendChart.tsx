@@ -23,7 +23,7 @@ export function DashboardPayrollTrendChart({
   monthlyPayroll = 0,
   runs = [],
 }: PayrollTrendChartProps) {
-  const safeRuns = Array.isArray(runs) ? runs : [];
+    const safeRuns = useMemo(() => Array.isArray(runs) ? runs : [], [runs]);
 
   const trendData = useMemo(() => {
     if (safeRuns.length > 0) {
