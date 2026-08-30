@@ -242,7 +242,7 @@ export class PeopleCopilotService {
 
     if (statusPredicate || (matchedDept && (q.includes("employee") || q.includes("show") || q.includes("list") || q.includes("kaun") || q.includes("who")))) {
       let filtered = [...authorizedEmployees];
-      let filterTitleParts: string[] = [];
+      const filterTitleParts: string[] = [];
 
       if (statusPredicate) {
         if (statusPredicate === "NOTICE") {
