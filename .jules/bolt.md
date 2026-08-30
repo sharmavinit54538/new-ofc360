@@ -1,0 +1,6 @@
+## 2024-05-24 - [Avoid frequent filtering calculations during un-related renders]
+**Learning:** [In a heavily interactive page (like 'EmployeesPage') that fetches larger sets of data, filtering directly inside component renders causes repeated and expensive executions when unrelated state variables update. ]
+**Action:** [Use the React hook `useMemo` to prevent recalculating list arrays by caching output between re-renders based on related filtering props or search states.]
+## 2024-05-24 - [Avoid unnecessary regex escapes & respect hook rules]
+**Learning:** [CI builds on strict setups (like ESLint React configurations) will fail if React hooks are invoked conditionally or after early returns, and regular expressions with unnecessary escapes trigger `no-useless-escape` errors.]
+**Action:** [Always verify that React hooks execute unconditionally at the top level of a component before any early returns. Furthermore, omit backslashes for characters (e.g. `^`, `*`, `/`) inside regex character classes if they don't require escaping.]
