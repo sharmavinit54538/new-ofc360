@@ -1,0 +1,3 @@
+## 2025-03-09 - Memoize list filtering in Employee Directory
+**Learning:** Found that large data lists like the employee directory in `src/pages/EmployeesPage.tsx` were re-evaluating expensive string-matching filter operations on every single render without `useMemo`. When filtering scales with data size, avoiding redundant array iterations is critical for frontend performance.
+**Action:** When mapping or rendering derived data sets in React components (especially those involving string manipulation across multiple fields), always wrap the filter or mapping logic in a `useMemo` hook with appropriate dependencies.
