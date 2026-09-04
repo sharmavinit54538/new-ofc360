@@ -15,5 +15,5 @@ export function useEmployeeFormSync(employee: Employee | null, open: boolean, st
     } else {
       syncNewEmployeeDefaults(state);
     }
-  }, [employee, open]);
+  }, [employee, open, state]);
 }
