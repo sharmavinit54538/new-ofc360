@@ -20,7 +20,8 @@ interface AttendanceChartProps {
 
 export function DashboardAttendanceTrendChart({ totalEmployees }: AttendanceChartProps) {
   const [viewMode, setViewMode] = useState<"rate" | "hours">("rate");
-  const punches = useAttendanceStore((s) => s.punches) || [];
+  const rawPunches = useAttendanceStore((s) => s.punches);
+  const punches = useMemo(() => rawPunches || [], [rawPunches]);
 
   const weeklyAttendanceData = useMemo(() => {
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri"];

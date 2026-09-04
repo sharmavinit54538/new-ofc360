@@ -17,7 +17,7 @@ interface CandidateAtsTableProps {
 }
 
 export function DashboardCandidateAtsTable({ candidates = [] }: CandidateAtsTableProps) {
-  const safeCandidates = Array.isArray(candidates) ? candidates : [];
+  const safeCandidates = useMemo(() => Array.isArray(candidates) ? candidates : [], [candidates]);
   const displayCandidates = safeCandidates.slice(0, 5);
 
   const avgScore = useMemo(() => {

@@ -19,27 +19,31 @@ interface HiringFunnelChartProps {
 }
 
 export function DashboardHiringFunnelChart({ candidates = [] }: HiringFunnelChartProps) {
-  const safeCandidates = Array.isArray(candidates) ? candidates : [];
+  const safeCandidates = useMemo(() => Array.isArray(candidates) ? candidates : [], [candidates]);
 
   // Compute stages from live candidates
-  const stagesCount: Record<string, number> = {
-    Sourced: 0,
-    Screening: 0,
-    Interview: 0,
-    Offer: 0,
-    Hired: 0,
-  };
+  const stagesCount = useMemo(() => {
+    const counts: Record<string, number> = {
+      Sourced: 0,
+      Screening: 0,
+      Interview: 0,
+      Offer: 0,
+      Hired: 0,
+    };
 
-  safeCandidates.forEach((c) => {
-    const stage = c?.stage || c?.status;
-    if (stage && stagesCount[stage] !== undefined) {
-      stagesCount[stage] += 1;
-    } else if (stage === "Applied" || stage === "New") {
-      stagesCount.Sourced += 1;
-    } else if (stage === "Technical Round" || stage === "Culture Round") {
-      stagesCount.Interview += 1;
-    }
-  });
+    safeCandidates.forEach((c) => {
+      const stage = c?.stage || c?.status;
+      if (stage && counts[stage] !== undefined) {
+        counts[stage] += 1;
+      } else if (stage === "Applied" || stage === "New") {
+        counts.Sourced += 1;
+      } else if (stage === "Technical Round" || stage === "Culture Round") {
+        counts.Interview += 1;
+      }
+    });
+
+    return counts;
+  }, [safeCandidates]);
 
   const totalCandidates = safeCandidates.length;
   const hasLiveCandidates = totalCandidates > 0;

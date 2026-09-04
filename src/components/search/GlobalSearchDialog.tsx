@@ -80,7 +80,7 @@ export function GlobalSearchDialog({
   const { data: rawEmployees = [] } = useGetEmployeesQuery(undefined, {
     skip: !open,
   });
-  const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
+  const employees = useMemo(() => Array.isArray(rawEmployees) ? rawEmployees : [], [rawEmployees]);
 
   const { data: candidatesData } = useGetRecruitmentCandidatesQuery(undefined, {
     skip: !open,

@@ -10,7 +10,7 @@ export function DashboardMilestones() {
   const { toast } = useToast();
   const [tab, setTab] = useState<"birthdays" | "anniversaries" | "holidays">("birthdays");
   const { data: rawEmployees = [] } = useGetEmployeesQuery();
-  const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
+  const employees = useMemo(() => Array.isArray(rawEmployees) ? rawEmployees : [], [rawEmployees]);
   const holidays = useAttendanceStore((s) => s.holidays) || [];
 
   const birthdays = useMemo(() => {
