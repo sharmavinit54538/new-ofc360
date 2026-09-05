@@ -1,6 +1,7 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Employee } from "@/types/hr";
+import React from "react";
 import { Building2, ChevronRight, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -10,7 +11,7 @@ interface SearchEmployeeItemProps {
   onSelect: (emp: Employee) => void;
 }
 
-export function SearchEmployeeItem({
+export const SearchEmployeeItem = React.memo(function SearchEmployeeItem({
   employee,
   isSelected,
   onSelect,
@@ -95,4 +96,4 @@ export function SearchEmployeeItem({
       </div>
     </div>
   );
-}
+});

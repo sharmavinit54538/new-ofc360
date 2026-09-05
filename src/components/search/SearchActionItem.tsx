@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import React from "react";
 import { ActionSearchItem } from "./searchTypes";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -9,7 +10,7 @@ interface SearchActionItemProps {
   onSelect: (item: ActionSearchItem) => void;
 }
 
-export function SearchActionItem({
+export const SearchActionItem = React.memo(function SearchActionItem({
   item,
   isSelected,
   onSelect,
@@ -62,4 +63,4 @@ export function SearchActionItem({
       </div>
     </div>
   );
-}
+});

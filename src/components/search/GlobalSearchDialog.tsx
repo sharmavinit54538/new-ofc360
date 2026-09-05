@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
@@ -320,27 +320,27 @@ export function GlobalSearchDialog({
   }, [flattenedItems.length, activeCategory, debouncedQuery]);
 
   // Selection handlers
-  const handleSelectEmployee = (emp: Employee) => {
+  const handleSelectEmployee = useCallback((emp: Employee) => {
     onOpenChange(false);
     const searchParam = emp.name || emp.full_name || emp.email || "";
     navigate(`/people?search=${encodeURIComponent(searchParam)}`);
     toast.info(`Opening profile for ${emp.name || emp.full_name || "Employee"}`);
-  };
+  }, [navigate, onOpenChange]);
 
-  const handleSelectCandidate = (candidate: BackendCandidateListItem) => {
+  const handleSelectCandidate = useCallback((candidate: BackendCandidateListItem) => {
     onOpenChange(false);
     navigate(`/talent-intelligence?candidate=${encodeURIComponent(candidate.candidate_id)}`);
     toast.info(`Opening ATS profile for ${candidate.name}`);
-  };
+  }, [navigate, onOpenChange]);
 
-  const handleSelectPage = (page: NavSearchItem) => {
+  const handleSelectPage = useCallback((page: NavSearchItem) => {
     onOpenChange(false);
     navigate(page.path);
-  };
+  }, [navigate, onOpenChange]);
 
-  const handleSelectAction = (actionItem: ActionSearchItem) => {
+  const handleSelectAction = useCallback((actionItem: ActionSearchItem) => {
     actionItem.action();
-  };
+  }, []);
 
   // Keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
