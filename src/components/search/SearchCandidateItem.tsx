@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import React from "react";
 import { BackendCandidateListItem } from "@/services/api/recruitment/recruitmentCandidateTypes";
 import { Briefcase, ChevronRight, Mail, Sparkles, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -9,7 +10,7 @@ interface SearchCandidateItemProps {
   onSelect: (candidate: BackendCandidateListItem) => void;
 }
 
-export function SearchCandidateItem({
+export const SearchCandidateItem = React.memo(function SearchCandidateItem({
   candidate,
   isSelected,
   onSelect,
@@ -87,4 +88,4 @@ export function SearchCandidateItem({
       </div>
     </div>
   );
-}
+});
