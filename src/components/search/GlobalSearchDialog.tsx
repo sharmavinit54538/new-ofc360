@@ -314,6 +314,18 @@ export function GlobalSearchDialog({
     return list;
   }, [activeCategory, filteredResults]);
 
+  // Create an index map to optimize O(n²) findIndex in render loops
+  const itemIndexMap = useMemo(() => {
+    const map = new Map<string, number>();
+    flattenedItems.forEach((item, index) => {
+      if (item.type === "employee") map.set(`employee-${item.data.id}`, index);
+      else if (item.type === "candidate") map.set(`candidate-${item.data.candidate_id}`, index);
+      else if (item.type === "page") map.set(`page-${item.data.id}`, index);
+      else if (item.type === "action") map.set(`action-${item.data.id}`, index);
+    });
+    return map;
+  }, [flattenedItems]);
+
   // Reset selectedIndex when flattened list changes
   useEffect(() => {
     setSelectedIndex(0);
@@ -444,9 +456,8 @@ export function GlobalSearchDialog({
                         ? filteredResults.employees.slice(0, 5)
                         : filteredResults.employees
                       ).map((emp) => {
-                        const globalIndex = flattenedItems.findIndex(
-                          (item) => item.type === "employee" && item.data.id === emp.id
-                        );
+                        // ⚡ Bolt Optimization: Use O(1) map lookup instead of O(n) findIndex
+                        const globalIndex = itemIndexMap.get(`employee-${emp.id}`) ?? -1;
                         return (
                           <SearchEmployeeItem
                             key={`emp-${emp.id || emp.email}`}
@@ -483,9 +494,8 @@ export function GlobalSearchDialog({
                         ? filteredResults.candidates.slice(0, 4)
                         : filteredResults.candidates
                       ).map((cand) => {
-                        const globalIndex = flattenedItems.findIndex(
-                          (item) => item.type === "candidate" && item.data.candidate_id === cand.candidate_id
-                        );
+                        // ⚡ Bolt Optimization: Use O(1) map lookup instead of O(n) findIndex
+                        const globalIndex = itemIndexMap.get(`candidate-${cand.candidate_id}`) ?? -1;
                         return (
                           <SearchCandidateItem
                             key={`cand-${cand.candidate_id}`}
@@ -522,9 +532,8 @@ export function GlobalSearchDialog({
                         ? filteredResults.pages.slice(0, 5)
                         : filteredResults.pages
                       ).map((page) => {
-                        const globalIndex = flattenedItems.findIndex(
-                          (item) => item.type === "page" && item.data.id === page.id
-                        );
+                        // ⚡ Bolt Optimization: Use O(1) map lookup instead of O(n) findIndex
+                        const globalIndex = itemIndexMap.get(`page-${page.id}`) ?? -1;
                         return (
                           <SearchNavItem
                             key={`page-${page.id}`}
@@ -552,9 +561,8 @@ export function GlobalSearchDialog({
                         ? filteredResults.actions.slice(0, 4)
                         : filteredResults.actions
                       ).map((act) => {
-                        const globalIndex = flattenedItems.findIndex(
-                          (item) => item.type === "action" && item.data.id === act.id
-                        );
+                        // ⚡ Bolt Optimization: Use O(1) map lookup instead of O(n) findIndex
+                        const globalIndex = itemIndexMap.get(`action-${act.id}`) ?? -1;
                         return (
                           <SearchActionItem
                             key={`act-${act.id}`}
