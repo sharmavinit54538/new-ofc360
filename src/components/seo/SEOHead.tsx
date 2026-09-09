@@ -17,7 +17,7 @@ const DEFAULT_CANONICAL = "https://www.ofc360.com/";
 const DEFAULT_OG_IMAGE = "https://www.ofc360.com/og-image.png";
 
 // Base Organization Schema for EquinoxSphere & Founders
-export const EQUINOX_SPHERE_ORGANIZATION_SCHEMA = {
+const EQUINOX_SPHERE_ORGANIZATION_SCHEMA = {
   "@context": "https://schema.org",
   "@type": "Organization",
   "name": "EquinoxSphere",
@@ -58,7 +58,7 @@ export const EQUINOX_SPHERE_ORGANIZATION_SCHEMA = {
 };
 
 // Base Product/SoftwareApplication Schema for OFC360
-export const OFC360_SOFTWARE_SCHEMA = {
+const OFC360_SOFTWARE_SCHEMA = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "OFC360",
