@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Check, X, CalendarCheck, UserCheck, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,7 @@ interface PendingApprovalsProps {
   onboardingEmployees?: any[];
 }
 
-export function DashboardPendingApprovals({ onboardingEmployees = [] }: PendingApprovalsProps) {
+export const DashboardPendingApprovals = React.memo(function DashboardPendingApprovals({ onboardingEmployees = [] }: PendingApprovalsProps) {
   const { toast } = useToast();
   const { leaveRequests = [], updateLeaveStatus } = useLeaveStore();
   const safeOnboarding = Array.isArray(onboardingEmployees) ? onboardingEmployees : [];
@@ -179,4 +179,4 @@ export function DashboardPendingApprovals({ onboardingEmployees = [] }: PendingA
       </div>
     </div>
   );
-}
+});

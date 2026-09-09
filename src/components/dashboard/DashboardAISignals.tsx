@@ -1,3 +1,4 @@
+import React from "react";
 import { Sparkles, TrendingUp, CalendarCheck, Award, Info, ArrowRight, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -6,7 +7,7 @@ interface AISignalsProps {
   insights?: { tone: "positive" | "warn" | "info" | "primary"; text: string }[];
 }
 
-export function DashboardAISignals({ insights = [] }: AISignalsProps) {
+export const DashboardAISignals = React.memo(function DashboardAISignals({ insights = [] }: AISignalsProps) {
   const safeInsights = Array.isArray(insights) ? insights : [];
 
   const getIcon = (tone: string) => {
@@ -101,4 +102,4 @@ export function DashboardAISignals({ insights = [] }: AISignalsProps) {
       </div>
     </div>
   );
-}
+});
