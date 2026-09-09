@@ -91,13 +91,17 @@ function HRAdminDashboard() {
 
   // Computed Real-Time Metrics
   const totalWorkforce = employees.length;
-  const activeEmployees = employees.filter(
+
+  // Memoize these calculations to prevent O(N) operations on every render
+  const activeEmployees = useMemo(() => employees.filter(
     (e) => (e?.status || "").toUpperCase() === "ACTIVE"
-  ).length;
-  const onboardingEmployees = employees.filter((e) =>
+  ).length, [employees]);
+
+  const onboardingEmployees = useMemo(() => employees.filter((e) =>
     (e?.status || "").toUpperCase().includes("PENDING") ||
     (e?.status || "").toUpperCase().includes("ONBOARDING")
-  );
+  ), [employees]);
+
   const onboardingCount = onboardingEmployees.length;
 
   const openCandidates = candidates.length;

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import {
   AreaChart,
   Area,
@@ -19,7 +19,7 @@ interface PayrollTrendChartProps {
   runs?: any[];
 }
 
-export function DashboardPayrollTrendChart({
+export const DashboardPayrollTrendChart = React.memo(function DashboardPayrollTrendChart({
   monthlyPayroll = 0,
   runs = [],
 }: PayrollTrendChartProps) {
@@ -145,4 +145,4 @@ export function DashboardPayrollTrendChart({
       </div>
     </div>
   );
-}
+});

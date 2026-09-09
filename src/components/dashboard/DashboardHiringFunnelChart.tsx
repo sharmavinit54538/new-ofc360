@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -18,7 +18,7 @@ interface HiringFunnelChartProps {
   candidates?: any[];
 }
 
-export function DashboardHiringFunnelChart({ candidates = [] }: HiringFunnelChartProps) {
+export const DashboardHiringFunnelChart = React.memo(function DashboardHiringFunnelChart({ candidates = [] }: HiringFunnelChartProps) {
   const safeCandidates = Array.isArray(candidates) ? candidates : [];
 
   // Compute stages from live candidates
@@ -132,4 +132,4 @@ export function DashboardHiringFunnelChart({ candidates = [] }: HiringFunnelChar
       </div>
     </div>
   );
-}
+});

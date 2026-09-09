@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { Cake, Award, Calendar, Sparkles, Send, CalendarX } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useGetEmployeesQuery } from "@/services/api/employeeApi";
 import { useAttendanceStore } from "@/stores/attendanceStore";
 
-export function DashboardMilestones() {
+export const DashboardMilestones = React.memo(function DashboardMilestones() {
   const { toast } = useToast();
   const [tab, setTab] = useState<"birthdays" | "anniversaries" | "holidays">("birthdays");
   const { data: rawEmployees = [] } = useGetEmployeesQuery();
@@ -205,4 +205,4 @@ export function DashboardMilestones() {
       </div>
     </div>
   );
-}
+});

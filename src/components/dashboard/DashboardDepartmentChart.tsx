@@ -1,3 +1,4 @@
+import React from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { PieChart as PieChartIcon } from "lucide-react";
@@ -17,7 +18,7 @@ interface DepartmentChartProps {
   departmentSplit?: { name: string; value: number }[];
 }
 
-export function DashboardDepartmentChart({ departmentSplit = [] }: DepartmentChartProps) {
+export const DashboardDepartmentChart = React.memo(function DashboardDepartmentChart({ departmentSplit = [] }: DepartmentChartProps) {
   const safeSplit = Array.isArray(departmentSplit) ? departmentSplit : [];
 
   const tooltipStyle = {
@@ -116,4 +117,4 @@ export function DashboardDepartmentChart({ departmentSplit = [] }: DepartmentCha
       )}
     </div>
   );
-}
+});

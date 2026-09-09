@@ -1,0 +1,3 @@
+## 2024-05-18 - Dashboard React.memo Optimization
+**Learning:** Large dashboard views containing multiple derived metrics and data visualization components can trigger expensive O(N) recalculations and widespread DOM diffing when simple top-level state changes. Wrapping static or pure UI sub-components in `React.memo` and memoizing filtered arrays (like active employee lists) effectively isolates the re-renders.
+**Action:** Always wrap presentation-heavy charts and tables in `React.memo` when rendering within a parent dashboard that polls or aggregates multiple data sources. Use `useMemo` for any derived arrays resulting from `.filter()` or `.map()` on the entire dataset.

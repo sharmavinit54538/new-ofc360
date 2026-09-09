@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -18,7 +18,7 @@ interface AttendanceChartProps {
   totalEmployees: number;
 }
 
-export function DashboardAttendanceTrendChart({ totalEmployees }: AttendanceChartProps) {
+export const DashboardAttendanceTrendChart = React.memo(function DashboardAttendanceTrendChart({ totalEmployees }: AttendanceChartProps) {
   const [viewMode, setViewMode] = useState<"rate" | "hours">("rate");
   const punches = useAttendanceStore((s) => s.punches) || [];
 
@@ -162,4 +162,4 @@ export function DashboardAttendanceTrendChart({ totalEmployees }: AttendanceChar
       </div>
     </div>
   );
-}
+});

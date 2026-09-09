@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import { ArrowRight, Sparkles, UserX } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ interface CandidateAtsTableProps {
   candidates?: any[];
 }
 
-export function DashboardCandidateAtsTable({ candidates = [] }: CandidateAtsTableProps) {
+export const DashboardCandidateAtsTable = React.memo(function DashboardCandidateAtsTable({ candidates = [] }: CandidateAtsTableProps) {
   const safeCandidates = Array.isArray(candidates) ? candidates : [];
   const displayCandidates = safeCandidates.slice(0, 5);
 
@@ -138,4 +138,4 @@ export function DashboardCandidateAtsTable({ candidates = [] }: CandidateAtsTabl
       </div>
     </div>
   );
-}
+});

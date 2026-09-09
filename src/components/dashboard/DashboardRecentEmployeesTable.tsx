@@ -1,3 +1,4 @@
+import React from "react";
 import { Users, UserPlus, ArrowRight, Mail } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,7 @@ interface RecentEmployeesProps {
   employees?: any[];
 }
 
-export function DashboardRecentEmployeesTable({ employees = [] }: RecentEmployeesProps) {
+export const DashboardRecentEmployeesTable = React.memo(function DashboardRecentEmployeesTable({ employees = [] }: RecentEmployeesProps) {
   const navigate = useNavigate();
   const safeEmployees = Array.isArray(employees) ? employees : [];
 
@@ -144,4 +145,4 @@ export function DashboardRecentEmployeesTable({ employees = [] }: RecentEmployee
       </div>
     </div>
   );
-}
+});
