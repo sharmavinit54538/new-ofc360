@@ -46,12 +46,13 @@ export const Employee360Drawer: React.FC<Employee360DrawerProps> = ({
   allEmployees = [],
   onTriggerAction,
 }) => {
-  if (!open || !employee) return null;
-
+  const skipQuery = !open || !employee?.id;
   const { data: intel, isLoading } = useGetEmployee360IntelligenceQuery(
-    { employeeId: employee.id, employees: allEmployees },
-    { skip: !employee?.id }
+    { employeeId: employee?.id || '', employees: allEmployees },
+    { skip: skipQuery }
   );
+
+  if (!open || !employee) return null;
 
   const displayName = employee.name || "Employee";
   const initials = displayName
