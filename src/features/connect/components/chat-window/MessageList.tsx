@@ -37,6 +37,11 @@ export function MessageList({
   refetchMessages,
   isCurrentUser,
 }: MessageListProps) {
+  const handleReply = React.useCallback((message: any) => onReplyInThread(message), [onReplyInThread]);
+  const handleToggleReaction = React.useCallback((msgId: string, emoji: string) => onToggleReaction(msgId, emoji), [onToggleReaction]);
+  const handleTogglePin = React.useCallback((msgId: string) => onTogglePin(msgId), [onTogglePin]);
+  const handleDelete = React.useCallback((msgId: string) => onDelete(msgId), [onDelete]);
+
   if (isLoading) {
     return (
       <div className="space-y-3 py-4">
@@ -100,16 +105,10 @@ export function MessageList({
             isOutgoing={isOutgoing}
             isConsecutive={isConsecutive}
             currentUserId={currentUserId}
-            onReplyInThread={() => onReplyInThread(message)}
-            onToggleReaction={(msgId, emoji) =>
-              onToggleReaction(msgId, emoji)
-            }
-            onTogglePin={(msgId) =>
-              onTogglePin(msgId)
-            }
-            onDelete={(msgId) =>
-              onDelete(msgId)
-            }
+            onReplyInThread={handleReply}
+            onToggleReaction={handleToggleReaction}
+            onTogglePin={handleTogglePin}
+            onDelete={handleDelete}
           />
         );
       })}

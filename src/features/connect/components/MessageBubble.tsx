@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { ConnectMessage, MessageAttachment } from "@/types/connect";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,8 @@ interface MessageBubbleProps {
 
 const COMMON_EMOJIS = ["👍", "❤️", "🔥", "🚀", "🎉", "👀", "👏", "🙌"];
 
-export function MessageBubble({
+// Memoize MessageBubble to prevent unnecessary re-renders in MessageList
+export const MessageBubble = React.memo(function MessageBubble({
   message,
   isOutgoing,
   isConsecutive = false,
@@ -374,4 +375,4 @@ export function MessageBubble({
       )}
     </div>
   );
-}
+});
