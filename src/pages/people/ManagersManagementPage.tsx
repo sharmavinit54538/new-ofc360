@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -93,19 +93,23 @@ export default function ManagersManagementPage({ onOpenCopilot }: ManagersManage
   const [selected360Emp, setSelected360Emp] = useState<Employee | null>(null);
   const [is360Open, setIs360Open] = useState(false);
 
-  const managerList = Array.isArray(rawManagers) ? rawManagers : [];
-  const employeeList = Array.isArray(rawEmployees) ? rawEmployees : [];
+  const managerList = useMemo(() => Array.isArray(rawManagers) ? rawManagers : [], [rawManagers]);
+  const employeeList = useMemo(() => Array.isArray(rawEmployees) ? rawEmployees : [], [rawEmployees]);
 
-  const filtered = managerList.filter((m) => {
-    const matchesSearch =
-      (m.name || "").toLowerCase().includes(search.toLowerCase()) ||
-      (m.email || "").toLowerCase().includes(search.toLowerCase()) ||
-      (m.role || "").toLowerCase().includes(search.toLowerCase()) ||
-      (m.department || "").toLowerCase().includes(search.toLowerCase());
+  // ⚡ Bolt: Memoized filtering logic to prevent unnecessary O(n) re-calculations on every render.
+  // Reduces re-renders by skipping filtering when dependencies haven't changed.
+  const filtered = useMemo(() => {
+    return managerList.filter((m) => {
+      const matchesSearch =
+        (m.name || "").toLowerCase().includes(search.toLowerCase()) ||
+        (m.email || "").toLowerCase().includes(search.toLowerCase()) ||
+        (m.role || "").toLowerCase().includes(search.toLowerCase()) ||
+        (m.department || "").toLowerCase().includes(search.toLowerCase());
 
-    const matchesDept = deptFilter === "ALL" || m.department === deptFilter;
-    return matchesSearch && matchesDept;
-  });
+      const matchesDept = deptFilter === "ALL" || m.department === deptFilter;
+      return matchesSearch && matchesDept;
+    });
+  }, [managerList, search, deptFilter]);
 
   const handleOpenCreate = () => {
     setEditingManager(null);
