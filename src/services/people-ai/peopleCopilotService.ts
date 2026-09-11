@@ -2853,11 +2853,11 @@ export class PeopleCopilotService {
       `* **Active Departments:** **${context.departments.length}**\n` +
       `* **Data Hygiene Score:** **${summary.dataHealthScore}%**\n\n` +
       `**How can I help you today? You can ask me to:**\n` +
-      `* *\"Engineering ke saare employees dikhao\"*\n` +
-      `* *\"Move Rahul to Finance\"*\n` +
-      `* *\"Show salary breakdown\"*\n` +
-      `* *\"Who is on leave today?\"*\n` +
-      `* *\"Add new employee\"*`;
+      `* *"Engineering ke saare employees dikhao"*\n` +
+      `* *"Move Rahul to Finance"*\n` +
+      `* *"Show salary breakdown"*\n` +
+      `* *"Who is on leave today?"*\n` +
+      `* *"Add new employee"*`;
 
     return {
       answer,
