@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -66,7 +66,7 @@ export default function ExecutivesManagementPage({ onOpenCopilot }: ExecutivesMa
   const { setRole } = useAuth();
   const { data: rawEmployees = [], isLoading } = useGetEmployeesQuery();
 
-  const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
+  const employees = useMemo(() => Array.isArray(rawEmployees) ? rawEmployees : [], [rawEmployees]);
 
   const [createEmployee] = useCreateEmployeeMutation();
   const [updateEmployee] = useUpdateEmployeeFullMutation();
@@ -81,24 +81,28 @@ export default function ExecutivesManagementPage({ onOpenCopilot }: ExecutivesMa
   const [is360Open, setIs360Open] = useState(false);
 
   // Executives are employees with systemRole === 'executive' or CXO titles
-  const executives = employees.filter(
+  const executives = useMemo(() => employees.filter(
     (e) =>
       (e.systemRole || (e as any).role || "employee") === "executive" ||
       (e.role || "").toLowerCase().includes("chief") ||
       (e.role || "").toLowerCase().includes("director") ||
       (e.role || "").toLowerCase().includes("vp")
-  );
+  ), [employees]);
 
-  const filtered = executives.filter((ex) => {
-    const matchesSearch =
-      (ex.name || "").toLowerCase().includes(search.toLowerCase()) ||
-      (ex.email || "").toLowerCase().includes(search.toLowerCase()) ||
-      (ex.role || "").toLowerCase().includes(search.toLowerCase()) ||
-      (ex.department || "").toLowerCase().includes(search.toLowerCase());
+  // ⚡ Bolt: Memoized filtering logic to prevent unnecessary O(n) re-calculations on every render.
+  // Reduces re-renders by skipping filtering when dependencies haven't changed.
+  const filtered = useMemo(() => {
+    return executives.filter((ex) => {
+      const matchesSearch =
+        (ex.name || "").toLowerCase().includes(search.toLowerCase()) ||
+        (ex.email || "").toLowerCase().includes(search.toLowerCase()) ||
+        (ex.role || "").toLowerCase().includes(search.toLowerCase()) ||
+        (ex.department || "").toLowerCase().includes(search.toLowerCase());
 
-    const matchesDept = deptFilter === "ALL" || ex.department === deptFilter;
-    return matchesSearch && matchesDept;
-  });
+      const matchesDept = deptFilter === "ALL" || ex.department === deptFilter;
+      return matchesSearch && matchesDept;
+    });
+  }, [executives, search, deptFilter]);
 
   const handleOpenCreate = () => {
     setEditingExec(null);

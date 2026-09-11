@@ -56,7 +56,7 @@ import {
   Loader2,
   AlertTriangle,
 } from "lucide-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -104,23 +104,27 @@ export function DepartmentsTable() {
   const canDelete = hasPermission(currentRole, "departments", "delete") || currentRole === "hr_admin" || currentRole === "super_admin";
 
   // Filtering
-  const filtered = departmentList.filter((dept) => {
-    const name = dept.name || "";
-    const code = dept.code || "";
-    const head = dept.head || "";
+  // ⚡ Bolt: Memoized filtering logic to prevent unnecessary O(n) re-calculations on every render.
+  // Reduces re-renders by skipping filtering when dependencies haven't changed.
+  const filtered = useMemo(() => {
+    return departmentList.filter((dept) => {
+      const name = dept.name || "";
+      const code = dept.code || "";
+      const head = dept.head || "";
 
-    const matchesSearch =
-      !searchQuery ||
-      name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      head.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch =
+        !searchQuery ||
+        name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        head.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesStatus = statusFilter === "all" || dept.status === statusFilter || dept.status?.toLowerCase() === statusFilter.toLowerCase();
-    const matchesLocation = locationFilter === "all" || dept.location === locationFilter;
-    const matchesHiring = hiringFilter === "all" || dept.hiringStatus === hiringFilter || dept.hiringStatus?.toLowerCase() === hiringFilter.toLowerCase();
+      const matchesStatus = statusFilter === "all" || dept.status === statusFilter || dept.status?.toLowerCase() === statusFilter.toLowerCase();
+      const matchesLocation = locationFilter === "all" || dept.location === locationFilter;
+      const matchesHiring = hiringFilter === "all" || dept.hiringStatus === hiringFilter || dept.hiringStatus?.toLowerCase() === hiringFilter.toLowerCase();
 
-    return matchesSearch && matchesStatus && matchesLocation && matchesHiring;
-  });
+      return matchesSearch && matchesStatus && matchesLocation && matchesHiring;
+    });
+  }, [departmentList, searchQuery, statusFilter, locationFilter, hiringFilter]);
 
   // Sorting
   const sorted = [...filtered].sort((a, b) => {
