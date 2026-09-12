@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { BarChart3, PieChart, TrendingUp, LineChart, ShieldCheck, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
@@ -12,30 +12,42 @@ export function DepartmentAnalytics() {
   const employees = Array.isArray(rawEmployees) ? rawEmployees : [];
   const departments = Array.isArray(rawDepartments) ? rawDepartments : [];
 
-  // Compute live department metrics
-  const deptBreakdown = departments.map((dept) => {
-    const members = employees.filter(
-      (e) => (e.department || "").toLowerCase() === dept.name.toLowerCase()
-    );
-    const avgScore = members.length > 0
-      ? Math.round(
-          members.reduce((acc, m) => acc + ((m as any).performanceScore || 82), 0) / members.length
-        )
-      : 80;
-    const monthlyCost = members.reduce(
-      (acc, m) => acc + Number(m.salary || m.ctc || 0) / 12,
-      0
-    );
+  // ⚡ Bolt Optimization: Compute live department metrics using O(n) employee grouping and useMemo
+  // Impact: Reduces complexity from O(n * m) to O(n + m), preventing unnecessary recalculations on re-renders
+  const deptBreakdown = useMemo(() => {
+    // 1. Group employees by department for O(1) lookup
+    const employeesByDept = new Map<string, any[]>();
+    for (const emp of employees) {
+      const deptName = (emp.department || "").toLowerCase();
+      if (!employeesByDept.has(deptName)) {
+        employeesByDept.set(deptName, []);
+      }
+      employeesByDept.get(deptName)!.push(emp);
+    }
 
-    return {
-      name: dept.name,
-      headcount: members.length,
-      performanceScore: avgScore,
-      monthlyPayroll: monthlyCost,
-      attendanceRate: 96.5,
-      capacityUtilization: members.length >= 3 ? 92 : members.length * 30,
-    };
-  });
+    // 2. Map over departments
+    return departments.map((dept) => {
+      const members = employeesByDept.get(dept.name.toLowerCase()) || [];
+      const avgScore = members.length > 0
+        ? Math.round(
+            members.reduce((acc, m) => acc + ((m as any).performanceScore || 82), 0) / members.length
+          )
+        : 80;
+      const monthlyCost = members.reduce(
+        (acc, m) => acc + Number(m.salary || m.ctc || 0) / 12,
+        0
+      );
+
+      return {
+        name: dept.name,
+        headcount: members.length,
+        performanceScore: avgScore,
+        monthlyPayroll: monthlyCost,
+        attendanceRate: 96.5,
+        capacityUtilization: members.length >= 3 ? 92 : members.length * 30,
+      };
+    });
+  }, [employees, departments]);
 
   return (
     <div className="space-y-4">
